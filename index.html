@@ -6,151 +6,235 @@
     <title>GodGuard Security - Lider în Servicii de Protecție</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Culori Brand */
         .bg-nav-highlight { background-color: #0056b3; }
         .bg-brand-deep { background-color: #002b5c; }
-        
-        /* Overlay Albastru Profesional Adaptiv */
-        .hero-overlay { 
-            background: linear-gradient(135deg, rgba(0, 43, 92, 0.85) 0%, rgba(0, 86, 179, 0.7) 100%); 
-        }
-
-        /* Ajustare text pentru ecrane mici (Mobile) vs mari (Desktop) */
-        .hero-headline {
-            font-size: clamp(2rem, 8vw, 3.5rem);
-            line-height: 1.1;
-        }
-
-        /* Scroll fin intre sectiuni */
+        .hero-overlay { background: linear-gradient(135deg, rgba(0, 43, 92, 0.85) 0%, rgba(0, 86, 179, 0.7) 100%); }
+        .hero-headline { font-size: clamp(2rem, 8vw, 3.5rem); line-height: 1.1; }
         html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
-
-        /* Fix pentru aspectul butoanelor pe iOS */
         button, input, textarea { -webkit-appearance: none; border-radius: 0.5rem; }
+        
+        /* Animatie simpla pentru numere */
+        .stat-card:hover { transform: translateY(-5px); transition: all 0.3s; }
     </style>
 </head>
 <body class="bg-white text-gray-900 antialiased font-sans m-0 p-0 overflow-x-hidden">
 
+    <a href="https://wa.me/40723909090" class="fixed bottom-6 right-6 z-[100] bg-green-500 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.588-5.946 0-6.556 5.332-11.888 11.888-11.888 3.176 0 6.161 1.237 8.404 3.481 2.245 2.244 3.481 5.229 3.481 8.405 0 6.556-5.331 11.888-11.888 11.888-2.02 0-4.005-.515-5.756-1.492L0 .057zm6.218-4.195l.301.179c1.511.898 3.256 1.372 5.048 1.372 5.161 0 9.358-4.195 9.358-9.356 0-2.5-1.002-4.851-2.822-6.67-1.821-1.82-4.172-2.822-6.671-2.822-5.162 0-9.358 4.197-9.358 9.359 0 1.9.497 3.75 1.439 5.352l.197.337-1.01 3.693 3.784-1.013z"/></svg>
+    </a>
+
     <nav class="bg-nav-highlight text-white p-4 sticky top-0 shadow-2xl z-50">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg p-1.5 shrink-0">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 </div>
                 <div class="flex flex-col">
                     <h1 class="text-xl md:text-2xl font-black tracking-tighter italic leading-none uppercase">GODGUARD</h1>
                     <span class="text-[8px] md:text-[9px] tracking-[0.3em] uppercase opacity-80 mt-1 font-bold">Security Services</span>
                 </div>
             </div>
-
-            <div class="flex space-x-4 md:space-x-8 font-bold text-xs uppercase tracking-wider">
-                <a href="#home" class="hover:text-blue-200 transition-colors py-2 px-1">Acasă</a>
-                <a href="#servicii" class="hover:text-blue-200 transition-colors py-2 px-1">Servicii</a>
-                <a href="#contact" class="hover:text-blue-200 transition-colors py-2 px-1 border-2 border-white/20 rounded-lg px-3">Contact</a>
+            <div class="flex space-x-4 md:space-x-8 font-bold text-xs uppercase tracking-wider text-center">
+                <a href="#home" class="hover:text-blue-200 transition-colors">Acasă</a>
+                <a href="#servicii" class="hover:text-blue-200 transition-colors">Servicii</a>
+                <a href="#expertiza" class="hover:text-blue-200 transition-colors">Expertiză</a>
+                <a href="#contact" class="hover:text-blue-200 transition-colors border-2 border-white/20 rounded-lg px-3 py-1">Contact</a>
             </div>
         </div>
     </nav>
 
-    <section id="home" class="relative min-h-[70vh] flex items-center justify-center overflow-hidden bg-brand-deep">
-        <img src="https://images.unsplash.com/photo-1557597774-9d2739f85a76?q=80&w=1600" class="absolute w-full h-full object-cover object-center opacity-30" alt="Securitate">
-        
-        <div class="absolute inset-0 hero-overlay flex flex-col items-center justify-center text-center px-6 py-10 z-10">
+    <section id="home" class="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-brand-deep">
+        <img src="https://images.unsplash.com/photo-1557597774-9d2739f85a76?q=80&w=1600" class="absolute w-full h-full object-cover opacity-30">
+        <div class="absolute inset-0 hero-overlay flex flex-col items-center justify-center text-center px-6 z-10">
             <div class="max-w-4xl mx-auto">
-                <h2 class="text-white hero-headline font-extrabold mb-6 drop-shadow-lg uppercase italic">
-                    PROFESIONIȘTI ÎN SIGURANȚĂ
-                </h2>
-                <p class="text-blue-50 text-base md:text-xl max-w-2xl mx-auto font-light leading-relaxed">
-                    Asigurăm integritatea obiectivelor prin soluții tactice de ultimă generație și personal de elită.
+                <span class="text-blue-300 font-bold tracking-[0.3em] text-sm mb-4 block uppercase">Protecție de Elită</span>
+                <h2 class="text-white hero-headline font-extrabold mb-6 drop-shadow-lg uppercase italic">PROFESIONIȘTI ÎN SIGURANȚĂ</h2>
+                <p class="text-blue-50 text-base md:text-xl max-w-2xl mx-auto font-light leading-relaxed mb-10">
+                    Asigurăm integritatea obiectivelor prin soluții tactice de ultimă generație și personal de elită atestat.
                 </p>
-                <div class="mt-12 flex flex-col sm:flex-row justify-center gap-4">
-                    <a href="#contact" class="bg-white text-brand-deep font-black px-10 py-4 rounded-xl text-sm uppercase tracking-widest hover:bg-blue-50 transition transform hover:scale-105 shadow-xl">
-                        Solicită Ofertă
-                    </a>
+                <div class="flex flex-col sm:flex-row justify-center gap-4 uppercase font-bold text-xs tracking-widest">
+                    <a href="#contact" class="bg-white text-brand-deep px-10 py-5 rounded-xl shadow-xl hover:bg-blue-50 transition transform hover:scale-105">Cere Ofertă</a>
+                    <a href="tel:0723909090" class="bg-transparent border-2 border-white text-white px-10 py-5 rounded-xl hover:bg-white/10 transition">Apel Rapid</a>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="max-w-5xl mx-auto py-16 md:py-24 px-8 text-center">
-        <h3 class="text-2xl md:text-3xl font-bold mb-8 text-gray-800 uppercase italic tracking-tight">Experiență Confirmată</h3>
-        <p class="text-base md:text-lg leading-relaxed text-gray-700 font-light italic">
-            Suntem recunoscuți pentru rigoarea și profesionalismul cu care abordăm fiecare misiune. Portofoliul nostru include parteneriate strategice pentru paza parcărilor rezidențiale, securizarea șantierelor de construcții și instituții universitare de prestigiu.
-        </p>
-    </section>
-
-    <section id="servicii" class="bg-gray-50 py-20 px-6">
-        <div class="max-w-6xl mx-auto text-center">
-            <h3 class="text-2xl md:text-3xl font-bold mb-16 text-brand-deep uppercase italic tracking-widest">Pachete de Servicii</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
-                <div class="bg-white p-8 shadow-xl border-t-8 border-blue-600 rounded-2xl transform transition hover:-translate-y-2">
-                    <h4 class="font-black text-xl mb-3 uppercase text-gray-800 tracking-tighter">Pază Umană</h4>
-                    <p class="text-gray-600 text-sm leading-relaxed">Personal calificat și instruit special pentru control acces, patrulare și gestionarea situațiilor de risc.</p>
-                </div>
-                <div class="bg-white p-8 shadow-xl border-t-8 border-blue-600 rounded-2xl transform transition hover:-translate-y-2">
-                    <h4 class="font-black text-xl mb-3 uppercase text-gray-800 tracking-tighter">Video & Intervenție</h4>
-                    <p class="text-gray-600 text-sm leading-relaxed">Monitorizare video 24/7 conectată direct la dispeceratul central pentru reacție imediată a echipajelor.</p>
-                </div>
-                <div class="bg-white p-8 shadow-xl border-t-8 border-blue-600 rounded-2xl transform transition hover:-translate-y-2">
-                    <h4 class="font-black text-xl mb-3 uppercase text-gray-800 tracking-tighter">Plan de Pază</h4>
-                    <p class="text-gray-600 text-sm italic leading-relaxed font-medium text-blue-800">Oferim consultanță specializată contra cost pentru întocmirea întregii documentații oficiale.</p>
-                </div>
+    <section class="relative z-20 -mt-10 max-w-6xl mx-auto px-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white p-6 rounded-2xl shadow-xl text-center border-b-4 border-blue-600 stat-card">
+                <div class="text-3xl font-black text-brand-deep mb-1">50+</div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">Obiective Păzite</div>
             </div>
-
-            <div class="mt-16 bg-brand-deep text-white p-10 rounded-3xl inline-block shadow-2xl border-b-8 border-nav-highlight">
-                <p class="text-[10px] tracking-[0.4em] uppercase opacity-70 mb-4 font-bold">Tarif Standard Servicii</p>
-                <div class="text-5xl md:text-7xl font-black">34 <span class="text-2xl font-light italic">LEI / ORĂ</span></div>
+            <div class="bg-white p-6 rounded-2xl shadow-xl text-center border-b-4 border-blue-600 stat-card">
+                <div class="text-3xl font-black text-brand-deep mb-1">100%</div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">Personal Atestat</div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-xl text-center border-b-4 border-blue-600 stat-card">
+                <div class="text-3xl font-black text-brand-deep mb-1"><10m</div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">Timp Intervenție</div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-xl text-center border-b-4 border-blue-600 stat-card">
+                <div class="text-3xl font-black text-brand-deep mb-1">24/7</div>
+                <div class="text-[10px] uppercase font-bold text-gray-400">Monitorizare</div>
             </div>
         </div>
     </section>
 
-    <section id="contact" class="py-20 px-6 max-w-6xl mx-auto">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
-            
-            <div class="bg-white p-8 md:p-10 border border-gray-100 rounded-3xl shadow-2xl">
-                <h3 class="text-2xl md:text-3xl font-bold mb-8 text-brand-deep uppercase">Solicitați Ofertă</h3>
-                <form class="space-y-6">
-                    <input type="text" placeholder="Nume Complet" class="w-full p-4 bg-gray-50 rounded-xl outline-none border border-gray-200 focus:ring-2 focus:ring-blue-600 transition-all">
-                    <input type="email" placeholder="Email de Contact" class="w-full p-4 bg-gray-50 rounded-xl outline-none border border-gray-200 focus:ring-2 focus:ring-blue-600 transition-all">
-                    <textarea rows="4" placeholder="Detalii Obiectiv (Locație, Tip Serviciu)" class="w-full p-4 bg-gray-50 rounded-xl outline-none border border-gray-200 focus:ring-2 focus:ring-blue-600 transition-all"></textarea>
-                    <button class="w-full bg-nav-highlight text-white font-black p-5 rounded-xl uppercase tracking-widest text-sm hover:bg-blue-800 transition shadow-lg">Trimite Solicitare</button>
+    <section id="expertiza" class="py-24 px-6 bg-white">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <h3 class="text-3xl font-bold text-brand-deep uppercase italic tracking-tighter">Domenii de Expertiză</h3>
+                <div class="w-20 h-1 bg-nav-highlight mx-auto mt-4"></div>
+            </div>
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-6 text-center">
+                <div class="p-4 border border-gray-100 rounded-xl hover:bg-blue-50 transition">
+                    <span class="text-3xl block mb-2">🏗️</span>
+                    <span class="text-[11px] font-black uppercase">Șantiere</span>
+                </div>
+                <div class="p-4 border border-gray-100 rounded-xl hover:bg-blue-50 transition">
+                    <span class="text-3xl block mb-2">🏢</span>
+                    <span class="text-[11px] font-black uppercase">Clădiri Birouri</span>
+                </div>
+                <div class="p-4 border border-gray-100 rounded-xl hover:bg-blue-50 transition">
+                    <span class="text-3xl block mb-2">🏡</span>
+                    <span class="text-[11px] font-black uppercase">Rezidențial</span>
+                </div>
+                <div class="p-4 border border-gray-100 rounded-xl hover:bg-blue-50 transition">
+                    <span class="text-3xl block mb-2">🛍️</span>
+                    <span class="text-[11px] font-black uppercase">Retail</span>
+                </div>
+                <div class="p-4 border border-gray-100 rounded-xl hover:bg-blue-50 transition">
+                    <span class="text-3xl block mb-2">🏟️</span>
+                    <span class="text-[11px] font-black uppercase">Evenimente</span>
+                </div>
+              <div class="p-4 border border-gray-100 rounded-xl hover:bg-blue-50 transition">
+                    <span class="text-3xl block mb-2">📦</span>
+                    <span class="text-[11px] font-black uppercase">Centre Logistice</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="servicii" class="bg-gray-100 py-24 px-6">
+        <div class="max-w-6xl mx-auto">
+            <h3 class="text-2xl md:text-3xl font-bold mb-16 text-brand-deep uppercase italic tracking-widest text-center uppercase">Soluții Complete de Securitate</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-10 shadow-lg rounded-3xl border-l-8 border-blue-600">
+                    <h4 class="font-black text-xl mb-4 uppercase tracking-tighter">Pază Umană</h4>
+                    <p class="text-gray-600 text-sm leading-relaxed mb-6">Agenți de securitate pregătiți pentru control acces, patrulare și prevenirea furturilor/actelor de vandalism.</p>
+                    <ul class="text-xs space-y-2 font-bold text-brand-deep italic">
+                        <li>✓ Echipament Profesional</li>
+                        <li>✓ Instruire Tactică</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-10 shadow-lg rounded-3xl border-l-8 border-blue-600">
+                    <h4 class="font-black text-xl mb-4 uppercase tracking-tighter">Video & Alarmă</h4>
+                    <p class="text-gray-600 text-sm leading-relaxed mb-6">Instalare și monitorizare sisteme de supraveghere inteligente cu recunoaștere și alertă instantanee.</p>
+                    <ul class="text-xs space-y-2 font-bold text-brand-deep italic">
+                        <li>✓ Monitorizare 24/7</li>
+                        <li>✓ Echipe Intervenție Rapidă</li>
+                    </ul>
+                </div>
+                <div class="bg-white p-10 shadow-lg rounded-3xl border-l-8 border-blue-600">
+                    <h4 class="font-black text-xl mb-4 uppercase tracking-tighter">Plan de Pază</h4>
+                    <p class="text-gray-600 text-sm leading-relaxed mb-6">Consultantă specializată pentru întocmirea planului de pază cerut de legislația în vigoare.</p>
+                    <ul class="text-xs space-y-2 font-bold text-blue-800 italic underline">
+                        <li>* Serviciu contra cost</li>
+                        <li>* Avizare Poliție inclusă</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-16 bg-brand-deep text-white p-12 rounded-[2rem] text-center shadow-2xl relative overflow-hidden">
+                <div class="relative z-10">
+                    <p class="text-[10px] tracking-[0.5em] uppercase opacity-60 mb-4 font-bold">Investiția în siguranță</p>
+                    <div class="text-6xl md:text-8xl font-black tracking-tighter">34 <span class="text-3xl font-light italic">LEI / ORĂ</span></div>
+                    <p class="mt-4 text-xs opacity-50 italic">*Tarif negociabil în funcție de complexitatea obiectivului</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 px-6 bg-white">
+        <div class="max-w-5xl mx-auto text-center">
+            <h3 class="text-2xl md:text-3xl font-bold mb-16 text-brand-deep uppercase italic tracking-widest">Cum colaborăm</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
+                <div class="relative">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl font-black mx-auto mb-6">1</div>
+                    <h5 class="font-bold uppercase mb-2">Evaluare</h5>
+                    <p class="text-sm text-gray-500 italic">Analizăm punctele vulnerabile ale obiectivului.</p>
+                </div>
+                <div class="relative">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl font-black mx-auto mb-6">2</div>
+                    <h5 class="font-bold uppercase mb-2">Planificare</h5>
+                    <p class="text-sm text-gray-500 italic">Proiectăm dispozitivul de pază optim.</p>
+                </div>
+                <div class="relative">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl font-black mx-auto mb-6">3</div>
+                    <h5 class="font-bold uppercase mb-2">Acțiune</h5>
+                    <p class="text-sm text-gray-500 italic">Activăm paza și monitorizarea permanentă.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="contact" class="py-24 px-6 bg-gray-50">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
+            <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl border border-gray-100">
+                <h3 class="text-3xl font-black mb-8 text-brand-deep uppercase tracking-tighter italic">Cere o Cotație</h3>
+                <form class="space-y-4">
+                    <input type="text" placeholder="Nume sau Firmă" class="w-full p-5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all">
+                    <input type="email" placeholder="Email" class="w-full p-5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all">
+                    <select class="w-full p-5 bg-gray-50 rounded-2xl outline-none border border-gray-100 text-gray-400 font-bold">
+                        <option>Tip Obiectiv: Șantier</option>
+                        <option>Tip Obiectiv: Industrial/Depozit</option>
+                        <option>Tip Obiectiv: Retail/Magazin</option>
+                        <option>Tip Obiectiv: Altele</option>
+                    </select>
+                    <textarea rows="4" placeholder="Mesaj scurt despre nevoile tale..." class="w-full p-5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all"></textarea>
+                    <button class="w-full bg-nav-highlight text-white font-black p-6 rounded-2xl uppercase tracking-widest hover:bg-blue-800 shadow-xl transition transform active:scale-95">Trimite Solicitarea</button>
                 </form>
-                
-                <div class="mt-10 pt-10 border-t flex flex-col items-center text-center">
-                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Director General</p>
-                    <a href="tel:0723909090" class="text-3xl font-black text-gray-900 hover:text-blue-700 transition tracking-tighter">0723 90 90 90</a>
-                    <a href="mailto:godguard@yahoo.com" class="text-blue-600 font-bold mt-2 italic hover:underline">godguard@yahoo.com</a>
-                </div>
             </div>
 
-            <div class="flex flex-col">
-                <h3 class="text-2xl font-bold mb-8 text-brand-deep uppercase text-center lg:text-left tracking-tighter">Locație Sediul Central</h3>
-                <div class="w-full h-[400px] md:h-[500px] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                    <iframe 
-                        width="100%" 
-                        height="100%" 
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2849.563!2d26.138!3d44.417!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDTCsDI1JzAxLjIiTiAyNsKwMDgnMTYuOCJF!5e0!3m2!1sro!2sro!4v1620000000000!5m2!1sro!2sro" 
-                        style="border:0;" 
-                        allowfullscreen="" 
-                        loading="lazy">
-                    </iframe>
+            <div class="flex flex-col justify-center">
+                <div class="mb-10 text-center lg:text-left">
+                    <h3 class="text-2xl font-black text-brand-deep uppercase mb-4 italic tracking-tighter">Vrei să vorbim direct?</h3>
+                    <p class="text-gray-500 italic mb-8">Directorul nostru general îți stă la dispoziție pentru detalii tehnice și negocieri.</p>
+                    <div class="space-y-4">
+                        <a href="tel:0723909090" class="flex items-center gap-4 group">
+                            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center group-hover:bg-brand-deep transition">📞</div>
+                            <span class="text-2xl font-black text-gray-800">0723 90 90 90</span>
+                        </a>
+                        <a href="mailto:god_guard@yahoo.com" class="flex items-center gap-4 group">
+                            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center group-hover:bg-brand-deep transition">✉️</div>
+                            <span class="text-lg font-bold text-blue-600 underline italic">god_guard@yahoo.com</span>
+                        </a>
+                    </div>
                 </div>
-                <p class="mt-4 text-xs text-gray-500 italic text-center font-medium">Bulevardul Camil Ressu Nr. 35, Sector 3, București</p>
+                <div class="w-full h-[300px] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+                    <iframe width="100%" height="100%" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2849.563!2d26.138!3d44.417!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDTCsDI1JzAxLjIiTiAyNsKwMDgnMTYuOCJF!5e0!3m2!1sro!2sro!4v1620000000000!5m2!1sro!2sro" style="border:0;" loading="lazy"></iframe>
+                </div>
             </div>
         </div>
     </section>
 
-    <footer class="bg-brand-deep text-white py-16 text-center border-t-8 border-nav-highlight">
-        <div class="max-w-6xl mx-auto px-6">
-            <h4 class="text-2xl font-black tracking-tighter italic mb-4">GODGUARD SECURITY</h4>
-            <p class="opacity-50 text-xs md:text-sm max-w-xl mx-auto font-light leading-relaxed mb-10 italic">
-                Operăm 24/7 cu profesionalism și dedicare totală pentru protecția obiectivelor civile și industriale. Siguranța dumneavoastră este misiunea noastră.
+    <footer class="bg-brand-deep text-white py-20 text-center border-t-8 border-nav-highlight">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="mb-10 flex flex-col items-center">
+                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" class="w-10 h-10"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <h4 class="text-3xl font-black tracking-tighter italic mb-2">GODGUARD SECURITY</h4>
+                <p class="text-[10px] tracking-[0.5em] opacity-40 uppercase">Safe. Secure. Elite.</p>
+            </div>
+            <p class="opacity-50 text-xs md:text-sm italic leading-relaxed mb-10 border-t border-white/10 pt-10">
+                Paza obiectivelor industriale, comerciale și rezidențiale. Monitorizare și intervenție rapidă. Licențiat conform legislației române.
             </p>
-            <div class="text-[9px] opacity-30 uppercase tracking-[0.5em] font-mono">© 2026 GodGuard Romania | Camil Ressu 35</div>
+            <div class="text-[9px] opacity-30 uppercase tracking-[0.4em] font-mono">© 2026 GodGuard Romania </div>
         </div>
     </footer>
 
 </body>
 </html>
+
