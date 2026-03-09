@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Cariere - Alătură-te echipei GodGuard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-nav-highlight { background-color: #0056b3; }
+        .bg-brand-deep { background-color: #002b5c; }
+        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+        button, input, textarea, select { -webkit-appearance: none; border-radius: 0.75rem; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased font-sans m-0 p-0">
+
+    <nav class="bg-nav-highlight text-white p-4 sticky top-0 shadow-2xl z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" class="w-full h-full"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <h1 class="text-xl font-black italic uppercase leading-none">GODGUARD</h1>
+            </a>
+            <div class="flex space-x-6 font-bold text-xs uppercase tracking-wider">
+                <a href="index.html" class="hover:text-blue-200 transition">Acasă</a>
+                <a href="index.html#servicii" class="hover:text-blue-200 transition">Servicii</a>
+                <a href="index.html#contact" class="bg-white text-brand-deep px-4 py-2 rounded-lg">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-brand-deep py-20 px-6 text-center text-white relative overflow-hidden">
+        <div class="max-w-4xl mx-auto relative z-10">
+            <h2 class="text-4xl md:text-5xl font-black mb-6 italic uppercase tracking-tighter">Vino în echipa de elită</h2>
+            <p class="text-blue-100 text-lg md:text-xl font-light max-w-2xl mx-auto">
+                Căutăm agenți de securitate serioși, dispeceri și șefi de obiectiv. Oferim stabilitate, respect și plată la timp.
+            </p>
+        </div>
+        <div class="absolute inset-0 opacity-10">
+            <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0 100 L100 0 L100 100 Z" fill="white"/></svg>
+        </div>
+    </header>
+
+    <section class="py-16 px-6">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+            <div class="bg-white p-8 rounded-3xl shadow-lg border-t-4 border-blue-500">
+                <span class="text-4xl block mb-4">💰</span>
+                <h4 class="font-black uppercase mb-2">Salariu la timp</h4>
+                <p class="text-sm text-gray-500 italic">Știm cât de importantă este stabilitatea ta financiară.</p>
+            </div>
+            <div class="bg-white p-8 rounded-3xl shadow-lg border-t-4 border-blue-500">
+                <span class="text-4xl block mb-4">🛡️</span>
+                <h4 class="font-black uppercase mb-2">Echipament Nou</h4>
+                <p class="text-sm text-gray-500 italic">Uniformă profesională completă oferită gratuit.</p>
+            </div>
+            <div class="bg-white p-8 rounded-3xl shadow-lg border-t-4 border-blue-500">
+                <span class="text-4xl block mb-4">📈</span>
+                <h4 class="font-black uppercase mb-2">Promovare</h4>
+                <p class="text-sm text-gray-500 italic">Posibilitatea de a deveni Șef de Obiectiv sau Inspector.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-16 px-6 bg-white">
+        <div class="max-w-3xl mx-auto bg-gray-50 p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-gray-100">
+            <div class="text-center mb-10">
+                <h3 class="text-3xl font-black text-brand-deep uppercase italic tracking-tighter">Aplică Acum</h3>
+                <p class="text-gray-500 text-sm mt-2">Completează datele și te sunăm în maxim 48 de ore.</p>
+            </div>
+            
+            <form class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Nume Complet</label>
+                        <input type="text" placeholder="Ex: Popescu Ion" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Telefon</label>
+                        <input type="tel" placeholder="07xx xxx xxx" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Postul dorit</label>
+                    <select class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-600">
+                        <option>Agent Securitate (Pază)</option>
+                        <option>Dispecer Monitorizare</option>
+                        <option>Șef de Obiectiv</option>
+                        <option>Șofer Intervenție</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Ai atestat de pază?</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 cursor-pointer bg-white px-6 py-3 rounded-xl border border-gray-200">
+                            <input type="radio" name="atestat" class="w-4 h-4"> Da
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer bg-white px-6 py-3 rounded-xl border border-gray-200">
+                            <input type="radio" name="atestat" class="w-4 h-4"> Nu
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95">
+                    Trimite Aplicația
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <footer class="bg-brand-deep text-white py-12 text-center">
+        <p class="opacity-50 text-xs italic uppercase tracking-widest">© 2026 GodGuard Romania | Departamentul Resurse Umane</p>
+    </footer>
+
+</body>
+</html>
