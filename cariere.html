@@ -15,17 +15,30 @@
 <body class="bg-gray-50 text-gray-900 antialiased font-sans m-0 p-0">
 
     <nav class="bg-nav-highlight text-white p-4 sticky top-0 shadow-2xl z-50">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center p-1.5">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" class="w-full h-full"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg p-1.5 shrink-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
                 </div>
-                <h1 class="text-xl font-black italic uppercase leading-none">GODGUARD</h1>
-            </a>
-            <div class="flex space-x-6 font-bold text-xs uppercase tracking-wider">
-                <a href="index.html" class="hover:text-blue-200 transition">Acasă</a>
-                <a href="index.html#servicii" class="hover:text-blue-200 transition">Servicii</a>
-                <a href="index.html#contact" class="bg-white text-brand-deep px-4 py-2 rounded-lg">Contact</a>
+                <div class="flex flex-col">
+                    <h1 class="text-xl md:text-2xl font-black tracking-tighter italic leading-none uppercase">GODGUARD</h1>
+                    <span class="text-[8px] md:text-[9px] tracking-[0.3em] uppercase opacity-80 mt-1 font-bold">Security Services</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4 md:space-x-8 font-bold text-xs uppercase tracking-wider text-center">
+                <a href="index.html#home" class="hover:text-blue-200 transition-colors">ACASA</a>
+                <a href="index.html#servicii" class="hover:text-blue-200 transition-colors">Servicii</a>
+                <a href="index.html#expertiza" class="hover:text-blue-200 transition-colors">Expertiza</a>
+                
+                <a href="cariere.html" class="text-yellow-300 hover:text-yellow-100 transition-colors flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>
+                    Cariere
+                </a>
+
+                <a href="index.html#contact" class="hover:text-blue-200 transition-colors border-2 border-white/20 rounded-lg px-3 py-1">Contact</a>
             </div>
         </div>
     </nav>
@@ -62,53 +75,62 @@
         </div>
     </section>
 
-    <section class="py-16 px-6 bg-white">
-        <div class="max-w-3xl mx-auto bg-gray-50 p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-gray-100">
-            <div class="text-center mb-10">
-                <h3 class="text-3xl font-black text-brand-deep uppercase italic tracking-tighter">Aplică Acum</h3>
-                <p class="text-gray-500 text-sm mt-2">Completează datele și te sunăm în maxim 48 de ore.</p>
-            </div>
-            
-            <form class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Nume Complet</label>
-                        <input type="text" placeholder="Ex: Popescu Ion" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Telefon</label>
-                        <input type="tel" placeholder="07xx xxx xxx" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Postul dorit</label>
-                    <select class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold text-gray-600">
-                        <option>Agent Securitate (Pază)</option>
-                        <option>Dispecer Monitorizare</option>
-                        <option>Șef de Obiectiv</option>
-                        <option>Șofer Intervenție</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Ai atestat de pază?</label>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer bg-white px-6 py-3 rounded-xl border border-gray-200">
-                            <input type="radio" name="atestat" class="w-4 h-4"> Da
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer bg-white px-6 py-3 rounded-xl border border-gray-200">
-                            <input type="radio" name="atestat" class="w-4 h-4"> Nu
-                        </label>
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95">
-                    Trimite Aplicația
-                </button>
-            </form>
+</section>
+<section class="py-16 px-6 bg-white">
+    <div class="max-w-3xl mx-auto bg-gray-50 p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-gray-100">
+        <div class="text-center mb-10">
+            <h3 class="text-3xl font-black text-brand-deep uppercase italic tracking-tighter">Aplică Acum</h3>
+            <p class="text-gray-500 text-sm mt-2">Completează datele și te sunăm în maxim 48 de ore.</p>
         </div>
-    </section>
+        
+        <form class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Nume Complet</label>
+                    <input type="text" required placeholder="Ex: Popescu Ion" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Telefon</label>
+                    <input type="tel" required placeholder="07xx xxx xxx" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Postul dorit</label>
+                <div class="w-full p-4 bg-gray-100 rounded-2xl border border-gray-200 font-bold text-brand-deep flex items-center gap-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    Agent Securitate (Pază)
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Experiență anterioară</label>
+                <textarea required rows="4" placeholder="Povestește-ne pe scurt unde ai mai lucrat și ce responsabilități ai avut..." class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-[9px] text-gray-400 mt-2 ml-4 italic">* Menționează firmele de pază sau obiectivele similare unde ai activat.</p>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Ai atestat de pază?</label>
+                <div class="flex gap-4">
+                    <label for="atestat-da" class="flex flex-1 items-center justify-center gap-3 cursor-pointer bg-white px-6 py-4 rounded-xl border border-gray-200 hover:border-blue-500 transition-all has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:ring-1 has-[:checked]:ring-blue-500">
+                        <input type="radio" name="atestat" id="atestat-da" value="da" class="w-5 h-5 accent-blue-600" required>
+                        <span class="font-bold text-gray-700">DA</span>
+                    </label>
+                    
+                    <label for="atestat-nu" class="flex flex-1 items-center justify-center gap-3 cursor-pointer bg-white px-6 py-4 rounded-xl border border-gray-200 hover:border-blue-500 transition-all has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:ring-1 has-[:checked]:ring-blue-500">
+                        <input type="radio" name="atestat" id="atestat-nu" value="nu" class="w-5 h-5 accent-blue-600">
+                        <span class="font-bold text-gray-700">NU</span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95 flex items-center justify-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+                Trimite Aplicația
+            </button>
+        </form>
+    </div>
+</section>
 
     <footer class="bg-brand-deep text-white py-12 text-center">
         <p class="opacity-50 text-xs italic uppercase tracking-widest">© 2026 GodGuard Romania | Departamentul Resurse Umane</p>
