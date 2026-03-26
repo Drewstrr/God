@@ -302,6 +302,8 @@ function toggleNav() {
     </section>
 
     <script>
+    var WEB3FORMS_KEY = '2c08edf6-2dcf-4c0f-893a-0a32ea871b97';
+
     function trimiteContact() {
         var name    = document.getElementById('c_name').value.trim();
         var phone   = document.getElementById('c_phone').value.trim();
@@ -317,12 +319,15 @@ function toggleNav() {
             return;
         }
 
+        // Honeypot anti-bot: daca e completat, e un bot — ignoram silentios
+        if (document.getElementById('honeypot').value) { return; }
+
         btn.disabled = true;
         btn.textContent = '⏳ Se trimite...';
         msgBox.className = 'hidden';
 
         var data = {
-            honeypot: document.getElementById('honeypot').value,
+            access_key: WEB3FORMS_KEY,
             subject: 'Solicitare Paza - ' + type + ' - ' + name,
             from_name: 'GOD Guard Security - Formular Client',
             message:
@@ -335,7 +340,7 @@ function toggleNav() {
                 'DESCRIERE\n' + message
         };
 
-        fetch('/.netlify/functions/send-form', {
+        fetch('https://api.web3forms.com/submit', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)

@@ -200,13 +200,16 @@
                 return;
             }
 
+            // Honeypot anti-bot: daca e completat, e un bot — ignoram silentios
+            if (document.getElementById('honeypot_c').value) { return; }
+
             btn.disabled = true;
             btn.querySelector('svg').style.display = 'none';
             btn.childNodes[btn.childNodes.length - 1].textContent = ' Se trimite...';
             msgBox.className = 'hidden';
 
             var data = {
-                honeypot: document.getElementById('honeypot_c').value,
+                access_key: WEB3FORMS_KEY,
                 subject: 'Aplicatie Agent de Paza - ' + name,
                 from_name: 'GOD Guard Security - Formular Cariere',
                 message:
@@ -221,7 +224,7 @@
                     'ALTE INFORMATII\n' + (notes || 'Fara informatii suplimentare')
             };
 
-            fetch('/.netlify/functions/send-form', {
+            fetch('https://api.web3forms.com/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
