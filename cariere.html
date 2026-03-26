@@ -180,8 +180,6 @@
         </form>
 
         <script>
-        var WEB3FORMS_KEY = '2c08edf6-2dcf-4c0f-893a-0a32ea871b97';
-
         function trimiteCariera() {
             var name         = document.getElementById('a_name').value.trim();
             var age          = document.getElementById('a_age').value.trim();
@@ -206,9 +204,10 @@
             msgBox.className = 'hidden';
 
             var data = {
-                honeypot: document.getElementById('honeypot_c').value,
+                access_key: '2c08edf6-2dcf-4c0f-893a-0a32ea871b97',
                 subject: 'Aplicatie Agent de Paza - ' + name,
                 from_name: 'GOD Guard Security - Formular Cariere',
+                botcheck: document.getElementById('honeypot_c').value,
                 message:
                     'DATE PERSONALE\n' +
                     'Nume: ' + name + '\n' +
@@ -221,9 +220,9 @@
                     'ALTE INFORMATII\n' + (notes || 'Fara informatii suplimentare')
             };
 
-            fetch('/.netlify/functions/send-form', {
+            fetch('https://api.web3forms.com/submit', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(data)
             })
             .then(function(res) { return res.json(); })

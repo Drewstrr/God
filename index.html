@@ -322,9 +322,10 @@ function toggleNav() {
         msgBox.className = 'hidden';
 
         var data = {
-            honeypot: document.getElementById('honeypot').value,
+            access_key: '2c08edf6-2dcf-4c0f-893a-0a32ea871b97',
             subject: 'Solicitare Paza - ' + type + ' - ' + name,
             from_name: 'GOD Guard Security - Formular Client',
+            botcheck: document.getElementById('honeypot').value,
             message:
                 'DATE DE CONTACT\n' +
                 'Nume: ' + name + '\n' +
@@ -335,9 +336,9 @@ function toggleNav() {
                 'DESCRIERE\n' + message
         };
 
-        fetch('/.netlify/functions/send-form', {
+        fetch('https://api.web3forms.com/submit', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
             body: JSON.stringify(data)
         })
         .then(function(res) { return res.json(); })
