@@ -247,9 +247,10 @@
                         <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-1">Descrieți obiectivul și nevoile dvs. *</label>
                         <textarea id="c_message" required rows="4" placeholder="Descrieți pe scurt obiectivul: suprafața aproximativă, programul de pază dorit (zi / noapte / non-stop), cerințe speciale..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all resize-none"></textarea>
                     </div>
-                    <button type="button" onclick="trimiteContact()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black p-5 rounded-2xl uppercase tracking-widest shadow-xl transition transform active:scale-95">
+                    <button id="btnContact" type="button" onclick="trimiteContact()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black p-5 rounded-2xl uppercase tracking-widest shadow-xl transition transform active:scale-95">
                         📩 Trimite Solicitarea
                     </button>
+                    <div id="contactMsg" class="hidden mt-4 p-4 rounded-2xl text-center font-bold text-sm"></div>
                 </form>
             </div>
 
@@ -268,9 +269,9 @@
                     <p class="font-black uppercase tracking-wider mb-3 text-yellow-300">💡 Cum funcționează?</p>
                     <ol class="text-sm space-y-3 text-blue-100 list-decimal list-inside">
                         <li>Completezi formularul cu detaliile obiectivului tău</li>
-                        <li>Apare aplicația de email cu mesajul pre-completat</li>
-                        <li>Trimiți mailul și noi îți răspundem în cel mai scurt timp</li>
-                        <li>Primești o ofertă personalizată gratuită</li>
+                        <li>Apeși butonul "Trimite Solicitarea"</li>
+                        <li>Mesajul ajunge automat la noi</li>
+                        <li>Îți răspundem cu o ofertă personalizată gratuită</li>
                     </ol>
                 </div>
                 <div class="bg-gray-100 p-6 rounded-2xl text-center">
@@ -282,34 +283,69 @@
     </section>
 
     <script>
+    // ============================================================
+    // IMPORTANT: Inlocuieste "YOUR_ACCESS_KEY_HERE" cu cheia ta
+    // obtinuta GRATUIT de la: https://web3forms.com
+    // Introdu adresa god_guard@yahoo.com si primesti cheia pe mail.
+    // ============================================================
+    var WEB3FORMS_KEY = 'YOUR_ACCESS_KEY_HERE';
+
     function trimiteContact() {
-        var name = document.getElementById('c_name').value.trim();
-        var phone = document.getElementById('c_phone').value.trim();
-        var type = document.getElementById('c_type').value;
-        var posts = document.getElementById('c_posts').value;
+        var name    = document.getElementById('c_name').value.trim();
+        var phone   = document.getElementById('c_phone').value.trim();
+        var type    = document.getElementById('c_type').value;
+        var posts   = document.getElementById('c_posts').value;
         var message = document.getElementById('c_message').value.trim();
+        var btn     = document.getElementById('btnContact');
+        var msgBox  = document.getElementById('contactMsg');
 
         if (!name || !phone || !type || !posts || !message) {
-            alert('Va rugam sa completati toate campurile marcate cu *');
+            msgBox.textContent = 'Va rugam sa completati toate campurile marcate cu *.';
+            msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
             return;
         }
 
-        var subject = encodeURIComponent('Solicitare Paza - ' + type + ' - ' + name);
-        var body = encodeURIComponent(
-            'Buna ziua,\n\n' +
-            'Va contactez pentru a solicita servicii de paza.\n\n' +
-            '--- DATE DE CONTACT ---\n' +
-            'Nume: ' + name + '\n' +
-            'Telefon: ' + phone + '\n\n' +
-            '--- DETALII OBIECTIV ---\n' +
-            'Tipul obiectivului: ' + type + '\n' +
-            'Numar de posturi necesare: ' + posts + '\n\n' +
-            '--- DESCRIERE ---\n' +
-            message + '\n\n' +
-            'Va multumesc,\n' + name
-        );
+        btn.disabled = true;
+        btn.textContent = '⏳ Se trimite...';
+        msgBox.className = 'hidden';
 
-        window.location.href = 'mailto:god_guard@yahoo.com?subject=' + subject + '&body=' + body;
+        var data = {
+            access_key: WEB3FORMS_KEY,
+            subject: 'Solicitare Paza - ' + type + ' - ' + name,
+            from_name: 'GOD Guard Security - Formular Client',
+            message:
+                'DATE DE CONTACT\n' +
+                'Nume: ' + name + '\n' +
+                'Telefon: ' + phone + '\n\n' +
+                'DETALII OBIECTIV\n' +
+                'Tip obiectiv: ' + type + '\n' +
+                'Numar posturi: ' + posts + '\n\n' +
+                'DESCRIERE\n' + message
+        };
+
+        fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(json) {
+            if (json.success) {
+                msgBox.textContent = '✅ Mesaj trimis cu succes! Va vom contacta in cel mai scurt timp.';
+                msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-green-100 text-green-700';
+                document.getElementById('contactForm').reset();
+            } else {
+                throw new Error(json.message || 'Eroare la trimitere');
+            }
+        })
+        .catch(function(err) {
+            msgBox.textContent = '❌ Eroare la trimitere. Incercati din nou sau scrieti direct la god_guard@yahoo.com';
+            msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
+        })
+        .finally(function() {
+            btn.disabled = false;
+            btn.textContent = '📩 Trimite Solicitarea';
+        });
     }
     </script>
 

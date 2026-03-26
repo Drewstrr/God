@@ -150,51 +150,84 @@
                 <textarea id="a_notes" rows="3" placeholder="Ture preferate (zi / noapte), zona preferată de lucru, orice alte detalii relevante..." class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
             </div>
 
-            <button type="button" onclick="trimiteCariera()" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95 flex items-center justify-center gap-3">
+            <button id="btnCariera" type="button" onclick="trimiteCariera()" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95 flex items-center justify-center gap-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                 Trimite Aplicația
             </button>
+            <div id="carieraMsg" class="hidden mt-4 p-4 rounded-2xl text-center font-bold text-sm"></div>
         </form>
 
         <script>
+        // ============================================================
+        // IMPORTANT: Inlocuieste "YOUR_ACCESS_KEY_HERE" cu cheia ta
+        // obtinuta GRATUIT de la: https://web3forms.com
+        // Introdu adresa god_guard@yahoo.com si primesti cheia pe mail.
+        // ============================================================
+        var WEB3FORMS_KEY = 'YOUR_ACCESS_KEY_HERE';
+
         function trimiteCariera() {
-            var name = document.getElementById('a_name').value.trim();
-            var age = document.getElementById('a_age').value.trim();
-            var phone = document.getElementById('a_phone').value.trim();
-            var description = document.getElementById('a_description').value.trim();
-            var experience = document.getElementById('a_experience').value.trim();
+            var name         = document.getElementById('a_name').value.trim();
+            var age          = document.getElementById('a_age').value.trim();
+            var phone        = document.getElementById('a_phone').value.trim();
+            var description  = document.getElementById('a_description').value.trim();
+            var experience   = document.getElementById('a_experience').value.trim();
             var availability = document.getElementById('a_availability').value;
-            var notes = document.getElementById('a_notes').value.trim();
-            var atestatEl = document.querySelector('input[name="atestat"]:checked');
+            var notes        = document.getElementById('a_notes').value.trim();
+            var atestatEl    = document.querySelector('input[name="atestat"]:checked');
+            var btn          = document.getElementById('btnCariera');
+            var msgBox       = document.getElementById('carieraMsg');
 
             if (!name || !age || !phone || !description || !experience || !availability || !atestatEl) {
-                alert('Va rugam sa completati toate campurile marcate cu *');
+                msgBox.textContent = 'Va rugam sa completati toate campurile marcate cu *.';
+                msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
                 return;
             }
 
-            var atestat = atestatEl.value;
+            btn.disabled = true;
+            btn.querySelector('svg').style.display = 'none';
+            btn.childNodes[btn.childNodes.length - 1].textContent = ' Se trimite...';
+            msgBox.className = 'hidden';
 
-            var subject = encodeURIComponent('Aplicatie Agent de Paza - ' + name);
-            var body = encodeURIComponent(
-                'Buna ziua,\n\n' +
-                'Doresc sa aplic pentru postul de agent de paza in cadrul GOD Guard Security.\n\n' +
-                '--- DATE PERSONALE ---\n' +
-                'Nume complet: ' + name + '\n' +
-                'Varsta: ' + age + ' ani\n' +
-                'Telefon: ' + phone + '\n' +
-                'Atestat de paza: ' + atestat + '\n\n' +
-                '--- DESCRIERE PERSONALA ---\n' +
-                description + '\n\n' +
-                '--- EXPERIENTA ANTERIOARA ---\n' +
-                experience + '\n\n' +
-                '--- DISPONIBILITATE ---\n' +
-                availability + '\n\n' +
-                '--- ALTE INFORMATII ---\n' +
-                (notes || 'Fara informatii suplimentare') + '\n\n' +
-                'Va multumesc pentru oportunitate,\n' + name
-            );
+            var data = {
+                access_key: WEB3FORMS_KEY,
+                subject: 'Aplicatie Agent de Paza - ' + name,
+                from_name: 'GOD Guard Security - Formular Cariere',
+                message:
+                    'DATE PERSONALE\n' +
+                    'Nume: ' + name + '\n' +
+                    'Varsta: ' + age + ' ani\n' +
+                    'Telefon: ' + phone + '\n' +
+                    'Atestat de paza: ' + atestatEl.value + '\n\n' +
+                    'DESCRIERE PERSONALA\n' + description + '\n\n' +
+                    'EXPERIENTA ANTERIOARA\n' + experience + '\n\n' +
+                    'DISPONIBILITATE\n' + availability + '\n\n' +
+                    'ALTE INFORMATII\n' + (notes || 'Fara informatii suplimentare')
+            };
 
-            window.location.href = 'mailto:god_guard@yahoo.com?subject=' + subject + '&body=' + body;
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(json) {
+                if (json.success) {
+                    msgBox.textContent = '✅ Aplicatia a fost trimisa! Te vom contacta in cel mai scurt timp.';
+                    msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-green-100 text-green-700';
+                    document.getElementById('careerForm').reset();
+                } else {
+                    throw new Error(json.message || 'Eroare la trimitere');
+                }
+            })
+            .catch(function() {
+                msgBox.textContent = '❌ Eroare la trimitere. Incercati din nou sau scrieti la god_guard@yahoo.com';
+                msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.querySelector('svg').style.display = '';
+                btn.childNodes[btn.childNodes.length - 1].textContent = ' Trimite Aplicatia';
+            });
         }
         </script>
     </div>
