@@ -172,6 +172,14 @@
 
             <!-- Honeypot anti-bot: ascuns vizual, completat doar de roboti -->
             <input type="text" name="honeypot" id="honeypot_c" style="display:none;" tabindex="-1" autocomplete="off">
+            <!-- GDPR consent -->
+            <div class="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+                <input type="checkbox" id="gdpr_cariera" class="w-5 h-5 mt-0.5 accent-blue-600 shrink-0">
+                <label for="gdpr_cariera" class="text-sm text-gray-600 leading-relaxed cursor-pointer">
+                    Am citit și sunt de acord cu
+                    <a href="/politica-confidentialitate.html" target="_blank" class="text-blue-700 font-bold underline hover:text-blue-900">Politica de Confidențialitate</a>. *
+                </label>
+            </div>
             <button id="btnCariera" type="button" onclick="trimiteCariera()" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95 flex items-center justify-center gap-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                 Trimite Aplicația
@@ -205,6 +213,13 @@
             var ageNum = parseInt(age, 10);
             if (isNaN(ageNum) || ageNum < 18 || ageNum > 65) {
                 msgBox.textContent = 'Varsta trebuie sa fie intre 18 si 65 de ani.';
+                msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
+                return;
+            }
+
+            // Validare GDPR consent
+            if (!document.getElementById('gdpr_cariera').checked) {
+                msgBox.textContent = 'Trebuie sa fii de acord cu Politica de Confidentialitate pentru a continua.';
                 msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
                 return;
             }

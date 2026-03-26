@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Politica de Confidențialitate - GodGuard Security</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-nav-highlight { background-color: #0056b3; }
+        .bg-brand-deep    { background-color: #002b5c; }
+        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 antialiased font-sans m-0 p-0">
+
+    <nav class="bg-nav-highlight text-white sticky top-0 shadow-2xl z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="/index.html" class="flex items-center gap-2 shrink-0">
+                <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg p-1.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-base font-black tracking-tighter italic leading-none uppercase">GODGUARD</span>
+                    <span class="text-[7px] tracking-[0.25em] uppercase opacity-80 font-bold">Security Services</span>
+                </div>
+            </a>
+            <button id="menuBtn" onclick="toggleNav()" class="md:hidden flex flex-col gap-1.5 p-2 focus:outline-none" aria-label="Meniu">
+                <span class="block w-6 h-0.5 bg-white"></span>
+                <span class="block w-6 h-0.5 bg-white"></span>
+                <span class="block w-6 h-0.5 bg-white"></span>
+            </button>
+            <div class="hidden md:flex items-center gap-5 font-bold text-xs uppercase tracking-wider">
+                <a href="/index.html#home" class="hover:text-blue-200 transition-colors">Acasă</a>
+                <a href="/index.html#expertiza" class="hover:text-blue-200 transition-colors">Expertiză</a>
+                <a href="/index.html#servicii" class="hover:text-blue-200 transition-colors">Servicii</a>
+                <a href="/cariere.html" class="text-yellow-300 hover:text-yellow-100 transition-colors flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>Cariere
+                </a>
+                <a href="/index.html#contact" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-3 py-2 text-white shadow-lg">📞 Contact</a>
+            </div>
+        </div>
+        <div id="mobileNav" class="hidden md:hidden bg-[#004494] border-t border-blue-400 px-4 py-3 flex flex-col gap-3 font-bold text-sm uppercase tracking-wider">
+            <a href="/index.html#home" onclick="toggleNav()" class="hover:text-blue-200 transition-colors py-1">Acasă</a>
+            <a href="/index.html#expertiza" onclick="toggleNav()" class="hover:text-blue-200 transition-colors py-1">Expertiză</a>
+            <a href="/index.html#servicii" onclick="toggleNav()" class="hover:text-blue-200 transition-colors py-1">Servicii</a>
+            <a href="/cariere.html" onclick="toggleNav()" class="text-yellow-300 hover:text-yellow-100 transition-colors py-1 flex items-center gap-2">
+                <span class="w-2 h-2 bg-yellow-300 rounded-full animate-pulse"></span>Cariere
+            </a>
+            <a href="/index.html#contact" onclick="toggleNav()" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-4 py-3 text-white text-center shadow-lg">📞 Contact</a>
+        </div>
+    </nav>
+    <script>
+    function toggleNav() {
+        document.getElementById('mobileNav').classList.toggle('hidden');
+    }
+    </script>
+
+    <header class="bg-brand-deep py-16 px-6 text-center text-white">
+        <div class="max-w-3xl mx-auto">
+            <a href="/index.html" class="inline-flex items-center gap-2 text-blue-300 hover:text-blue-100 text-sm font-bold uppercase tracking-widest mb-8 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Înapoi acasă
+            </a>
+            <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" class="w-8 h-8"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-black uppercase italic tracking-tighter mb-3">Politica de Confidențialitate</h1>
+            <p class="text-blue-200 text-sm font-medium">Ultima actualizare: <strong class="text-white">27 Martie 2026</strong></p>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-6 py-16">
+
+        <div class="bg-blue-50 border-l-4 border-blue-600 rounded-2xl p-6 mb-10">
+            <p class="text-gray-700 text-sm leading-relaxed">
+                Societatea <strong>GODGUARD SECURITY SRL</strong>, cu sediul în București, Str. Baba Novac nr. 3,
+                înmatriculată la Registrul Comerțului sub nr. <strong>J40/628/2014</strong>, CUI <strong>RO32690707</strong>
+                (denumită în continuare „Compania"), în calitate de operator de date, îți respectă confidențialitatea
+                și se angajează să protejeze datele tale cu caracter personal.
+            </p>
+        </div>
+
+        <div class="space-y-10">
+
+            <section>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-10 h-10 bg-brand-deep text-white rounded-full flex items-center justify-center font-black text-lg shrink-0">1</div>
+                    <h2 class="text-xl font-black text-brand-deep uppercase tracking-tight">Ce date colectăm?</h2>
+                </div>
+                <div class="pl-14">
+                    <p class="text-gray-600 text-sm mb-4 leading-relaxed">Prin intermediul formularelor de contact și recrutare de pe site-ul <strong>godguard.ro</strong>, colectăm următoarele categorii de date:</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full mt-1.5 shrink-0"></span>
+                            <span><strong>Identificare:</strong> Nume și prenume.</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full mt-1.5 shrink-0"></span>
+                            <span><strong>Contact:</strong> Adresa de e-mail și numărul de telefon.</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full mt-1.5 shrink-0"></span>
+                            <span><strong>Profil profesional:</strong> Vârsta (pentru verificarea eligibilității legale de angajare) și ocupațiile anterioare / experiența profesională.</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="border-t border-gray-200"></div>
+
+            <section>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-10 h-10 bg-brand-deep text-white rounded-full flex items-center justify-center font-black text-lg shrink-0">2</div>
+                    <h2 class="text-xl font-black text-brand-deep uppercase tracking-tight">Scopul și temeiul prelucrării</h2>
+                </div>
+                <div class="pl-14">
+                    <p class="text-gray-600 text-sm mb-4 leading-relaxed">Prelucrăm aceste date în următoarele scopuri:</p>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full mt-1.5 shrink-0"></span>
+                            <span><strong>Recrutare:</strong> Evaluarea candidaturii tale pentru posturile disponibile în cadrul agenției de pază <em>(Temei: demersuri pre-contractuale)</em>.</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full mt-1.5 shrink-0"></span>
+                            <span><strong>Comunicare:</strong> Răspunsul la solicitările de ofertă sau informații transmise de tine <em>(Temei: consimțământul tău și interesul legitim de a comunica cu potențialii clienți)</em>.</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="border-t border-gray-200"></div>
+
+            <section>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-10 h-10 bg-brand-deep text-white rounded-full flex items-center justify-center font-black text-lg shrink-0">3</div>
+                    <h2 class="text-xl font-black text-brand-deep uppercase tracking-tight">Cine are acces la datele tale?</h2>
+                </div>
+                <div class="pl-14">
+                    <p class="text-gray-600 text-sm leading-relaxed mb-4">Confidențialitatea este prioritară pentru noi. Datele tale sunt accesate exclusiv de către conducerea firmei în scopul luării deciziilor de angajare sau comerciale.</p>
+                    <div class="bg-yellow-50 border border-yellow-300 rounded-xl p-4 text-sm text-gray-700">
+                        <strong class="text-yellow-800">Notă privind transferul:</strong> Deoarece folosim serviciul Google Mail (Gmail) pentru corespondență, datele tale pot fi stocate pe serverele Google, care asigură standarde ridicate de protecție conform acordurilor internaționale.
+                    </div>
+                </div>
+            </section>
+
+            <div class="border-t border-gray-200"></div>
+
+            <section>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-10 h-10 bg-brand-deep text-white rounded-full flex items-center justify-center font-black text-lg shrink-0">4</div>
+                    <h2 class="text-xl font-black text-brand-deep uppercase tracking-tight">Cât timp păstrăm datele?</h2>
+                </div>
+                <div class="pl-14">
+                    <p class="text-gray-600 text-sm mb-4 leading-relaxed">Păstrăm datele tale doar atât timp cât este necesar pentru scopul colectării:</p>
+                    <ul class="space-y-2">
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full mt-1.5 shrink-0"></span>
+                            <span><strong>Datele din CV-uri:</strong> Maxim 12 luni, cu excepția cazului în care devii angajat (caz în care se aplică termenele legale de arhivare a dosarului de personal).</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-gray-700">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full mt-1.5 shrink-0"></span>
+                            <span><strong>Cererile de ofertă:</strong> Până la finalizarea comunicării sau semnarea unui contract.</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <div class="border-t border-gray-200"></div>
+
+            <section>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-10 h-10 bg-brand-deep text-white rounded-full flex items-center justify-center font-black text-lg shrink-0">5</div>
+                    <h2 class="text-xl font-black text-brand-deep uppercase tracking-tight">Drepturile tale</h2>
+                </div>
+                <div class="pl-14">
+                    <p class="text-gray-600 text-sm mb-4 leading-relaxed">Conform GDPR, beneficiezi de următoarele drepturi:</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-white border border-gray-200 rounded-xl p-4 text-sm">
+                            <div class="font-black text-brand-deep mb-1">Dreptul de acces</div>
+                            <div class="text-gray-500 text-xs">Poți solicita o copie a datelor pe care le deținem despre tine.</div>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-xl p-4 text-sm">
+                            <div class="font-black text-brand-deep mb-1">Dreptul de rectificare</div>
+                            <div class="text-gray-500 text-xs">Poți solicita corectarea datelor inexacte sau incomplete.</div>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-xl p-4 text-sm">
+                            <div class="font-black text-brand-deep mb-1">Dreptul de ștergere</div>
+                            <div class="text-gray-500 text-xs">„Dreptul de a fi uitat" — poți solicita ștergerea datelor tale.</div>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-xl p-4 text-sm">
+                            <div class="font-black text-brand-deep mb-1">Retragerea consimțământului</div>
+                            <div class="text-gray-500 text-xs">Poți retrage consimțământul oricând, fără a afecta prelucrările anterioare.</div>
+                        </div>
+                    </div>
+                    <p class="text-gray-500 text-sm mt-4 leading-relaxed">
+                        Pentru orice solicitare legată de datele tale, ne poți contacta direct la adresa de e-mail de pe site sau la sediul nostru din <strong>Str. Baba Novac nr. 3, București</strong>.
+                    </p>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <footer class="bg-brand-deep text-white py-12 text-center border-t-4 border-nav-highlight mt-10">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="mb-6 flex flex-col items-center">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-4">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" class="w-7 h-7"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
+                <h4 class="text-2xl font-black tracking-tighter italic mb-1">GODGUARD SECURITY</h4>
+                <p class="text-[8px] tracking-[0.5em] opacity-40 uppercase">Safe. Secure. Elite.</p>
+            </div>
+            <p class="opacity-50 text-xs italic leading-relaxed mb-6 border-t border-white/10 pt-6">
+                Paza obiectivelor industriale, comerciale și rezidențiale. Monitorizare și intervenție rapidă. Licențiat conform legislației române.
+            </p>
+            <div class="text-[9px] opacity-30 uppercase tracking-[0.4em] font-mono">© 2026 GodGuard Romania</div>
+        </div>
+    </footer>
+
+</body>
+</html>
