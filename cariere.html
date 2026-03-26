@@ -14,34 +14,55 @@
 </head>
 <body class="bg-gray-50 text-gray-900 antialiased font-sans m-0 p-0">
 
-    <nav class="bg-nav-highlight text-white p-4 sticky top-0 shadow-2xl z-50">
-        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg p-1.5 shrink-0">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
+    <nav class="bg-nav-highlight text-white sticky top-0 shadow-2xl z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo -->
+            <a href="/index.html" class="flex items-center gap-2 shrink-0">
+                <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg p-1.5">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
                 </div>
                 <div class="flex flex-col">
-                    <h1 class="text-xl md:text-2xl font-black tracking-tighter italic leading-none uppercase">GODGUARD</h1>
-                    <span class="text-[8px] md:text-[9px] tracking-[0.3em] uppercase opacity-80 mt-1 font-bold">Security Services</span>
+                    <span class="text-base font-black tracking-tighter italic leading-none uppercase">GODGUARD</span>
+                    <span class="text-[7px] tracking-[0.25em] uppercase opacity-80 font-bold">Security Services</span>
                 </div>
-            </div>
+            </a>
 
-            <div class="flex items-center space-x-4 md:space-x-8 font-bold text-xs uppercase tracking-wider text-center">
-                <a href="index.html#home" class="hover:text-blue-200 transition-colors">ACASA</a>
-                <a href="index.html#expertiza" class="hover:text-blue-200 transition-colors">Expertiza</a>
-                                <a href="index.html#servicii" class="hover:text-blue-200 transition-colors">Servicii</a>
-                
-                <a href="cariere.html" class="text-yellow-300 hover:text-yellow-100 transition-colors flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>
-                    Cariere
+            <!-- Hamburger (mobil) -->
+            <button id="menuBtn" onclick="toggleNav()" class="md:hidden flex flex-col gap-1.5 p-2 focus:outline-none" aria-label="Meniu">
+                <span class="block w-6 h-0.5 bg-white"></span>
+                <span class="block w-6 h-0.5 bg-white"></span>
+                <span class="block w-6 h-0.5 bg-white"></span>
+            </button>
+
+            <!-- Linkuri desktop -->
+            <div class="hidden md:flex items-center gap-5 font-bold text-xs uppercase tracking-wider">
+                <a href="/index.html#home" class="hover:text-blue-200 transition-colors">Acasă</a>
+                <a href="/index.html#expertiza" class="hover:text-blue-200 transition-colors">Expertiză</a>
+                <a href="/index.html#servicii" class="hover:text-blue-200 transition-colors">Servicii</a>
+                <a href="/cariere.html" class="text-yellow-300 hover:text-yellow-100 transition-colors flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>Cariere
                 </a>
-
-                <a href="index.html#contact" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-4 py-2 font-black text-white shadow-lg">📞 Contact</a>
+                <a href="/index.html#contact" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-3 py-2 text-white shadow-lg">📞 Contact</a>
             </div>
         </div>
+
+        <!-- Meniu mobil dropdown -->
+        <div id="mobileNav" class="hidden md:hidden bg-[#004494] border-t border-blue-400 px-4 py-3 flex flex-col gap-3 font-bold text-sm uppercase tracking-wider">
+            <a href="/index.html#home" onclick="toggleNav()" class="hover:text-blue-200 transition-colors py-1">Acasă</a>
+            <a href="/index.html#expertiza" onclick="toggleNav()" class="hover:text-blue-200 transition-colors py-1">Expertiză</a>
+            <a href="/index.html#servicii" onclick="toggleNav()" class="hover:text-blue-200 transition-colors py-1">Servicii</a>
+            <a href="/cariere.html" onclick="toggleNav()" class="text-yellow-300 hover:text-yellow-100 transition-colors py-1 flex items-center gap-2">
+                <span class="w-2 h-2 bg-yellow-300 rounded-full animate-pulse"></span>Cariere
+            </a>
+            <a href="/index.html#contact" onclick="toggleNav()" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-4 py-3 text-white text-center shadow-lg">📞 Contact</a>
+        </div>
     </nav>
+    <script>
+    function toggleNav() {
+        var m = document.getElementById('mobileNav');
+        m.classList.toggle('hidden');
+    }
+    </script>
 
     <header class="bg-brand-deep py-20 px-6 text-center text-white relative overflow-hidden">
         <div class="max-w-4xl mx-auto relative z-10">
@@ -75,7 +96,6 @@
         </div>
     </section>
 
-</section>
 <section class="py-16 px-6 bg-white">
     <div class="max-w-3xl mx-auto bg-gray-50 p-8 md:p-12 rounded-[2.5rem] shadow-2xl border border-gray-100">
         <div class="text-center mb-10">
@@ -150,51 +170,79 @@
                 <textarea id="a_notes" rows="3" placeholder="Ture preferate (zi / noapte), zona preferată de lucru, orice alte detalii relevante..." class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
             </div>
 
-            <button type="button" onclick="trimiteCariera()" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95 flex items-center justify-center gap-3">
+            <button id="btnCariera" type="button" onclick="trimiteCariera()" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95 flex items-center justify-center gap-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                 Trimite Aplicația
             </button>
+            <div id="carieraMsg" class="hidden mt-4 p-4 rounded-2xl text-center font-bold text-sm"></div>
         </form>
 
         <script>
+        var WEB3FORMS_KEY = '2c08edf6-2dcf-4c0f-893a-0a32ea871b97';
+
         function trimiteCariera() {
-            var name = document.getElementById('a_name').value.trim();
-            var age = document.getElementById('a_age').value.trim();
-            var phone = document.getElementById('a_phone').value.trim();
-            var description = document.getElementById('a_description').value.trim();
-            var experience = document.getElementById('a_experience').value.trim();
+            var name         = document.getElementById('a_name').value.trim();
+            var age          = document.getElementById('a_age').value.trim();
+            var phone        = document.getElementById('a_phone').value.trim();
+            var description  = document.getElementById('a_description').value.trim();
+            var experience   = document.getElementById('a_experience').value.trim();
             var availability = document.getElementById('a_availability').value;
-            var notes = document.getElementById('a_notes').value.trim();
-            var atestatEl = document.querySelector('input[name="atestat"]:checked');
+            var notes        = document.getElementById('a_notes').value.trim();
+            var atestatEl    = document.querySelector('input[name="atestat"]:checked');
+            var btn          = document.getElementById('btnCariera');
+            var msgBox       = document.getElementById('carieraMsg');
 
             if (!name || !age || !phone || !description || !experience || !availability || !atestatEl) {
-                alert('Va rugam sa completati toate campurile marcate cu *');
+                msgBox.textContent = 'Va rugam sa completati toate campurile marcate cu *.';
+                msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
                 return;
             }
 
-            var atestat = atestatEl.value;
+            btn.disabled = true;
+            btn.querySelector('svg').style.display = 'none';
+            btn.childNodes[btn.childNodes.length - 1].textContent = ' Se trimite...';
+            msgBox.className = 'hidden';
 
-            var subject = encodeURIComponent('Aplicatie Agent de Paza - ' + name);
-            var body = encodeURIComponent(
-                'Buna ziua,\n\n' +
-                'Doresc sa aplic pentru postul de agent de paza in cadrul GOD Guard Security.\n\n' +
-                '--- DATE PERSONALE ---\n' +
-                'Nume complet: ' + name + '\n' +
-                'Varsta: ' + age + ' ani\n' +
-                'Telefon: ' + phone + '\n' +
-                'Atestat de paza: ' + atestat + '\n\n' +
-                '--- DESCRIERE PERSONALA ---\n' +
-                description + '\n\n' +
-                '--- EXPERIENTA ANTERIOARA ---\n' +
-                experience + '\n\n' +
-                '--- DISPONIBILITATE ---\n' +
-                availability + '\n\n' +
-                '--- ALTE INFORMATII ---\n' +
-                (notes || 'Fara informatii suplimentare') + '\n\n' +
-                'Va multumesc pentru oportunitate,\n' + name
-            );
+            var data = {
+                access_key: WEB3FORMS_KEY,
+                subject: 'Aplicatie Agent de Paza - ' + name,
+                from_name: 'GOD Guard Security - Formular Cariere',
+                message:
+                    'DATE PERSONALE\n' +
+                    'Nume: ' + name + '\n' +
+                    'Varsta: ' + age + ' ani\n' +
+                    'Telefon: ' + phone + '\n' +
+                    'Atestat de paza: ' + atestatEl.value + '\n\n' +
+                    'DESCRIERE PERSONALA\n' + description + '\n\n' +
+                    'EXPERIENTA ANTERIOARA\n' + experience + '\n\n' +
+                    'DISPONIBILITATE\n' + availability + '\n\n' +
+                    'ALTE INFORMATII\n' + (notes || 'Fara informatii suplimentare')
+            };
 
-            window.location.href = 'mailto:god_guard@yahoo.com?subject=' + subject + '&body=' + body;
+            fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(json) {
+                if (json.success) {
+                    msgBox.textContent = '✅ Aplicatia a fost trimisa! Te vom contacta in cel mai scurt timp.';
+                    msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-green-100 text-green-700';
+                    document.getElementById('careerForm').reset();
+                } else {
+                    throw new Error(json.message || 'Eroare la trimitere');
+                }
+            })
+            .catch(function() {
+                msgBox.textContent = '❌ Eroare la trimitere. Incercati din nou sau scrieti la god_guard@yahoo.com';
+                msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
+            })
+            .finally(function() {
+                btn.disabled = false;
+                btn.querySelector('svg').style.display = '';
+                btn.childNodes[btn.childNodes.length - 1].textContent = ' Trimite Aplicatia';
+            });
         }
         </script>
     </div>
