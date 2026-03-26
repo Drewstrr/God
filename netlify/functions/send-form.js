@@ -1,5 +1,7 @@
 const https = require('https');
 
+const WEB3FORMS_KEY = '2c08edf6-2dcf-4c0f-893a-0a32ea871b97';
+
 exports.handler = async function(event) {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
@@ -8,14 +10,13 @@ exports.handler = async function(event) {
     try {
         const body = JSON.parse(event.body);
 
-        // Honeypot: daca e completat e un bot
+        // Honeypot: daca campul ascuns e completat, e un bot
         if (body.honeypot) {
             return { statusCode: 200, body: JSON.stringify({ success: true }) };
         }
         delete body.honeypot;
 
-        // Cheia se adauga server-side
-        body.access_key = process.env.WEB3FORMS_KEY;
+        body.access_key = WEB3FORMS_KEY;
 
         const result = await new Promise((resolve, reject) => {
             const postData = JSON.stringify(body);
@@ -35,7 +36,7 @@ exports.handler = async function(event) {
                 res.on('data', (chunk) => { data += chunk; });
                 res.on('end', () => {
                     try { resolve(JSON.parse(data)); }
-                    catch (e) { reject(e); }
+                    catch (e) { reject(new Error('Raspuns invalid Web3Forms')); }
                 });
             });
 
@@ -47,6 +48,6 @@ exports.handler = async function(event) {
         return { statusCode: 200, body: JSON.stringify(result) };
 
     } catch (err) {
-        return { statusCode: 500, body: JSON.stringify({ success: false, message: 'Eroare server' }) };
+        return { statusCode: 500, body: JSON.stringify({ success: false, message: err.message || 'Eroare server' }) };
     }
 };
