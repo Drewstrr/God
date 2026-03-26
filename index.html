@@ -44,7 +44,7 @@
                 Cariere
             </a>
 
-            <a href="index.html#contact" class="hover:text-blue-200 transition-colors border-2 border-white/20 rounded-lg px-3 py-1">Contact</a>
+            <a href="index.html#contact" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-4 py-2 font-black text-white shadow-lg animate-pulse-slow">📞 Contact</a>
         </div>
     </div>
 </nav>
@@ -116,6 +116,10 @@
         
         <div class="grid grid-cols-2 md:grid-cols-3 gap-6 text-center">
             <div class="p-6 border border-gray-100 rounded-xl hover:bg-blue-50 transition shadow-sm">
+                <span class="text-4xl block mb-3">🎓</span>
+                <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Unități de Învățământ Superior</span>
+            </div>
+            <div class="p-6 border border-gray-100 rounded-xl hover:bg-blue-50 transition shadow-sm">
                 <span class="text-4xl block mb-3">🏗️</span>
                 <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Șantiere</span>
             </div>
@@ -124,20 +128,16 @@
                 <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Clădiri Birouri</span>
             </div>
             <div class="p-6 border border-gray-100 rounded-xl hover:bg-blue-50 transition shadow-sm">
-                <span class="text-4xl block mb-3">🏡</span>
-                <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Rezidențial</span>
+                <span class="text-4xl block mb-3">📦</span>
+                <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Depozite & Hale</span>
             </div>
             <div class="p-6 border border-gray-100 rounded-xl hover:bg-blue-50 transition shadow-sm">
                 <span class="text-4xl block mb-3">🛍️</span>
-                <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Retail</span>
+                <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Magazine & Retail</span>
             </div>
             <div class="p-6 border border-gray-100 rounded-xl hover:bg-blue-50 transition shadow-sm">
-                <span class="text-4xl block mb-3">🏟️</span>
-                <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Evenimente</span>
-            </div>
-            <div class="p-6 border border-gray-100 rounded-xl hover:bg-blue-50 transition shadow-sm">
-                <span class="text-4xl block mb-3">📦</span>
-                <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Centre Logistice</span>
+                <span class="text-4xl block mb-3">🔒</span>
+                <span class="text-[12px] font-black uppercase tracking-wider text-brand-deep">Alte Obiective</span>
             </div>
         </div>
     </div>
@@ -176,7 +176,7 @@
             <div class="mt-16 bg-brand-deep text-white p-12 rounded-[2rem] text-center shadow-2xl relative overflow-hidden">
                 <div class="relative z-10">
                     <p class="text-[10px] tracking-[0.5em] uppercase opacity-60 mb-4 font-bold">Investiția în siguranță</p>
-                    <div class="text-6xl md:text-8xl font-black tracking-tighter">34 <span class="text-3xl font-light italic">LEI / ORĂ</span></div>
+                    <div class="text-6xl md:text-8xl font-black tracking-tighter">35 <span class="text-3xl font-light italic">LEI / ORĂ</span></div>
                     <p class="mt-4 text-xs opacity-50 italic">*Tarif negociabil în funcție de complexitatea obiectivului</p>
                 </div>
             </div>
@@ -209,42 +209,109 @@
     <section id="contact" class="py-24 px-6 bg-gray-50">
         <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
             <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl border border-gray-100">
-                <h3 class="text-3xl font-black mb-8 text-brand-deep uppercase tracking-tighter italic">Cere o Cotație</h3>
-                <form class="space-y-4">
-                    <input type="text" placeholder="Nume sau Firmă" class="w-full p-5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all">
-                    <input type="email" placeholder="Email" class="w-full p-5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all">
-                    <select class="w-full p-5 bg-gray-50 rounded-2xl outline-none border border-gray-100 text-gray-400 font-bold">
-                        <option>Șantier</option>
-                        <option>Industrial/Depozit</option>
-                        <option>Retail/Magazin</option>
-                        <option>Altele</option>
-                    </select>
-                    <textarea rows="4" placeholder="Mesaj scurt despre nevoile tale..." class="w-full p-5 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all"></textarea>
-                    <button class="w-full bg-nav-highlight text-white font-black p-6 rounded-2xl uppercase tracking-widest hover:bg-blue-800 shadow-xl transition transform active:scale-95">Trimite Solicitarea</button>
+                <h3 class="text-3xl font-black mb-2 text-brand-deep uppercase tracking-tighter italic">Cere o Ofertă</h3>
+                <p class="text-gray-500 text-sm mb-8 italic">Completează formularul și îți vom trimite o ofertă personalizată.</p>
+                <form id="contactForm" class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-1">Numele dvs. *</label>
+                        <input id="c_name" type="text" required placeholder="Ex: Ion Popescu" class="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-1">Telefon *</label>
+                        <input id="c_phone" type="tel" required placeholder="07XX XXX XXX" class="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-1">Tipul obiectivului *</label>
+                        <select id="c_type" required class="w-full p-4 bg-gray-50 rounded-2xl outline-none border border-gray-100 text-gray-700 font-bold focus:ring-2 focus:ring-blue-600 transition-all">
+                            <option value="">-- Selectează tipul obiectivului --</option>
+                            <option value="Unitate de Invatamant Superior (scoala, universitate)">Unitate de Învățământ Superior</option>
+                            <option value="Depozit sau Hala Industriala">Depozit / Hală Industrială</option>
+                            <option value="Santier de Constructii">Șantier de Construcții</option>
+                            <option value="Magazin sau Spatiu Retail">Magazin / Retail</option>
+                            <option value="Cladire de Birouri">Clădire de Birouri</option>
+                            <option value="Alt tip de obiectiv">Alt tip de obiectiv</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-1">Câte posturi de pază aveți nevoie? *</label>
+                        <select id="c_posts" required class="w-full p-4 bg-gray-50 rounded-2xl outline-none border border-gray-100 text-gray-700 font-bold focus:ring-2 focus:ring-blue-600 transition-all">
+                            <option value="">-- Selectează numărul de posturi --</option>
+                            <option value="1 post">1 post</option>
+                            <option value="2 posturi">2 posturi</option>
+                            <option value="3 posturi">3 posturi</option>
+                            <option value="4-6 posturi">4-6 posturi</option>
+                            <option value="Peste 6 posturi">Peste 6 posturi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-1">Descrieți obiectivul și nevoile dvs. *</label>
+                        <textarea id="c_message" required rows="4" placeholder="Descrieți pe scurt obiectivul: suprafața aproximativă, programul de pază dorit (zi / noapte / non-stop), cerințe speciale..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all resize-none"></textarea>
+                    </div>
+                    <button type="button" onclick="trimiteContact()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black p-5 rounded-2xl uppercase tracking-widest shadow-xl transition transform active:scale-95">
+                        📩 Trimite Solicitarea
+                    </button>
                 </form>
             </div>
 
-            <div class="flex flex-col justify-center">
-                <div class="mb-10 text-center lg:text-left">
+            <div class="flex flex-col justify-center gap-8">
+                <div>
                     <h3 class="text-2xl font-black text-brand-deep uppercase mb-4 italic tracking-tighter">Vrei să vorbim direct?</h3>
-                    <p class="text-gray-500 italic mb-8">Directorul nostru general îți stă la dispoziție pentru detalii tehnice și negocieri.</p>
+                    <p class="text-gray-500 italic mb-6">Suntem disponibili pentru detalii și negocieri.</p>
                     <div class="space-y-4">
-                        <a href="tel:0723909090" class="flex items-center gap-4 group">
-                            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center group-hover:bg-brand-deep transition">📞</div>
-                            <span class="text-2xl font-black text-gray-800">0723 90 90 90</span>
-                        </a>
                         <a href="mailto:god_guard@yahoo.com" class="flex items-center gap-4 group">
-                            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center group-hover:bg-brand-deep transition">✉️</div>
+                            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center group-hover:bg-brand-deep transition text-xl">✉️</div>
                             <span class="text-lg font-bold text-blue-600 underline italic">god_guard@yahoo.com</span>
                         </a>
                     </div>
                 </div>
-                <div class="w-full h-[300px] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                    <iframe width="100%" height="100%" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2849.563!2d26.138!3d44.417!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDTCsDI1JzAxLjIiTiAyNsKwMDgnMTYuOCJF!5e0!3m2!1sro!2sro!4v1620000000000!5m2!1sro!2sro" style="border:0;" loading="lazy"></iframe>
+                <div class="bg-brand-deep text-white p-8 rounded-3xl">
+                    <p class="font-black uppercase tracking-wider mb-3 text-yellow-300">💡 Cum funcționează?</p>
+                    <ol class="text-sm space-y-3 text-blue-100 list-decimal list-inside">
+                        <li>Completezi formularul cu detaliile obiectivului tău</li>
+                        <li>Apare aplicația de email cu mesajul pre-completat</li>
+                        <li>Trimiți mailul și noi îți răspundem în cel mai scurt timp</li>
+                        <li>Primești o ofertă personalizată gratuită</li>
+                    </ol>
+                </div>
+                <div class="bg-gray-100 p-6 rounded-2xl text-center">
+                    <p class="text-4xl font-black text-brand-deep">35 <span class="text-xl font-light">lei/oră</span></p>
+                    <p class="text-xs text-gray-500 mt-1 italic">per agent de pază · tarif negociabil</p>
                 </div>
             </div>
         </div>
     </section>
+
+    <script>
+    function trimiteContact() {
+        var name = document.getElementById('c_name').value.trim();
+        var phone = document.getElementById('c_phone').value.trim();
+        var type = document.getElementById('c_type').value;
+        var posts = document.getElementById('c_posts').value;
+        var message = document.getElementById('c_message').value.trim();
+
+        if (!name || !phone || !type || !posts || !message) {
+            alert('Va rugam sa completati toate campurile marcate cu *');
+            return;
+        }
+
+        var subject = encodeURIComponent('Solicitare Paza - ' + type + ' - ' + name);
+        var body = encodeURIComponent(
+            'Buna ziua,\n\n' +
+            'Va contactez pentru a solicita servicii de paza.\n\n' +
+            '--- DATE DE CONTACT ---\n' +
+            'Nume: ' + name + '\n' +
+            'Telefon: ' + phone + '\n\n' +
+            '--- DETALII OBIECTIV ---\n' +
+            'Tipul obiectivului: ' + type + '\n' +
+            'Numar de posturi necesare: ' + posts + '\n\n' +
+            '--- DESCRIERE ---\n' +
+            message + '\n\n' +
+            'Va multumesc,\n' + name
+        );
+
+        window.location.href = 'mailto:god_guard@yahoo.com?subject=' + subject + '&body=' + body;
+    }
+    </script>
 
     <footer class="bg-brand-deep text-white py-20 text-center border-t-8 border-nav-highlight">
         <div class="max-w-4xl mx-auto px-6">

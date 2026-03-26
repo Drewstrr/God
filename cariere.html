@@ -38,7 +38,7 @@
                     Cariere
                 </a>
 
-                <a href="index.html#contact" class="hover:text-blue-200 transition-colors border-2 border-white/20 rounded-lg px-3 py-1">Contact</a>
+                <a href="index.html#contact" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-4 py-2 font-black text-white shadow-lg">📞 Contact</a>
             </div>
         </div>
     </nav>
@@ -83,16 +83,22 @@
             <p class="text-gray-500 text-sm mt-2">Completează datele și te sunăm în maxim 48 de ore.</p>
         </div>
         
-        <form class="space-y-6">
+        <form id="careerForm" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Nume Complet</label>
-                    <input type="text" required placeholder="Ex: Popescu Ion" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Nume Complet *</label>
+                    <input id="a_name" type="text" required placeholder="Ex: Popescu Ion" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Telefon</label>
-                    <input type="tel" required placeholder="07xx xxx xxx" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Vârsta *</label>
+                    <input id="a_age" type="number" required min="18" max="65" placeholder="Ex: 30" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-[9px] text-gray-400 mt-1 ml-4 italic">Vârsta minimă: 18 ani</p>
                 </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Telefon *</label>
+                <input id="a_phone" type="tel" required placeholder="07xx xxx xxx" class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500">
             </div>
 
             <div>
@@ -104,31 +110,93 @@
             </div>
 
             <div>
-                <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Experiență anterioară</label>
-                <textarea required rows="4" placeholder="Povestește-ne pe scurt unde ai mai lucrat și ce responsabilități ai avut..." class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-                <p class="text-[9px] text-gray-400 mt-2 ml-4 italic">* Menționează firmele de pază sau obiectivele similare unde ai activat.</p>
+                <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Descriere scurtă despre tine *</label>
+                <textarea id="a_description" required rows="4" placeholder="Spune-ne câteva lucruri despre tine: cum ești ca persoană, de ce vrei să lucrezi în pază, ce calități ai care te recomandă pentru acest job..." class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Unde ai lucrat înainte? *</label>
+                <textarea id="a_experience" required rows="4" placeholder="Povestește-ne pe scurt unde ai mai lucrat și ce responsabilități ai avut. Dacă ai experiență în pază sau domenii similare, menționeaz-o." class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <p class="text-[9px] text-gray-400 mt-2 ml-4 italic">* Menționează firmele de pază sau obiectivele similare unde ai activat. Dacă nu ai experiență anterioară, scrie "Fără experiență anterioară".</p>
             </div>
 
             <div>
                 <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Ai atestat de pază?</label>
                 <div class="flex gap-4">
                     <label for="atestat-da" class="flex flex-1 items-center justify-center gap-3 cursor-pointer bg-white px-6 py-4 rounded-xl border border-gray-200 hover:border-blue-500 transition-all has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:ring-1 has-[:checked]:ring-blue-500">
-                        <input type="radio" name="atestat" id="atestat-da" value="da" class="w-5 h-5 accent-blue-600" required>
+                        <input type="radio" name="atestat" id="atestat-da" value="DA" class="w-5 h-5 accent-blue-600" required>
                         <span class="font-bold text-gray-700">DA</span>
                     </label>
-                    
                     <label for="atestat-nu" class="flex flex-1 items-center justify-center gap-3 cursor-pointer bg-white px-6 py-4 rounded-xl border border-gray-200 hover:border-blue-500 transition-all has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 has-[:checked]:ring-1 has-[:checked]:ring-blue-500">
-                        <input type="radio" name="atestat" id="atestat-nu" value="nu" class="w-5 h-5 accent-blue-600">
+                        <input type="radio" name="atestat" id="atestat-nu" value="NU" class="w-5 h-5 accent-blue-600">
                         <span class="font-bold text-gray-700">NU</span>
                     </label>
                 </div>
             </div>
 
-            <button type="submit" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95 flex items-center justify-center gap-3">
+            <div>
+                <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Când ești disponibil să începi? *</label>
+                <select id="a_availability" required class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 font-bold">
+                    <option value="">-- Selectează disponibilitatea --</option>
+                    <option value="Imediat (in aceasta saptamana)">Imediat (în această săptămână)</option>
+                    <option value="In 1-2 saptamani">În 1-2 săptămâni</option>
+                    <option value="In aproximativ 1 luna">În aproximativ 1 lună</option>
+                    <option value="La o data ulterioara (voi preciza in mesaj)">La o dată ulterioară</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-4">Alte informații (opțional)</label>
+                <textarea id="a_notes" rows="3" placeholder="Ture preferate (zi / noapte), zona preferată de lucru, orice alte detalii relevante..." class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+            </div>
+
+            <button type="button" onclick="trimiteCariera()" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95 flex items-center justify-center gap-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                 Trimite Aplicația
             </button>
         </form>
+
+        <script>
+        function trimiteCariera() {
+            var name = document.getElementById('a_name').value.trim();
+            var age = document.getElementById('a_age').value.trim();
+            var phone = document.getElementById('a_phone').value.trim();
+            var description = document.getElementById('a_description').value.trim();
+            var experience = document.getElementById('a_experience').value.trim();
+            var availability = document.getElementById('a_availability').value;
+            var notes = document.getElementById('a_notes').value.trim();
+            var atestatEl = document.querySelector('input[name="atestat"]:checked');
+
+            if (!name || !age || !phone || !description || !experience || !availability || !atestatEl) {
+                alert('Va rugam sa completati toate campurile marcate cu *');
+                return;
+            }
+
+            var atestat = atestatEl.value;
+
+            var subject = encodeURIComponent('Aplicatie Agent de Paza - ' + name);
+            var body = encodeURIComponent(
+                'Buna ziua,\n\n' +
+                'Doresc sa aplic pentru postul de agent de paza in cadrul GOD Guard Security.\n\n' +
+                '--- DATE PERSONALE ---\n' +
+                'Nume complet: ' + name + '\n' +
+                'Varsta: ' + age + ' ani\n' +
+                'Telefon: ' + phone + '\n' +
+                'Atestat de paza: ' + atestat + '\n\n' +
+                '--- DESCRIERE PERSONALA ---\n' +
+                description + '\n\n' +
+                '--- EXPERIENTA ANTERIOARA ---\n' +
+                experience + '\n\n' +
+                '--- DISPONIBILITATE ---\n' +
+                availability + '\n\n' +
+                '--- ALTE INFORMATII ---\n' +
+                (notes || 'Fara informatii suplimentare') + '\n\n' +
+                'Va multumesc pentru oportunitate,\n' + name
+            );
+
+            window.location.href = 'mailto:god_guard@yahoo.com?subject=' + subject + '&body=' + body;
+        }
+        </script>
     </div>
 </section>
 
