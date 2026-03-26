@@ -350,8 +350,8 @@ function toggleNav() {
                 throw new Error(json.message || 'Eroare la trimitere');
             }
         })
-        .catch(function() {
-            msgBox.textContent = '❌ Eroare la trimitere. Va rugam incercati din nou.';
+        .catch(function(err) {
+            msgBox.textContent = '❌ ' + (err.message || 'Eroare la trimitere. Va rugam incercati din nou.');
             msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
         })
         .finally(function() {
