@@ -170,6 +170,8 @@
                 <textarea id="a_notes" rows="3" placeholder="Ture preferate (zi / noapte), zona preferată de lucru, orice alte detalii relevante..." class="w-full p-4 bg-white rounded-2xl border border-gray-200 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
             </div>
 
+            <!-- Honeypot anti-bot: ascuns vizual, completat doar de roboti -->
+            <input type="text" name="honeypot" id="honeypot_c" style="display:none;" tabindex="-1" autocomplete="off">
             <button id="btnCariera" type="button" onclick="trimiteCariera()" class="w-full bg-nav-highlight text-white font-black p-5 rounded-2xl uppercase tracking-[0.2em] shadow-xl hover:bg-blue-800 transition transform active:scale-95 flex items-center justify-center gap-3">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
                 Trimite Aplicația
@@ -204,7 +206,7 @@
             msgBox.className = 'hidden';
 
             var data = {
-                access_key: WEB3FORMS_KEY,
+                honeypot: document.getElementById('honeypot_c').value,
                 subject: 'Aplicatie Agent de Paza - ' + name,
                 from_name: 'GOD Guard Security - Formular Cariere',
                 message:
@@ -219,9 +221,9 @@
                     'ALTE INFORMATII\n' + (notes || 'Fara informatii suplimentare')
             };
 
-            fetch('https://api.web3forms.com/submit', {
+            fetch('/.netlify/functions/send-form', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             })
             .then(function(res) { return res.json(); })
@@ -235,7 +237,7 @@
                 }
             })
             .catch(function() {
-                msgBox.textContent = '❌ Eroare la trimitere. Incercati din nou sau scrieti la god_guard@yahoo.com';
+                msgBox.textContent = '❌ Eroare la trimitere. Va rugam incercati din nou.';
                 msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
             })
             .finally(function() {

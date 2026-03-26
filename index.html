@@ -19,31 +19,59 @@
 </head>
 <body class="bg-white text-gray-900 antialiased font-sans m-0 p-0 overflow-x-hidden">
 
-    <nav class="bg-nav-highlight text-white p-4 sticky top-0 shadow-2xl z-50">
-    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg p-1.5 shrink-0">
+    <a href="https://wa.me/40723909090" class="fixed bottom-6 right-6 z-[100] bg-green-500 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.588-5.946 0-6.556 5.332-11.888 11.888-11.888 3.176 0 6.161 1.237 8.404 3.481 2.245 2.244 3.481 5.229 3.481 8.405 0 6.556-5.331 11.888-11.888 11.888-2.02 0-4.005-.515-5.756-1.492L0 .057zm6.218-4.195l.301.179c1.511.898 3.256 1.372 5.048 1.372 5.161 0 9.358-4.195 9.358-9.356 0-2.5-1.002-4.851-2.822-6.67-1.821-1.82-4.172-2.822-6.671-2.822-5.162 0-9.358 4.197-9.358 9.359 0 1.9.497 3.75 1.439 5.352l.197.337-1.01 3.693 3.784-1.013z"/></svg>
+    </a>
+
+    <nav class="bg-nav-highlight text-white sticky top-0 shadow-2xl z-50">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+        <!-- Logo -->
+        <a href="/index.html" class="flex items-center gap-2 shrink-0">
+            <div class="w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-lg p-1.5">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#002b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
             </div>
             <div class="flex flex-col">
-                <h1 class="text-xl md:text-2xl font-black tracking-tighter italic leading-none uppercase">GODGUARD</h1>
-                <span class="text-[8px] md:text-[9px] tracking-[0.3em] uppercase opacity-80 mt-1 font-bold">Security Services</span>
+                <span class="text-base font-black tracking-tighter italic leading-none uppercase">GODGUARD</span>
+                <span class="text-[7px] tracking-[0.25em] uppercase opacity-80 font-bold">Security Services</span>
             </div>
-        </div>
-        <div class="flex items-center space-x-4 md:space-x-8 font-bold text-xs uppercase tracking-wider text-center">
-            <a href="index.html#home" class="hover:text-blue-200 transition-colors">Acasă</a>            
-            <a href="index.html#expertiza" class="hover:text-blue-200 transition-colors">Expertiză</a>
-             <a href="index.html#servicii" class="hover:text-blue-200 transition-colors">Servicii</a>
-            
-            <a href="cariere.html" class="text-yellow-300 hover:text-yellow-100 transition-colors flex items-center gap-1">
-                <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>
-                Cariere
-            </a>
+        </a>
 
-            <a href="index.html#contact" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-4 py-2 font-black text-white shadow-lg animate-pulse-slow">📞 Contact</a>
+        <!-- Hamburger (mobil) -->
+        <button id="menuBtn" onclick="toggleNav()" class="md:hidden flex flex-col gap-1.5 p-2 focus:outline-none" aria-label="Meniu">
+            <span class="block w-6 h-0.5 bg-white"></span>
+            <span class="block w-6 h-0.5 bg-white"></span>
+            <span class="block w-6 h-0.5 bg-white"></span>
+        </button>
+
+        <!-- Linkuri desktop -->
+        <div class="hidden md:flex items-center gap-5 font-bold text-xs uppercase tracking-wider">
+            <a href="/index.html#home" class="hover:text-blue-200 transition-colors">Acasă</a>
+            <a href="/index.html#expertiza" class="hover:text-blue-200 transition-colors">Expertiză</a>
+            <a href="/index.html#servicii" class="hover:text-blue-200 transition-colors">Servicii</a>
+            <a href="/cariere.html" class="text-yellow-300 hover:text-yellow-100 transition-colors flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-yellow-300 rounded-full animate-pulse"></span>Cariere
+            </a>
+            <a href="/index.html#contact" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-3 py-2 text-white shadow-lg">📞 Contact</a>
         </div>
     </div>
+
+    <!-- Meniu mobil dropdown -->
+    <div id="mobileNav" class="hidden md:hidden bg-[#004494] border-t border-blue-400 px-4 py-3 flex flex-col gap-3 font-bold text-sm uppercase tracking-wider">
+        <a href="/index.html#home" onclick="toggleNav()" class="hover:text-blue-200 transition-colors py-1">Acasă</a>
+        <a href="/index.html#expertiza" onclick="toggleNav()" class="hover:text-blue-200 transition-colors py-1">Expertiză</a>
+        <a href="/index.html#servicii" onclick="toggleNav()" class="hover:text-blue-200 transition-colors py-1">Servicii</a>
+        <a href="/cariere.html" onclick="toggleNav()" class="text-yellow-300 hover:text-yellow-100 transition-colors py-1 flex items-center gap-2">
+            <span class="w-2 h-2 bg-yellow-300 rounded-full animate-pulse"></span>Cariere
+        </a>
+        <a href="/index.html#contact" onclick="toggleNav()" class="bg-red-600 hover:bg-red-700 transition-colors rounded-lg px-4 py-3 text-white text-center shadow-lg">📞 Contact</a>
+    </div>
 </nav>
+<script>
+function toggleNav() {
+    var m = document.getElementById('mobileNav');
+    m.classList.toggle('hidden');
+}
+</script>
 
 <section id="home" class="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-brand-deep">
     <img src="https://images.unsplash.com/photo-1557597774-9d2739f85a76?q=80&w=1600" class="absolute w-full h-full object-cover opacity-30">
@@ -166,8 +194,9 @@
             <div class="mt-16 bg-brand-deep text-white p-12 rounded-[2rem] text-center shadow-2xl relative overflow-hidden">
                 <div class="relative z-10">
                     <p class="text-[10px] tracking-[0.5em] uppercase opacity-60 mb-4 font-bold">Investiția în siguranță</p>
-                    <div class="text-6xl md:text-8xl font-black tracking-tighter">35 <span class="text-3xl font-light italic">L E I / O R Ă</span></div>
-                    <p class="mt-4 text-xs opacity-50 italic">*Tarif negociabil în funcție de complexitatea obiectivului</p>
+                    <div class="text-6xl md:text-8xl font-black tracking-tighter">35 <span class="text-3xl font-light italic">LEI / ORĂ</span></div>
+                    <p class="mt-3 text-sm font-bold text-yellow-300 uppercase tracking-wide">per post de pază</p>
+                    <p class="mt-2 text-xs opacity-60 italic">* Acesta este tariful minim. Prețul final este negociabil în funcție de complexitatea postului, numărul de posturi și durata contractului.</p>
                 </div>
             </div>
         </div>
@@ -237,34 +266,36 @@
                         <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-1">Descrieți obiectivul și nevoile dvs. *</label>
                         <textarea id="c_message" required rows="4" placeholder="Descrieți pe scurt obiectivul: suprafața aproximativă, programul de pază dorit (zi / noapte / non-stop), cerințe speciale..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all resize-none"></textarea>
                     </div>
-                    <button type="button" onclick="trimiteContact()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black p-5 rounded-2xl uppercase tracking-widest shadow-xl transition transform active:scale-95">
+                    <!-- Honeypot anti-bot: ascuns vizual, completat doar de roboti -->
+                    <input type="text" name="honeypot" id="honeypot" style="display:none;" tabindex="-1" autocomplete="off">
+                    <button id="btnContact" type="button" onclick="trimiteContact()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black p-5 rounded-2xl uppercase tracking-widest shadow-xl transition transform active:scale-95">
                         📩 Trimite Solicitarea
                     </button>
+                    <div id="contactMsg" class="hidden mt-4 p-4 rounded-2xl text-center font-bold text-sm"></div>
                 </form>
             </div>
 
             <div class="flex flex-col justify-center gap-8">
                 <div>
                     <h3 class="text-2xl font-black text-brand-deep uppercase mb-4 italic tracking-tighter">Vrei să vorbim direct?</h3>
-                    <p class="text-gray-500 italic mb-6">Suntem disponibili pentru detalii și negocieri.</p>
-                    <div class="space-y-4">
-                        <a href="mailto:god_guard@yahoo.com" class="flex items-center gap-4 group">
-                            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center group-hover:bg-brand-deep transition text-xl">✉️</div>
-                            <span class="text-lg font-bold text-blue-600 underline italic">god_guard@yahoo.com</span>
-                        </a>
+                    <p class="text-gray-500 italic mb-6">Completează formularul și te contactăm noi în cel mai scurt timp.</p>
+                    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-brand-deep text-sm font-medium">
+                        ⏱️ Timp de răspuns: <strong>sub 24 de ore</strong> în zilele lucrătoare.
                     </div>
                 </div>
                 <div class="bg-brand-deep text-white p-8 rounded-3xl">
                     <p class="font-black uppercase tracking-wider mb-3 text-yellow-300">💡 Cum funcționează?</p>
                     <ol class="text-sm space-y-3 text-blue-100 list-decimal list-inside">
                         <li>Completezi formularul cu detaliile obiectivului tău</li>
-                        <li>Trimiți solicitarea și noi îți răspundem în cel mai scurt timp</li>
-                        <li>Primești o ofertă personalizată gratuită</li>
+                        <li>Apeși butonul "Trimite Solicitarea"</li>
+                        <li>Mesajul ajunge automat la noi</li>
+                        <li>Îți răspundem cu o ofertă personalizată gratuită</li>
                     </ol>
                 </div>
                 <div class="bg-gray-100 p-6 rounded-2xl text-center">
                     <p class="text-4xl font-black text-brand-deep">35 <span class="text-xl font-light">lei/oră</span></p>
-                    <p class="text-xs text-gray-500 mt-1 italic">per agent de pază · tarif negociabil</p>
+                    <p class="text-sm font-bold text-brand-deep mt-1">per post de pază</p>
+                    <p class="text-xs text-gray-500 mt-1 italic">Tarif minim · negociabil în funcție de complexitatea postului</p>
                 </div>
             </div>
         </div>
@@ -272,33 +303,61 @@
 
     <script>
     function trimiteContact() {
-        var name = document.getElementById('c_name').value.trim();
-        var phone = document.getElementById('c_phone').value.trim();
-        var type = document.getElementById('c_type').value;
-        var posts = document.getElementById('c_posts').value;
+        var name    = document.getElementById('c_name').value.trim();
+        var phone   = document.getElementById('c_phone').value.trim();
+        var type    = document.getElementById('c_type').value;
+        var posts   = document.getElementById('c_posts').value;
         var message = document.getElementById('c_message').value.trim();
+        var btn     = document.getElementById('btnContact');
+        var msgBox  = document.getElementById('contactMsg');
 
         if (!name || !phone || !type || !posts || !message) {
-            alert('Va rugam sa completati toate campurile marcate cu *');
+            msgBox.textContent = 'Va rugam sa completati toate campurile marcate cu *.';
+            msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
             return;
         }
 
-        var subject = encodeURIComponent('Solicitare Paza - ' + type + ' - ' + name);
-        var body = encodeURIComponent(
-            'Buna ziua,\n\n' +
-            'Va contactez pentru a solicita servicii de paza.\n\n' +
-            '--- DATE DE CONTACT ---\n' +
-            'Nume: ' + name + '\n' +
-            'Telefon: ' + phone + '\n\n' +
-            '--- DETALII OBIECTIV ---\n' +
-            'Tipul obiectivului: ' + type + '\n' +
-            'Numar de posturi necesare: ' + posts + '\n\n' +
-            '--- DESCRIERE ---\n' +
-            message + '\n\n' +
-            'Va multumesc,\n' + name
-        );
+        btn.disabled = true;
+        btn.textContent = '⏳ Se trimite...';
+        msgBox.className = 'hidden';
 
-        window.location.href = 'mailto:god_guard@yahoo.com?subject=' + subject + '&body=' + body;
+        var data = {
+            honeypot: document.getElementById('honeypot').value,
+            subject: 'Solicitare Paza - ' + type + ' - ' + name,
+            from_name: 'GOD Guard Security - Formular Client',
+            message:
+                'DATE DE CONTACT\n' +
+                'Nume: ' + name + '\n' +
+                'Telefon: ' + phone + '\n\n' +
+                'DETALII OBIECTIV\n' +
+                'Tip obiectiv: ' + type + '\n' +
+                'Numar posturi: ' + posts + '\n\n' +
+                'DESCRIERE\n' + message
+        };
+
+        fetch('/.netlify/functions/send-form', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(json) {
+            if (json.success) {
+                msgBox.textContent = '✅ Mesaj trimis cu succes! Va vom contacta in cel mai scurt timp.';
+                msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-green-100 text-green-700';
+                document.getElementById('contactForm').reset();
+            } else {
+                throw new Error(json.message || 'Eroare la trimitere');
+            }
+        })
+        .catch(function() {
+            msgBox.textContent = '❌ Eroare la trimitere. Va rugam incercati din nou.';
+            msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
+        })
+        .finally(function() {
+            btn.disabled = false;
+            btn.textContent = '📩 Trimite Solicitarea';
+        });
     }
     </script>
 
