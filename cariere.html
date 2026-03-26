@@ -181,6 +181,7 @@
 
         <script>
         var WEB3FORMS_KEY = '2c08edf6-2dcf-4c0f-893a-0a32ea871b97';
+        var CARIERA_COOLDOWN_MS = 60000;
 
         function trimiteCariera() {
             var name         = document.getElementById('a_name').value.trim();
@@ -200,8 +201,26 @@
                 return;
             }
 
+            // Validare varsta in JS (nu poate fi ocolita din HTML)
+            var ageNum = parseInt(age, 10);
+            if (isNaN(ageNum) || ageNum < 18 || ageNum > 65) {
+                msgBox.textContent = 'Varsta trebuie sa fie intre 18 si 65 de ani.';
+                msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
+                return;
+            }
+
             // Honeypot anti-bot: daca e completat, e un bot — ignoram silentios
             if (document.getElementById('honeypot_c').value) { return; }
+
+            // Rate limiting: max 1 trimitere pe minut
+            var lastSent = parseInt(localStorage.getItem('gg_cariera_last') || '0');
+            var elapsed  = Date.now() - lastSent;
+            if (elapsed < CARIERA_COOLDOWN_MS) {
+                var remaining = Math.ceil((CARIERA_COOLDOWN_MS - elapsed) / 1000);
+                msgBox.textContent = '⏳ Asteptati ' + remaining + ' secunde inainte de a retrimite.';
+                msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-yellow-100 text-yellow-700';
+                return;
+            }
 
             btn.disabled = true;
             btn.querySelector('svg').style.display = 'none';
@@ -232,6 +251,7 @@
             .then(function(res) { return res.json(); })
             .then(function(json) {
                 if (json.success) {
+                    localStorage.setItem('gg_cariera_last', Date.now().toString());
                     msgBox.textContent = '✅ Aplicatia a fost trimisa! Te vom contacta in cel mai scurt timp.';
                     msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-green-100 text-green-700';
                     document.getElementById('careerForm').reset();

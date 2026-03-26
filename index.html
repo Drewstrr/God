@@ -304,6 +304,8 @@ function toggleNav() {
     <script>
     var WEB3FORMS_KEY = '2c08edf6-2dcf-4c0f-893a-0a32ea871b97';
 
+    var CONTACT_COOLDOWN_MS = 60000;
+
     function trimiteContact() {
         var name    = document.getElementById('c_name').value.trim();
         var phone   = document.getElementById('c_phone').value.trim();
@@ -321,6 +323,16 @@ function toggleNav() {
 
         // Honeypot anti-bot: daca e completat, e un bot — ignoram silentios
         if (document.getElementById('honeypot').value) { return; }
+
+        // Rate limiting: max 1 trimitere pe minut
+        var lastSent = parseInt(localStorage.getItem('gg_contact_last') || '0');
+        var elapsed  = Date.now() - lastSent;
+        if (elapsed < CONTACT_COOLDOWN_MS) {
+            var remaining = Math.ceil((CONTACT_COOLDOWN_MS - elapsed) / 1000);
+            msgBox.textContent = '⏳ Asteptati ' + remaining + ' secunde inainte de a retrimite.';
+            msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-yellow-100 text-yellow-700';
+            return;
+        }
 
         btn.disabled = true;
         btn.textContent = '⏳ Se trimite...';
@@ -348,6 +360,7 @@ function toggleNav() {
         .then(function(res) { return res.json(); })
         .then(function(json) {
             if (json.success) {
+                localStorage.setItem('gg_contact_last', Date.now().toString());
                 msgBox.textContent = '✅ Mesaj trimis cu succes! Va vom contacta in cel mai scurt timp.';
                 msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-green-100 text-green-700';
                 document.getElementById('contactForm').reset();
