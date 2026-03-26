@@ -272,6 +272,8 @@ function toggleNav() {
                         <label class="block text-[10px] uppercase font-black text-gray-400 mb-2 ml-1">Descrieți obiectivul și nevoile dvs. *</label>
                         <textarea id="c_message" required rows="4" placeholder="Descrieți pe scurt obiectivul: suprafața aproximativă, programul de pază dorit (zi / noapte / non-stop), cerințe speciale..." class="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-blue-600 border border-gray-100 transition-all resize-none"></textarea>
                     </div>
+                    <!-- Honeypot anti-bot: ascuns vizual, completat doar de roboti -->
+                    <input type="text" name="honeypot" id="honeypot" style="display:none;" tabindex="-1" autocomplete="off">
                     <button id="btnContact" type="button" onclick="trimiteContact()" class="w-full bg-red-600 hover:bg-red-700 text-white font-black p-5 rounded-2xl uppercase tracking-widest shadow-xl transition transform active:scale-95">
                         📩 Trimite Solicitarea
                     </button>
@@ -282,12 +284,9 @@ function toggleNav() {
             <div class="flex flex-col justify-center gap-8">
                 <div>
                     <h3 class="text-2xl font-black text-brand-deep uppercase mb-4 italic tracking-tighter">Vrei să vorbim direct?</h3>
-                    <p class="text-gray-500 italic mb-6">Suntem disponibili pentru detalii și negocieri.</p>
-                    <div class="space-y-4">
-                        <a href="mailto:god_guard@yahoo.com" class="flex items-center gap-4 group">
-                            <div class="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center group-hover:bg-brand-deep transition text-xl">✉️</div>
-                            <span class="text-lg font-bold text-blue-600 underline italic">god_guard@yahoo.com</span>
-                        </a>
+                    <p class="text-gray-500 italic mb-6">Completează formularul și te contactăm noi în cel mai scurt timp.</p>
+                    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-brand-deep text-sm font-medium">
+                        ⏱️ Timp de răspuns: <strong>sub 24 de ore</strong> în zilele lucrătoare.
                     </div>
                 </div>
                 <div class="bg-brand-deep text-white p-8 rounded-3xl">
@@ -309,13 +308,6 @@ function toggleNav() {
     </section>
 
     <script>
-    // ============================================================
-    // IMPORTANT: Inlocuieste "YOUR_ACCESS_KEY_HERE" cu cheia ta
-    // obtinuta GRATUIT de la: https://web3forms.com
-    // Introdu adresa god_guard@yahoo.com si primesti cheia pe mail.
-    // ============================================================
-    var WEB3FORMS_KEY = '2c08edf6-2dcf-4c0f-893a-0a32ea871b97';
-
     function trimiteContact() {
         var name    = document.getElementById('c_name').value.trim();
         var phone   = document.getElementById('c_phone').value.trim();
@@ -336,7 +328,7 @@ function toggleNav() {
         msgBox.className = 'hidden';
 
         var data = {
-            access_key: WEB3FORMS_KEY,
+            honeypot: document.getElementById('honeypot').value,
             subject: 'Solicitare Paza - ' + type + ' - ' + name,
             from_name: 'GOD Guard Security - Formular Client',
             message:
@@ -349,9 +341,9 @@ function toggleNav() {
                 'DESCRIERE\n' + message
         };
 
-        fetch('https://api.web3forms.com/submit', {
+        fetch('/.netlify/functions/send-form', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         })
         .then(function(res) { return res.json(); })
@@ -364,8 +356,8 @@ function toggleNav() {
                 throw new Error(json.message || 'Eroare la trimitere');
             }
         })
-        .catch(function(err) {
-            msgBox.textContent = '❌ Eroare la trimitere. Incercati din nou sau scrieti direct la god_guard@yahoo.com';
+        .catch(function() {
+            msgBox.textContent = '❌ Eroare la trimitere. Va rugam incercati din nou.';
             msgBox.className = 'mt-4 p-4 rounded-2xl text-center font-bold text-sm bg-red-100 text-red-700';
         })
         .finally(function() {
