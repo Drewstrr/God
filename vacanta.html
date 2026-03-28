@@ -3,149 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zakynthos 2026 - Itinerariu Complet</title>
+    <title>Zante 2026 - Itinerariu</title>
     <meta name="robots" content="noindex, nofollow">
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
-        body { font-family: 'DM Sans', sans-serif; background-color: #f3f4f6; margin: 0; }
-        @keyframes dashMove { to { stroke-dashoffset: -50; } }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;900&display=swap');
+        body { font-family: 'DM Sans', sans-serif; background-color: #f3f4f6; }
+        .day-card { display: none; }
+        .day-card.active { display: block; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="bg-gray-100">
 
-    <script type="text/babel">
-        const { useState } = React;
+    <div class="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col border-x">
+        <header class="bg-gradient-to-br from-blue-600 to-teal-700 p-8 text-white rounded-b-[40px] shadow-lg">
+            <h1 class="text-3xl font-black italic tracking-tighter">ZAKYNTHOS '26</h1>
+            <p class="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1">Grup de 10 Persoane • GodGuard</p>
+        </header>
 
-        const Icon = ({ name, size = 18, color = "currentColor" }) => {
-            const LucideIcon = lucide[name] || lucide.HelpCircle;
-            return <LucideIcon size={size} color={color} strokeWidth={2.5} />;
-        };
+        <div class="flex gap-2 p-4 overflow-x-auto no-scrollbar bg-gray-50 border-b">
+            <button onclick="switchTab(0)" id="tab-btn-0" class="tab-btn px-5 py-2 rounded-full text-[11px] font-black uppercase bg-black text-white">Itinerariu</button>
+            <button onclick="switchTab(1)" id="tab-btn-1" class="tab-btn px-5 py-2 rounded-full text-[11px] font-black uppercase bg-gray-200 text-gray-500">Buget</button>
+            <button onclick="switchTab(2)" id="tab-btn-2" class="tab-btn px-5 py-2 rounded-full text-[11px] font-black uppercase bg-gray-200 text-gray-500">Ghid</button>
+        </div>
 
-        const COLORS = {
-            sea: "#0077B6", nature: "#2D6A4F", logistics: "#E76F51", 
-            dark: "#1B263B", bg: "#F8F9FA", white: "#FFFFFF"
-        };
-
-        const ISLAND_POINTS = {
-            kalamaki: { x: 218, y: 405, label: "Kalamaki" },
-            airport: { x: 232, y: 382, label: "Aeroport" },
-            laganas: { x: 175, y: 418, label: "Laganas" },
-            shipwreck: { x: 92, y: 122, label: "Navagio" },
-            xigia: { x: 262, y: 152, label: "Xigia" },
-            portoLimnionas: { x: 78, y: 258, label: "Limnionas" },
-            zakynthosTown: { x: 298, y: 308, label: "Zante Town" },
-            banana: { x: 315, y: 408, label: "Banana Beach" }
-        };
-
-        const days = [
-            { day: 1, title: "Sosire & Kalamaki", icon: "Plane", color: COLORS.logistics, activities: [{ time: "09:00", title: "Aterizare", desc: "Transfer aeroport - Kalamaki. Lăsăm bagajele.", icon: "Plane" }, { time: "13:00", title: "Prânz", desc: "Tavernele locale din Kalamaki.", icon: "Utensils" }], highlights: ["airport", "kalamaki"], routes: [["airport", "kalamaki"]] },
-            { day: 2, title: "Ziua cu Barca", icon: "Ship", color: COLORS.sea, activities: [{ time: "10:00", title: "Închiriere barcă", desc: "Barcă fără permis din Ag. Sostis/Laganas.", icon: "Anchor" }, { time: "14:00", title: "Marathonisi", desc: "Insula țestoaselor.", icon: "Waves" }], highlights: ["kalamaki", "laganas"], routes: [["kalamaki", "laganas"]] },
-            { day: 3, title: "Plaje Sud", icon: "Sun", color: COLORS.sea, activities: [{ time: "11:00", title: "Banana Beach", desc: "Relaxare și sporturi nautice.", icon: "Waves" }, { time: "17:00", title: "Apus Cameo", desc: "Insula Cameo (podul de lemn).", icon: "Sunset" }], highlights: ["kalamaki", "banana"], routes: [["kalamaki", "banana"]] },
-            { day: 4, title: "Zante Town", icon: "Camera", color: COLORS.logistics, activities: [{ time: "10:00", title: "Capitala", desc: "Shopping și portul istoric.", icon: "Map" }, { time: "19:00", title: "Cină Bohali", desc: "Vedere panoramică deasupra orașului.", icon: "Utensils" }], highlights: ["kalamaki", "zakynthosTown"], routes: [["kalamaki", "zakynthosTown"]] },
-            { day: 5, title: "West Coast (Mașini)", icon: "Car", color: COLORS.nature, activities: [{ time: "09:00", title: "Preluare mașini", desc: "Start roadtrip coasta de vest.", icon: "Car" }, { time: "12:00", title: "Limnionas", desc: "Sărituri în apă și peșteri.", icon: "Waves" }, { time: "17:00", title: "Navagio View", desc: "Panoramă de pe stânci.", icon: "Camera" }], highlights: ["kalamaki", "portoLimnionas", "shipwreck"], routes: [["kalamaki", "portoLimnionas"], ["portoLimnionas", "shipwreck"]] },
-            { day: 6, title: "North Coast (Mașini)", icon: "Compass", color: COLORS.nature, activities: [{ time: "10:00", title: "Xigia", desc: "Plaja cu sulf (spa natural).", icon: "Sparkles" }, { time: "14:00", title: "Satele de munte", desc: "Explorare Volimes și produse locale.", icon: "Mountain" }], highlights: ["kalamaki", "xigia"], routes: [["kalamaki", "xigia"]] },
-            { day: 7, title: "Plecare", icon: "Plane", color: COLORS.dark, activities: [{ time: "06:30", title: "Check-out", desc: "Zbor matinal la ora 08:35 AM.", icon: "Clock" }], highlights: ["kalamaki", "airport"], routes: [["kalamaki", "airport"]] }
-        ];
-
-        const costs = [
-            { item: "Cazare (6 nopți)", total: 1800, pp: 180, cat: "Home" },
-            { item: "Mașini (2 buc / 3 zile)", total: 450, pp: 45, cat: "Car" },
-            { item: "Barcă privată", total: 300, pp: 30, cat: "Ship" },
-            { item: "Mâncare & Diverse", total: 2000, pp: 200, cat: "Utensils" }
-        ];
-
-        function ZakynthosApp() {
-            const [tab, setTab] = useState(0);
-            const [activeDay, setActiveDay] = useState(0);
-            const current = days[activeDay];
-
-            return (
-                <div className="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col border-x">
-                    <header className="bg-gradient-to-br from-[#0077B6] to-[#2D6A4F] p-8 text-white rounded-b-[40px] shadow-lg">
-                        <h1 className="text-3xl font-black italic tracking-tighter" style={{fontFamily: 'Playfair Display'}}>ZANTE '26</h1>
-                        <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1 flex items-center gap-2"><Users size={12}/> Crew de 10 Persoane</p>
-                    </header>
-
-                    <div className="flex gap-2 p-4 overflow-x-auto no-scrollbar bg-gray-50 border-b">
-                        {["Itinerariu", "Buget", "Ghid Local"].map((t, i) => (
-                            <button key={i} onClick={() => setTab(i)} className={`px-5 py-2 rounded-full text-[11px] font-black uppercase transition-all ${tab === i ? 'bg-black text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>{t}</button>
-                        ))}
-                    </div>
-
-                    <div className="flex-1 p-6">
-                        {tab === 0 && (
-                            <>
-                                <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar pb-2">
-                                    {days.map((d, i) => (
-                                        <button key={i} onClick={() => setActiveDay(i)} className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl min-w-[65px] transition-all ${activeDay === i ? 'bg-white shadow-xl ring-2 ring-offset-2 scale-105' : 'bg-gray-50 opacity-40'}`} style={{ ringColor: d.color }}>
-                                            <Icon name={d.icon} color={d.color} size={20} />
-                                            <span className="text-[9px] font-black mt-1 uppercase">Zi {d.day}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                                <div className="mb-8">
-                                    <h2 className="text-2xl font-black text-gray-900 leading-none">{current.title}</h2>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">Plan detaliat pentru grup</p>
-                                </div>
-                                <div className="space-y-8">
-                                    {current.activities.map((a, i) => (
-                                        <div key={i} className="flex gap-4">
-                                            <div className="flex flex-col items-center"><div className="p-2 bg-gray-50 rounded-xl"><Icon name={a.icon} size={18} color={current.color} /></div><div className="w-px h-full bg-gray-100 mt-2"></div></div>
-                                            <div className="pb-2"><span className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">{a.time}</span><h4 className="font-bold text-gray-800">{a.title}</h4><p className="text-xs text-gray-500 mt-1">{a.desc}</p></div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </>
-                        )}
-
-                        {tab === 1 && (
-                            <div className="space-y-4">
-                                <h2 className="text-xl font-black mb-6 uppercase tracking-tighter">Estimare Costuri / Persoană</h2>
-                                {costs.map((c, i) => (
-                                    <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 bg-white rounded-lg shadow-sm"><Icon name={c.cat} size={16} color={COLORS.sea}/></div>
-                                            <span className="text-sm font-bold text-gray-700">{c.item}</span>
-                                        </div>
-                                        <div className="text-right font-black text-gray-900">€{c.pp}</div>
-                                    </div>
-                                ))}
-                                <div className="bg-black p-6 rounded-3xl text-white mt-8 shadow-xl">
-                                    <p className="text-[10px] uppercase font-bold opacity-50">Total estimat / persoană</p>
-                                    <h3 className="text-3xl font-black">€455</h3>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {tab === 2 && (
-                            <div className="space-y-4">
-                                <h2 className="text-xl font-black uppercase tracking-tighter">Ghid Kalamaki (Lângă noi)</h2>
-                                <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                                    <h4 className="font-bold text-orange-800">Merlis Taverna</h4>
-                                    <p className="text-xs text-orange-600 mt-1">Cea mai bună mâncare pe plajă. Ideală pentru grupuri mari.</p>
-                                </div>
-                                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                                    <h4 className="font-bold text-blue-800">Cave Bar</h4>
-                                    <p className="text-xs text-blue-600 mt-1">Cocktails cu vedere la stânci în Kalamaki.</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <footer className="p-6 text-center text-[9px] text-gray-300 font-black uppercase tracking-[0.2em]">GodGuard.ro • Zakynthos 2026</footer>
+        <div class="p-6 flex-1">
+            <div id="tab-0" class="tab-content active">
+                <div class="flex gap-2 mb-6 overflow-x-auto no-scrollbar pb-2">
+                    <button onclick="showDay(0)" class="day-btn flex-shrink-0 flex flex-col items-center p-3 rounded-2xl min-w-[65px] bg-white shadow-md ring-2 ring-orange-500"><span class="text-[10px] font-black uppercase text-orange-600">Zi 1</span></button>
+                    <button onclick="showDay(1)" class="day-btn flex-shrink-0 flex flex-col items-center p-3 rounded-2xl min-w-[65px] bg-gray-50 opacity-50"><span class="text-[10px] font-black uppercase text-blue-600">Zi 2</span></button>
+                    <button onclick="showDay(2)" class="day-btn flex-shrink-0 flex flex-col items-center p-3 rounded-2xl min-w-[65px] bg-gray-50 opacity-50"><span class="text-[10px] font-black uppercase text-blue-600">Zi 3</span></button>
+                    <button onclick="showDay(3)" class="day-btn flex-shrink-0 flex flex-col items-center p-3 rounded-2xl min-w-[65px] bg-gray-50 opacity-50"><span class="text-[10px] font-black uppercase text-gray-600">Zi 4</span></button>
+                    <button onclick="showDay(4)" class="day-btn flex-shrink-0 flex flex-col items-center p-3 rounded-2xl min-w-[65px] bg-gray-50 opacity-50"><span class="text-[10px] font-black uppercase text-green-600">Zi 5</span></button>
+                    <button onclick="showDay(5)" class="day-btn flex-shrink-0 flex flex-col items-center p-3 rounded-2xl min-w-[65px] bg-gray-50 opacity-50"><span class="text-[10px] font-black uppercase text-green-600">Zi 6</span></button>
+                    <button onclick="showDay(6)" class="day-btn flex-shrink-0 flex flex-col items-center p-3 rounded-2xl min-w-[65px] bg-gray-50 opacity-50"><span class="text-[10px] font-black uppercase text-red-600">Zi 7</span></button>
                 </div>
-            );
+
+                <div id="day-0" class="day-card active">
+                    <h2 class="text-2xl font-black text-gray-900 mb-6 border-l-4 border-orange-500 pl-3">Sosire & Kalamaki</h2>
+                    <div class="space-y-6">
+                        <div class="flex gap-4">
+                            <div class="text-xs font-bold text-gray-400 w-12 pt-1">09:00</div>
+                            <div><h4 class="font-bold text-gray-800">Aterizare</h4><p class="text-xs text-gray-500">Transfer la Hektor's Studios, Kalamaki.</p></div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="text-xs font-bold text-gray-400 w-12 pt-1">13:00</div>
+                            <div><h4 class="font-bold text-gray-800">Prânz</h4><p class="text-xs text-gray-500">Prima masă grecească la malul mării.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="day-1" class="day-card">
+                    <h2 class="text-2xl font-black text-gray-900 mb-6 border-l-4 border-blue-500 pl-3">Ziua cu Barca</h2>
+                    <div class="space-y-6">
+                        <div class="flex gap-4">
+                            <div class="text-xs font-bold text-gray-400 w-12 pt-1">10:00</div>
+                            <div><h4 class="font-bold text-gray-800">Agios Sostis</h4><p class="text-xs text-gray-500">Închiriem barcă (nu e nevoie de permis).</p></div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="text-xs font-bold text-gray-400 w-12 pt-1">14:00</div>
+                            <div><h4 class="font-bold text-gray-800">Marathonisi</h4><p class="text-xs text-gray-500">Snorkeling cu țestoasele Caretta-Caretta.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="day-4" class="day-card">
+                    <h2 class="text-2xl font-black text-gray-900 mb-6 border-l-4 border-green-600 pl-3">Roadtrip Coasta de Vest</h2>
+                    <div class="space-y-6">
+                        <div class="flex gap-4">
+                            <div class="text-xs font-bold text-gray-400 w-12 pt-1">09:30</div>
+                            <div><h4 class="font-bold text-gray-800">Porto Limnionas</h4><p class="text-xs text-gray-500">Sărituri în apă și peșteri azur.</p></div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="text-xs font-bold text-gray-400 w-12 pt-1">17:00</div>
+                            <div><h4 class="font-bold text-gray-800">Navagio View</h4><p class="text-xs text-gray-500">Vedere panoramică celebră de sus.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="day-6" class="day-card">
+                    <h2 class="text-2xl font-black text-gray-900 mb-6 border-l-4 border-red-600 pl-3">Plecare</h2>
+                    <div class="space-y-6">
+                        <div class="flex gap-4">
+                            <div class="text-xs font-bold text-gray-400 w-12 pt-1">06:00</div>
+                            <div><h4 class="font-bold text-gray-800">Ultima cafea</h4><p class="text-xs text-gray-500">Zbor spre casă la ora 08:35.</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="mt-10 text-[10px] text-gray-300 italic">*Zilele 3, 4 și 6 sunt plaje libere / explorare oraș.</p>
+            </div>
+
+            <div id="tab-1" class="tab-content">
+                <h2 class="text-xl font-black mb-6 uppercase tracking-tighter text-gray-800">Estimare / Persoană</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between p-4 bg-gray-50 rounded-xl border italic text-sm"><span>Cazare (6 nopți)</span><b>€180</b></div>
+                    <div class="flex justify-between p-4 bg-gray-50 rounded-xl border italic text-sm"><span>Mașini + Benzină</span><b>€60</b></div>
+                    <div class="flex justify-between p-4 bg-gray-50 rounded-xl border italic text-sm"><span>Barcă privată</span><b>€30</b></div>
+                    <div class="flex justify-between p-4 bg-gray-50 rounded-xl border italic text-sm"><span>Mâncare (buget mediu)</span><b>€200</b></div>
+                </div>
+                <div class="mt-8 bg-black p-6 rounded-3xl text-white">
+                    <p class="text-[10px] uppercase opacity-50 font-bold">Total estimat</p>
+                    <h3 class="text-3xl font-black">€470</h3>
+                </div>
+            </div>
+
+            <div id="tab-2" class="tab-content">
+                <h2 class="text-xl font-black mb-6 uppercase tracking-tighter text-gray-800">Recomandări Kalamaki</h2>
+                <div class="space-y-4">
+                    <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                        <h4 class="font-bold text-blue-800 underline">Merlis Taverna</h4>
+                        <p class="text-xs text-blue-600 mt-1">Lângă plajă, fructe de mare proaspete și atmosferă relaxată.</p>
+                    </div>
+                    <div class="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                        <h4 class="font-bold text-orange-800 underline">Cave Bar</h4>
+                        <p class="text-xs text-orange-600 mt-1">Un bar construit în stâncă, perfect pentru un cocktail la apus.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="p-6 text-center text-[9px] text-gray-300 font-black uppercase tracking-[0.2em] bg-gray-50">
+            GodGuard.ro • Zante 2026
+        </footer>
+    </div>
+
+    <script>
+        function switchTab(tabIndex) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-black', 'text-white');
+                el.classList.add('bg-gray-200', 'text-gray-500');
+            });
+            
+            document.getElementById('tab-' + tabIndex).classList.add('active');
+            const activeBtn = document.getElementById('tab-btn-' + tabIndex);
+            activeBtn.classList.remove('bg-gray-200', 'text-gray-500');
+            activeBtn.classList.add('bg-black', 'text-white');
         }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<ZakynthosApp />);
+        function showDay(dayIndex) {
+            document.querySelectorAll('.day-card').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.day-btn').forEach(el => {
+                el.classList.add('opacity-50');
+                el.classList.remove('ring-2', 'shadow-md', 'bg-white');
+            });
+
+            const targetDay = document.getElementById('day-' + dayIndex);
+            if(targetDay) targetDay.classList.add('active');
+            
+            const activeBtn = event.currentTarget;
+            activeBtn.classList.remove('opacity-50');
+            activeBtn.classList.add('ring-2', 'shadow-md', 'bg-white');
+        }
     </script>
 </body>
 </html>
