@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zakynthos 2026 - Itinerariu 10 Persoane</title>
+    <title>Zakynthos 2026 - Itinerariu Complet</title>
     <meta name="robots" content="noindex, nofollow">
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -11,10 +11,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap');
-        body { font-family: 'DM Sans', sans-serif; background-color: #F8F9FA; margin: 0; }
-        @keyframes dashMove { to { stroke-dashoffset: -52; } }
-        .custom-scroll::-webkit-scrollbar { display: none; }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
+        body { font-family: 'DM Sans', sans-serif; background-color: #f3f4f6; margin: 0; }
+        @keyframes dashMove { to { stroke-dashoffset: -50; } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
@@ -22,142 +22,124 @@
 
     <script type="text/babel">
         const { useState } = React;
-        const { 
-            Plane, Sun, Ship, Car, Coffee, Utensils, Camera, Clock, Users, 
-            Compass, Waves, Star, Map, Info, Wallet, Navigation, Sunset, 
-            Mountain, Eye, Sparkles, CalendarDays, Home, Shell, Anchor, Fuel
-        } = lucide;
+
+        const Icon = ({ name, size = 18, color = "currentColor" }) => {
+            const LucideIcon = lucide[name] || lucide.HelpCircle;
+            return <LucideIcon size={size} color={color} strokeWidth={2.5} />;
+        };
 
         const COLORS = {
-            sea: "#0077B6", seaLight: "#90E0EF", seaBg: "#CAF0F8",
-            nature: "#2D6A4F", natureLight: "#95D5B2", natureBg: "#D8F3DC",
-            logistics: "#E76F51", logisticsLight: "#F4A261", logisticsBg: "#FFECD2",
-            sand: "#FEFAE0", sandDark: "#DDA15E", dark: "#1B263B",
-            mid: "#415A77", light: "#778DA9", white: "#FFFFFF", bg: "#F8F9FA"
+            sea: "#0077B6", nature: "#2D6A4F", logistics: "#E76F51", 
+            dark: "#1B263B", bg: "#F8F9FA", white: "#FFFFFF"
         };
 
         const ISLAND_POINTS = {
-            kalamaki:       { x: 218, y: 405, label: "Kalamaki", anchor: "start" },
-            laganas:        { x: 175, y: 418, label: "Laganas", anchor: "end" },
-            agiosSostis:    { x: 152, y: 398, label: "Ag. Sostis", anchor: "end" },
-            zakynthosTown:  { x: 298, y: 308, label: "Zante Town", anchor: "start" },
-            tsilivi:        { x: 272, y: 228, label: "Tsilivi", anchor: "start" },
-            portoLimnionas: { x: 78, y: 258, label: "Porto Limnionas", anchor: "end" },
-            korakonisi:     { x: 82, y: 178, label: "Korakonisi", anchor: "end" },
-            shipwreck:      { x: 92, y: 122, label: "Navagio", anchor: "end" },
-            xigia:          { x: 262, y: 152, label: "Xigia Beach", anchor: "start" },
-            gerakas:        { x: 345, y: 432, label: "Gerakas", anchor: "start" },
-            marathonisi:    { x: 142, y: 452, label: "Marathonisi", anchor: "middle" },
-            airport:        { x: 232, y: 382, label: "Airport", anchor: "start" },
-        };
-
-        const IslandMap = ({ highlights = [], routes = [], dayColor }) => {
-            const color = dayColor || COLORS.sea;
-            const islandPath = `M 210,52 C 225,48 240,55 255,68 C 268,80 278,98 285,118 C 290,135 288,155 285,172 C 282,192 280,210 278,228 C 276,248 282,268 290,288 C 298,305 305,318 310,335 C 315,348 320,362 328,378 C 335,392 342,405 348,420 C 352,432 350,442 340,448 C 330,455 318,450 308,438 C 298,426 288,418 278,415 C 268,412 258,414 248,418 C 238,422 228,424 218,422 C 208,420 195,422 182,425 C 170,428 158,428 148,422 C 138,416 128,418 118,425 C 108,432 98,430 92,418 C 86,405 82,390 80,372 C 78,352 76,332 78,312 C 80,292 78,275 76,258 C 74,240 76,222 80,205 C 84,188 86,172 90,155 C 94,138 96,120 100,108 C 108,90 118,78 132,68 C 148,56 168,50 188,48 C 198,47 205,50 210,52 Z`;
-
-            const routePoints = [];
-            if (routes.length > 0) {
-                const firstFrom = ISLAND_POINTS[routes[0][0]];
-                if (firstFrom) routePoints.push(firstFrom);
-                routes.forEach(([, toKey]) => {
-                    const pt = ISLAND_POINTS[toKey];
-                    if (pt) routePoints.push(pt);
-                });
-            }
-
-            let routePath = "";
-            if (routePoints.length >= 2) {
-                routePath = `M ${routePoints[0].x},${routePoints[0].y}`;
-                for (let i = 1; i < routePoints.length; i++) {
-                    const curr = routePoints[i];
-                    routePath += ` L ${curr.x},${curr.y}`;
-                }
-            }
-
-            return (
-                <div className="rounded-3xl p-4 relative overflow-hidden bg-sky-100 shadow-inner">
-                    <svg viewBox="30 20 370 470" className="w-full h-auto max-h-[380px]">
-                        <path d={islandPath} fill="#8FBF87" stroke="#5A9A5E" strokeWidth="1.5" />
-                        {routePath && (
-                            <path d={routePath} stroke={color} strokeWidth="3" fill="none" strokeDasharray="8,5" style={{ animation: 'dashMove 2s linear infinite' }} />
-                        )}
-                        {Object.entries(ISLAND_POINTS).map(([key, pt]) => {
-                            const isHighlight = highlights.includes(key);
-                            return (
-                                <g key={key}>
-                                    <circle cx={pt.x} cy={pt.y} r={isHighlight ? 5 : 3} fill={isHighlight ? color : "#AAB8C8"} stroke="white" strokeWidth="1" />
-                                    {isHighlight && <text x={pt.x + 8} y={pt.y - 8} fontSize="10" fontWeight="bold" fill="#1B263B">{pt.label}</text>}
-                                </g>
-                            );
-                        })}
-                    </svg>
-                </div>
-            );
+            kalamaki: { x: 218, y: 405, label: "Kalamaki" },
+            airport: { x: 232, y: 382, label: "Aeroport" },
+            laganas: { x: 175, y: 418, label: "Laganas" },
+            shipwreck: { x: 92, y: 122, label: "Navagio" },
+            xigia: { x: 262, y: 152, label: "Xigia" },
+            portoLimnionas: { x: 78, y: 258, label: "Limnionas" },
+            zakynthosTown: { x: 298, y: 308, label: "Zante Town" },
+            banana: { x: 315, y: 408, label: "Banana Beach" }
         };
 
         const days = [
-            { day: 1, title: "Arrival & Kalamaki", icon: Plane, color: "#E76F51", transport: "Taxi / Walking", highlights: ["airport", "kalamaki", "laganas"], routes: [["airport", "kalamaki"], ["kalamaki", "laganas"]], activities: [{ time: "09:00", title: "Arrival", desc: "Land and drop bags in Kalamaki", icon: Plane, tag: "logistics" }, { time: "13:00", title: "Lunch", desc: "Local taverna in Kalamaki", icon: Utensils, tag: "nature" }] },
-            { day: 2, title: "Boat Day", icon: Ship, color: "#0077B6", transport: "Self-drive Boat", highlights: ["kalamaki", "marathonisi"], routes: [["kalamaki", "marathonisi"]], activities: [{ time: "10:00", title: "Rent Boat", desc: "No license needed from Ag. Sostis", icon: Anchor, tag: "sea" }] },
-            { day: 5, title: "West Coast Wild", icon: Car, color: "#2D6A4F", transport: "Rented Cars", highlights: ["kalamaki", "portoLimnionas", "shipwreck"], routes: [["kalamaki", "portoLimnionas"], ["portoLimnionas", "shipwreck"]], activities: [{ time: "09:00", title: "Drive West", desc: "Explore the cliffs and Navagio Viewpoint", icon: Camera, tag: "sea" }] },
-            { day: 7, title: "Departure", icon: Plane, color: "#E76F51", transport: "Car to Airport", highlights: ["kalamaki", "airport"], routes: [["kalamaki", "airport"]], activities: [{ time: "06:30", title: "Airport Run", desc: "Flight leaves at 08:35 AM", icon: Clock, tag: "logistics" }] }
+            { day: 1, title: "Sosire & Kalamaki", icon: "Plane", color: COLORS.logistics, activities: [{ time: "09:00", title: "Aterizare", desc: "Transfer aeroport - Kalamaki. Lăsăm bagajele.", icon: "Plane" }, { time: "13:00", title: "Prânz", desc: "Tavernele locale din Kalamaki.", icon: "Utensils" }], highlights: ["airport", "kalamaki"], routes: [["airport", "kalamaki"]] },
+            { day: 2, title: "Ziua cu Barca", icon: "Ship", color: COLORS.sea, activities: [{ time: "10:00", title: "Închiriere barcă", desc: "Barcă fără permis din Ag. Sostis/Laganas.", icon: "Anchor" }, { time: "14:00", title: "Marathonisi", desc: "Insula țestoaselor.", icon: "Waves" }], highlights: ["kalamaki", "laganas"], routes: [["kalamaki", "laganas"]] },
+            { day: 3, title: "Plaje Sud", icon: "Sun", color: COLORS.sea, activities: [{ time: "11:00", title: "Banana Beach", desc: "Relaxare și sporturi nautice.", icon: "Waves" }, { time: "17:00", title: "Apus Cameo", desc: "Insula Cameo (podul de lemn).", icon: "Sunset" }], highlights: ["kalamaki", "banana"], routes: [["kalamaki", "banana"]] },
+            { day: 4, title: "Zante Town", icon: "Camera", color: COLORS.logistics, activities: [{ time: "10:00", title: "Capitala", desc: "Shopping și portul istoric.", icon: "Map" }, { time: "19:00", title: "Cină Bohali", desc: "Vedere panoramică deasupra orașului.", icon: "Utensils" }], highlights: ["kalamaki", "zakynthosTown"], routes: [["kalamaki", "zakynthosTown"]] },
+            { day: 5, title: "West Coast (Mașini)", icon: "Car", color: COLORS.nature, activities: [{ time: "09:00", title: "Preluare mașini", desc: "Start roadtrip coasta de vest.", icon: "Car" }, { time: "12:00", title: "Limnionas", desc: "Sărituri în apă și peșteri.", icon: "Waves" }, { time: "17:00", title: "Navagio View", desc: "Panoramă de pe stânci.", icon: "Camera" }], highlights: ["kalamaki", "portoLimnionas", "shipwreck"], routes: [["kalamaki", "portoLimnionas"], ["portoLimnionas", "shipwreck"]] },
+            { day: 6, title: "North Coast (Mașini)", icon: "Compass", color: COLORS.nature, activities: [{ time: "10:00", title: "Xigia", desc: "Plaja cu sulf (spa natural).", icon: "Sparkles" }, { time: "14:00", title: "Satele de munte", desc: "Explorare Volimes și produse locale.", icon: "Mountain" }], highlights: ["kalamaki", "xigia"], routes: [["kalamaki", "xigia"]] },
+            { day: 7, title: "Plecare", icon: "Plane", color: COLORS.dark, activities: [{ time: "06:30", title: "Check-out", desc: "Zbor matinal la ora 08:35 AM.", icon: "Clock" }], highlights: ["kalamaki", "airport"], routes: [["kalamaki", "airport"]] }
+        ];
+
+        const costs = [
+            { item: "Cazare (6 nopți)", total: 1800, pp: 180, cat: "Home" },
+            { item: "Mașini (2 buc / 3 zile)", total: 450, pp: 45, cat: "Car" },
+            { item: "Barcă privată", total: 300, pp: 30, cat: "Ship" },
+            { item: "Mâncare & Diverse", total: 2000, pp: 200, cat: "Utensils" }
         ];
 
         function ZakynthosApp() {
-            const [activeTab, setActiveTab] = useState(0);
+            const [tab, setTab] = useState(0);
             const [activeDay, setActiveDay] = useState(0);
-            const currentDay = days[activeDay] || days[0];
+            const current = days[activeDay];
 
             return (
-                <div className="max-w-[480px] mx-auto min-h-screen bg-[#F8F9FA] pb-10">
-                    <header className="bg-gradient-to-br from-[#0077B6] to-[#2D6A4F] p-8 rounded-b-[40px] text-white shadow-lg">
-                        <h1 className="text-4xl font-black mb-2 italic">Zakynthos '26</h1>
-                        <p className="opacity-80 flex items-center gap-2"><Users size={16}/> Group of 10 Explorers</p>
+                <div className="max-w-md mx-auto bg-white min-h-screen shadow-2xl flex flex-col border-x">
+                    <header className="bg-gradient-to-br from-[#0077B6] to-[#2D6A4F] p-8 text-white rounded-b-[40px] shadow-lg">
+                        <h1 className="text-3xl font-black italic tracking-tighter" style={{fontFamily: 'Playfair Display'}}>ZANTE '26</h1>
+                        <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mt-1 flex items-center gap-2"><Users size={12}/> Crew de 10 Persoane</p>
                     </header>
 
-                    <div className="flex gap-2 p-4 overflow-x-auto custom-scroll">
-                        {["Itinerariu", "Costuri", "Ghid Local"].map((t, i) => (
-                            <button key={i} onClick={() => setActiveTab(i)} className={`px-5 py-2 rounded-full text-xs font-bold transition-all ${activeTab === i ? 'bg-black text-white' : 'bg-gray-200 text-gray-600'}`}>{t}</button>
+                    <div className="flex gap-2 p-4 overflow-x-auto no-scrollbar bg-gray-50 border-b">
+                        {["Itinerariu", "Buget", "Ghid Local"].map((t, i) => (
+                            <button key={i} onClick={() => setTab(i)} className={`px-5 py-2 rounded-full text-[11px] font-black uppercase transition-all ${tab === i ? 'bg-black text-white shadow-md' : 'bg-gray-200 text-gray-500'}`}>{t}</button>
                         ))}
                     </div>
 
-                    {activeTab === 0 && (
-                        <div className="px-4">
-                            <div className="flex gap-3 mb-6 overflow-x-auto pb-2 custom-scroll">
-                                {days.map((d, i) => (
-                                    <button key={i} onClick={() => setActiveDay(i)} className={`flex flex-col items-center p-3 rounded-2xl min-w-[70px] ${activeDay === i ? 'bg-white shadow-md ring-2' : 'bg-gray-100'}`} style={{ ringColor: d.color }}>
-                                        <d.icon size={20} color={d.color} />
-                                        <span className="text-[10px] font-bold mt-1">Ziua {d.day}</span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            <div className="bg-white p-6 rounded-[30px] shadow-sm mb-6 border border-gray-100">
-                                <h2 className="text-2xl font-bold text-gray-800 mb-1">{currentDay.title}</h2>
-                                <p className="text-xs text-gray-400 mb-4 flex items-center gap-1"><Car size={12}/> {currentDay.transport}</p>
-                                <IslandMap highlights={currentDay.highlights} routes={currentDay.routes} dayColor={currentDay.color} />
-                            </div>
-
-                            <div className="space-y-6">
-                                {currentDay.activities.map((act, i) => (
-                                    <div key={i} className="flex gap-4">
-                                        <div className="flex flex-col items-center">
-                                            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600"><act.icon size={18}/></div>
-                                            <div className="w-0.5 h-full bg-gray-100 my-1"></div>
+                    <div className="flex-1 p-6">
+                        {tab === 0 && (
+                            <>
+                                <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar pb-2">
+                                    {days.map((d, i) => (
+                                        <button key={i} onClick={() => setActiveDay(i)} className={`flex-shrink-0 flex flex-col items-center p-3 rounded-2xl min-w-[65px] transition-all ${activeDay === i ? 'bg-white shadow-xl ring-2 ring-offset-2 scale-105' : 'bg-gray-50 opacity-40'}`} style={{ ringColor: d.color }}>
+                                            <Icon name={d.icon} color={d.color} size={20} />
+                                            <span className="text-[9px] font-black mt-1 uppercase">Zi {d.day}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="mb-8">
+                                    <h2 className="text-2xl font-black text-gray-900 leading-none">{current.title}</h2>
+                                    <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">Plan detaliat pentru grup</p>
+                                </div>
+                                <div className="space-y-8">
+                                    {current.activities.map((a, i) => (
+                                        <div key={i} className="flex gap-4">
+                                            <div className="flex flex-col items-center"><div className="p-2 bg-gray-50 rounded-xl"><Icon name={a.icon} size={18} color={current.color} /></div><div className="w-px h-full bg-gray-100 mt-2"></div></div>
+                                            <div className="pb-2"><span className="text-[10px] font-black text-blue-500 uppercase tracking-tighter">{a.time}</span><h4 className="font-bold text-gray-800">{a.title}</h4><p className="text-xs text-gray-500 mt-1">{a.desc}</p></div>
                                         </div>
-                                        <div>
-                                            <span className="text-[10px] font-bold text-gray-400">{act.time}</span>
-                                            <h4 className="font-bold text-gray-800">{act.title}</h4>
-                                            <p className="text-sm text-gray-500">{act.desc}</p>
+                                    ))}
+                                </div>
+                            </>
+                        )}
+
+                        {tab === 1 && (
+                            <div className="space-y-4">
+                                <h2 className="text-xl font-black mb-6 uppercase tracking-tighter">Estimare Costuri / Persoană</h2>
+                                {costs.map((c, i) => (
+                                    <div key={i} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-white rounded-lg shadow-sm"><Icon name={c.cat} size={16} color={COLORS.sea}/></div>
+                                            <span className="text-sm font-bold text-gray-700">{c.item}</span>
                                         </div>
+                                        <div className="text-right font-black text-gray-900">€{c.pp}</div>
                                     </div>
                                 ))}
+                                <div className="bg-black p-6 rounded-3xl text-white mt-8 shadow-xl">
+                                    <p className="text-[10px] uppercase font-bold opacity-50">Total estimat / persoană</p>
+                                    <h3 className="text-3xl font-black">€455</h3>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                    
-                    <footer className="mt-10 text-center text-gray-300 text-[10px] uppercase tracking-widest">
-                        GodGuard Vacation Planner
-                    </footer>
+                        )}
+                        
+                        {tab === 2 && (
+                            <div className="space-y-4">
+                                <h2 className="text-xl font-black uppercase tracking-tighter">Ghid Kalamaki (Lângă noi)</h2>
+                                <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                                    <h4 className="font-bold text-orange-800">Merlis Taverna</h4>
+                                    <p className="text-xs text-orange-600 mt-1">Cea mai bună mâncare pe plajă. Ideală pentru grupuri mari.</p>
+                                </div>
+                                <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                                    <h4 className="font-bold text-blue-800">Cave Bar</h4>
+                                    <p className="text-xs text-blue-600 mt-1">Cocktails cu vedere la stânci în Kalamaki.</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <footer className="p-6 text-center text-[9px] text-gray-300 font-black uppercase tracking-[0.2em]">GodGuard.ro • Zakynthos 2026</footer>
                 </div>
             );
         }
