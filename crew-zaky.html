@@ -379,8 +379,12 @@
         <div class="relative z-10">
             <!-- label + theme toggle -->
             <div class="flex items-center justify-between mb-3">
-                <span class="text-xs font-bold tracking-[0.25em] uppercase"
-                      style="color: #F97316;">✦ The Crew</span>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-xs font-bold tracking-[0.25em] uppercase"
+                          style="color: #F97316;">✦ The Crew</span>
+                    <span id="crew-greeting" class="text-xs font-semibold"
+                          style="color:rgba(255,255,255,0.55); display:none;"></span>
+                </div>
                 <button id="theme-toggle" onclick="toggleTheme()"
                         class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold"
                         style="background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.15); cursor:pointer;">
@@ -1493,6 +1497,27 @@ const _sb = (function() {
   const errEl     = document.getElementById('auth-error');
   const submitBtn = document.getElementById('auth-submit');
 
+  // Extrage numele afișabil dintr-un user Supabase
+  // Prioritate: user_metadata.full_name → email prefix (înainte de @)
+  function getDisplayName(user) {
+    if (!user) return '';
+    const meta = user.user_metadata || {};
+    if (meta.full_name && meta.full_name.trim()) return meta.full_name.trim();
+    // fallback: "zaky@crew.ro" → "Zaky"
+    const prefix = (user.email || '').split('@')[0];
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  }
+
+  function showGreeting(user) {
+    const el = document.getElementById('crew-greeting');
+    if (!el) return;
+    const name = getDisplayName(user);
+    if (name) {
+      el.textContent = 'Salut, ' + name + '!';
+      el.style.display = 'block';
+    }
+  }
+
   // Block Esc key while modal is visible
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
@@ -1504,9 +1529,12 @@ const _sb = (function() {
   // Block click on the dark backdrop (don't close)
   overlay.addEventListener('click', function(e) { e.stopPropagation(); });
 
-  // Check existing session → hide overlay if already logged in
+  // Check existing session → hide overlay + show greeting if already logged in
   _sb.auth.getSession().then(function({ data: { session } }) {
-    if (session) overlay.classList.add('hidden');
+    if (session) {
+      overlay.classList.add('hidden');
+      showGreeting(session.user);
+    }
   });
 
   // Form submit
@@ -1522,7 +1550,7 @@ const _sb = (function() {
     submitBtn.disabled    = true;
     submitBtn.textContent = 'Se verifică...';
 
-    const { error } = await _sb.auth.signInWithPassword({ email, password });
+    const { data, error } = await _sb.auth.signInWithPassword({ email, password });
 
     if (error) {
       errEl.textContent     = 'Acces Respins. Încearcă din nou.';
@@ -1530,6 +1558,7 @@ const _sb = (function() {
       submitBtn.textContent = 'Acces Crew ✈';
     } else {
       overlay.classList.add('hidden');
+      showGreeting(data.user);
     }
   });
 })();
