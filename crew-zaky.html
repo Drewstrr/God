@@ -159,6 +159,39 @@
         body.light #cost-wrapper { box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.07); }
         body.light .rounded-2xl.theme-bg1 { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         body.light header { box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
+
+        /* ══════════════════════════════════════
+           Map toggle button — "Vezi Harta"
+        ══════════════════════════════════════ */
+        @keyframes map-pulse {
+            0%   { box-shadow: 0 0 0 0   rgba(14,165,233,0.55); }
+            60%  { box-shadow: 0 0 0 9px rgba(14,165,233,0.00); }
+            100% { box-shadow: 0 0 0 0   rgba(14,165,233,0.55); }
+        }
+        .btn-map-toggle {
+            background: #0EA5E9;
+            color: #FFFFFF;
+            font-weight: 700;
+            border: none;
+            border-radius: 999px;
+            padding: 7px 14px;
+            font-size: 11px;
+            white-space: nowrap;
+            cursor: pointer;
+            flex-shrink: 0;
+            animation: map-pulse 2s ease-in-out infinite;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .btn-map-toggle:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(14,165,233,0.55);
+            animation: none;
+        }
+        .btn-map-toggle.map-open {
+            background: #0284C7;
+            animation: none;
+            box-shadow: 0 3px 12px rgba(14,165,233,0.45);
+        }
     </style>
 </head>
 <body>
@@ -1019,13 +1052,11 @@ function toggleMap(dayIndex) {
   if (!mapContainer || !btn) return;
   if (mapContainer.innerHTML === '') {
     mapContainer.innerHTML = buildMap(day.highlights, day.routes, day.accent);
-    btn.style.background = day.accent;
-    btn.style.color = '#0A0A0A';
+    btn.classList.add('map-open');
     btn.textContent = '🗺 Ascunde harta';
   } else {
     mapContainer.innerHTML = '';
-    btn.style.background = '#1A1A1A';
-    btn.style.color = day.accent;
+    btn.classList.remove('map-open');
     btn.textContent = '🗺 Vezi harta';
   }
 }
@@ -1056,8 +1087,7 @@ function renderDays() {
             <p class="text-xs mt-1" style="color:${th.t3};">${day.subtitle}</p>
           </div>
           <button id="mapbtn-${day.index}" onclick="toggleMap(${day.index})"
-                  class="flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold"
-                  style="background:${th.mapBg}; color:${day.accent}; border:1px solid ${day.accent}33; white-space:nowrap; cursor:pointer;">
+                  class="btn-map-toggle">
             🗺 Vezi harta
           </button>
         </div>
