@@ -23,18 +23,20 @@
             --hdr:   linear-gradient(135deg, #0A0A0A 0%, #111827 60%, #0A0A0A 100%);
         }
         body.light {
-            --bg:    #F4F4F5;
+            --bg:    #FFFFFF;
             --bg1:   #FFFFFF;
             --card:  #FFFFFF;
-            --card2: #F0F0F0;
-            --bdr:   #E4E4E7;
-            --bdr2:  #D4D4D8;
-            --t1:    #111111;
-            --t2:    #555555;
-            --t3:    #888888;
-            --t4:    #AAAAAA;
+            --card2: #F8F8F8;
+            --bdr:   #F0F0F0;
+            --bdr2:  #E8E8E8;
+            --t1:    #0A0A0A;
+            --t2:    #444444;
+            --t3:    #777777;
+            --t4:    #999999;
             --t5:    #BBBBBB;
             --hdr:   linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #1a1a2e 100%);
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.07);
+            --shadow-sm:   0 2px 10px rgba(0,0,0,0.08);
         }
         * { box-sizing: border-box; }
         body {
@@ -64,6 +66,9 @@
         .theme-t2    { color: var(--t2) !important; }
         .theme-t3    { color: var(--t3) !important; }
         .theme-t5    { color: var(--t5) !important; }
+        body.light #cost-wrapper { box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.07); }
+        body.light .rounded-2xl.theme-bg1 { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        body.light header { box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
     </style>
 </head>
 <body>
@@ -250,7 +255,7 @@
             </div>
 
             <!-- Cost rows -->
-            <div class="rounded-2xl overflow-hidden" style="border:1px solid #1E1E1E;">
+            <div id="cost-wrapper" class="rounded-2xl overflow-hidden" style="border:1px solid var(--bdr);">
                 <div id="cost-rows"></div>
             </div>
 
@@ -580,7 +585,7 @@ function renderBeaches() {
     const dc = DIFF_COLORS[b.difficulty];
     return `
       <div class="rounded-2xl p-4"
-           style="background:${th.card}; border:1px solid ${th.bdr}; border-left:3px solid ${dc.text};">
+           style="background:${th.card}; border:1px solid ${th.bdr}; border-left:3px solid ${dc.text}; box-shadow:${th.shadow};">
         <div class="flex items-start justify-between gap-2 mb-2">
           <div class="flex items-center gap-2">
             <span class="text-lg">${b.icon}</span>
@@ -672,7 +677,7 @@ function renderKalamaki() {
   const th = T();
   container.innerHTML = KALAMAKI.map(s => `
     <div class="rounded-2xl p-4 flex items-center gap-3"
-         style="background:${th.card}; border:1px solid ${th.bdr};">
+         style="background:${th.card}; border:1px solid ${th.bdr}; box-shadow:${th.shadow};">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-wrap mb-1">
           <span class="text-sm font-bold" style="color:${th.t1};">${s.name}</span>
@@ -732,10 +737,13 @@ function T() {
     card: '#141414', card2: '#1A1A1A', bdr: '#1E1E1E', bdr2: '#2A2A2A',
     t1: '#F0F0F0', t2: '#A0A0A0', t3: '#666', t4: '#444', t5: '#333',
     transBg: '#0A0A0A', mapBg: '#1A1A1A',
+    shadow: 'none', shadowSm: 'none',
   } : {
-    card: '#FFFFFF', card2: '#F0F0F0', bdr: '#E4E4E7', bdr2: '#D4D4D8',
-    t1: '#111111', t2: '#555555', t3: '#888', t4: '#999', t5: '#BBB',
-    transBg: '#F4F4F5', mapBg: '#E8E8E8',
+    card: '#FFFFFF', card2: '#F8F8F8', bdr: '#F0F0F0', bdr2: '#E8E8E8',
+    t1: '#0A0A0A', t2: '#444444', t3: '#777', t4: '#999', t5: '#BBB',
+    transBg: '#FFFFFF', mapBg: '#F0F0F0',
+    shadow: '0 4px 24px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.07)',
+    shadowSm: '0 2px 10px rgba(0,0,0,0.08)',
   };
 }
 
@@ -932,7 +940,7 @@ function renderDays() {
     const th = T();
     const bg = isDark() ? day.accentBg : day.accentBgLight;
     panel.innerHTML = `
-      <div class="rounded-2xl p-4 mb-4" style="background:${bg}; border:1px solid ${day.accent}22;">
+      <div class="rounded-2xl p-4 mb-4" style="background:${bg}; border:1px solid ${day.accent}22; box-shadow:${th.shadow};">
         <div class="flex items-start justify-between gap-3">
           <div>
             <p class="text-xs font-bold uppercase tracking-widest mb-1" style="color:${day.accent};">
