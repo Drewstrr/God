@@ -120,44 +120,28 @@
         /* ══════════════════════════════════════
            MOMENT 2 — Responsive grid layout
         ══════════════════════════════════════ */
+        /* Nav main row — 4 butoane sticky, grid uniform */
         .nav-main-row {
-            display: flex;
-            gap: 7px;
-            overflow-x: auto;
-            padding: 10px 14px 8px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 10px 12px 8px;
         }
-        .nav-main-row::-webkit-scrollbar { display: none; }
+        .nav-main-row .tab-btn {
+            padding: 9px 4px;
+            font-size: 10px;
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+        /* WarRoom — întotdeauna full-width, non-sticky */
         .nav-warroom-row {
-            display: none; /* hidden on desktop — WarRoom stays in flex row */
-            padding: 0 14px 10px;
+            padding: 0 12px 10px;
+            background: var(--bg);
         }
-        @media (max-width: 600px) {
-            .nav-main-row {
-                display: grid;
-                grid-template-columns: repeat(4, 1fr);
-                gap: 6px;
-                overflow: visible;
-                padding: 10px 12px 6px;
-            }
-            .nav-main-row .tab-btn {
-                padding: 9px 4px;
-                font-size: 9px;
-                letter-spacing: 0.04em;
-                text-align: center;
-            }
-            /* Hide WarRoom from the flex row on mobile */
-            .nav-main-row #tb-4 { display: none; }
-            /* Show the dedicated full-width WarRoom row */
-            .nav-warroom-row {
-                display: block;
-                padding: 0 12px 10px;
-            }
-            .nav-warroom-row .tab-btn-warroom {
-                width: 100%;
-                text-align: center;
-                display: block;
-                border-radius: 10px;
-            }
+        .nav-warroom-row .tab-btn-warroom {
+            width: 100%;
+            text-align: center;
+            display: block;
         }
 
         .day-btn  { transition: background 0.2s, color 0.2s, transform 0.15s; }
@@ -260,24 +244,18 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════ TAB BAR ═══════════════════════
-         MOMENT 3: sticky wrapper conține doar primele 4 butoane
-    ════════════════════════════════════════════════════════════ -->
+    <!-- ══ STICKY: primele 4 butoane ══ -->
     <div class="sticky top-0 z-30" style="background:var(--bg); border-bottom:1px solid var(--bdr);">
-        <!-- MOMENT 2: nav-main-row devine grid 4col pe mobile -->
         <div class="nav-main-row">
             <button onclick="switchTab(0)" id="tb-0" class="tab-btn active-tab">Itinerariu</button>
             <button onclick="switchTab(1)" id="tb-1" class="tab-btn">Costuri</button>
             <button onclick="switchTab(2)" id="tb-2" class="tab-btn">Kalamaki</button>
             <button onclick="switchTab(3)" id="tb-3" class="tab-btn">Plaje</button>
-            <!-- Desktop: WarRoom în același rând -->
-            <button onclick="switchTab(4)" id="tb-4" class="tab-btn tab-btn-warroom flex-shrink-0">⚔ WarRoom</button>
         </div>
-        <!-- MOMENT 2+3: pe mobile, WarRoom apare NON-sticky sub grid -->
     </div>
-    <!-- MOMENT 3: WarRoom NON-sticky pe mobile — rămâne în flux normal -->
+    <!-- ══ NON-STICKY: WarRoom întotdeauna pe rândul 2 ══ -->
     <div class="nav-warroom-row" style="background:var(--bg);">
-        <button onclick="switchTab(4)" class="tab-btn tab-btn-warroom">⚔ WarRoom</button>
+        <button onclick="switchTab(4)" id="tb-4" class="tab-btn tab-btn-warroom">⚔ WarRoom</button>
     </div>
 
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
