@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex, nofollow">
     <title>Crew Zaky '26</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -161,6 +162,121 @@
         body.light header { box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
 
         /* ══════════════════════════════════════
+           Auth Overlay / Login Modal
+        ══════════════════════════════════════ */
+        #auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 24px;
+        }
+        #auth-overlay.hidden { display: none; }
+        #auth-modal {
+            background: #111111;
+            border: 1px solid #222222;
+            border-radius: 22px;
+            padding: 38px 28px 34px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 28px 72px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04);
+        }
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .auth-logo-tag {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.26em;
+            text-transform: uppercase;
+            color: #F97316;
+            margin-bottom: 8px;
+        }
+        .auth-logo-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.1rem;
+            font-weight: 700;
+            font-style: italic;
+            color: #F0F0F0;
+            line-height: 1;
+        }
+        .auth-logo-title span { color: #0EA5E9; }
+        .auth-logo-sub {
+            font-size: 11px;
+            color: #555;
+            margin-top: 8px;
+            letter-spacing: 0.04em;
+        }
+        .auth-field { margin-bottom: 16px; }
+        .auth-field label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        .auth-field input {
+            width: 100%;
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 13px;
+            color: #F0F0F0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            padding: 15px 16px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+        }
+        .auth-field input::placeholder { color: #3A3A3A; }
+        .auth-field input:focus {
+            border-color: #0EA5E9;
+            box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+        }
+        #auth-error {
+            font-size: 12px;
+            font-weight: 600;
+            color: #EF4444;
+            text-align: center;
+            min-height: 20px;
+            margin-bottom: 10px;
+        }
+        #auth-submit {
+            width: 100%;
+            background: #0EA5E9;
+            color: #FFFFFF;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            border: none;
+            border-radius: 14px;
+            padding: 17px;
+            cursor: pointer;
+            transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #auth-submit:hover:not(:disabled) {
+            background: #0284C7;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(14,165,233,0.45);
+        }
+        #auth-submit:active:not(:disabled) { transform: scale(0.97); }
+        #auth-submit:disabled {
+            background: #152636;
+            color: #2A5A72;
+            cursor: not-allowed;
+        }
+
+        /* ══════════════════════════════════════
            Map toggle button — "Vezi Harta"
         ══════════════════════════════════════ */
         @keyframes map-pulse {
@@ -195,6 +311,33 @@
     </style>
 </head>
 <body>
+
+<!-- ═══════════════════════ AUTH OVERLAY ═══════════════════════ -->
+<div id="auth-overlay">
+    <div id="auth-modal">
+        <div class="auth-logo">
+            <div class="auth-logo-tag">✦ The Crew</div>
+            <div class="auth-logo-title"><span>Zakynthos</span> '26</div>
+            <div class="auth-logo-sub">Acces exclusiv membri crew</div>
+        </div>
+        <form id="auth-form" autocomplete="off" onsubmit="return false;">
+            <div class="auth-field">
+                <label for="auth-email">Email</label>
+                <input type="email" id="auth-email"
+                       placeholder="email@exemplu.com"
+                       required autocomplete="email">
+            </div>
+            <div class="auth-field">
+                <label for="auth-password">Parolă</label>
+                <input type="password" id="auth-password"
+                       placeholder="••••••••"
+                       required autocomplete="current-password">
+            </div>
+            <div id="auth-error"></div>
+            <button type="submit" id="auth-submit">Acces Crew ✈</button>
+        </form>
+    </div>
+</div>
 
 <div class="max-w-md mx-auto min-h-screen flex flex-col">
 
@@ -1304,6 +1447,57 @@ applyTheme(savedTheme === 'light');
   }
 })();
 
+
+// ── Supabase Auth ──────────────────────────────────────────
+(function() {
+  const SUPA_URL = 'https://jdhpczzxighkydfvites.supabase.co';
+  const SUPA_KEY = 'sb_publishable_dqGDI5IR_m4Er4y4yKpXbQ_u2sr6Iuw';
+  const _sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+  const overlay  = document.getElementById('auth-overlay');
+  const form     = document.getElementById('auth-form');
+  const errEl    = document.getElementById('auth-error');
+  const submitBtn = document.getElementById('auth-submit');
+
+  // Block Esc key while modal is visible
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+
+  // Block click on the dark backdrop (don't close)
+  overlay.addEventListener('click', function(e) {
+    e.stopPropagation();
+  });
+
+  // Check existing session → hide overlay if already logged in
+  _sb.auth.getSession().then(function({ data: { session } }) {
+    if (session) overlay.classList.add('hidden');
+  });
+
+  // Form submit → signInWithPassword
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const email    = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value;
+
+    errEl.textContent    = '';
+    submitBtn.disabled   = true;
+    submitBtn.textContent = 'Se verifică...';
+
+    const { error } = await _sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      errEl.textContent    = 'Email sau parolă incorectă. Încearcă din nou.';
+      submitBtn.disabled   = false;
+      submitBtn.textContent = 'Acces Crew ✈';
+    } else {
+      overlay.classList.add('hidden');
+    }
+  });
+})();
 </script>
 </body>
 </html>
