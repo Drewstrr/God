@@ -12,7 +12,7 @@
  */
 
 const PROJECT_URL   = 'https://jdhpczzxighkydfvites.supabase.co';
-const SERVICE_ROLE_KEY = 'PUNE_AICI_SERVICE_ROLE_KEY'; // ← înlocuiește
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'PUNE_AICI_SERVICE_ROLE_KEY';
 
 const CREW = [
   { name: 'Andrei'   },
@@ -56,8 +56,9 @@ async function createUser({ name }) {
   }
 }
 
+
 if (SERVICE_ROLE_KEY === 'PUNE_AICI_SERVICE_ROLE_KEY') {
-  console.error('⚠️  Înlocuiește SERVICE_ROLE_KEY cu cheia service_role din Supabase Dashboard!');
+  console.error('⚠️  Setează env: SUPABASE_SERVICE_ROLE_KEY=<cheia> node create-crew-users.mjs');
   process.exit(1);
 }
 
