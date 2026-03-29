@@ -54,7 +54,44 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         .fade-up { animation: fadeUp 0.35s ease forwards; }
-        .tab-btn  { transition: background 0.2s, color 0.2s; }
+
+        /* ── Tab bar buttons ── */
+        .tab-btn {
+            transition: background 0.25s, color 0.25s, transform 0.15s, filter 0.15s, box-shadow 0.25s;
+            border: 1px solid rgba(255,255,255,0.08);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+        }
+        .tab-btn:hover {
+            transform: scale(1.05);
+            filter: brightness(1.15);
+        }
+        .tab-btn.active-tab {
+            border-color: rgba(255,255,255,0.18);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+        }
+        body.light .tab-btn {
+            border-color: rgba(0,0,0,0.07);
+        }
+        body.light .tab-btn.active-tab {
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+        }
+
+        /* ── WarRoom pulse ── */
+        @keyframes warPulse {
+            0%   { box-shadow: 0 0 0 0 rgba(139,0,0,0.30), 0 2px 12px rgba(0,0,0,0.25); }
+            50%  { box-shadow: 0 0 0 7px rgba(139,0,0,0.00), 0 2px 12px rgba(0,0,0,0.25); }
+            100% { box-shadow: 0 0 0 0 rgba(139,0,0,0.30), 0 2px 12px rgba(0,0,0,0.25); }
+        }
+        .tab-btn-warroom {
+            animation: warPulse 3.6s ease-in-out infinite;
+            border-color: rgba(139,0,0,0.35) !important;
+        }
+        .tab-btn-warroom:hover {
+            transform: scale(1.05);
+            filter: brightness(1.15);
+        }
+
         .day-btn  { transition: background 0.2s, color 0.2s, transform 0.15s; }
         .day-btn.active  { transform: scale(1.06); }
         .theme-bg    { background: var(--bg) !important; }
@@ -158,8 +195,8 @@
     <div class="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar sticky top-0 z-30"
          style="background:var(--bg); border-bottom:1px solid var(--bdr);">
         <button onclick="switchTab(0)" id="tb-0"
-                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:#F0F0F0; color:#0A0A0A;">Itinerariu</button>
+                class="tab-btn active-tab flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
+                style="background:var(--t1); color:var(--bg);">Itinerariu</button>
         <button onclick="switchTab(1)" id="tb-1"
                 class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
                 style="background:var(--card2); color:var(--t3);">Costuri</button>
@@ -169,6 +206,9 @@
         <button onclick="switchTab(3)" id="tb-3"
                 class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
                 style="background:var(--card2); color:var(--t3);">Plaje</button>
+        <button onclick="switchTab(4)" id="tb-4"
+                class="tab-btn tab-btn-warroom flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
+                style="background:rgba(80,0,0,0.75); color:#FF6B6B;">⚔ WarRoom</button>
     </div>
 
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
@@ -294,6 +334,23 @@
 
             <div id="beaches-rows" class="flex flex-col gap-3"></div>
 
+        </div>
+
+        <!-- ─────────── TAB 4: WARROOM ─────────── -->
+        <div id="tab-4" class="tab-content hidden pt-4">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
+                     style="background:rgba(139,0,0,0.2); border:1px solid rgba(139,0,0,0.3);">⚔</div>
+                <div>
+                    <h2 class="text-xl font-black" style="font-family:'Playfair Display',serif;">WarRoom</h2>
+                    <p class="text-xs" style="color:#666;">Coming soon — secret crew features</p>
+                </div>
+            </div>
+            <div class="rounded-2xl p-6 text-center" style="background:rgba(139,0,0,0.08); border:1px solid rgba(139,0,0,0.2);">
+                <p class="text-3xl mb-3">🔒</p>
+                <p class="text-sm font-bold" style="color:#FF6B6B;">Acces restricționat</p>
+                <p class="text-xs mt-2" style="color:#666;">Această secțiune va fi activată în curând.</p>
+            </div>
         </div>
 
     </main>
@@ -996,19 +1053,28 @@ function renderDays() {
 
 // ── Switch tab ────────────────────────────────────────────────
 function switchTab(index) {
-  // hide all
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(`tab-${index}`).classList.remove('hidden');
 
   const th = T();
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 5; i++) {
     const btn = document.getElementById(`tb-${i}`);
-    if (i === index) {
+    if (!btn) continue;
+    btn.classList.remove('active-tab');
+    if (i === 4) {
+      // WarRoom — always keeps its own style, just dim when inactive
+      btn.style.background   = i === index ? 'rgba(139,0,0,0.85)' : 'rgba(80,0,0,0.75)';
+      btn.style.color        = '#FF6B6B';
+      btn.style.opacity      = i === index ? '1' : '0.7';
+    } else if (i === index) {
+      btn.classList.add('active-tab');
       btn.style.background = th.t1;
-      btn.style.color = isDark() ? '#0A0A0A' : '#FFFFFF';
+      btn.style.color      = isDark() ? '#0A0A0A' : '#FFFFFF';
+      btn.style.opacity    = '1';
     } else {
       btn.style.background = th.card2;
-      btn.style.color = th.t3;
+      btn.style.color      = th.t3;
+      btn.style.opacity    = '1';
     }
   }
   activeTab = index;
