@@ -275,6 +275,30 @@
             color: #2A5A72;
             cursor: not-allowed;
         }
+        #logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 28px auto 0;
+            padding: 9px 20px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 10px;
+            color: #555;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #logout-btn:hover {
+            border-color: rgba(239,68,68,0.35);
+            color: #EF4444;
+            background: rgba(239,68,68,0.06);
+        }
 
         /* ══════════════════════════════════════
            Map toggle button — "Vezi Harta"
@@ -322,10 +346,11 @@
         </div>
         <form id="auth-form" autocomplete="off" onsubmit="return false;">
             <div class="auth-field">
-                <label for="auth-email">Email</label>
-                <input type="email" id="auth-email"
-                       placeholder="email@exemplu.com"
-                       required autocomplete="email">
+                <label for="auth-name">Nume</label>
+                <input type="text" id="auth-name"
+                       placeholder="ex: Zaky"
+                       required autocomplete="off"
+                       autocapitalize="none" spellcheck="false">
             </div>
             <div class="auth-field">
                 <label for="auth-password">Parolă</label>
@@ -574,6 +599,10 @@
                 <p class="text-sm font-bold" style="color:#FF6B6B;">Acces restricționat</p>
                 <p class="text-xs mt-2" style="color:#666;">Această secțiune va fi activată în curând.</p>
             </div>
+            <button id="logout-btn" onclick="crewLogout()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Ieșire
+            </button>
         </div>
 
     </main>
@@ -1449,14 +1478,19 @@ applyTheme(savedTheme === 'light');
 
 
 // ── Supabase Auth ──────────────────────────────────────────
-(function() {
+const _sb = (function() {
   const SUPA_URL = 'https://jdhpczzxighkydfvites.supabase.co';
   const SUPA_KEY = 'sb_publishable_dqGDI5IR_m4Er4y4yKpXbQ_u2sr6Iuw';
-  const _sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+  // persistSession:true (default) → sesiunea rămâne în localStorage la închidere browser
+  return supabase.createClient(SUPA_URL, SUPA_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true }
+  });
+})();
 
-  const overlay  = document.getElementById('auth-overlay');
-  const form     = document.getElementById('auth-form');
-  const errEl    = document.getElementById('auth-error');
+(function() {
+  const overlay   = document.getElementById('auth-overlay');
+  const form      = document.getElementById('auth-form');
+  const errEl     = document.getElementById('auth-error');
   const submitBtn = document.getElementById('auth-submit');
 
   // Block Esc key while modal is visible
@@ -1468,36 +1502,43 @@ applyTheme(savedTheme === 'light');
   }, true);
 
   // Block click on the dark backdrop (don't close)
-  overlay.addEventListener('click', function(e) {
-    e.stopPropagation();
-  });
+  overlay.addEventListener('click', function(e) { e.stopPropagation(); });
 
   // Check existing session → hide overlay if already logged in
   _sb.auth.getSession().then(function({ data: { session } }) {
     if (session) overlay.classList.add('hidden');
   });
 
-  // Form submit → signInWithPassword
+  // Form submit
   form.addEventListener('submit', async function(e) {
     e.preventDefault();
-    const email    = document.getElementById('auth-email').value.trim();
+
+    // Transformare Nume → email: "Zaky" → "zaky@crew.ro"
+    const raw      = document.getElementById('auth-name').value.trim();
+    const email    = raw.toLowerCase().replace(/\s+/g, '') + '@crew.ro';
     const password = document.getElementById('auth-password').value;
 
-    errEl.textContent    = '';
-    submitBtn.disabled   = true;
+    errEl.textContent     = '';
+    submitBtn.disabled    = true;
     submitBtn.textContent = 'Se verifică...';
 
     const { error } = await _sb.auth.signInWithPassword({ email, password });
 
     if (error) {
-      errEl.textContent    = 'Email sau parolă incorectă. Încearcă din nou.';
-      submitBtn.disabled   = false;
+      errEl.textContent     = 'Acces Respins. Încearcă din nou.';
+      submitBtn.disabled    = false;
       submitBtn.textContent = 'Acces Crew ✈';
     } else {
       overlay.classList.add('hidden');
     }
   });
 })();
+
+// Logout — apelat din butonul din WarRoom
+async function crewLogout() {
+  await _sb.auth.signOut();
+  window.location.reload();
+}
 </script>
 </body>
 </html>
