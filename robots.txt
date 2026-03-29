@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /crew-zaky
+Disallow: /crew-zaky.html
+Disallow: /vacanta
+Disallow: /vacanta.html

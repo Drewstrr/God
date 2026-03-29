@@ -5,6 +5,11 @@
   publish = "."
   functions = "netlify/functions"
 
+[[redirects]]
+  from = "/crew-zaky"
+  to = "/crew-zaky.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
