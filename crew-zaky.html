@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Crew Zaky '26</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #0A0A0A;
+            color: #F0F0F0;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp 0.35s ease forwards; }
+
+        /* Tab & day button states */
+        .tab-btn  { transition: background 0.2s, color 0.2s; }
+        .day-btn  { transition: background 0.2s, color 0.2s, transform 0.15s; }
+        .day-btn.active  { transform: scale(1.06); }
+
+        /* Timeline connector */
+        .tl-line {
+            position: absolute;
+            left: 15px;
+            top: 32px;
+            bottom: -14px;
+            width: 2px;
+            background: #2A2A2A;
+        }
+    </style>
+</head>
+<body>
+
+<div class="max-w-md mx-auto min-h-screen flex flex-col">
+
+    <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+    <header class="relative overflow-hidden px-6 pt-10 pb-8"
+            style="background: linear-gradient(135deg, #0A0A0A 0%, #111827 60%, #0A0A0A 100%);">
+
+        <!-- decorative circles -->
+        <div class="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10"
+             style="background: radial-gradient(circle, #0EA5E9, transparent); transform: translate(30%, -30%);"></div>
+        <div class="absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-10"
+             style="background: radial-gradient(circle, #F97316, transparent); transform: translate(-30%, 30%);"></div>
+
+        <div class="relative z-10">
+            <!-- label -->
+            <div class="flex items-center gap-2 mb-3">
+                <span class="text-xs font-bold tracking-[0.25em] uppercase"
+                      style="color: #F97316;">✦ The Crew</span>
+            </div>
+
+            <!-- title -->
+            <h1 class="leading-none mb-3"
+                style="font-family:'Playfair Display',serif; font-size:2.6rem; font-weight:700; font-style:italic;">
+                <span style="color:#0EA5E9;">Zakynthos</span>
+                <span style="color:#F0F0F0;"> '26</span>
+            </h1>
+
+            <!-- meta pills -->
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 rounded-full text-xs font-600"
+                      style="background:#1A1A1A; color:#A0A0A0; border:1px solid #2A2A2A;">
+                    👥 10 explorers
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-600"
+                      style="background:#1A1A1A; color:#A0A0A0; border:1px solid #2A2A2A;">
+                    📅 7 zile
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-600"
+                      style="background:#1A1A1A; color:#A0A0A0; border:1px solid #2A2A2A;">
+                    🏠 Kalamaki base
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════ TAB BAR ═══════════════════════ -->
+    <div class="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar sticky top-0 z-30"
+         style="background:#0A0A0A; border-bottom:1px solid #1E1E1E;">
+        <button onclick="switchTab(0)" id="tb-0"
+                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
+                style="background:#F0F0F0; color:#0A0A0A;">Itinerariu</button>
+        <button onclick="switchTab(1)" id="tb-1"
+                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
+                style="background:#1A1A1A; color:#666;">Costuri</button>
+        <button onclick="switchTab(2)" id="tb-2"
+                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
+                style="background:#1A1A1A; color:#666;">Kalamaki</button>
+        <button onclick="switchTab(3)" id="tb-3"
+                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
+                style="background:#1A1A1A; color:#666;">Plaje</button>
+    </div>
+
+    <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+    <main class="flex-1 px-4 pb-8">
+
+        <!-- ─────────── TAB 0: ITINERARIU ─────────── -->
+        <div id="tab-0" class="tab-content pt-4">
+
+            <!-- Day selector -->
+            <div class="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
+
+                <button onclick="showDay(0)" id="db-0"
+                        class="day-btn active flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#F97316; border-color:#F97316; color:#fff;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider opacity-80">Zi</span>
+                    <span class="text-lg font-black leading-none">1</span>
+                </button>
+
+                <button onclick="showDay(1)" id="db-1"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">2</span>
+                </button>
+
+                <button onclick="showDay(2)" id="db-2"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">3</span>
+                </button>
+
+                <button onclick="showDay(3)" id="db-3"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">4</span>
+                </button>
+
+                <button onclick="showDay(4)" id="db-4"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">5</span>
+                </button>
+
+                <button onclick="showDay(5)" id="db-5"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">6</span>
+                </button>
+
+                <button onclick="showDay(6)" id="db-6"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">7</span>
+                </button>
+
+            </div>
+
+            <!-- Day panels -->
+            <div id="day-panels"></div>
+
+        </div><!-- end tab-0 -->
+
+        <!-- ─────────── TAB 1: COSTURI ─────────── -->
+        <div id="tab-1" class="tab-content hidden pt-4">
+            <p style="color:#555;" class="text-sm">Coming soon…</p>
+        </div>
+
+        <!-- ─────────── TAB 2: KALAMAKI ─────────── -->
+        <div id="tab-2" class="tab-content hidden pt-4">
+            <p style="color:#555;" class="text-sm">Coming soon…</p>
+        </div>
+
+        <!-- ─────────── TAB 3: PLAJE ─────────── -->
+        <div id="tab-3" class="tab-content hidden pt-4">
+            <p style="color:#555;" class="text-sm">Coming soon…</p>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+    <footer class="text-center py-6 px-4" style="border-top:1px solid #1A1A1A;">
+        <p class="text-xs" style="color:#333;">
+            Made for the crew &nbsp;·&nbsp; Zakynthos 2026
+        </p>
+        <div class="flex justify-center gap-1 mt-2">
+            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:#0EA5E9;"></span>
+            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:#22C55E;"></span>
+            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:#F97316;"></span>
+        </div>
+    </footer>
+
+</div><!-- end max-w-md -->
+
+<!-- ═══════════════════════ DATA & LOGIC ═══════════════════════ -->
+<script>
+
+// ── Day data ──────────────────────────────────────────────────
+const DAYS = [
+  {
+    index: 0,
+    title: "Arrival & Kalamaki",
+    subtitle: "Settle in, feel the island",
+    accent: "#F97316",
+    accentBg: "#1C1008",
+    transport: "✈️  Taxi · Walking",
+    activities: [
+      { time: "09:00", icon: "✈️", title: "Land at Zakynthos Airport",
+        desc: "Collect luggage, split into taxis for Kalamaki. ~15 min drive south." },
+      { time: "09:45", icon: "🏠", title: "Drop bags at Hektor's Studios",
+        desc: "Check-in or early bag drop. Grab keys, find your rooms, freshen up." },
+      { time: "10:30", icon: "🏖️", title: "Kalamaki Beach Morning",
+        desc: "Soft golden sand and shallow turquoise water. Perfect first swim of the trip." },
+      { time: "13:00", icon: "🍽️", title: "Lunch at Merlis Taverna",
+        desc: "Traditional Greek cuisine right on the beach. Try the fresh grilled fish and tzatziki." },
+      { time: "15:00", icon: "🚶", title: "Explore Laganas Strip",
+        desc: "Short taxi to Laganas — the island's main strip. Coffee, souvenir shops, vibes." },
+      { time: "17:30", icon: "🌅", title: "Cameo Island Sunset",
+        desc: "Tiny island connected by a wooden bridge. THE sunset spot near base. Don't miss it." },
+      { time: "20:00", icon: "🍷", title: "Dinner at Zepos",
+        desc: "Kalamaki local favourite. Garden terrace, fresh seafood and grilled meats. Book ahead for 10." },
+    ]
+  },
+  {
+    index: 1,
+    title: "Boat Adventure",
+    subtitle: "Captain your own voyage",
+    accent: "#0EA5E9",
+    accentBg: "#06111A",
+    transport: "🚢  Self-drive Boat · Taxi",
+    activities: [
+      { time: "08:00", icon: "☕", title: "Breakfast at Kavos Psarou",
+        desc: "Fuel up with Greek yogurt, honey, and strong coffee before the sea day." },
+      { time: "09:30", icon: "🚕", title: "Taxi to Ag. Sostis Port",
+        desc: "Pick up your self-drive speedboat rental. No license needed. Full safety briefing." },
+      { time: "10:00", icon: "🐢", title: "Sail to Marathonisi (Turtle Island)",
+        desc: "20 min cruise south. Crystal water, white sand. Sea turtles nest here — spot them!" },
+      { time: "12:30", icon: "🗺️", title: "Keri Caves Exploration",
+        desc: "Navigate to the stunning blue sea grottos at the south tip. Snorkeling is incredible." },
+      { time: "14:00", icon: "🥪", title: "Beach Picnic & Swim",
+        desc: "Anchor near a quiet cove. Cold drinks, packed lunch, and total silence." },
+      { time: "16:30", icon: "⚓", title: "Return Boat & Transfer Back",
+        desc: "Head back to port, return the boat, taxi to base. Shower and relax." },
+      { time: "19:30", icon: "🌿", title: "Dinner at Arekia",
+        desc: "Farm-to-table Greek dishes, local produce. Reserve in advance for the group." },
+    ]
+  },
+  {
+    index: 2,
+    title: "Beach Hopping South",
+    subtitle: "Golden sands & turquoise waters",
+    accent: "#0EA5E9",
+    accentBg: "#06111A",
+    transport: "🚌  Bus · Walking",
+    activities: [
+      { time: "08:30", icon: "🍞", title: "Lazy Breakfast at Base",
+        desc: "Sleep in a bit. Coffee and toast at the studios or the nearby café." },
+      { time: "10:00", icon: "🍌", title: "Bus to Banana Beach",
+        desc: "The island's party beach — sunbeds, water sports, good energy." },
+      { time: "12:00", icon: "🌊", title: "Gerakas Beach",
+        desc: "Protected Caretta caretta nesting beach. Dramatic clay cliffs, no sunbeds, pure nature." },
+      { time: "14:00", icon: "🍽️", title: "Lunch at Gerakas Taverna",
+        desc: "Simple beachside food — Greek salad, tzatziki, grilled chicken and cold beers." },
+      { time: "15:30", icon: "🪨", title: "Porto Zoro Beach",
+        desc: "Wild rocky beauty, unique formations. Excellent snorkeling, very peaceful." },
+      { time: "17:30", icon: "🍹", title: "Quick Stop in Argassi",
+        desc: "Lively village, grab a cocktail and watch the sun go down over the bay." },
+      { time: "20:00", icon: "🫕", title: "Group Dinner in Kalamaki",
+        desc: "Back to base. Taverna Planos — one of Kalamaki's best. Big portions, good wine." },
+    ]
+  },
+  {
+    index: 3,
+    title: "Zakynthos Town Day",
+    subtitle: "Culture, history & harbour charm",
+    accent: "#F97316",
+    accentBg: "#1C1008",
+    transport: "🚌  Bus · Walking",
+    activities: [
+      { time: "09:00", icon: "🚌", title: "Bus to Zakynthos Town",
+        desc: "Quick 15 min ride north. Get dropped at Solomos Square." },
+      { time: "09:30", icon: "🏛️", title: "Solomos Square & Harbour Walk",
+        desc: "The heart of town. Venetian architecture, marble square, harbour views and espresso." },
+      { time: "10:30", icon: "🎨", title: "Byzantine Museum",
+        desc: "Beautiful religious icons and art rescued from churches after the 1953 earthquake." },
+      { time: "12:00", icon: "🏰", title: "Bohali Hill & Venetian Castle",
+        desc: "Walk up or take a short taxi. Panoramic views of the town, harbour and coastline." },
+      { time: "13:30", icon: "🍝", title: "Lunch at Malanos",
+        desc: "Local institution since 1949. Try moussaka, pastitsio, and the house barrel wine." },
+      { time: "15:00", icon: "🛍️", title: "Shopping & Gelato",
+        desc: "Browse shops for local olive oil, honey, and handmade ceramics. Finish with gelato." },
+      { time: "17:00", icon: "🏠", title: "Return to Kalamaki",
+        desc: "Bus or taxi back. Pool time and rest before the night out." },
+      { time: "20:30", icon: "🎉", title: "Dinner & Nightlife in Laganas",
+        desc: "Group dinner then optional night on the strip. Laganas doesn't sleep." },
+    ]
+  },
+  {
+    index: 4,
+    title: "West Coast Wild",
+    subtitle: "Cliffs, caves & untouched shores",
+    accent: "#22C55E",
+    accentBg: "#071209",
+    transport: "🚗  Rented Cars (2 cars)",
+    activities: [
+      { time: "08:00", icon: "🚗", title: "Pick Up Rental Cars",
+        desc: "2 cars for 10 people. Pick up from local agency near Kalamaki." },
+      { time: "09:00", icon: "🛣️", title: "Drive to Porto Limnionas",
+        desc: "50 min scenic drive west through mountains and olive groves." },
+      { time: "09:50", icon: "💧", title: "Porto Limnionas Swim & Explore",
+        desc: "Dramatic emerald fjord carved into rock. Jump off ledges into crystal-clear water." },
+      { time: "12:00", icon: "🌿", title: "Drive to Korakonisi",
+        desc: "20 min north. Natural rock arch, hidden coves, completely undeveloped." },
+      { time: "13:30", icon: "🍖", title: "Lunch in Volimes Village",
+        desc: "Authentic mountain taverna. Local honey, fresh bread, and hearty stews." },
+      { time: "15:00", icon: "📸", title: "Shipwreck Beach Viewpoint",
+        desc: "THE iconic Zakynthos view. Look down at the MV Panagiotis wreck in turquoise blue." },
+      { time: "17:00", icon: "⛪", title: "Drive South via Anafonitria",
+        desc: "Stop at the medieval monastery. Winding roads through olive groves at golden hour." },
+      { time: "20:00", icon: "🔥", title: "BBQ Night at Studios",
+        desc: "Buy supplies en route. Group BBQ on the terrace. Best night of the trip." },
+    ]
+  },
+  {
+    index: 5,
+    title: "North & Hidden Gems",
+    subtitle: "Sulphur springs & mountain villages",
+    accent: "#22C55E",
+    accentBg: "#071209",
+    transport: "🚗  Rented Cars",
+    activities: [
+      { time: "08:30", icon: "🥐", title: "Breakfast on the Go",
+        desc: "Grab pastries and coffee from the bakery. Pack the car with snacks and plenty of water." },
+      { time: "09:30", icon: "♨️", title: "Drive to Xigia Beach",
+        desc: "45 min north. Natural sulphur springs bubble up from underwater — a natural spa in the sea." },
+      { time: "11:00", icon: "🪨", title: "Makris Gialos Beach",
+        desc: "Secluded white pebble beach nearby. No facilities, no crowds — pure Zakynthos." },
+      { time: "13:00", icon: "🌯", title: "Lunch in Tsilivi",
+        desc: "Lively resort town. Great gyros spots and cold Mythos beer in the sun." },
+      { time: "14:30", icon: "🦩", title: "Alykes Salt Flats",
+        desc: "Unique landscape — old Venetian saltworks. Flamingos sometimes spotted in spring." },
+      { time: "16:00", icon: "🗺️", title: "Free Exploration Time",
+        desc: "Split up or stay together. Last chance for a hidden beach, a viewpoint, or a nap." },
+      { time: "18:00", icon: "🌇", title: "Sunset at Zakynthos Town",
+        desc: "Return south. Golden hour at the harbour — one last big view of the island." },
+      { time: "20:30", icon: "🥂", title: "Last Supper: Lofos Restaurant",
+        desc: "Hillside restaurant with valley views. Best food of the trip. Celebrate the crew." },
+    ]
+  },
+  {
+    index: 6,
+    title: "Departure",
+    subtitle: "Last moments & safe travels",
+    accent: "#F97316",
+    accentBg: "#1C1008",
+    transport: "🚗  Rental Cars → Airport",
+    activities: [
+      { time: "05:30", icon: "⏰", title: "Wake Up & Final Pack",
+        desc: "Alarm set. Pack bags, tidy studios, leave everything ready before leaving." },
+      { time: "06:00", icon: "☕", title: "Quick Coffee & Checkout",
+        desc: "Express checkout at Hektor's. Grab coffee from the 24h kiosk nearby." },
+      { time: "06:30", icon: "🚗", title: "Drive to Airport",
+        desc: "Return rental cars at the airport. Only 5 min from base — easy." },
+      { time: "07:00", icon: "🎫", title: "Airport Check-in",
+        desc: "Arrive 90 min early. Check bags, last Greek coffee at departures." },
+      { time: "08:35", icon: "✈️", title: "Takeoff!",
+        desc: "Window seat for one last view of that turquoise coast. Until next time, Zakynthos." },
+    ]
+  },
+];
+
+// ── State ─────────────────────────────────────────────────────
+let activeTab = 0;
+let activeDay = 0;
+
+// ── Render day panels ─────────────────────────────────────────
+function renderDays() {
+  const container = document.getElementById('day-panels');
+  container.innerHTML = '';
+
+  DAYS.forEach(day => {
+    const panel = document.createElement('div');
+    panel.id = `day-${day.index}`;
+    panel.style.display = day.index === 0 ? 'block' : 'none';
+    panel.className = 'fade-up';
+
+    // Day header card
+    panel.innerHTML = `
+      <div class="rounded-2xl p-4 mb-5" style="background:${day.accentBg}; border:1px solid ${day.accent}22;">
+        <div class="flex items-start justify-between">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-widest mb-1" style="color:${day.accent};">
+              Ziua ${day.index + 1}
+            </p>
+            <h2 class="text-xl font-black leading-tight" style="font-family:'Playfair Display',serif; color:#F0F0F0;">
+              ${day.title}
+            </h2>
+            <p class="text-xs mt-1" style="color:#666;">${day.subtitle}</p>
+          </div>
+        </div>
+        <div class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+             style="background:#0A0A0A; color:${day.accent}; border:1px solid ${day.accent}33;">
+          ${day.transport}
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="flex flex-col gap-0">
+        ${day.activities.map((act, i) => `
+          <div class="flex gap-3 ${i < day.activities.length - 1 ? 'mb-4' : ''}">
+            <!-- icon + line -->
+            <div class="flex flex-col items-center flex-shrink-0" style="width:32px;">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+                   style="background:${day.accentBg}; border:1px solid ${day.accent}33;">
+                ${act.icon}
+              </div>
+              ${i < day.activities.length - 1 ? `
+                <div class="w-px flex-1 mt-1" style="background:#1E1E1E; min-height:20px;"></div>
+              ` : ''}
+            </div>
+            <!-- content -->
+            <div class="flex-1 pb-1">
+              <span class="text-[11px] font-bold tabular-nums" style="color:${day.accent};">${act.time}</span>
+              <h4 class="text-sm font-bold mt-0.5 mb-1" style="color:#F0F0F0;">${act.title}</h4>
+              <p class="text-xs leading-relaxed" style="color:#666;">${act.desc}</p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    container.appendChild(panel);
+  });
+}
+
+// ── Switch tab ────────────────────────────────────────────────
+function switchTab(index) {
+  // hide all
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById(`tab-${index}`).classList.remove('hidden');
+
+  // update buttons
+  for (let i = 0; i < 4; i++) {
+    const btn = document.getElementById(`tb-${i}`);
+    if (i === index) {
+      btn.style.background = '#F0F0F0';
+      btn.style.color = '#0A0A0A';
+    } else {
+      btn.style.background = '#1A1A1A';
+      btn.style.color = '#555';
+    }
+  }
+  activeTab = index;
+}
+
+// ── Show day ──────────────────────────────────────────────────
+function showDay(index) {
+  const day = DAYS[index];
+
+  // hide all panels
+  DAYS.forEach(d => {
+    const el = document.getElementById(`day-${d.index}`);
+    if (el) el.style.display = 'none';
+  });
+
+  // show selected
+  const panel = document.getElementById(`day-${index}`);
+  if (panel) {
+    panel.style.display = 'block';
+    panel.classList.remove('fade-up');
+    void panel.offsetWidth; // reflow
+    panel.classList.add('fade-up');
+  }
+
+  // update day buttons
+  for (let i = 0; i < 7; i++) {
+    const btn = document.getElementById(`db-${i}`);
+    if (!btn) continue;
+    if (i === index) {
+      btn.style.background = day.accent;
+      btn.style.borderColor = day.accent;
+      btn.style.color = '#fff';
+      btn.classList.add('active');
+    } else {
+      btn.style.background = '#141414';
+      btn.style.borderColor = '#2A2A2A';
+      btn.style.color = '#555';
+      btn.classList.remove('active');
+    }
+  }
+  activeDay = index;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+renderDays();
+
+</script>
+</body>
+</html>
