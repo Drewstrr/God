@@ -8,13 +8,42 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg:    #0A0A0A;
+            --bg1:   #111111;
+            --card:  #141414;
+            --card2: #1A1A1A;
+            --bdr:   #1E1E1E;
+            --bdr2:  #2A2A2A;
+            --t1:    #F0F0F0;
+            --t2:    #A0A0A0;
+            --t3:    #666666;
+            --t4:    #444444;
+            --t5:    #333333;
+            --hdr:   linear-gradient(135deg, #0A0A0A 0%, #111827 60%, #0A0A0A 100%);
+        }
+        body.light {
+            --bg:    #F4F4F5;
+            --bg1:   #FFFFFF;
+            --card:  #FFFFFF;
+            --card2: #F0F0F0;
+            --bdr:   #E4E4E7;
+            --bdr2:  #D4D4D8;
+            --t1:    #111111;
+            --t2:    #555555;
+            --t3:    #888888;
+            --t4:    #AAAAAA;
+            --t5:    #BBBBBB;
+            --hdr:   linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #1a1a2e 100%);
+        }
         * { box-sizing: border-box; }
         body {
             font-family: 'DM Sans', sans-serif;
-            background: #0A0A0A;
-            color: #F0F0F0;
+            background: var(--bg);
+            color: var(--t1);
             min-height: 100vh;
             margin: 0;
+            transition: background 0.3s, color 0.3s;
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -23,21 +52,18 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         .fade-up { animation: fadeUp 0.35s ease forwards; }
-
-        /* Tab & day button states */
         .tab-btn  { transition: background 0.2s, color 0.2s; }
         .day-btn  { transition: background 0.2s, color 0.2s, transform 0.15s; }
         .day-btn.active  { transform: scale(1.06); }
-
-        /* Timeline connector */
-        .tl-line {
-            position: absolute;
-            left: 15px;
-            top: 32px;
-            bottom: -14px;
-            width: 2px;
-            background: #2A2A2A;
-        }
+        .theme-bg    { background: var(--bg) !important; }
+        .theme-bg1   { background: var(--bg1) !important; }
+        .theme-card  { background: var(--card) !important; }
+        .theme-card2 { background: var(--card2) !important; }
+        .theme-bdr   { border-color: var(--bdr) !important; }
+        .theme-t1    { color: var(--t1) !important; }
+        .theme-t2    { color: var(--t2) !important; }
+        .theme-t3    { color: var(--t3) !important; }
+        .theme-t5    { color: var(--t5) !important; }
     </style>
 </head>
 <body>
@@ -46,7 +72,7 @@
 
     <!-- ═══════════════════════ HEADER ═══════════════════════ -->
     <header class="relative overflow-hidden px-6 pt-10 pb-8"
-            style="background: linear-gradient(135deg, #0A0A0A 0%, #111827 60%, #0A0A0A 100%);">
+            style="background: var(--hdr);">
 
         <!-- decorative circles -->
         <div class="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10"
@@ -55,10 +81,16 @@
              style="background: radial-gradient(circle, #F97316, transparent); transform: translate(-30%, 30%);"></div>
 
         <div class="relative z-10">
-            <!-- label -->
-            <div class="flex items-center gap-2 mb-3">
+            <!-- label + theme toggle -->
+            <div class="flex items-center justify-between mb-3">
                 <span class="text-xs font-bold tracking-[0.25em] uppercase"
                       style="color: #F97316;">✦ The Crew</span>
+                <button id="theme-toggle" onclick="toggleTheme()"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold"
+                        style="background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.15); cursor:pointer;">
+                    <span id="theme-icon">☀️</span>
+                    <span id="theme-label">Light</span>
+                </button>
             </div>
 
             <!-- title -->
@@ -70,16 +102,16 @@
 
             <!-- meta pills -->
             <div class="flex flex-wrap gap-2 mt-4">
-                <span class="px-3 py-1 rounded-full text-xs font-600"
-                      style="background:#1A1A1A; color:#A0A0A0; border:1px solid #2A2A2A;">
+                <span class="px-3 py-1 rounded-full text-xs font-600 theme-card2 theme-t2 theme-bdr"
+                      style="border:1px solid var(--bdr2);">
                     👥 10 explorers
                 </span>
-                <span class="px-3 py-1 rounded-full text-xs font-600"
-                      style="background:#1A1A1A; color:#A0A0A0; border:1px solid #2A2A2A;">
+                <span class="px-3 py-1 rounded-full text-xs font-600 theme-card2 theme-t2"
+                      style="border:1px solid var(--bdr2);">
                     📅 7 zile
                 </span>
-                <span class="px-3 py-1 rounded-full text-xs font-600"
-                      style="background:#1A1A1A; color:#A0A0A0; border:1px solid #2A2A2A;">
+                <span class="px-3 py-1 rounded-full text-xs font-600 theme-card2 theme-t2"
+                      style="border:1px solid var(--bdr2);">
                     🏠 Kalamaki base
                 </span>
             </div>
@@ -87,30 +119,30 @@
     </header>
 
     <!-- ═══════════════════════ COUNTDOWN ═══════════════════════ -->
-    <div class="px-4 py-4" style="background:#0A0A0A; border-bottom:1px solid #1E1E1E;">
-        <div class="rounded-2xl p-4" style="background:#111; border:1px solid #1E1E1E;">
-            <p class="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 text-center" style="color:#555;">
+    <div class="px-4 py-4 theme-bg" style="border-bottom:1px solid var(--bdr);">
+        <div class="rounded-2xl p-4 theme-bg1" style="border:1px solid var(--bdr);">
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 text-center theme-t3">
                 ✦ Countdown to Zakynthos
             </p>
             <div class="flex justify-center gap-3" id="countdown-boxes">
                 <div class="flex flex-col items-center">
                     <span id="cd-days" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#0EA5E9;">--</span>
-                    <span class="text-[9px] uppercase tracking-widest mt-1" style="color:#333;">zile</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1 theme-t5">zile</span>
                 </div>
-                <span class="text-2xl font-black self-start mt-1" style="color:#222;">:</span>
+                <span class="text-2xl font-black self-start mt-1" style="color:var(--bdr2);">:</span>
                 <div class="flex flex-col items-center">
                     <span id="cd-hours" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#F97316;">--</span>
-                    <span class="text-[9px] uppercase tracking-widest mt-1" style="color:#333;">ore</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1 theme-t5">ore</span>
                 </div>
-                <span class="text-2xl font-black self-start mt-1" style="color:#222;">:</span>
+                <span class="text-2xl font-black self-start mt-1" style="color:var(--bdr2);">:</span>
                 <div class="flex flex-col items-center">
                     <span id="cd-mins" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#22C55E;">--</span>
-                    <span class="text-[9px] uppercase tracking-widest mt-1" style="color:#333;">min</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1 theme-t5">min</span>
                 </div>
-                <span class="text-2xl font-black self-start mt-1" style="color:#222;">:</span>
+                <span class="text-2xl font-black self-start mt-1" style="color:var(--bdr2);">:</span>
                 <div class="flex flex-col items-center">
                     <span id="cd-secs" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#A78BFA;">--</span>
-                    <span class="text-[9px] uppercase tracking-widest mt-1" style="color:#333;">sec</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1 theme-t5">sec</span>
                 </div>
             </div>
             <div id="cd-message"></div>
@@ -119,19 +151,19 @@
 
     <!-- ═══════════════════════ TAB BAR ═══════════════════════ -->
     <div class="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar sticky top-0 z-30"
-         style="background:#0A0A0A; border-bottom:1px solid #1E1E1E;">
+         style="background:var(--bg); border-bottom:1px solid var(--bdr);">
         <button onclick="switchTab(0)" id="tb-0"
                 class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
                 style="background:#F0F0F0; color:#0A0A0A;">Itinerariu</button>
         <button onclick="switchTab(1)" id="tb-1"
                 class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:#1A1A1A; color:#666;">Costuri</button>
+                style="background:var(--card2); color:var(--t3);">Costuri</button>
         <button onclick="switchTab(2)" id="tb-2"
                 class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:#1A1A1A; color:#666;">Kalamaki</button>
+                style="background:var(--card2); color:var(--t3);">Kalamaki</button>
         <button onclick="switchTab(3)" id="tb-3"
                 class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:#1A1A1A; color:#666;">Plaje</button>
+                style="background:var(--card2); color:var(--t3);">Plaje</button>
     </div>
 
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
@@ -262,8 +294,8 @@
     </main>
 
     <!-- ═══════════════════════ FOOTER ═══════════════════════ -->
-    <footer class="text-center py-6 px-4" style="border-top:1px solid #1A1A1A;">
-        <p class="text-xs" style="color:#333;">
+    <footer class="text-center py-6 px-4" style="border-top:1px solid var(--bdr);">
+        <p class="text-xs theme-t5">
             Made for the crew &nbsp;·&nbsp; Zakynthos 2026
         </p>
         <div class="flex justify-center gap-1 mt-2">
@@ -285,7 +317,7 @@ const DAYS = [
     title: "Arrival & Kalamaki",
     subtitle: "Settle in, feel the island",
     accent: "#F97316",
-    accentBg: "#1C1008",
+    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
     transport: "✈️  Taxi · Walking",
     highlights: ["airport","kalamaki","laganas","cameo"],
     routes: ["airport","kalamaki","laganas","cameo"],
@@ -311,7 +343,7 @@ const DAYS = [
     title: "Boat Adventure",
     subtitle: "Captain your own voyage",
     accent: "#0EA5E9",
-    accentBg: "#06111A",
+    accentBg: "#06111A", accentBgLight: "#EFF8FF",
     transport: "🚢  Self-drive Boat · Taxi",
     highlights: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
     routes: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
@@ -337,7 +369,7 @@ const DAYS = [
     title: "Beach Hopping South",
     subtitle: "Golden sands & turquoise waters",
     accent: "#0EA5E9",
-    accentBg: "#06111A",
+    accentBg: "#06111A", accentBgLight: "#EFF8FF",
     transport: "🚌  Bus · Walking",
     highlights: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi"],
     routes: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi","kalamaki"],
@@ -363,7 +395,7 @@ const DAYS = [
     title: "Zakynthos Town Day",
     subtitle: "Culture, history & harbour charm",
     accent: "#F97316",
-    accentBg: "#1C1008",
+    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
     transport: "🚌  Bus · Walking",
     highlights: ["kalamaki","zakynthosTown"],
     routes: ["kalamaki","zakynthosTown","kalamaki"],
@@ -391,7 +423,7 @@ const DAYS = [
     title: "West Coast Wild",
     subtitle: "Cliffs, caves & untouched shores",
     accent: "#22C55E",
-    accentBg: "#071209",
+    accentBg: "#071209", accentBgLight: "#F0FDF4",
     transport: "🚗  Rented Cars (2 cars)",
     highlights: ["kalamaki","portoLimnionas","korakonisi","shipwreck"],
     routes: ["kalamaki","portoLimnionas","korakonisi","shipwreck","kalamaki"],
@@ -419,7 +451,7 @@ const DAYS = [
     title: "North & Hidden Gems",
     subtitle: "Sulphur springs & mountain villages",
     accent: "#22C55E",
-    accentBg: "#071209",
+    accentBg: "#071209", accentBgLight: "#F0FDF4",
     transport: "🚗  Rented Cars",
     highlights: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown"],
     routes: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown","kalamaki"],
@@ -447,7 +479,7 @@ const DAYS = [
     title: "Departure",
     subtitle: "Last moments & safe travels",
     accent: "#F97316",
-    accentBg: "#1C1008",
+    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
     transport: "🚗  Rental Cars → Airport",
     highlights: ["kalamaki","airport"],
     routes: ["kalamaki","airport"],
@@ -543,21 +575,22 @@ const DIFF_COLORS = {
 function renderBeaches() {
   const container = document.getElementById('beaches-rows');
   if (!container) return;
+  const th = T();
   container.innerHTML = BEACHES.map(b => {
     const dc = DIFF_COLORS[b.difficulty];
     return `
       <div class="rounded-2xl p-4"
-           style="background:#141414; border:1px solid #1E1E1E; border-left:3px solid ${dc.text};">
+           style="background:${th.card}; border:1px solid ${th.bdr}; border-left:3px solid ${dc.text};">
         <div class="flex items-start justify-between gap-2 mb-2">
           <div class="flex items-center gap-2">
             <span class="text-lg">${b.icon}</span>
-            <h3 class="text-sm font-bold" style="color:#F0F0F0;">${b.name}</h3>
+            <h3 class="text-sm font-bold" style="color:${th.t1};">${b.name}</h3>
           </div>
           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
                 style="background:${dc.bg}; color:${dc.text};">${b.difficulty}</span>
         </div>
-        <p class="text-xs leading-relaxed mb-3" style="color:#555;">${b.desc}</p>
-        <div class="flex items-center gap-4 text-[11px]" style="color:#444;">
+        <p class="text-xs leading-relaxed mb-3" style="color:${th.t3};">${b.desc}</p>
+        <div class="flex items-center gap-4 text-[11px]" style="color:${th.t4};">
           <span>${b.access}</span>
           <span>📅 Ziua ${b.day}</span>
         </div>
@@ -636,21 +669,22 @@ const KALAMAKI = [
 function renderKalamaki() {
   const container = document.getElementById('kalamaki-rows');
   if (!container) return;
+  const th = T();
   container.innerHTML = KALAMAKI.map(s => `
     <div class="rounded-2xl p-4 flex items-center gap-3"
-         style="background:#141414; border:1px solid #1E1E1E;">
+         style="background:${th.card}; border:1px solid ${th.bdr};">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-wrap mb-1">
-          <span class="text-sm font-bold" style="color:#F0F0F0;">${s.name}</span>
+          <span class="text-sm font-bold" style="color:${th.t1};">${s.name}</span>
           <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
                 style="background:${s.tagColor}18; color:${s.tagColor};">${s.tag}</span>
         </div>
-        <p class="text-[11px] mb-1" style="color:#0EA5E9;">${s.type} &nbsp;·&nbsp; <span style="color:#444;">${s.distance}</span></p>
-        <p class="text-xs leading-relaxed" style="color:#555;">${s.desc}</p>
+        <p class="text-[11px] mb-1" style="color:#0EA5E9;">${s.type} &nbsp;·&nbsp; <span style="color:${th.t4};">${s.distance}</span></p>
+        <p class="text-xs leading-relaxed" style="color:${th.t3};">${s.desc}</p>
       </div>
       <div class="flex flex-col items-center flex-shrink-0 gap-1">
         <span class="text-base">⭐</span>
-        <span class="text-sm font-black" style="color:#F0F0F0;">${s.rating}</span>
+        <span class="text-sm font-black" style="color:${th.t1};">${s.rating}</span>
       </div>
     </div>
   `).join('');
@@ -671,23 +705,38 @@ const COSTS = [
 function renderCosts() {
   const container = document.getElementById('cost-rows');
   if (!container) return;
+  const th = T();
   container.innerHTML = COSTS.map((c, i) => `
     <div class="flex items-center gap-3 px-4 py-3"
-         style="${i < COSTS.length - 1 ? 'border-bottom:1px solid #1A1A1A;' : ''}">
+         style="background:${th.card}; ${i < COSTS.length - 1 ? `border-bottom:1px solid ${th.bdr};` : ''}">
       <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
            style="background:${c.color}15;">
         ${c.icon}
       </div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold truncate" style="color:#F0F0F0;">${c.label}</p>
-        <p class="text-[11px]" style="color:#444;">${c.category}</p>
+        <p class="text-sm font-semibold truncate" style="color:${th.t1};">${c.label}</p>
+        <p class="text-[11px]" style="color:${th.t4};">${c.category}</p>
       </div>
       <div class="text-right flex-shrink-0">
-        <p class="text-sm font-bold" style="color:#F0F0F0;">€${c.total}</p>
-        <p class="text-[10px]" style="color:#444;">€${c.pp}/pp</p>
+        <p class="text-sm font-bold" style="color:${th.t1};">€${c.total}</p>
+        <p class="text-[10px]" style="color:${th.t4};">€${c.pp}/pp</p>
       </div>
     </div>
   `).join('');
+}
+
+// ── Theme helper ──────────────────────────────────────────────
+function isDark() { return !document.body.classList.contains('light'); }
+function T() {
+  return isDark() ? {
+    card: '#141414', card2: '#1A1A1A', bdr: '#1E1E1E', bdr2: '#2A2A2A',
+    t1: '#F0F0F0', t2: '#A0A0A0', t3: '#666', t4: '#444', t5: '#333',
+    transBg: '#0A0A0A', mapBg: '#1A1A1A',
+  } : {
+    card: '#FFFFFF', card2: '#F0F0F0', bdr: '#E4E4E7', bdr2: '#D4D4D8',
+    t1: '#111111', t2: '#555555', t3: '#888', t4: '#999', t5: '#BBB',
+    transBg: '#F4F4F5', mapBg: '#E8E8E8',
+  };
 }
 
 // ── State ─────────────────────────────────────────────────────
@@ -880,26 +929,28 @@ function renderDays() {
     panel.className = 'fade-up';
 
     // Day header card
+    const th = T();
+    const bg = isDark() ? day.accentBg : day.accentBgLight;
     panel.innerHTML = `
-      <div class="rounded-2xl p-4 mb-4" style="background:${day.accentBg}; border:1px solid ${day.accent}22;">
+      <div class="rounded-2xl p-4 mb-4" style="background:${bg}; border:1px solid ${day.accent}22;">
         <div class="flex items-start justify-between gap-3">
           <div>
             <p class="text-xs font-bold uppercase tracking-widest mb-1" style="color:${day.accent};">
               Ziua ${day.index + 1}
             </p>
-            <h2 class="text-xl font-black leading-tight" style="font-family:'Playfair Display',serif; color:#F0F0F0;">
+            <h2 class="text-xl font-black leading-tight" style="font-family:'Playfair Display',serif; color:${th.t1};">
               ${day.title}
             </h2>
-            <p class="text-xs mt-1" style="color:#666;">${day.subtitle}</p>
+            <p class="text-xs mt-1" style="color:${th.t3};">${day.subtitle}</p>
           </div>
           <button id="mapbtn-${day.index}" onclick="toggleMap(${day.index})"
                   class="flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold"
-                  style="background:#1A1A1A; color:${day.accent}; border:1px solid ${day.accent}33; white-space:nowrap; cursor:pointer;">
+                  style="background:${th.mapBg}; color:${day.accent}; border:1px solid ${day.accent}33; white-space:nowrap; cursor:pointer;">
             🗺 Vezi harta
           </button>
         </div>
         <div class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
-             style="background:#0A0A0A; color:${day.accent}; border:1px solid ${day.accent}33;">
+             style="background:${th.transBg}; color:${day.accent}; border:1px solid ${day.accent}33;">
           ${day.transport}
         </div>
       </div>
@@ -913,18 +964,18 @@ function renderDays() {
             <!-- icon + line -->
             <div class="flex flex-col items-center flex-shrink-0" style="width:32px;">
               <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-                   style="background:${day.accentBg}; border:1px solid ${day.accent}33;">
+                   style="background:${bg}; border:1px solid ${day.accent}33;">
                 ${act.icon}
               </div>
               ${i < day.activities.length - 1 ? `
-                <div class="w-px flex-1 mt-1" style="background:#1E1E1E; min-height:20px;"></div>
+                <div class="w-px flex-1 mt-1" style="background:${th.bdr}; min-height:20px;"></div>
               ` : ''}
             </div>
             <!-- content -->
             <div class="flex-1 pb-1">
               <span class="text-[11px] font-bold tabular-nums" style="color:${day.accent};">${act.time}</span>
-              <h4 class="text-sm font-bold mt-0.5 mb-1" style="color:#F0F0F0;">${act.title}</h4>
-              <p class="text-xs leading-relaxed" style="color:#666;">${act.desc}</p>
+              <h4 class="text-sm font-bold mt-0.5 mb-1" style="color:${th.t1};">${act.title}</h4>
+              <p class="text-xs leading-relaxed" style="color:${th.t3};">${act.desc}</p>
             </div>
           </div>
         `).join('')}
@@ -941,15 +992,15 @@ function switchTab(index) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(`tab-${index}`).classList.remove('hidden');
 
-  // update buttons
+  const th = T();
   for (let i = 0; i < 4; i++) {
     const btn = document.getElementById(`tb-${i}`);
     if (i === index) {
-      btn.style.background = '#F0F0F0';
-      btn.style.color = '#0A0A0A';
+      btn.style.background = th.t1;
+      btn.style.color = isDark() ? '#0A0A0A' : '#FFFFFF';
     } else {
-      btn.style.background = '#1A1A1A';
-      btn.style.color = '#555';
+      btn.style.background = th.card2;
+      btn.style.color = th.t3;
     }
   }
   activeTab = index;
@@ -1031,11 +1082,37 @@ function updateCountdown() {
 updateCountdown();
 setInterval(updateCountdown, 1000);
 
+// ── Theme toggle ──────────────────────────────────────────────
+function applyTheme(light) {
+  if (light) {
+    document.body.classList.add('light');
+    document.getElementById('theme-icon').textContent  = '🌙';
+    document.getElementById('theme-label').textContent = 'Dark';
+  } else {
+    document.body.classList.remove('light');
+    document.getElementById('theme-icon').textContent  = '☀️';
+    document.getElementById('theme-label').textContent = 'Light';
+  }
+  // Re-render dynamic content with new theme
+  renderDays();
+  renderCosts();
+  renderKalamaki();
+  renderBeaches();
+  // Restore active day view
+  showDay(activeDay);
+  switchTab(activeTab);
+}
+
+function toggleTheme() {
+  const nowLight = !document.body.classList.contains('light');
+  localStorage.setItem('zaky-theme', nowLight ? 'light' : 'dark');
+  applyTheme(nowLight);
+}
+
 // ── Init ──────────────────────────────────────────────────────
-renderDays();
-renderCosts();
-renderKalamaki();
-renderBeaches();
+// Aplică tema salvată (default: light)
+const savedTheme = localStorage.getItem('zaky-theme') || 'light';
+applyTheme(savedTheme === 'light');
 
 // ── Swipe between days ────────────────────────────────────────
 (function() {
