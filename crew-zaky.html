@@ -170,7 +170,35 @@
 
         <!-- ─────────── TAB 1: COSTURI ─────────── -->
         <div id="tab-1" class="tab-content hidden pt-4">
-            <p style="color:#555;" class="text-sm">Coming soon…</p>
+
+            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Estimare Costuri</h2>
+            <p class="text-xs mb-5" style="color:#555;">10 persoane · 7 zile · Kalamaki</p>
+
+            <!-- Summary cards -->
+            <div class="flex gap-3 mb-5">
+                <div class="flex-1 rounded-2xl p-4" style="background:linear-gradient(135deg,#06111A,#0d1f30); border:1px solid #0EA5E933;">
+                    <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#0EA5E9;">Per persoană</p>
+                    <p class="text-3xl font-black" style="font-family:'Playfair Display',serif; color:#F0F0F0;">€757</p>
+                </div>
+                <div class="flex-1 rounded-2xl p-4" style="background:linear-gradient(135deg,#1C1008,#2d1a08); border:1px solid #F9731633;">
+                    <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#F97316;">Total grup</p>
+                    <p class="text-3xl font-black" style="font-family:'Playfair Display',serif; color:#F0F0F0;">€7570</p>
+                </div>
+            </div>
+
+            <!-- Cost rows -->
+            <div class="rounded-2xl overflow-hidden" style="border:1px solid #1E1E1E;">
+                <div id="cost-rows"></div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="mt-4 rounded-xl p-3 flex gap-2" style="background:#141414; border:1px solid #1E1E1E;">
+                <span style="color:#0EA5E9; flex-shrink:0;">ℹ️</span>
+                <p class="text-[11px] leading-relaxed" style="color:#555;">
+                    Estimări bazate pe prețuri medii 2024/25. Costurile reale pot varia în funcție de sezon, disponibilitate și preferințe personale.
+                </p>
+            </div>
+
         </div>
 
         <!-- ─────────── TAB 2: KALAMAKI ─────────── -->
@@ -376,6 +404,40 @@ const DAYS = [
   },
 ];
 
+// ── Costs data ────────────────────────────────────────────────
+const COSTS = [
+  { category: "Cazare",    icon: "🏠", label: "Hektor's Studios (6 nopți × 10)",  pp: 427, total: 4270, color: "#0EA5E9" },
+  { category: "Transport", icon: "✈️", label: "Taxiuri aeroport (sosire + plecare)", pp: 8,   total: 80,   color: "#F97316" },
+  { category: "Transport", icon: "🚌", label: "Bus/taxi zilnic — Zilele 1–4",       pp: 30,  total: 300,  color: "#F97316" },
+  { category: "Transport", icon: "🚗", label: "Închiriere mașini (2 × 3 zile)",     pp: 45,  total: 450,  color: "#F97316" },
+  { category: "Transport", icon: "⛽", label: "Carburant mașini închiriate",         pp: 12,  total: 120,  color: "#F97316" },
+  { category: "Barcă",     icon: "🚢", label: "Barcă self-drive (o zi completă)",   pp: 30,  total: 300,  color: "#22C55E" },
+  { category: "Mâncare",   icon: "🍽️", label: "Mese estimate (6 zile × ~€30/zi)",  pp: 180, total: 1800, color: "#A78BFA" },
+  { category: "Activități",icon: "🎟️", label: "Muzee, Cameo Island, bacșișuri",    pp: 25,  total: 250,  color: "#F59E0B" },
+];
+
+function renderCosts() {
+  const container = document.getElementById('cost-rows');
+  if (!container) return;
+  container.innerHTML = COSTS.map((c, i) => `
+    <div class="flex items-center gap-3 px-4 py-3"
+         style="${i < COSTS.length - 1 ? 'border-bottom:1px solid #1A1A1A;' : ''}">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
+           style="background:${c.color}15;">
+        ${c.icon}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold truncate" style="color:#F0F0F0;">${c.label}</p>
+        <p class="text-[11px]" style="color:#444;">${c.category}</p>
+      </div>
+      <div class="text-right flex-shrink-0">
+        <p class="text-sm font-bold" style="color:#F0F0F0;">€${c.total}</p>
+        <p class="text-[10px]" style="color:#444;">€${c.pp}/pp</p>
+      </div>
+    </div>
+  `).join('');
+}
+
 // ── State ─────────────────────────────────────────────────────
 let activeTab = 0;
 let activeDay = 0;
@@ -500,6 +562,7 @@ function showDay(index) {
 
 // ── Init ──────────────────────────────────────────────────────
 renderDays();
+renderCosts();
 
 </script>
 </body>
