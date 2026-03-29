@@ -1037,6 +1037,46 @@ renderCosts();
 renderKalamaki();
 renderBeaches();
 
+// ── Swipe between days ────────────────────────────────────────
+(function() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const SWIPE_THRESHOLD = 50;  // min px horizontal to count as swipe
+  const ANGLE_THRESHOLD = 35;  // max degrees from horizontal
+
+  const container = document.getElementById('day-panels');
+
+  container.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  container.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+
+    // Ignore if mostly vertical (scrolling)
+    if (Math.abs(dy) > Math.abs(dx) * Math.tan(ANGLE_THRESHOLD * Math.PI / 180)) return;
+    // Ignore if too short
+    if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+
+    if (dx < 0 && activeDay < DAYS.length - 1) {
+      // swipe left → next day
+      showDay(activeDay + 1);
+      scrollDayBtn(activeDay);
+    } else if (dx > 0 && activeDay > 0) {
+      // swipe right → previous day
+      showDay(activeDay - 1);
+      scrollDayBtn(activeDay);
+    }
+  }, { passive: true });
+
+  function scrollDayBtn(index) {
+    const btn = document.getElementById(`db-${index}`);
+    if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+})();
+
 </script>
 </body>
 </html>
