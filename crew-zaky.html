@@ -257,6 +257,7 @@ const DAYS = [
     accentBg: "#1C1008",
     transport: "✈️  Taxi · Walking",
     highlights: ["airport","kalamaki","laganas","cameo"],
+    routes: ["airport","kalamaki","laganas","cameo"],
     activities: [
       { time: "09:00", icon: "✈️", title: "Land at Zakynthos Airport",
         desc: "Collect luggage, split into taxis for Kalamaki. ~15 min drive south." },
@@ -282,6 +283,7 @@ const DAYS = [
     accentBg: "#06111A",
     transport: "🚢  Self-drive Boat · Taxi",
     highlights: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
+    routes: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
     activities: [
       { time: "08:00", icon: "☕", title: "Breakfast at Kavos Psarou",
         desc: "Fuel up with Greek yogurt, honey, and strong coffee before the sea day." },
@@ -307,6 +309,7 @@ const DAYS = [
     accentBg: "#06111A",
     transport: "🚌  Bus · Walking",
     highlights: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi"],
+    routes: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi","kalamaki"],
     activities: [
       { time: "08:30", icon: "🍞", title: "Lazy Breakfast at Base",
         desc: "Sleep in a bit. Coffee and toast at the studios or the nearby café." },
@@ -332,6 +335,7 @@ const DAYS = [
     accentBg: "#1C1008",
     transport: "🚌  Bus · Walking",
     highlights: ["kalamaki","zakynthosTown"],
+    routes: ["kalamaki","zakynthosTown","kalamaki"],
     activities: [
       { time: "09:00", icon: "🚌", title: "Bus to Zakynthos Town",
         desc: "Quick 15 min ride north. Get dropped at Solomos Square." },
@@ -359,6 +363,7 @@ const DAYS = [
     accentBg: "#071209",
     transport: "🚗  Rented Cars (2 cars)",
     highlights: ["kalamaki","portoLimnionas","korakonisi","shipwreck"],
+    routes: ["kalamaki","portoLimnionas","korakonisi","shipwreck","kalamaki"],
     activities: [
       { time: "08:00", icon: "🚗", title: "Pick Up Rental Cars",
         desc: "2 cars for 10 people. Pick up from local agency near Kalamaki." },
@@ -386,6 +391,7 @@ const DAYS = [
     accentBg: "#071209",
     transport: "🚗  Rented Cars",
     highlights: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown"],
+    routes: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown","kalamaki"],
     activities: [
       { time: "08:30", icon: "🥐", title: "Breakfast on the Go",
         desc: "Grab pastries and coffee from the bakery. Pack the car with snacks and plenty of water." },
@@ -413,6 +419,7 @@ const DAYS = [
     accentBg: "#1C1008",
     transport: "🚗  Rental Cars → Airport",
     highlights: ["kalamaki","airport"],
+    routes: ["kalamaki","airport"],
     activities: [
       { time: "05:30", icon: "⏰", title: "Wake Up & Final Pack",
         desc: "Alarm set. Pack bags, tidy studios, leave everything ready before leaving." },
@@ -710,8 +717,50 @@ const ISLAND_PATH = `
   C 198,46 204,48 208,50 Z
 `;
 
-function buildMap(highlights, color) {
+function buildMap(highlights, routes, color) {
   const allKeys = Object.keys(POINTS);
+
+  // Build curved route path through ordered waypoints
+  let routeSvg = '';
+  if (routes && routes.length >= 2) {
+    const pts = routes.map(k => POINTS[k]).filter(Boolean);
+    if (pts.length >= 2) {
+      // Shadow path
+      let d = `M ${pts[0].x},${pts[0].y}`;
+      for (let i = 1; i < pts.length; i++) {
+        const prev = pts[i - 1], curr = pts[i];
+        const cx = (prev.x + curr.x) / 2 + (i % 2 === 0 ? 14 : -14);
+        const cy = (prev.y + curr.y) / 2 - 10;
+        d += ` Q ${cx},${cy} ${curr.x},${curr.y}`;
+      }
+      // Approximate path length for animation speed
+      const len = pts.reduce((s, p, i) => {
+        if (i === 0) return 0;
+        const prev = pts[i - 1];
+        return s + Math.hypot(p.x - prev.x, p.y - prev.y);
+      }, 0);
+      const speed = Math.max(2, len / 100).toFixed(1);
+
+      routeSvg = `
+        <!-- route glow -->
+        <path d="${d}" stroke="${color}" stroke-width="5" fill="none" opacity="0.08" stroke-linecap="round"/>
+        <!-- animated dashed route -->
+        <path d="${d}" stroke="${color}" stroke-width="2" fill="none" opacity="0.75"
+              stroke-linecap="round" stroke-dasharray="7,5"
+              style="animation: dashMove ${speed}s linear infinite;"/>
+        <!-- start marker -->
+        <circle cx="${pts[0].x}" cy="${pts[0].y}" r="5" fill="${color}" opacity="0.25"/>
+        <circle cx="${pts[0].x}" cy="${pts[0].y}" r="3" fill="${color}" stroke="#060E18" stroke-width="1.5"/>
+        <!-- end marker -->
+        <circle cx="${pts[pts.length-1].x}" cy="${pts[pts.length-1].y}" r="7" fill="${color}" opacity="0.2"/>
+        <circle cx="${pts[pts.length-1].x}" cy="${pts[pts.length-1].y}" r="4.5" fill="${color}" stroke="#060E18" stroke-width="1.5"/>
+        <!-- waypoint dots on route -->
+        ${pts.slice(1, -1).map(p => `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${color}" opacity="0.5"/>`).join('')}
+      `;
+    }
+  }
+
+  // Location dots & labels
   const dots = allKeys.map(key => {
     const pt = POINTS[key];
     const isHl = highlights.includes(key);
@@ -727,7 +776,7 @@ function buildMap(highlights, color) {
                  paint-order:stroke; stroke:#0A0A0A; stroke-width:2.5;">${pt.label}</text>
       `;
     }
-    return `<circle cx="${pt.x}" cy="${pt.y}" r="2.5" fill="#333" stroke="#222" stroke-width="1"/>`;
+    return `<circle cx="${pt.x}" cy="${pt.y}" r="2.5" fill="#2A2A2A" stroke="#1A1A1A" stroke-width="1"/>`;
   }).join('');
 
   return `
@@ -743,27 +792,29 @@ function buildMap(highlights, color) {
             <stop offset="100%" stop-color="#142414"/>
           </linearGradient>
         </defs>
+        <style>@keyframes dashMove { to { stroke-dashoffset: -48; } }</style>
         <!-- ocean -->
         <rect x="40" y="30" width="340" height="450" fill="url(#oceanGrad)"/>
-        <!-- subtle wave lines -->
-        <path d="M55,90 Q165,80 275,90 T380,86"   stroke="#0E2540" stroke-width="0.8" fill="none"/>
+        <!-- wave lines -->
+        <path d="M55,90 Q165,80 275,90 T380,86"    stroke="#0E2540" stroke-width="0.8" fill="none"/>
         <path d="M55,200 Q165,190 275,200 T385,196" stroke="#0E2540" stroke-width="0.7" fill="none"/>
         <path d="M50,320 Q160,310 275,318 T385,315" stroke="#0E2540" stroke-width="0.7" fill="none"/>
         <!-- island shadow -->
         <path d="${ISLAND_PATH}" fill="#0A160A" transform="translate(3,4)"/>
         <!-- island body -->
         <path d="${ISLAND_PATH}" fill="url(#islandGrad)" stroke="#2A4A2A" stroke-width="1"/>
-        <!-- coast highlight south (Bay of Laganas) -->
+        <!-- Bay of Laganas coast -->
         <path d="M164,424 C188,430 212,428 236,418" stroke="#1A3A2A" stroke-width="2.5" fill="none" opacity="0.6" stroke-linecap="round"/>
-        <!-- North label -->
+        <!-- labels -->
         <text x="210" y="42" text-anchor="middle"
           style="font-size:6px; fill:#1A3A5A; font-family:'DM Sans',sans-serif; letter-spacing:2px;">N ▲</text>
-        <!-- Bay of Laganas label -->
         <text x="200" y="450" text-anchor="middle"
           style="font-size:6.5px; fill:#0E2540; font-family:'DM Sans',sans-serif; font-style:italic;">
           BAY OF LAGANAS
         </text>
-        <!-- dots -->
+        <!-- animated route (drawn below dots so dots appear on top) -->
+        ${routeSvg}
+        <!-- location dots -->
         ${dots}
       </svg>
     </div>
@@ -776,7 +827,7 @@ function toggleMap(dayIndex) {
   const day = DAYS[dayIndex];
   if (!mapContainer || !btn) return;
   if (mapContainer.innerHTML === '') {
-    mapContainer.innerHTML = buildMap(day.highlights, day.accent);
+    mapContainer.innerHTML = buildMap(day.highlights, day.routes, day.accent);
     btn.style.background = day.accent;
     btn.style.color = '#0A0A0A';
     btn.textContent = '🗺 Ascunde harta';
