@@ -55,45 +55,114 @@
         }
         .fade-up { animation: fadeUp 0.35s ease forwards; }
 
-        /* ── Tab bar buttons ── */
+        /* ══════════════════════════════════════
+           MOMENT 1 — Bold-Minimalist tab buttons
+        ══════════════════════════════════════ */
         .tab-btn {
-            transition: background 0.25s, color 0.25s, transform 0.15s, filter 0.15s, box-shadow 0.25s;
-            border: 1px solid rgba(255,255,255,0.08);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-        }
-        .tab-btn:hover {
-            transform: scale(1.05);
-            filter: brightness(1.15);
-        }
-        .tab-btn.active-tab {
-            border-color: rgba(255,255,255,0.18);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(30,30,30,0.90);
+            color: rgba(200,200,200,0.85);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 9px 14px;
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
         }
         body.light .tab-btn {
-            border-color: rgba(0,0,0,0.07);
+            background: rgba(240,240,240,0.90);
+            color: rgba(60,60,60,0.85);
+            border-color: rgba(0,0,0,0.08);
+        }
+        .tab-btn:hover   { transform: scale(1.05); filter: brightness(1.18); }
+        /* MOMENT 5 — Active press feedback */
+        .tab-btn:active  { transform: scale(0.95); filter: brightness(0.92); }
+        .tab-btn.active-tab {
+            background: rgba(240,240,240,0.97);
+            color: #0A0A0A;
+            border-color: rgba(255,255,255,0.25);
+            box-shadow: 0 3px 14px rgba(0,0,0,0.30);
         }
         body.light .tab-btn.active-tab {
-            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            background: rgba(15,15,15,0.92);
+            color: #FFFFFF;
+            border-color: rgba(0,0,0,0.15);
+            box-shadow: 0 3px 14px rgba(0,0,0,0.18);
         }
 
-        /* ── WarRoom pulse ── */
+        /* ══════════════════════════════════════
+           MOMENT 1 — WarRoom: Deep Red #B22222
+        ══════════════════════════════════════ */
         @keyframes warPulse {
-            0%   { box-shadow: 0 0 0 0 rgba(139,0,0,0.30), 0 2px 12px rgba(0,0,0,0.25); }
-            50%  { box-shadow: 0 0 0 7px rgba(139,0,0,0.00), 0 2px 12px rgba(0,0,0,0.25); }
-            100% { box-shadow: 0 0 0 0 rgba(139,0,0,0.30), 0 2px 12px rgba(0,0,0,0.25); }
+            0%   { box-shadow: 0 0 0 0   rgba(178,34,34,0.45); }
+            60%  { box-shadow: 0 0 0 8px rgba(178,34,34,0.00); }
+            100% { box-shadow: 0 0 0 0   rgba(178,34,34,0.45); }
         }
         .tab-btn-warroom {
-            animation: warPulse 3.6s ease-in-out infinite;
-            border-color: rgba(139,0,0,0.35) !important;
+            background: #B22222 !important;
+            color: #FFFFFF !important;
+            border-color: rgba(178,34,34,0.4) !important;
+            animation: warPulse 3.2s ease-in-out infinite;
         }
-        .tab-btn-warroom:hover {
-            transform: scale(1.05);
-            filter: brightness(1.15);
+        .tab-btn-warroom.active-tab {
+            background: #8B0000 !important;
+            box-shadow: 0 3px 14px rgba(178,34,34,0.45) !important;
+        }
+        body.light .tab-btn-warroom {
+            background: #B22222 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* ══════════════════════════════════════
+           MOMENT 2 — Responsive grid layout
+        ══════════════════════════════════════ */
+        .nav-main-row {
+            display: flex;
+            gap: 7px;
+            overflow-x: auto;
+            padding: 10px 14px 8px;
+        }
+        .nav-main-row::-webkit-scrollbar { display: none; }
+        .nav-warroom-row {
+            display: none; /* hidden on desktop — WarRoom stays in flex row */
+            padding: 0 14px 10px;
+        }
+        @media (max-width: 600px) {
+            .nav-main-row {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+                overflow: visible;
+                padding: 10px 12px 6px;
+            }
+            .nav-main-row .tab-btn {
+                padding: 9px 4px;
+                font-size: 9px;
+                letter-spacing: 0.04em;
+                text-align: center;
+            }
+            /* Hide WarRoom from the flex row on mobile */
+            .nav-main-row #tb-4 { display: none; }
+            /* Show the dedicated full-width WarRoom row */
+            .nav-warroom-row {
+                display: block;
+                padding: 0 12px 10px;
+            }
+            .nav-warroom-row .tab-btn-warroom {
+                width: 100%;
+                text-align: center;
+                display: block;
+                border-radius: 10px;
+            }
         }
 
         .day-btn  { transition: background 0.2s, color 0.2s, transform 0.15s; }
         .day-btn.active  { transform: scale(1.06); }
+        .day-btn:active  { transform: scale(0.96); }
         .theme-bg    { background: var(--bg) !important; }
         .theme-bg1   { background: var(--bg1) !important; }
         .theme-card  { background: var(--card) !important; }
@@ -191,24 +260,24 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════ TAB BAR ═══════════════════════ -->
-    <div class="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar sticky top-0 z-30"
-         style="background:var(--bg); border-bottom:1px solid var(--bdr);">
-        <button onclick="switchTab(0)" id="tb-0"
-                class="tab-btn active-tab flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:var(--t1); color:var(--bg);">Itinerariu</button>
-        <button onclick="switchTab(1)" id="tb-1"
-                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:var(--card2); color:var(--t3);">Costuri</button>
-        <button onclick="switchTab(2)" id="tb-2"
-                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:var(--card2); color:var(--t3);">Kalamaki</button>
-        <button onclick="switchTab(3)" id="tb-3"
-                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:var(--card2); color:var(--t3);">Plaje</button>
-        <button onclick="switchTab(4)" id="tb-4"
-                class="tab-btn tab-btn-warroom flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:rgba(80,0,0,0.75); color:#FF6B6B;">⚔ WarRoom</button>
+    <!-- ═══════════════════════ TAB BAR ═══════════════════════
+         MOMENT 3: sticky wrapper conține doar primele 4 butoane
+    ════════════════════════════════════════════════════════════ -->
+    <div class="sticky top-0 z-30" style="background:var(--bg); border-bottom:1px solid var(--bdr);">
+        <!-- MOMENT 2: nav-main-row devine grid 4col pe mobile -->
+        <div class="nav-main-row">
+            <button onclick="switchTab(0)" id="tb-0" class="tab-btn active-tab">Itinerariu</button>
+            <button onclick="switchTab(1)" id="tb-1" class="tab-btn">Costuri</button>
+            <button onclick="switchTab(2)" id="tb-2" class="tab-btn">Kalamaki</button>
+            <button onclick="switchTab(3)" id="tb-3" class="tab-btn">Plaje</button>
+            <!-- Desktop: WarRoom în același rând -->
+            <button onclick="switchTab(4)" id="tb-4" class="tab-btn tab-btn-warroom flex-shrink-0">⚔ WarRoom</button>
+        </div>
+        <!-- MOMENT 2+3: pe mobile, WarRoom apare NON-sticky sub grid -->
+    </div>
+    <!-- MOMENT 3: WarRoom NON-sticky pe mobile — rămâne în flux normal -->
+    <div class="nav-warroom-row" style="background:var(--bg);">
+        <button onclick="switchTab(4)" class="tab-btn tab-btn-warroom">⚔ WarRoom</button>
     </div>
 
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
@@ -1053,30 +1122,29 @@ function renderDays() {
 
 // ── Switch tab ────────────────────────────────────────────────
 function switchTab(index) {
+  // MOMENT 4 — scroll to top on every tab click
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(`tab-${index}`).classList.remove('hidden');
 
-  const th = T();
-  for (let i = 0; i < 5; i++) {
-    const btn = document.getElementById(`tb-${i}`);
-    if (!btn) continue;
+  // Update all .tab-btn elements (both the sticky and the mobile non-sticky WarRoom clone)
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const i = parseInt(btn.id?.replace('tb-', '') ?? '-1');
     btn.classList.remove('active-tab');
-    if (i === 4) {
-      // WarRoom — always keeps its own style, just dim when inactive
-      btn.style.background   = i === index ? 'rgba(139,0,0,0.85)' : 'rgba(80,0,0,0.75)';
-      btn.style.color        = '#FF6B6B';
-      btn.style.opacity      = i === index ? '1' : '0.7';
-    } else if (i === index) {
-      btn.classList.add('active-tab');
-      btn.style.background = th.t1;
-      btn.style.color      = isDark() ? '#0A0A0A' : '#FFFFFF';
-      btn.style.opacity    = '1';
-    } else {
-      btn.style.background = th.card2;
-      btn.style.color      = th.t3;
-      btn.style.opacity    = '1';
-    }
+    // Reset inline overrides — CSS classes handle the rest
+    btn.style.opacity = '1';
+  });
+
+  // Mark active on the #tb-N button (sticky row)
+  const activeBtn = document.getElementById(`tb-${index}`);
+  if (activeBtn) activeBtn.classList.add('active-tab');
+
+  // Also mark active on the mobile WarRoom clone if index === 4
+  if (index === 4) {
+    document.querySelectorAll('.tab-btn-warroom').forEach(b => b.classList.add('active-tab'));
   }
+
   activeTab = index;
 }
 
