@@ -213,7 +213,19 @@
 
         <!-- ─────────── TAB 3: PLAJE ─────────── -->
         <div id="tab-3" class="tab-content hidden pt-4">
-            <p style="color:#555;" class="text-sm">Coming soon…</p>
+
+            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Plaje Sălbatice</h2>
+            <p class="text-xs mb-5" style="color:#555;">Hidden gems pentru exploratori</p>
+
+            <!-- Difficulty legend -->
+            <div class="flex gap-2 mb-5">
+                <span class="text-[10px] font-bold px-3 py-1 rounded-full" style="background:#22C55E18; color:#22C55E;">● Easy</span>
+                <span class="text-[10px] font-bold px-3 py-1 rounded-full" style="background:#F59E0B18; color:#F59E0B;">● Medium</span>
+                <span class="text-[10px] font-bold px-3 py-1 rounded-full" style="background:#F9731618; color:#F97316;">● Hard</span>
+            </div>
+
+            <div id="beaches-rows" class="flex flex-col gap-3"></div>
+
         </div>
 
     </main>
@@ -408,6 +420,106 @@ const DAYS = [
     ]
   },
 ];
+
+// ── Wild Beaches data ─────────────────────────────────────────
+const BEACHES = [
+  {
+    name: "Porto Limnionas",
+    desc: "Fjord de smarald cu sărituri de pe stânci și peșteri submarine. Nu există plajă — doar rocă pură și apă cristalină.",
+    difficulty: "Hard",
+    access: "🚗 Cu mașina",
+    day: 5,
+    icon: "💧",
+  },
+  {
+    name: "Marathonisi (Turtle Island)",
+    desc: "Accesibilă doar cu barca. Nisip alb imaculat și broaște țestoase Caretta caretta în sezon.",
+    difficulty: "Medium",
+    access: "🚢 Cu barca",
+    day: 2,
+    icon: "🐢",
+  },
+  {
+    name: "Keri Caves",
+    desc: "Grote marine albastre la capătul sudic al insulei. Snorkeling incredibil în caverne.",
+    difficulty: "Medium",
+    access: "🚢 Cu barca",
+    day: 2,
+    icon: "🗺️",
+  },
+  {
+    name: "Gerakas Beach",
+    desc: "Plajă protejată pentru cuibăritul broaștelor țestoase. Falezeă dramatică de argilă, fără șezlonguri.",
+    difficulty: "Easy",
+    access: "🚌 Cu busul",
+    day: 3,
+    icon: "🌊",
+  },
+  {
+    name: "Porto Zoro",
+    desc: "Formațiuni stâncoase unice, snorkeling excelent, liniște deplină. Una din cele mai frumoase din sud.",
+    difficulty: "Easy",
+    access: "🚌 Cu busul",
+    day: 3,
+    icon: "🪨",
+  },
+  {
+    name: "Korakonisi",
+    desc: "Arc natural din piatră, cale nedezvoltată. Sălbăticie pură la vest, fără turiști.",
+    difficulty: "Hard",
+    access: "🚗 Cu mașina",
+    day: 5,
+    icon: "🌿",
+  },
+  {
+    name: "Xigia Beach",
+    desc: "Izvoare sulfuroase naturale care ies din fundul mării — spa natural gratuit cu efect detoxifiant.",
+    difficulty: "Medium",
+    access: "🚗 Cu mașina",
+    day: 6,
+    icon: "♨️",
+  },
+  {
+    name: "Makris Gialos",
+    desc: "Plajă secretă cu pietriș alb, fără facilități și fără aglomerație. Natura în stare pură.",
+    difficulty: "Hard",
+    access: "🚗 Cu mașina",
+    day: 6,
+    icon: "🏝️",
+  },
+];
+
+const DIFF_COLORS = {
+  Easy:   { bg: "#22C55E18", text: "#22C55E" },
+  Medium: { bg: "#F59E0B18", text: "#F59E0B" },
+  Hard:   { bg: "#F9731618", text: "#F97316" },
+};
+
+function renderBeaches() {
+  const container = document.getElementById('beaches-rows');
+  if (!container) return;
+  container.innerHTML = BEACHES.map(b => {
+    const dc = DIFF_COLORS[b.difficulty];
+    return `
+      <div class="rounded-2xl p-4"
+           style="background:#141414; border:1px solid #1E1E1E; border-left:3px solid ${dc.text};">
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">${b.icon}</span>
+            <h3 class="text-sm font-bold" style="color:#F0F0F0;">${b.name}</h3>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                style="background:${dc.bg}; color:${dc.text};">${b.difficulty}</span>
+        </div>
+        <p class="text-xs leading-relaxed mb-3" style="color:#555;">${b.desc}</p>
+        <div class="flex items-center gap-4 text-[11px]" style="color:#444;">
+          <span>${b.access}</span>
+          <span>📅 Ziua ${b.day}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
 
 // ── Kalamaki Guide data ───────────────────────────────────────
 const KALAMAKI = [
@@ -659,6 +771,7 @@ function showDay(index) {
 renderDays();
 renderCosts();
 renderKalamaki();
+renderBeaches();
 
 </script>
 </body>
