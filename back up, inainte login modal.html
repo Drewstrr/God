@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Crew Zaky '26</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:    #0A0A0A;
+            --bg1:   #111111;
+            --card:  #141414;
+            --card2: #1A1A1A;
+            --bdr:   #1E1E1E;
+            --bdr2:  #2A2A2A;
+            --t1:    #F0F0F0;
+            --t2:    #A0A0A0;
+            --t3:    #666666;
+            --t4:    #444444;
+            --t5:    #333333;
+            --hdr:   linear-gradient(135deg, #0A0A0A 0%, #111827 60%, #0A0A0A 100%);
+        }
+        body.light {
+            --bg:    #FFFFFF;
+            --bg1:   #FFFFFF;
+            --card:  #FFFFFF;
+            --card2: #F8F8F8;
+            --bdr:   #F0F0F0;
+            --bdr2:  #E8E8E8;
+            --t1:    #0A0A0A;
+            --t2:    #444444;
+            --t3:    #777777;
+            --t4:    #999999;
+            --t5:    #BBBBBB;
+            --hdr:   linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #1a1a2e 100%);
+            --shadow-card: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.07);
+            --shadow-sm:   0 2px 10px rgba(0,0,0,0.08);
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--t1);
+            min-height: 100vh;
+            margin: 0;
+            transition: background 0.3s, color 0.3s;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade-up { animation: fadeUp 0.35s ease forwards; }
+
+        /* ══════════════════════════════════════
+           MOMENT 1 — Bold-Minimalist tab buttons
+        ══════════════════════════════════════ */
+        .tab-btn {
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(30,30,30,0.90);
+            color: rgba(200,200,200,0.85);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 9px 14px;
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body.light .tab-btn {
+            background: rgba(240,240,240,0.90);
+            color: rgba(60,60,60,0.85);
+            border-color: rgba(0,0,0,0.08);
+        }
+        .tab-btn:hover   { transform: scale(1.05); filter: brightness(1.18); }
+        /* MOMENT 5 — Active press feedback */
+        .tab-btn:active  { transform: scale(0.95); filter: brightness(0.92); }
+        .tab-btn.active-tab {
+            background: rgba(240,240,240,0.97);
+            color: #0A0A0A;
+            border-color: rgba(255,255,255,0.25);
+            box-shadow: 0 3px 14px rgba(0,0,0,0.30);
+        }
+        body.light .tab-btn.active-tab {
+            background: rgba(15,15,15,0.92);
+            color: #FFFFFF;
+            border-color: rgba(0,0,0,0.15);
+            box-shadow: 0 3px 14px rgba(0,0,0,0.18);
+        }
+
+        /* ══════════════════════════════════════
+           MOMENT 1 — WarRoom: Deep Red #B22222
+        ══════════════════════════════════════ */
+        @keyframes warPulse {
+            0%   { box-shadow: 0 0 0 0   rgba(178,34,34,0.45); }
+            60%  { box-shadow: 0 0 0 8px rgba(178,34,34,0.00); }
+            100% { box-shadow: 0 0 0 0   rgba(178,34,34,0.45); }
+        }
+        .tab-btn-warroom {
+            background: #B22222 !important;
+            color: #FFFFFF !important;
+            border-color: rgba(178,34,34,0.4) !important;
+            animation: warPulse 3.2s ease-in-out infinite;
+        }
+        .tab-btn-warroom.active-tab {
+            background: #8B0000 !important;
+            box-shadow: 0 3px 14px rgba(178,34,34,0.45) !important;
+        }
+        body.light .tab-btn-warroom {
+            background: #B22222 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* ══════════════════════════════════════
+           MOMENT 2 — Responsive grid layout
+        ══════════════════════════════════════ */
+        /* Nav main row — 4 butoane sticky, grid uniform */
+        .nav-main-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 10px 12px 8px;
+        }
+        .nav-main-row .tab-btn {
+            padding: 9px 4px;
+            font-size: 10px;
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+        /* WarRoom — întotdeauna full-width, non-sticky */
+        .nav-warroom-row {
+            padding: 0 12px 10px;
+            background: var(--bg);
+        }
+        .nav-warroom-row .tab-btn-warroom {
+            width: 100%;
+            text-align: center;
+            display: block;
+        }
+
+        .day-btn  { transition: background 0.2s, color 0.2s, transform 0.15s; }
+        .day-btn.active  { transform: scale(1.06); }
+        .day-btn:active  { transform: scale(0.96); }
+        .theme-bg    { background: var(--bg) !important; }
+        .theme-bg1   { background: var(--bg1) !important; }
+        .theme-card  { background: var(--card) !important; }
+        .theme-card2 { background: var(--card2) !important; }
+        .theme-bdr   { border-color: var(--bdr) !important; }
+        .theme-t1    { color: var(--t1) !important; }
+        .theme-t2    { color: var(--t2) !important; }
+        .theme-t3    { color: var(--t3) !important; }
+        .theme-t5    { color: var(--t5) !important; }
+        body.light #cost-wrapper { box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.07); }
+        body.light .rounded-2xl.theme-bg1 { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        body.light header { box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
+
+        /* ══════════════════════════════════════
+           Map toggle button — "Vezi Harta"
+        ══════════════════════════════════════ */
+        @keyframes map-pulse {
+            0%   { box-shadow: 0 0 0 0   rgba(14,165,233,0.55); }
+            60%  { box-shadow: 0 0 0 9px rgba(14,165,233,0.00); }
+            100% { box-shadow: 0 0 0 0   rgba(14,165,233,0.55); }
+        }
+        .btn-map-toggle {
+            background: #0EA5E9;
+            color: #FFFFFF;
+            font-weight: 700;
+            border: none;
+            border-radius: 999px;
+            padding: 7px 14px;
+            font-size: 11px;
+            white-space: nowrap;
+            cursor: pointer;
+            flex-shrink: 0;
+            animation: map-pulse 2s ease-in-out infinite;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .btn-map-toggle:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(14,165,233,0.55);
+            animation: none;
+        }
+        .btn-map-toggle.map-open {
+            background: #0284C7;
+            animation: none;
+            box-shadow: 0 3px 12px rgba(14,165,233,0.45);
+        }
+    </style>
+</head>
+<body>
+
+<div class="max-w-md mx-auto min-h-screen flex flex-col">
+
+    <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+    <header class="relative overflow-hidden px-6 pt-10 pb-8"
+            style="background: var(--hdr);">
+
+        <!-- decorative circles -->
+        <div class="absolute top-0 right-0 w-48 h-48 rounded-full opacity-10"
+             style="background: radial-gradient(circle, #0EA5E9, transparent); transform: translate(30%, -30%);"></div>
+        <div class="absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-10"
+             style="background: radial-gradient(circle, #F97316, transparent); transform: translate(-30%, 30%);"></div>
+
+        <div class="relative z-10">
+            <!-- label + theme toggle -->
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold tracking-[0.25em] uppercase"
+                      style="color: #F97316;">✦ The Crew</span>
+                <button id="theme-toggle" onclick="toggleTheme()"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold"
+                        style="background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.15); cursor:pointer;">
+                    <span id="theme-icon">☀️</span>
+                    <span id="theme-label">Light</span>
+                </button>
+            </div>
+
+            <!-- title -->
+            <h1 class="leading-none mb-3"
+                style="font-family:'Playfair Display',serif; font-size:2.6rem; font-weight:700; font-style:italic;">
+                <span style="color:#0EA5E9;">Zakynthos</span>
+                <span style="color:#F0F0F0;"> '26</span>
+            </h1>
+
+            <!-- meta pills -->
+            <div class="flex flex-wrap gap-2 mt-4">
+                <span class="px-3 py-1 rounded-full text-xs font-600 theme-card2 theme-t2 theme-bdr"
+                      style="border:1px solid var(--bdr2);">
+                    👥 10 explorers
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-600 theme-card2 theme-t2"
+                      style="border:1px solid var(--bdr2);">
+                    📅 7 zile
+                </span>
+                <span class="px-3 py-1 rounded-full text-xs font-600 theme-card2 theme-t2"
+                      style="border:1px solid var(--bdr2);">
+                    🏠 Kalamaki base
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════════════ COUNTDOWN ═══════════════════════ -->
+    <div class="px-4 py-4 theme-bg" style="border-bottom:1px solid var(--bdr);">
+        <div class="rounded-2xl p-4 theme-bg1" style="border:1px solid var(--bdr);">
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 text-center theme-t3">
+                ✦ Countdown to Zakynthos
+            </p>
+            <div class="flex justify-center gap-3" id="countdown-boxes">
+                <div class="flex flex-col items-center">
+                    <span id="cd-days" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#0EA5E9;">--</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1 theme-t5">zile</span>
+                </div>
+                <span class="text-2xl font-black self-start mt-1" style="color:var(--bdr2);">:</span>
+                <div class="flex flex-col items-center">
+                    <span id="cd-hours" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#F97316;">--</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1 theme-t5">ore</span>
+                </div>
+                <span class="text-2xl font-black self-start mt-1" style="color:var(--bdr2);">:</span>
+                <div class="flex flex-col items-center">
+                    <span id="cd-mins" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#22C55E;">--</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1 theme-t5">min</span>
+                </div>
+                <span class="text-2xl font-black self-start mt-1" style="color:var(--bdr2);">:</span>
+                <div class="flex flex-col items-center">
+                    <span id="cd-secs" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#A78BFA;">--</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1 theme-t5">sec</span>
+                </div>
+            </div>
+            <div id="cd-message"></div>
+        </div>
+    </div>
+
+    <!-- ══ STICKY: primele 4 butoane ══ -->
+    <div class="sticky top-0 z-30" style="background:var(--bg); border-bottom:1px solid var(--bdr);">
+        <div class="nav-main-row">
+            <button onclick="switchTab(0)" id="tb-0" class="tab-btn active-tab">Itinerariu</button>
+            <button onclick="switchTab(1)" id="tb-1" class="tab-btn">Costuri</button>
+            <button onclick="switchTab(2)" id="tb-2" class="tab-btn">Kalamaki</button>
+            <button onclick="switchTab(3)" id="tb-3" class="tab-btn">Plaje</button>
+        </div>
+    </div>
+    <!-- ══ NON-STICKY: WarRoom întotdeauna pe rândul 2 ══ -->
+    <div class="nav-warroom-row" style="background:var(--bg);">
+        <button onclick="switchTab(4)" id="tb-4" class="tab-btn tab-btn-warroom">⚔ WarRoom</button>
+    </div>
+
+    <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
+    <main class="flex-1 px-4 pb-8">
+
+        <!-- ─────────── TAB 0: ITINERARIU ─────────── -->
+        <div id="tab-0" class="tab-content pt-4">
+
+            <!-- Day selector -->
+            <div class="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
+
+                <button onclick="showDay(0)" id="db-0"
+                        class="day-btn active flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#F97316; border-color:#F97316; color:#fff;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider opacity-80">Zi</span>
+                    <span class="text-lg font-black leading-none">1</span>
+                </button>
+
+                <button onclick="showDay(1)" id="db-1"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">2</span>
+                </button>
+
+                <button onclick="showDay(2)" id="db-2"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">3</span>
+                </button>
+
+                <button onclick="showDay(3)" id="db-3"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">4</span>
+                </button>
+
+                <button onclick="showDay(4)" id="db-4"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">5</span>
+                </button>
+
+                <button onclick="showDay(5)" id="db-5"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">6</span>
+                </button>
+
+                <button onclick="showDay(6)" id="db-6"
+                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                        style="background:#141414; border-color:#2A2A2A; color:#555;">
+                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                    <span class="text-lg font-black leading-none">7</span>
+                </button>
+
+            </div>
+
+            <!-- Day panels -->
+            <div id="day-panels"></div>
+
+        </div><!-- end tab-0 -->
+
+        <!-- ─────────── TAB 1: COSTURI ─────────── -->
+        <div id="tab-1" class="tab-content hidden pt-4">
+
+            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Estimare Costuri</h2>
+            <p class="text-xs mb-5" style="color:#555;">10 persoane · 7 zile · Kalamaki</p>
+
+            <!-- Summary cards -->
+            <div class="flex gap-3 mb-5">
+                <div class="flex-1 rounded-2xl p-4" style="background:linear-gradient(135deg,#06111A,#0d1f30); border:1px solid #0EA5E933;">
+                    <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#0EA5E9;">Per persoană</p>
+                    <p class="text-3xl font-black" style="font-family:'Playfair Display',serif; color:#F0F0F0;">€757</p>
+                </div>
+                <div class="flex-1 rounded-2xl p-4" style="background:linear-gradient(135deg,#1C1008,#2d1a08); border:1px solid #F9731633;">
+                    <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#F97316;">Total grup</p>
+                    <p class="text-3xl font-black" style="font-family:'Playfair Display',serif; color:#F0F0F0;">€7570</p>
+                </div>
+            </div>
+
+            <!-- Cost rows -->
+            <div id="cost-wrapper" class="rounded-2xl overflow-hidden" style="border:1px solid var(--bdr);">
+                <div id="cost-rows"></div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="mt-4 rounded-xl p-3 flex gap-2" style="background:#141414; border:1px solid #1E1E1E;">
+                <span style="color:#0EA5E9; flex-shrink:0;">ℹ️</span>
+                <p class="text-[11px] leading-relaxed" style="color:#555;">
+                    Estimări bazate pe prețuri medii 2024/25. Costurile reale pot varia în funcție de sezon, disponibilitate și preferințe personale.
+                </p>
+            </div>
+
+        </div>
+
+        <!-- ─────────── TAB 2: KALAMAKI ─────────── -->
+        <div id="tab-2" class="tab-content hidden pt-4">
+
+            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Kalamaki Guide</h2>
+            <p class="text-xs mb-5" style="color:#555;">Tot ce ai nevoie la 5 minute de bază</p>
+
+            <div id="kalamaki-rows" class="flex flex-col gap-3"></div>
+
+        </div>
+
+        <!-- ─────────── TAB 3: PLAJE ─────────── -->
+        <div id="tab-3" class="tab-content hidden pt-4">
+
+            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Plaje Sălbatice</h2>
+            <p class="text-xs mb-5" style="color:#555;">Hidden gems pentru exploratori</p>
+
+            <!-- Difficulty legend -->
+            <div class="flex gap-2 mb-5">
+                <span class="text-[10px] font-bold px-3 py-1 rounded-full" style="background:#22C55E18; color:#22C55E;">● Easy</span>
+                <span class="text-[10px] font-bold px-3 py-1 rounded-full" style="background:#F59E0B18; color:#F59E0B;">● Medium</span>
+                <span class="text-[10px] font-bold px-3 py-1 rounded-full" style="background:#F9731618; color:#F97316;">● Hard</span>
+            </div>
+
+            <div id="beaches-rows" class="flex flex-col gap-3"></div>
+
+        </div>
+
+        <!-- ─────────── TAB 4: WARROOM ─────────── -->
+        <div id="tab-4" class="tab-content hidden pt-4">
+            <div class="flex items-center gap-3 mb-5">
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
+                     style="background:rgba(139,0,0,0.2); border:1px solid rgba(139,0,0,0.3);">⚔</div>
+                <div>
+                    <h2 class="text-xl font-black" style="font-family:'Playfair Display',serif;">WarRoom</h2>
+                    <p class="text-xs" style="color:#666;">Coming soon — secret crew features</p>
+                </div>
+            </div>
+            <div class="rounded-2xl p-6 text-center" style="background:rgba(139,0,0,0.08); border:1px solid rgba(139,0,0,0.2);">
+                <p class="text-3xl mb-3">🔒</p>
+                <p class="text-sm font-bold" style="color:#FF6B6B;">Acces restricționat</p>
+                <p class="text-xs mt-2" style="color:#666;">Această secțiune va fi activată în curând.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ═══════════════════════ FOOTER ═══════════════════════ -->
+    <footer class="text-center py-6 px-4" style="border-top:1px solid var(--bdr);">
+        <p class="text-xs theme-t5">
+            Made for the crew &nbsp;·&nbsp; Zakynthos 2026
+        </p>
+        <div class="flex justify-center gap-1 mt-2">
+            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:#0EA5E9;"></span>
+            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:#22C55E;"></span>
+            <span class="w-1.5 h-1.5 rounded-full inline-block" style="background:#F97316;"></span>
+        </div>
+    </footer>
+
+</div><!-- end max-w-md -->
+
+<!-- ═══════════════════════ DATA & LOGIC ═══════════════════════ -->
+<script>
+
+// ── Day data ──────────────────────────────────────────────────
+const DAYS = [
+  {
+    index: 0,
+    title: "Arrival & Kalamaki",
+    subtitle: "Settle in, feel the island",
+    accent: "#F97316",
+    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
+    transport: "✈️  Taxi · Walking",
+    highlights: ["airport","kalamaki","laganas","cameo"],
+    routes: ["airport","kalamaki","laganas","cameo"],
+    activities: [
+      { time: "09:00", icon: "✈️", title: "Land at Zakynthos Airport",
+        desc: "Collect luggage, split into taxis for Kalamaki. ~15 min drive south." },
+      { time: "09:45", icon: "🏠", title: "Drop bags at Hektor's Studios",
+        desc: "Check-in or early bag drop. Grab keys, find your rooms, freshen up." },
+      { time: "10:30", icon: "🏖️", title: "Kalamaki Beach Morning",
+        desc: "Soft golden sand and shallow turquoise water. Perfect first swim of the trip." },
+      { time: "13:00", icon: "🍽️", title: "Lunch at Merlis Taverna",
+        desc: "Traditional Greek cuisine right on the beach. Try the fresh grilled fish and tzatziki." },
+      { time: "15:00", icon: "🚶", title: "Explore Laganas Strip",
+        desc: "Short taxi to Laganas — the island's main strip. Coffee, souvenir shops, vibes." },
+      { time: "17:30", icon: "🌅", title: "Cameo Island Sunset",
+        desc: "Tiny island connected by a wooden bridge. THE sunset spot near base. Don't miss it." },
+      { time: "20:00", icon: "🍷", title: "Dinner at Zepos",
+        desc: "Kalamaki local favourite. Garden terrace, fresh seafood and grilled meats. Book ahead for 10." },
+    ]
+  },
+  {
+    index: 1,
+    title: "Boat Adventure",
+    subtitle: "Captain your own voyage",
+    accent: "#0EA5E9",
+    accentBg: "#06111A", accentBgLight: "#EFF8FF",
+    transport: "🚢  Self-drive Boat · Taxi",
+    highlights: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
+    routes: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
+    activities: [
+      { time: "08:00", icon: "☕", title: "Breakfast at Kavos Psarou",
+        desc: "Fuel up with Greek yogurt, honey, and strong coffee before the sea day." },
+      { time: "09:30", icon: "🚕", title: "Taxi to Ag. Sostis Port",
+        desc: "Pick up your self-drive speedboat rental. No license needed. Full safety briefing." },
+      { time: "10:00", icon: "🐢", title: "Sail to Marathonisi (Turtle Island)",
+        desc: "20 min cruise south. Crystal water, white sand. Sea turtles nest here — spot them!" },
+      { time: "12:30", icon: "🗺️", title: "Keri Caves Exploration",
+        desc: "Navigate to the stunning blue sea grottos at the south tip. Snorkeling is incredible." },
+      { time: "14:00", icon: "🥪", title: "Beach Picnic & Swim",
+        desc: "Anchor near a quiet cove. Cold drinks, packed lunch, and total silence." },
+      { time: "16:30", icon: "⚓", title: "Return Boat & Transfer Back",
+        desc: "Head back to port, return the boat, taxi to base. Shower and relax." },
+      { time: "19:30", icon: "🌿", title: "Dinner at Arekia",
+        desc: "Farm-to-table Greek dishes, local produce. Reserve in advance for the group." },
+    ]
+  },
+  {
+    index: 2,
+    title: "Beach Hopping South",
+    subtitle: "Golden sands & turquoise waters",
+    accent: "#0EA5E9",
+    accentBg: "#06111A", accentBgLight: "#EFF8FF",
+    transport: "🚌  Bus · Walking",
+    highlights: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi"],
+    routes: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi","kalamaki"],
+    activities: [
+      { time: "08:30", icon: "🍞", title: "Lazy Breakfast at Base",
+        desc: "Sleep in a bit. Coffee and toast at the studios or the nearby café." },
+      { time: "10:00", icon: "🍌", title: "Bus to Banana Beach",
+        desc: "The island's party beach — sunbeds, water sports, good energy." },
+      { time: "12:00", icon: "🌊", title: "Gerakas Beach",
+        desc: "Protected Caretta caretta nesting beach. Dramatic clay cliffs, no sunbeds, pure nature." },
+      { time: "14:00", icon: "🍽️", title: "Lunch at Gerakas Taverna",
+        desc: "Simple beachside food — Greek salad, tzatziki, grilled chicken and cold beers." },
+      { time: "15:30", icon: "🪨", title: "Porto Zoro Beach",
+        desc: "Wild rocky beauty, unique formations. Excellent snorkeling, very peaceful." },
+      { time: "17:30", icon: "🍹", title: "Quick Stop in Argassi",
+        desc: "Lively village, grab a cocktail and watch the sun go down over the bay." },
+      { time: "20:00", icon: "🫕", title: "Group Dinner in Kalamaki",
+        desc: "Back to base. Taverna Planos — one of Kalamaki's best. Big portions, good wine." },
+    ]
+  },
+  {
+    index: 3,
+    title: "Zakynthos Town Day",
+    subtitle: "Culture, history & harbour charm",
+    accent: "#F97316",
+    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
+    transport: "🚌  Bus · Walking",
+    highlights: ["kalamaki","zakynthosTown"],
+    routes: ["kalamaki","zakynthosTown","kalamaki"],
+    activities: [
+      { time: "09:00", icon: "🚌", title: "Bus to Zakynthos Town",
+        desc: "Quick 15 min ride north. Get dropped at Solomos Square." },
+      { time: "09:30", icon: "🏛️", title: "Solomos Square & Harbour Walk",
+        desc: "The heart of town. Venetian architecture, marble square, harbour views and espresso." },
+      { time: "10:30", icon: "🎨", title: "Byzantine Museum",
+        desc: "Beautiful religious icons and art rescued from churches after the 1953 earthquake." },
+      { time: "12:00", icon: "🏰", title: "Bohali Hill & Venetian Castle",
+        desc: "Walk up or take a short taxi. Panoramic views of the town, harbour and coastline." },
+      { time: "13:30", icon: "🍝", title: "Lunch at Malanos",
+        desc: "Local institution since 1949. Try moussaka, pastitsio, and the house barrel wine." },
+      { time: "15:00", icon: "🛍️", title: "Shopping & Gelato",
+        desc: "Browse shops for local olive oil, honey, and handmade ceramics. Finish with gelato." },
+      { time: "17:00", icon: "🏠", title: "Return to Kalamaki",
+        desc: "Bus or taxi back. Pool time and rest before the night out." },
+      { time: "20:30", icon: "🎉", title: "Dinner & Nightlife in Laganas",
+        desc: "Group dinner then optional night on the strip. Laganas doesn't sleep." },
+    ]
+  },
+  {
+    index: 4,
+    title: "West Coast Wild",
+    subtitle: "Cliffs, caves & untouched shores",
+    accent: "#22C55E",
+    accentBg: "#071209", accentBgLight: "#F0FDF4",
+    transport: "🚗  Rented Cars (2 cars)",
+    highlights: ["kalamaki","portoLimnionas","korakonisi","shipwreck"],
+    routes: ["kalamaki","portoLimnionas","korakonisi","shipwreck","kalamaki"],
+    activities: [
+      { time: "08:00", icon: "🚗", title: "Pick Up Rental Cars",
+        desc: "2 cars for 10 people. Pick up from local agency near Kalamaki." },
+      { time: "09:00", icon: "🛣️", title: "Drive to Porto Limnionas",
+        desc: "50 min scenic drive west through mountains and olive groves." },
+      { time: "09:50", icon: "💧", title: "Porto Limnionas Swim & Explore",
+        desc: "Dramatic emerald fjord carved into rock. Jump off ledges into crystal-clear water." },
+      { time: "12:00", icon: "🌿", title: "Drive to Korakonisi",
+        desc: "20 min north. Natural rock arch, hidden coves, completely undeveloped." },
+      { time: "13:30", icon: "🍖", title: "Lunch in Volimes Village",
+        desc: "Authentic mountain taverna. Local honey, fresh bread, and hearty stews." },
+      { time: "15:00", icon: "📸", title: "Shipwreck Beach Viewpoint",
+        desc: "THE iconic Zakynthos view. Look down at the MV Panagiotis wreck in turquoise blue." },
+      { time: "17:00", icon: "⛪", title: "Drive South via Anafonitria",
+        desc: "Stop at the medieval monastery. Winding roads through olive groves at golden hour." },
+      { time: "20:00", icon: "🔥", title: "BBQ Night at Studios",
+        desc: "Buy supplies en route. Group BBQ on the terrace. Best night of the trip." },
+    ]
+  },
+  {
+    index: 5,
+    title: "North & Hidden Gems",
+    subtitle: "Sulphur springs & mountain villages",
+    accent: "#22C55E",
+    accentBg: "#071209", accentBgLight: "#F0FDF4",
+    transport: "🚗  Rented Cars",
+    highlights: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown"],
+    routes: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown","kalamaki"],
+    activities: [
+      { time: "08:30", icon: "🥐", title: "Breakfast on the Go",
+        desc: "Grab pastries and coffee from the bakery. Pack the car with snacks and plenty of water." },
+      { time: "09:30", icon: "♨️", title: "Drive to Xigia Beach",
+        desc: "45 min north. Natural sulphur springs bubble up from underwater — a natural spa in the sea." },
+      { time: "11:00", icon: "🪨", title: "Makris Gialos Beach",
+        desc: "Secluded white pebble beach nearby. No facilities, no crowds — pure Zakynthos." },
+      { time: "13:00", icon: "🌯", title: "Lunch in Tsilivi",
+        desc: "Lively resort town. Great gyros spots and cold Mythos beer in the sun." },
+      { time: "14:30", icon: "🦩", title: "Alykes Salt Flats",
+        desc: "Unique landscape — old Venetian saltworks. Flamingos sometimes spotted in spring." },
+      { time: "16:00", icon: "🗺️", title: "Free Exploration Time",
+        desc: "Split up or stay together. Last chance for a hidden beach, a viewpoint, or a nap." },
+      { time: "18:00", icon: "🌇", title: "Sunset at Zakynthos Town",
+        desc: "Return south. Golden hour at the harbour — one last big view of the island." },
+      { time: "20:30", icon: "🥂", title: "Last Supper: Lofos Restaurant",
+        desc: "Hillside restaurant with valley views. Best food of the trip. Celebrate the crew." },
+    ]
+  },
+  {
+    index: 6,
+    title: "Departure",
+    subtitle: "Last moments & safe travels",
+    accent: "#F97316",
+    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
+    transport: "🚗  Rental Cars → Airport",
+    highlights: ["kalamaki","airport"],
+    routes: ["kalamaki","airport"],
+    activities: [
+      { time: "05:30", icon: "⏰", title: "Wake Up & Final Pack",
+        desc: "Alarm set. Pack bags, tidy studios, leave everything ready before leaving." },
+      { time: "06:00", icon: "☕", title: "Quick Coffee & Checkout",
+        desc: "Express checkout at Hektor's. Grab coffee from the 24h kiosk nearby." },
+      { time: "06:30", icon: "🚗", title: "Drive to Airport",
+        desc: "Return rental cars at the airport. Only 5 min from base — easy." },
+      { time: "07:00", icon: "🎫", title: "Airport Check-in",
+        desc: "Arrive 90 min early. Check bags, last Greek coffee at departures." },
+      { time: "08:35", icon: "✈️", title: "Takeoff!",
+        desc: "Window seat for one last view of that turquoise coast. Until next time, Zakynthos." },
+    ]
+  },
+];
+
+// ── Wild Beaches data ─────────────────────────────────────────
+const BEACHES = [
+  {
+    name: "Porto Limnionas",
+    desc: "Fjord de smarald cu sărituri de pe stânci și peșteri submarine. Nu există plajă — doar rocă pură și apă cristalină.",
+    difficulty: "Hard",
+    access: "🚗 Cu mașina",
+    day: 5,
+    icon: "💧",
+  },
+  {
+    name: "Marathonisi (Turtle Island)",
+    desc: "Accesibilă doar cu barca. Nisip alb imaculat și broaște țestoase Caretta caretta în sezon.",
+    difficulty: "Medium",
+    access: "🚢 Cu barca",
+    day: 2,
+    icon: "🐢",
+  },
+  {
+    name: "Keri Caves",
+    desc: "Grote marine albastre la capătul sudic al insulei. Snorkeling incredibil în caverne.",
+    difficulty: "Medium",
+    access: "🚢 Cu barca",
+    day: 2,
+    icon: "🗺️",
+  },
+  {
+    name: "Gerakas Beach",
+    desc: "Plajă protejată pentru cuibăritul broaștelor țestoase. Falezeă dramatică de argilă, fără șezlonguri.",
+    difficulty: "Easy",
+    access: "🚌 Cu busul",
+    day: 3,
+    icon: "🌊",
+  },
+  {
+    name: "Porto Zoro",
+    desc: "Formațiuni stâncoase unice, snorkeling excelent, liniște deplină. Una din cele mai frumoase din sud.",
+    difficulty: "Easy",
+    access: "🚌 Cu busul",
+    day: 3,
+    icon: "🪨",
+  },
+  {
+    name: "Korakonisi",
+    desc: "Arc natural din piatră, cale nedezvoltată. Sălbăticie pură la vest, fără turiști.",
+    difficulty: "Hard",
+    access: "🚗 Cu mașina",
+    day: 5,
+    icon: "🌿",
+  },
+  {
+    name: "Xigia Beach",
+    desc: "Izvoare sulfuroase naturale care ies din fundul mării — spa natural gratuit cu efect detoxifiant.",
+    difficulty: "Medium",
+    access: "🚗 Cu mașina",
+    day: 6,
+    icon: "♨️",
+  },
+  {
+    name: "Makris Gialos",
+    desc: "Plajă secretă cu pietriș alb, fără facilități și fără aglomerație. Natura în stare pură.",
+    difficulty: "Hard",
+    access: "🚗 Cu mașina",
+    day: 6,
+    icon: "🏝️",
+  },
+];
+
+const DIFF_COLORS = {
+  Easy:   { bg: "#22C55E18", text: "#22C55E" },
+  Medium: { bg: "#F59E0B18", text: "#F59E0B" },
+  Hard:   { bg: "#F9731618", text: "#F97316" },
+};
+
+function renderBeaches() {
+  const container = document.getElementById('beaches-rows');
+  if (!container) return;
+  const th = T();
+  container.innerHTML = BEACHES.map(b => {
+    const dc = DIFF_COLORS[b.difficulty];
+    return `
+      <div class="rounded-2xl p-4"
+           style="background:${th.card}; border:1px solid ${th.bdr}; border-left:3px solid ${dc.text}; box-shadow:${th.shadow};">
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-lg">${b.icon}</span>
+            <h3 class="text-sm font-bold" style="color:${th.t1};">${b.name}</h3>
+          </div>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                style="background:${dc.bg}; color:${dc.text};">${b.difficulty}</span>
+        </div>
+        <p class="text-xs leading-relaxed mb-3" style="color:${th.t3};">${b.desc}</p>
+        <div class="flex items-center gap-4 text-[11px]" style="color:${th.t4};">
+          <span>${b.access}</span>
+          <span>📅 Ziua ${b.day}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Kalamaki Guide data ───────────────────────────────────────
+const KALAMAKI = [
+  {
+    name: "Merlis Taverna",
+    type: "🐟 Seafood",
+    desc: "Pește proaspăt, caracatiță, vedere la apus direct de pe plajă.",
+    rating: 4.7,
+    tag: "Recomandat",
+    tagColor: "#0EA5E9",
+    distance: "2 min plajă",
+  },
+  {
+    name: "Zepos Restaurant",
+    type: "🍖 Traditional",
+    desc: "Terasă în grădină, porții generoase, perfect pentru grupuri mari.",
+    rating: 4.6,
+    tag: "Grup-friendly",
+    tagColor: "#22C55E",
+    distance: "5 min mers",
+  },
+  {
+    name: "Arekia",
+    type: "🌿 Farm-to-table",
+    desc: "Bucătărie greacă modernă, ingrediente locale. Rezervare obligatorie.",
+    rating: 4.8,
+    tag: "Top pick",
+    tagColor: "#F59E0B",
+    distance: "8 min mers",
+  },
+  {
+    name: "Kavos Psarou Café",
+    type: "☕ Breakfast",
+    desc: "Iaurt grecesc cu miere, patiserie, cafea tare. Ideal dimineața.",
+    rating: 4.5,
+    tag: "Dimineață",
+    tagColor: "#A78BFA",
+    distance: "3 min mers",
+  },
+  {
+    name: "Crystal Beach Bar",
+    type: "🍹 Beach Bar",
+    desc: "Șezlonguri, cocktailuri, muzică chill. Relaxare totală după plajă.",
+    rating: 4.4,
+    tag: "Relaxare",
+    tagColor: "#0EA5E9",
+    distance: "1 min plajă",
+  },
+  {
+    name: "Cameo Island",
+    type: "🌅 Must-see",
+    desc: "Insuliță unită prin pod de lemn. Cel mai bun spot de apus din zonă.",
+    rating: 5.0,
+    tag: "Imperdibil",
+    tagColor: "#F97316",
+    distance: "10 min taxi",
+  },
+  {
+    name: "Kalamaki Beach",
+    type: "🏖️ Beach",
+    desc: "Nisip fin auriu, apă puțin adâncă, zonă de cuibărit broaște țestoase.",
+    rating: 4.9,
+    tag: "Baza",
+    tagColor: "#22C55E",
+    distance: "0 min",
+  },
+];
+
+function renderKalamaki() {
+  const container = document.getElementById('kalamaki-rows');
+  if (!container) return;
+  const th = T();
+  container.innerHTML = KALAMAKI.map(s => `
+    <div class="rounded-2xl p-4 flex items-center gap-3"
+         style="background:${th.card}; border:1px solid ${th.bdr}; box-shadow:${th.shadow};">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap mb-1">
+          <span class="text-sm font-bold" style="color:${th.t1};">${s.name}</span>
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style="background:${s.tagColor}18; color:${s.tagColor};">${s.tag}</span>
+        </div>
+        <p class="text-[11px] mb-1" style="color:#0EA5E9;">${s.type} &nbsp;·&nbsp; <span style="color:${th.t4};">${s.distance}</span></p>
+        <p class="text-xs leading-relaxed" style="color:${th.t3};">${s.desc}</p>
+      </div>
+      <div class="flex flex-col items-center flex-shrink-0 gap-1">
+        <span class="text-base">⭐</span>
+        <span class="text-sm font-black" style="color:${th.t1};">${s.rating}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Costs data ────────────────────────────────────────────────
+const COSTS = [
+  { category: "Cazare",    icon: "🏠", label: "Hektor's Studios (6 nopți × 10)",  pp: 427, total: 4270, color: "#0EA5E9" },
+  { category: "Transport", icon: "✈️", label: "Taxiuri aeroport (sosire + plecare)", pp: 8,   total: 80,   color: "#F97316" },
+  { category: "Transport", icon: "🚌", label: "Bus/taxi zilnic — Zilele 1–4",       pp: 30,  total: 300,  color: "#F97316" },
+  { category: "Transport", icon: "🚗", label: "Închiriere mașini (2 × 3 zile)",     pp: 45,  total: 450,  color: "#F97316" },
+  { category: "Transport", icon: "⛽", label: "Carburant mașini închiriate",         pp: 12,  total: 120,  color: "#F97316" },
+  { category: "Barcă",     icon: "🚢", label: "Barcă self-drive (o zi completă)",   pp: 30,  total: 300,  color: "#22C55E" },
+  { category: "Mâncare",   icon: "🍽️", label: "Mese estimate (6 zile × ~€30/zi)",  pp: 180, total: 1800, color: "#A78BFA" },
+  { category: "Activități",icon: "🎟️", label: "Muzee, Cameo Island, bacșișuri",    pp: 25,  total: 250,  color: "#F59E0B" },
+];
+
+function renderCosts() {
+  const container = document.getElementById('cost-rows');
+  if (!container) return;
+  const th = T();
+  container.innerHTML = COSTS.map((c, i) => `
+    <div class="flex items-center gap-3 px-4 py-3"
+         style="background:${th.card}; ${i < COSTS.length - 1 ? `border-bottom:1px solid ${th.bdr};` : ''}">
+      <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
+           style="background:${c.color}15;">
+        ${c.icon}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold truncate" style="color:${th.t1};">${c.label}</p>
+        <p class="text-[11px]" style="color:${th.t4};">${c.category}</p>
+      </div>
+      <div class="text-right flex-shrink-0">
+        <p class="text-sm font-bold" style="color:${th.t1};">€${c.total}</p>
+        <p class="text-[10px]" style="color:${th.t4};">€${c.pp}/pp</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Theme helper ──────────────────────────────────────────────
+function isDark() { return !document.body.classList.contains('light'); }
+function T() {
+  return isDark() ? {
+    card: '#141414', card2: '#1A1A1A', bdr: '#1E1E1E', bdr2: '#2A2A2A',
+    t1: '#F0F0F0', t2: '#A0A0A0', t3: '#666', t4: '#444', t5: '#333',
+    transBg: '#0A0A0A', mapBg: '#1A1A1A',
+    shadow: 'none', shadowSm: 'none',
+  } : {
+    card: '#FFFFFF', card2: '#F8F8F8', bdr: '#F0F0F0', bdr2: '#E8E8E8',
+    t1: '#0A0A0A', t2: '#444444', t3: '#777', t4: '#999', t5: '#BBB',
+    transBg: '#FFFFFF', mapBg: '#F0F0F0',
+    shadow: '0 4px 24px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.07)',
+    shadowSm: '0 2px 10px rgba(0,0,0,0.08)',
+  };
+}
+
+// ── State ─────────────────────────────────────────────────────
+let activeTab = 0;
+let activeDay = 0;
+
+// ── Render day panels ─────────────────────────────────────────
+// ── Island map ────────────────────────────────────────────────
+const POINTS = {
+  airport:       { x: 228, y: 368, label: "Airport" },
+  kalamaki:      { x: 212, y: 392, label: "Kalamaki" },
+  laganas:       { x: 175, y: 408, label: "Laganas" },
+  agiosSostis:   { x: 148, y: 386, label: "Ag. Sostis" },
+  cameo:         { x: 160, y: 406, label: "Cameo" },
+  marathonisi:   { x: 140, y: 445, label: "Marathonisi" },
+  keriCaves:     { x: 105, y: 418, label: "Keri Caves" },
+  zakynthosTown: { x: 298, y: 298, label: "ZTH Town" },
+  argassi:       { x: 312, y: 338, label: "Argassi" },
+  tsilivi:       { x: 272, y: 220, label: "Tsilivi" },
+  xigia:         { x: 258, y: 148, label: "Xigia" },
+  shipwreck:     { x: 90,  y: 118, label: "Shipwreck" },
+  korakonisi:    { x: 78,  y: 172, label: "Korakonisi" },
+  portoLimnionas:{ x: 74,  y: 255, label: "P. Limnionas" },
+  bananaBeach:   { x: 320, y: 396, label: "Banana Beach" },
+  gerakas:       { x: 346, y: 428, label: "Gerakas" },
+  portoZoro:     { x: 328, y: 384, label: "Porto Zoro" },
+  makrisGialos:  { x: 112, y: 152, label: "Makris Gialos" },
+};
+
+// Zakynthos outline path — clockwise from north cape
+const ISLAND_PATH = `
+  M 208,50
+  C 222,46 238,54 252,68
+  C 265,80 275,98 282,118
+  C 288,138 286,158 283,175
+  C 280,195 278,215 276,232
+  C 274,252 280,270 288,288
+  C 296,305 304,318 310,336
+  C 316,350 322,364 328,380
+  C 334,394 340,408 346,422
+  C 350,432 348,442 338,448
+  C 328,454 316,450 305,438
+  C 294,426 283,418 272,415
+  C 260,412 248,415 236,418
+  C 224,421 212,422 200,420
+  C 188,418 176,420 164,424
+  C 152,428 140,426 130,420
+  C 120,414 110,416 100,424
+  C 90,432 80,428 75,416
+  C 70,402 68,386 70,368
+  C 72,350 70,330 72,312
+  C 74,292 72,272 74,254
+  C 76,234 78,215 82,198
+  C 86,180 88,162 92,145
+  C 96,128 100,112 108,98
+  C 116,84 128,72 142,62
+  C 156,52 174,47 190,47
+  C 198,46 204,48 208,50 Z
+`;
+
+function buildMap(highlights, routes, color) {
+  const allKeys = Object.keys(POINTS);
+
+  // Build curved route path through ordered waypoints
+  let routeSvg = '';
+  if (routes && routes.length >= 2) {
+    const pts = routes.map(k => POINTS[k]).filter(Boolean);
+    if (pts.length >= 2) {
+      // Shadow path
+      let d = `M ${pts[0].x},${pts[0].y}`;
+      for (let i = 1; i < pts.length; i++) {
+        const prev = pts[i - 1], curr = pts[i];
+        const cx = (prev.x + curr.x) / 2 + (i % 2 === 0 ? 14 : -14);
+        const cy = (prev.y + curr.y) / 2 - 10;
+        d += ` Q ${cx},${cy} ${curr.x},${curr.y}`;
+      }
+      // Approximate path length for animation speed
+      const len = pts.reduce((s, p, i) => {
+        if (i === 0) return 0;
+        const prev = pts[i - 1];
+        return s + Math.hypot(p.x - prev.x, p.y - prev.y);
+      }, 0);
+      const speed = Math.max(2, len / 100).toFixed(1);
+
+      routeSvg = `
+        <!-- route glow -->
+        <path d="${d}" stroke="${color}" stroke-width="5" fill="none" opacity="0.08" stroke-linecap="round"/>
+        <!-- animated dashed route -->
+        <path d="${d}" stroke="${color}" stroke-width="2" fill="none" opacity="0.75"
+              stroke-linecap="round" stroke-dasharray="7,5"
+              style="animation: dashMove ${speed}s linear infinite;"/>
+        <!-- start marker -->
+        <circle cx="${pts[0].x}" cy="${pts[0].y}" r="5" fill="${color}" opacity="0.25"/>
+        <circle cx="${pts[0].x}" cy="${pts[0].y}" r="3" fill="${color}" stroke="#060E18" stroke-width="1.5"/>
+        <!-- end marker -->
+        <circle cx="${pts[pts.length-1].x}" cy="${pts[pts.length-1].y}" r="7" fill="${color}" opacity="0.2"/>
+        <circle cx="${pts[pts.length-1].x}" cy="${pts[pts.length-1].y}" r="4.5" fill="${color}" stroke="#060E18" stroke-width="1.5"/>
+        <!-- waypoint dots on route -->
+        ${pts.slice(1, -1).map(p => `<circle cx="${p.x}" cy="${p.y}" r="2.5" fill="${color}" opacity="0.5"/>`).join('')}
+      `;
+    }
+  }
+
+  // Location dots & labels
+  const dots = allKeys.map(key => {
+    const pt = POINTS[key];
+    const isHl = highlights.includes(key);
+    if (isHl) {
+      return `
+        <circle cx="${pt.x}" cy="${pt.y}" r="10" fill="${color}" opacity="0.15">
+          <animate attributeName="r" values="10;14;10" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.15;0.06;0.15" dur="2.4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="${pt.x}" cy="${pt.y}" r="5" fill="${color}" stroke="#0A0A0A" stroke-width="1.5"/>
+        <text x="${pt.x}" y="${pt.y - 10}" text-anchor="middle"
+          style="font-size:8px; font-weight:300; fill:#FFFFFF; font-family:'DM Sans',sans-serif;">${pt.label}</text>
+      `;
+    }
+    return `<circle cx="${pt.x}" cy="${pt.y}" r="2.5" fill="#2A2A2A" stroke="#1A1A1A" stroke-width="1"/>`;
+  }).join('');
+
+  return `
+    <div style="border-radius:16px; overflow:hidden; border:1px solid #1E1E1E; margin-bottom:16px;">
+      <svg viewBox="40 30 340 450" style="width:100%; height:auto; display:block; background:#060E18;">
+        <defs>
+          <radialGradient id="oceanGrad" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#0A1E35"/>
+            <stop offset="100%" stop-color="#060E18"/>
+          </radialGradient>
+          <linearGradient id="islandGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1A2E1A"/>
+            <stop offset="100%" stop-color="#142414"/>
+          </linearGradient>
+        </defs>
+        <style>@keyframes dashMove { to { stroke-dashoffset: -48; } }</style>
+        <!-- ocean -->
+        <rect x="40" y="30" width="340" height="450" fill="url(#oceanGrad)"/>
+        <!-- wave lines -->
+        <path d="M55,90 Q165,80 275,90 T380,86"    stroke="#0E2540" stroke-width="0.8" fill="none"/>
+        <path d="M55,200 Q165,190 275,200 T385,196" stroke="#0E2540" stroke-width="0.7" fill="none"/>
+        <path d="M50,320 Q160,310 275,318 T385,315" stroke="#0E2540" stroke-width="0.7" fill="none"/>
+        <!-- island shadow -->
+        <path d="${ISLAND_PATH}" fill="#0A160A" transform="translate(3,4)"/>
+        <!-- island body -->
+        <path d="${ISLAND_PATH}" fill="url(#islandGrad)" stroke="#2A4A2A" stroke-width="1"/>
+        <!-- Bay of Laganas coast -->
+        <path d="M164,424 C188,430 212,428 236,418" stroke="#1A3A2A" stroke-width="2.5" fill="none" opacity="0.6" stroke-linecap="round"/>
+        <!-- labels -->
+        <text x="210" y="42" text-anchor="middle"
+          style="font-size:6px; fill:#1A3A5A; font-family:'DM Sans',sans-serif; letter-spacing:2px;">N ▲</text>
+        <text x="200" y="450" text-anchor="middle"
+          style="font-size:6.5px; fill:#0E2540; font-family:'DM Sans',sans-serif; font-style:italic;">
+          BAY OF LAGANAS
+        </text>
+        <!-- animated route (drawn below dots so dots appear on top) -->
+        ${routeSvg}
+        <!-- location dots -->
+        ${dots}
+      </svg>
+    </div>
+  `;
+}
+
+function toggleMap(dayIndex) {
+  const mapContainer = document.getElementById(`map-${dayIndex}`);
+  const btn = document.getElementById(`mapbtn-${dayIndex}`);
+  const day = DAYS[dayIndex];
+  if (!mapContainer || !btn) return;
+  if (mapContainer.innerHTML === '') {
+    mapContainer.innerHTML = buildMap(day.highlights, day.routes, day.accent);
+    btn.classList.add('map-open');
+    btn.textContent = '🗺 Ascunde harta';
+  } else {
+    mapContainer.innerHTML = '';
+    btn.classList.remove('map-open');
+    btn.textContent = '🗺 Vezi harta';
+  }
+}
+
+function renderDays() {
+  const container = document.getElementById('day-panels');
+  container.innerHTML = '';
+
+  DAYS.forEach(day => {
+    const panel = document.createElement('div');
+    panel.id = `day-${day.index}`;
+    panel.style.display = day.index === 0 ? 'block' : 'none';
+    panel.className = 'fade-up';
+
+    // Day header card
+    const th = T();
+    const bg = isDark() ? day.accentBg : day.accentBgLight;
+    panel.innerHTML = `
+      <div class="rounded-2xl p-4 mb-4" style="background:${bg}; border:1px solid ${day.accent}22; box-shadow:${th.shadow};">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-widest mb-1" style="color:${day.accent};">
+              Ziua ${day.index + 1}
+            </p>
+            <h2 class="text-xl font-black leading-tight" style="font-family:'Playfair Display',serif; color:${th.t1};">
+              ${day.title}
+            </h2>
+            <p class="text-xs mt-1" style="color:${th.t3};">${day.subtitle}</p>
+          </div>
+          <button id="mapbtn-${day.index}" onclick="toggleMap(${day.index})"
+                  class="btn-map-toggle">
+            🗺 Vezi harta
+          </button>
+        </div>
+        <div class="mt-3 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold"
+             style="background:${th.transBg}; color:${day.accent}; border:1px solid ${day.accent}33;">
+          ${day.transport}
+        </div>
+      </div>
+      <!-- Map container (hidden by default) -->
+      <div id="map-${day.index}"></div>
+
+      <!-- Timeline -->
+      <div class="flex flex-col gap-0">
+        ${day.activities.map((act, i) => `
+          <div class="flex gap-3 ${i < day.activities.length - 1 ? 'mb-4' : ''}">
+            <!-- icon + line -->
+            <div class="flex flex-col items-center flex-shrink-0" style="width:32px;">
+              <div class="w-8 h-8 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+                   style="background:${bg}; border:1px solid ${day.accent}33;">
+                ${act.icon}
+              </div>
+              ${i < day.activities.length - 1 ? `
+                <div class="w-px flex-1 mt-1" style="background:${th.bdr}; min-height:20px;"></div>
+              ` : ''}
+            </div>
+            <!-- content -->
+            <div class="flex-1 pb-1">
+              <span class="text-[11px] font-bold tabular-nums" style="color:${day.accent};">${act.time}</span>
+              <h4 class="text-sm font-bold mt-0.5 mb-1" style="color:${th.t1};">${act.title}</h4>
+              <p class="text-xs leading-relaxed" style="color:${th.t3};">${act.desc}</p>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    container.appendChild(panel);
+  });
+}
+
+// ── Switch tab ────────────────────────────────────────────────
+function switchTab(index) {
+  // MOMENT 4 — scroll to top on every tab click
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById(`tab-${index}`).classList.remove('hidden');
+
+  // Update all .tab-btn elements (both the sticky and the mobile non-sticky WarRoom clone)
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const i = parseInt(btn.id?.replace('tb-', '') ?? '-1');
+    btn.classList.remove('active-tab');
+    // Reset inline overrides — CSS classes handle the rest
+    btn.style.opacity = '1';
+  });
+
+  // Mark active on the #tb-N button (sticky row)
+  const activeBtn = document.getElementById(`tb-${index}`);
+  if (activeBtn) activeBtn.classList.add('active-tab');
+
+  // Also mark active on the mobile WarRoom clone if index === 4
+  if (index === 4) {
+    document.querySelectorAll('.tab-btn-warroom').forEach(b => b.classList.add('active-tab'));
+  }
+
+  activeTab = index;
+}
+
+// ── Show day ──────────────────────────────────────────────────
+function showDay(index) {
+  const day = DAYS[index];
+
+  // hide all panels
+  DAYS.forEach(d => {
+    const el = document.getElementById(`day-${d.index}`);
+    if (el) el.style.display = 'none';
+  });
+
+  // show selected
+  const panel = document.getElementById(`day-${index}`);
+  if (panel) {
+    panel.style.display = 'block';
+    panel.classList.remove('fade-up');
+    void panel.offsetWidth; // reflow
+    panel.classList.add('fade-up');
+  }
+
+  // update day buttons
+  for (let i = 0; i < 7; i++) {
+    const btn = document.getElementById(`db-${i}`);
+    if (!btn) continue;
+    if (i === index) {
+      btn.style.background = day.accent;
+      btn.style.borderColor = day.accent;
+      btn.style.color = '#fff';
+      btn.classList.add('active');
+    } else {
+      btn.style.background = '#141414';
+      btn.style.borderColor = '#2A2A2A';
+      btn.style.color = '#555';
+      btn.classList.remove('active');
+    }
+  }
+  activeDay = index;
+}
+
+// ── Countdown ────────────────────────────────────────────────
+function updateCountdown() {
+  const target = new Date('2026-08-06T09:00:00');
+  const now    = new Date();
+  const diff   = target - now;
+
+  const elDays = document.getElementById('cd-days');
+  const elHrs  = document.getElementById('cd-hours');
+  const elMins = document.getElementById('cd-mins');
+  const elSecs = document.getElementById('cd-secs');
+  const elMsg  = document.getElementById('cd-message');
+
+  if (diff <= 0) {
+    // Vacation has started or passed
+    elDays.textContent = '0';
+    elHrs.textContent  = '0';
+    elMins.textContent = '0';
+    elSecs.textContent = '0';
+    elMsg.innerHTML = `<p class="text-center text-xs mt-3" style="color:#22C55E; font-weight:700;">
+      🌊 Suntem în Zakynthos! Enjoy the crew!
+    </p>`;
+    return;
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hrs  = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+  elDays.textContent = String(days);
+  elHrs.textContent  = String(hrs).padStart(2, '0');
+  elMins.textContent = String(mins).padStart(2, '0');
+  elSecs.textContent = String(secs).padStart(2, '0');
+}
+
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+// ── Theme toggle ──────────────────────────────────────────────
+function applyTheme(light) {
+  if (light) {
+    document.body.classList.add('light');
+    document.getElementById('theme-icon').textContent  = '🌙';
+    document.getElementById('theme-label').textContent = 'Dark';
+  } else {
+    document.body.classList.remove('light');
+    document.getElementById('theme-icon').textContent  = '☀️';
+    document.getElementById('theme-label').textContent = 'Light';
+  }
+  // Re-render dynamic content with new theme
+  renderDays();
+  renderCosts();
+  renderKalamaki();
+  renderBeaches();
+  // Restore active day view
+  showDay(activeDay);
+  switchTab(activeTab);
+}
+
+function toggleTheme() {
+  const nowLight = !document.body.classList.contains('light');
+  localStorage.setItem('zaky-theme', nowLight ? 'light' : 'dark');
+  applyTheme(nowLight);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+// Aplică tema salvată (default: light)
+const savedTheme = localStorage.getItem('zaky-theme') || 'light';
+applyTheme(savedTheme === 'light');
+
+// ── Swipe between days ────────────────────────────────────────
+(function() {
+  let touchStartX = 0;
+  let touchStartY = 0;
+  const SWIPE_THRESHOLD = 50;  // min px horizontal to count as swipe
+  const ANGLE_THRESHOLD = 35;  // max degrees from horizontal
+
+  const container = document.getElementById('day-panels');
+
+  container.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }, { passive: true });
+
+  container.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+
+    // Ignore if mostly vertical (scrolling)
+    if (Math.abs(dy) > Math.abs(dx) * Math.tan(ANGLE_THRESHOLD * Math.PI / 180)) return;
+    // Ignore if too short
+    if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+
+    if (dx < 0 && activeDay < DAYS.length - 1) {
+      // swipe left → next day
+      showDay(activeDay + 1);
+      scrollDayBtn(activeDay);
+    } else if (dx > 0 && activeDay > 0) {
+      // swipe right → previous day
+      showDay(activeDay - 1);
+      scrollDayBtn(activeDay);
+    }
+  }, { passive: true });
+
+  function scrollDayBtn(index) {
+    const btn = document.getElementById(`db-${index}`);
+    if (btn) btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+})();
+
+</script>
+</body>
+</html>
