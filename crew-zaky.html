@@ -86,6 +86,37 @@
         </div>
     </header>
 
+    <!-- ═══════════════════════ COUNTDOWN ═══════════════════════ -->
+    <div class="px-4 py-4" style="background:#0A0A0A; border-bottom:1px solid #1E1E1E;">
+        <div class="rounded-2xl p-4" style="background:#111; border:1px solid #1E1E1E;">
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] mb-3 text-center" style="color:#555;">
+                ✦ Countdown to Zakynthos
+            </p>
+            <div class="flex justify-center gap-3" id="countdown-boxes">
+                <div class="flex flex-col items-center">
+                    <span id="cd-days" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#0EA5E9;">--</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1" style="color:#333;">zile</span>
+                </div>
+                <span class="text-2xl font-black self-start mt-1" style="color:#222;">:</span>
+                <div class="flex flex-col items-center">
+                    <span id="cd-hours" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#F97316;">--</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1" style="color:#333;">ore</span>
+                </div>
+                <span class="text-2xl font-black self-start mt-1" style="color:#222;">:</span>
+                <div class="flex flex-col items-center">
+                    <span id="cd-mins" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#22C55E;">--</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1" style="color:#333;">min</span>
+                </div>
+                <span class="text-2xl font-black self-start mt-1" style="color:#222;">:</span>
+                <div class="flex flex-col items-center">
+                    <span id="cd-secs" class="text-3xl font-black tabular-nums" style="font-family:'Playfair Display',serif; color:#A78BFA;">--</span>
+                    <span class="text-[9px] uppercase tracking-widest mt-1" style="color:#333;">sec</span>
+                </div>
+            </div>
+            <div id="cd-message"></div>
+        </div>
+    </div>
+
     <!-- ═══════════════════════ TAB BAR ═══════════════════════ -->
     <div class="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar sticky top-0 z-30"
          style="background:#0A0A0A; border-bottom:1px solid #1E1E1E;">
@@ -961,6 +992,44 @@ function showDay(index) {
   }
   activeDay = index;
 }
+
+// ── Countdown ────────────────────────────────────────────────
+function updateCountdown() {
+  const target = new Date('2026-08-06T09:00:00');
+  const now    = new Date();
+  const diff   = target - now;
+
+  const elDays = document.getElementById('cd-days');
+  const elHrs  = document.getElementById('cd-hours');
+  const elMins = document.getElementById('cd-mins');
+  const elSecs = document.getElementById('cd-secs');
+  const elMsg  = document.getElementById('cd-message');
+
+  if (diff <= 0) {
+    // Vacation has started or passed
+    elDays.textContent = '0';
+    elHrs.textContent  = '0';
+    elMins.textContent = '0';
+    elSecs.textContent = '0';
+    elMsg.innerHTML = `<p class="text-center text-xs mt-3" style="color:#22C55E; font-weight:700;">
+      🌊 Suntem în Zakynthos! Enjoy the crew!
+    </p>`;
+    return;
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hrs  = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+  elDays.textContent = String(days);
+  elHrs.textContent  = String(hrs).padStart(2, '0');
+  elMins.textContent = String(mins).padStart(2, '0');
+  elSecs.textContent = String(secs).padStart(2, '0');
+}
+
+updateCountdown();
+setInterval(updateCountdown, 1000);
 
 // ── Init ──────────────────────────────────────────────────────
 renderDays();
