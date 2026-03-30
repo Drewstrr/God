@@ -401,18 +401,17 @@
             color: var(--t3);
         }
         .vote-bar-track {
-            height: 6px;
+            height: 10px;
             background: var(--bdr2);
             border-radius: 999px;
             overflow: hidden;
         }
         .vote-bar {
             height: 100%;
-            background: var(--t4);
             border-radius: 999px;
-            transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+            transition: width 0.65s cubic-bezier(0.34, 1.2, 0.64, 1);
         }
-        .vote-result-row.my-vote .vote-bar { background: #0EA5E9; }
+        .vote-result-row.my-vote .vote-result-label { color: var(--t1); font-weight: 700; }
         .poll-total {
             font-size: 11px;
             color: var(--t3);
@@ -1576,9 +1575,14 @@ function toggleTheme() {
 }
 
 // ── Init ──────────────────────────────────────────────────────
-// Aplică tema salvată (default: light)
 const savedTheme = localStorage.getItem('zaky-theme') || 'light';
 applyTheme(savedTheme === 'light');
+
+// Deschide WarRoom automat dacă vine redirect de la create-poll.html
+if (window.location.hash === '#warroom') {
+  history.replaceState(null, '', window.location.pathname);
+  switchTab(4);
+}
 
 // ── Swipe between days ────────────────────────────────────────
 (function() {
@@ -1704,18 +1708,21 @@ const _sb = (function() {
 })();
 
 // ── WarRoom Polls ──────────────────────────────────────────────
+// Cache polls by ID pentru re-render rapid după vot
+const _pollCache = {};
+const OPTION_COLORS = ['#0EA5E9', '#22C55E', '#F97316', '#A855F7', '#EF4444', '#F59E0B'];
+
 async function loadActivePoll() {
   const pollEl = document.getElementById('warroom-poll');
   if (!pollEl) return;
   pollEl.innerHTML = '<div class="warroom-loading">Se încarcă...</div>';
 
   try {
+    // Toate poll-urile, cele mai noi primele (fără limit)
     const { data: polls, error } = await _sb
       .from('polls')
       .select('*')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1);
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
@@ -1723,27 +1730,33 @@ async function loadActivePoll() {
       pollEl.innerHTML = `
         <div class="poll-empty">
           <p style="font-size:2.5rem; margin-bottom:12px;">🗳</p>
-          <p class="text-sm font-bold" style="color:var(--t2);">Niciun poll activ</p>
+          <p class="text-sm font-bold" style="color:var(--t2);">Niciun poll încă</p>
           <p class="text-xs mt-2" style="color:var(--t3);">Creează primul poll pentru crew!</p>
         </div>`;
       return;
     }
 
-    const poll = polls[0];
     const { data: { session } } = await _sb.auth.getSession();
     const userId = session?.user?.id;
 
-    const { data: votes } = await _sb
+    // Un singur query pentru toate voturile tuturor poll-urilor
+    const { data: allVotes } = await _sb
       .from('votes')
-      .select('option_id, user_id')
-      .eq('poll_id', poll.id);
+      .select('poll_id, option_id, user_id')
+      .in('poll_id', polls.map(p => p.id));
 
-    const allVotes = votes || [];
-    const myVote   = allVotes.find(v => v.user_id === userId);
+    const votes = allVotes || [];
 
-    pollEl.innerHTML = myVote
-      ? renderPollResults(poll, allVotes, myVote.option_id)
-      : renderPollVoting(poll);
+    let html = '';
+    for (const poll of polls) {
+      _pollCache[poll.id] = poll;
+      const pollVotes = votes.filter(v => v.poll_id === poll.id);
+      const myVote    = pollVotes.find(v => v.user_id === userId);
+      html += myVote
+        ? renderPollResults(poll, pollVotes, myVote.option_id)
+        : renderPollVoting(poll);
+    }
+    pollEl.innerHTML = html;
 
   } catch (e) {
     pollEl.innerHTML = `<div class="poll-empty"><p style="color:#EF4444; font-size:12px;">Eroare: ${e.message}</p></div>`;
@@ -1752,19 +1765,27 @@ async function loadActivePoll() {
 
 function renderPollVoting(poll) {
   const opts = poll.options || [];
-  const btns = opts.map(opt =>
-    `<button class="vote-btn" onclick="castVote('${poll.id}','${opt.id}')">${opt.text}</button>`
-  ).join('');
-  return `<div class="poll-card"><p class="poll-question">${poll.question}</p><div>${btns}</div></div>`;
+  const btns = opts.map((opt, i) => {
+    const color = OPTION_COLORS[i % OPTION_COLORS.length];
+    return `<button class="vote-btn"
+              style="border-left:3px solid ${color};"
+              onclick="castVote('${poll.id}','${opt.id}')">${opt.text}</button>`;
+  }).join('');
+  return `
+    <div class="poll-card" id="poll-card-${poll.id}">
+      <p class="poll-question">${poll.question}</p>
+      <div class="poll-options">${btns}</div>
+    </div>`;
 }
 
 function renderPollResults(poll, votes, myOptionId) {
   const opts  = poll.options || [];
   const total = votes.length;
-  const rows  = opts.map(opt => {
+  const rows  = opts.map((opt, i) => {
     const count  = votes.filter(v => v.option_id === opt.id).length;
     const pct    = total > 0 ? Math.round(count / total * 100) : 0;
     const isMine = opt.id === myOptionId;
+    const color  = OPTION_COLORS[i % OPTION_COLORS.length];
     return `
       <div class="vote-result-row${isMine ? ' my-vote' : ''}">
         <div class="vote-result-label">
@@ -1772,12 +1793,12 @@ function renderPollResults(poll, votes, myOptionId) {
           <span class="vote-result-count">${count} vot${count !== 1 ? 'uri' : ''} · ${pct}%</span>
         </div>
         <div class="vote-bar-track">
-          <div class="vote-bar" style="width:${pct}%"></div>
+          <div class="vote-bar" style="width:${pct}%; background:${color}; opacity:${isMine ? '1' : '0.45'};"></div>
         </div>
       </div>`;
   }).join('');
   return `
-    <div class="poll-card">
+    <div class="poll-card" id="poll-card-${poll.id}">
       <p class="poll-question">${poll.question}</p>
       <div class="poll-voted-badge">✓ Ai votat</div>
       <div class="poll-results">${rows}</div>
@@ -1786,14 +1807,18 @@ function renderPollResults(poll, votes, myOptionId) {
 }
 
 async function castVote(pollId, optionId) {
+  const card = document.getElementById(`poll-card-${pollId}`);
+
+  // Dezactivează instant butoanele din cardul acestui poll
+  if (card) {
+    card.querySelectorAll('.vote-btn').forEach(b => {
+      b.disabled = true;
+      b.style.opacity = '0.45';
+    });
+  }
+
   const { data: { session } } = await _sb.auth.getSession();
   if (!session) return;
-
-  // Optimistic: disable all buttons instantly
-  document.querySelectorAll('#warroom-poll .vote-btn').forEach(b => {
-    b.disabled = true;
-    b.style.opacity = '0.5';
-  });
 
   const { error } = await _sb.from('votes').insert({
     poll_id:   pollId,
@@ -1801,10 +1826,29 @@ async function castVote(pollId, optionId) {
     option_id: optionId,
   });
 
-  if (error) {
+  if (!error) {
+    // Fetch voturi actualizate doar pentru acest poll
+    const { data: freshVotes } = await _sb
+      .from('votes')
+      .select('option_id, user_id')
+      .eq('poll_id', pollId);
+
+    const poll = _pollCache[pollId];
+    if (poll && card) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderPollResults(poll, freshVotes || [], optionId);
+      card.replaceWith(tmp.firstElementChild);
+    }
+  } else {
     console.error('Vote error:', error.message);
+    // Reactivează butoanele dacă a eșuat
+    if (card) {
+      card.querySelectorAll('.vote-btn').forEach(b => {
+        b.disabled = false;
+        b.style.opacity = '';
+      });
+    }
   }
-  loadActivePoll();
 }
 
 // Logout — apelat din butonul din WarRoom
