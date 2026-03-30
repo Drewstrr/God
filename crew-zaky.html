@@ -812,6 +812,13 @@
 <!-- ═══════════════════════ DATA & LOGIC ═══════════════════════ -->
 <script>
 
+// ── Supabase client — trebuie să fie PRIMUL lucru inițializat ──
+const _sb = supabase.createClient(
+  'https://jdhpczzxighkydfvites.supabase.co',
+  'sb_publishable_dqGDI5IR_m4Er4y4yKpXbQ_u2sr6Iuw',
+  { auth: { persistSession: true, autoRefreshToken: true } }
+);
+
 // ── Day data ──────────────────────────────────────────────────
 const DAYS = [
   {
@@ -1621,14 +1628,17 @@ function toggleTheme() {
 }
 
 // ── Init ──────────────────────────────────────────────────────
-const savedTheme = localStorage.getItem('zaky-theme') || 'light';
-applyTheme(savedTheme === 'light');
+document.addEventListener('DOMContentLoaded', function() {
+  const savedTheme = localStorage.getItem('zaky-theme') || 'light';
+  applyTheme(savedTheme === 'light');
 
-// Deschide WarRoom automat dacă vine redirect de la create-poll.html
-if (window.location.hash === '#warroom') {
-  history.replaceState(null, '', window.location.pathname);
-  switchTab(4);
-}
+  // Deschide WarRoom automat dacă vine redirect de la create-poll.html
+  // _sb e garantat inițializat la acest punct
+  if (window.location.hash === '#warroom') {
+    history.replaceState(null, '', window.location.pathname);
+    switchTab(4);
+  }
+});
 
 // ── Swipe between days ────────────────────────────────────────
 (function() {
@@ -1672,15 +1682,6 @@ if (window.location.hash === '#warroom') {
 
 
 // ── Supabase Auth ──────────────────────────────────────────
-const _sb = (function() {
-  const SUPA_URL = 'https://jdhpczzxighkydfvites.supabase.co';
-  const SUPA_KEY = 'sb_publishable_dqGDI5IR_m4Er4y4yKpXbQ_u2sr6Iuw';
-  // persistSession:true (default) → sesiunea rămâne în localStorage la închidere browser
-  return supabase.createClient(SUPA_URL, SUPA_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true }
-  });
-})();
-
 (function() {
   const overlay   = document.getElementById('auth-overlay');
   const form      = document.getElementById('auth-form');
