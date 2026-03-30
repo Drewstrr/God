@@ -1809,7 +1809,7 @@ async function loadActivePoll() {
       const pollVotes = votes.filter(v => v.poll_id === poll.id);
       const myVote    = pollVotes.find(v => v.user_id === userId);
       html += myVote
-        ? renderPollResults(poll, pollVotes, myVote.option_id)
+        ? renderPollResults(poll, pollVotes, String(myVote.option_id))
         : renderPollVoting(poll);
     }
     pollEl.innerHTML = html;
@@ -1848,9 +1848,9 @@ function renderPollResults(poll, votes, myOptionId) {
   const opts  = poll.options || [];
   const total = votes.length;
   const rows  = opts.map((opt, i) => {
-    const count  = votes.filter(v => v.option_id === opt.id).length;
+    const count  = votes.filter(v => String(v.option_id) === String(opt.id)).length;
     const pct    = total > 0 ? Math.round(count / total * 100) : 0;
-    const isMine = opt.id === myOptionId;
+    const isMine = String(opt.id) === String(myOptionId);
     const color  = OPTION_COLORS[i % OPTION_COLORS.length];
     return `
       <div class="vote-result-row${isMine ? ' my-vote' : ''}">
