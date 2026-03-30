@@ -301,6 +301,138 @@
         }
 
         /* ══════════════════════════════════════
+           WarRoom — Polls
+        ══════════════════════════════════════ */
+        .btn-create-poll {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 9px 16px;
+            background: rgba(14,165,233,0.12);
+            border: 1px solid rgba(14,165,233,0.30);
+            border-radius: 10px;
+            color: #0EA5E9;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s, transform 0.15s;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-create-poll:hover {
+            background: rgba(14,165,233,0.20);
+            border-color: rgba(14,165,233,0.55);
+            transform: translateY(-1px);
+        }
+        .poll-card {
+            background: var(--card);
+            border: 1px solid var(--bdr2);
+            border-radius: 18px;
+            padding: 22px 18px 18px;
+            margin-bottom: 16px;
+        }
+        body.light .poll-card {
+            box-shadow: 0 3px 16px rgba(0,0,0,0.08);
+        }
+        .poll-question {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--t1);
+            margin-bottom: 18px;
+            line-height: 1.3;
+        }
+        .vote-btn {
+            display: block;
+            width: 100%;
+            padding: 15px 18px;
+            margin-bottom: 10px;
+            background: var(--card2);
+            border: 1.5px solid var(--bdr2);
+            border-radius: 14px;
+            color: var(--t1);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s, transform 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .vote-btn:hover {
+            background: rgba(14,165,233,0.10);
+            border-color: rgba(14,165,233,0.45);
+            transform: translateX(3px);
+        }
+        .vote-btn:active { transform: scale(0.98); }
+        .poll-voted-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #22C55E;
+            background: rgba(34,197,94,0.10);
+            border: 1px solid rgba(34,197,94,0.25);
+            border-radius: 999px;
+            padding: 4px 10px;
+            margin-bottom: 16px;
+        }
+        .vote-result-row {
+            margin-bottom: 12px;
+        }
+        .vote-result-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--t2);
+        }
+        .vote-result-row.my-vote .vote-result-label { color: var(--t1); }
+        .vote-result-count {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--t3);
+        }
+        .vote-bar-track {
+            height: 6px;
+            background: var(--bdr2);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .vote-bar {
+            height: 100%;
+            background: var(--t4);
+            border-radius: 999px;
+            transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        .vote-result-row.my-vote .vote-bar { background: #0EA5E9; }
+        .poll-total {
+            font-size: 11px;
+            color: var(--t3);
+            text-align: right;
+            margin-top: 10px;
+        }
+        .poll-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--t3);
+        }
+        .warroom-loading {
+            text-align: center;
+            padding: 32px;
+            font-size: 12px;
+            color: var(--t3);
+            letter-spacing: 0.08em;
+        }
+
+        /* ══════════════════════════════════════
            Map toggle button — "Vezi Harta"
         ══════════════════════════════════════ */
         @keyframes map-pulse {
@@ -590,19 +722,26 @@
 
         <!-- ─────────── TAB 4: WARROOM ─────────── -->
         <div id="tab-4" class="tab-content hidden pt-4">
-            <div class="flex items-center gap-3 mb-5">
-                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
-                     style="background:rgba(139,0,0,0.2); border:1px solid rgba(139,0,0,0.3);">⚔</div>
-                <div>
-                    <h2 class="text-xl font-black" style="font-family:'Playfair Display',serif;">WarRoom</h2>
-                    <p class="text-xs" style="color:#666;">Coming soon — secret crew features</p>
+
+            <!-- Header row: titlu + buton Poll Nou -->
+            <div class="flex items-center justify-between gap-3 mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
+                         style="background:rgba(139,0,0,0.2); border:1px solid rgba(139,0,0,0.3);">⚔</div>
+                    <div>
+                        <h2 class="text-xl font-black" style="font-family:'Playfair Display',serif;">WarRoom</h2>
+                        <p class="text-xs" style="color:#666;">Votează. Decideți împreună.</p>
+                    </div>
                 </div>
+                <a href="create-poll.html" class="btn-create-poll">➕ Poll Nou</a>
             </div>
-            <div class="rounded-2xl p-6 text-center" style="background:rgba(139,0,0,0.08); border:1px solid rgba(139,0,0,0.2);">
-                <p class="text-3xl mb-3">🔒</p>
-                <p class="text-sm font-bold" style="color:#FF6B6B;">Acces restricționat</p>
-                <p class="text-xs mt-2" style="color:#666;">Această secțiune va fi activată în curând.</p>
+
+            <!-- Poll activ -->
+            <div id="warroom-poll">
+                <div class="warroom-loading">Se încarcă...</div>
             </div>
+
+            <!-- Logout -->
             <button id="logout-btn" onclick="crewLogout()">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                 Ieșire
@@ -1327,6 +1466,7 @@ function switchTab(index) {
   // Also mark active on the mobile WarRoom clone if index === 4
   if (index === 4) {
     document.querySelectorAll('.tab-btn-warroom').forEach(b => b.classList.add('active-tab'));
+    loadActivePoll();
   }
 
   activeTab = index;
@@ -1562,6 +1702,110 @@ const _sb = (function() {
     }
   });
 })();
+
+// ── WarRoom Polls ──────────────────────────────────────────────
+async function loadActivePoll() {
+  const pollEl = document.getElementById('warroom-poll');
+  if (!pollEl) return;
+  pollEl.innerHTML = '<div class="warroom-loading">Se încarcă...</div>';
+
+  try {
+    const { data: polls, error } = await _sb
+      .from('polls')
+      .select('*')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (error) throw error;
+
+    if (!polls || polls.length === 0) {
+      pollEl.innerHTML = `
+        <div class="poll-empty">
+          <p style="font-size:2.5rem; margin-bottom:12px;">🗳</p>
+          <p class="text-sm font-bold" style="color:var(--t2);">Niciun poll activ</p>
+          <p class="text-xs mt-2" style="color:var(--t3);">Creează primul poll pentru crew!</p>
+        </div>`;
+      return;
+    }
+
+    const poll = polls[0];
+    const { data: { session } } = await _sb.auth.getSession();
+    const userId = session?.user?.id;
+
+    const { data: votes } = await _sb
+      .from('votes')
+      .select('option_id, user_id')
+      .eq('poll_id', poll.id);
+
+    const allVotes = votes || [];
+    const myVote   = allVotes.find(v => v.user_id === userId);
+
+    pollEl.innerHTML = myVote
+      ? renderPollResults(poll, allVotes, myVote.option_id)
+      : renderPollVoting(poll);
+
+  } catch (e) {
+    pollEl.innerHTML = `<div class="poll-empty"><p style="color:#EF4444; font-size:12px;">Eroare: ${e.message}</p></div>`;
+  }
+}
+
+function renderPollVoting(poll) {
+  const opts = poll.options || [];
+  const btns = opts.map(opt =>
+    `<button class="vote-btn" onclick="castVote('${poll.id}','${opt.id}')">${opt.text}</button>`
+  ).join('');
+  return `<div class="poll-card"><p class="poll-question">${poll.question}</p><div>${btns}</div></div>`;
+}
+
+function renderPollResults(poll, votes, myOptionId) {
+  const opts  = poll.options || [];
+  const total = votes.length;
+  const rows  = opts.map(opt => {
+    const count  = votes.filter(v => v.option_id === opt.id).length;
+    const pct    = total > 0 ? Math.round(count / total * 100) : 0;
+    const isMine = opt.id === myOptionId;
+    return `
+      <div class="vote-result-row${isMine ? ' my-vote' : ''}">
+        <div class="vote-result-label">
+          <span>${opt.text}${isMine ? ' ✓' : ''}</span>
+          <span class="vote-result-count">${count} vot${count !== 1 ? 'uri' : ''} · ${pct}%</span>
+        </div>
+        <div class="vote-bar-track">
+          <div class="vote-bar" style="width:${pct}%"></div>
+        </div>
+      </div>`;
+  }).join('');
+  return `
+    <div class="poll-card">
+      <p class="poll-question">${poll.question}</p>
+      <div class="poll-voted-badge">✓ Ai votat</div>
+      <div class="poll-results">${rows}</div>
+      <p class="poll-total">${total} vot${total !== 1 ? 'uri' : ''} total</p>
+    </div>`;
+}
+
+async function castVote(pollId, optionId) {
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) return;
+
+  // Optimistic: disable all buttons instantly
+  document.querySelectorAll('#warroom-poll .vote-btn').forEach(b => {
+    b.disabled = true;
+    b.style.opacity = '0.5';
+  });
+
+  const { error } = await _sb.from('votes').insert({
+    poll_id:   pollId,
+    user_id:   session.user.id,
+    option_id: optionId,
+  });
+
+  if (error) {
+    console.error('Vote error:', error.message);
+  }
+  loadActivePoll();
+}
 
 // Logout — apelat din butonul din WarRoom
 async function crewLogout() {
