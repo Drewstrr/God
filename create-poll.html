@@ -432,10 +432,9 @@ async function submitPoll() {
     submitBtn.textContent = 'Se salvează...';
 
     const { error } = await _sb.from('polls').insert({
-        question:   question,
-        options:    options,
-        created_by: session.user.id,
-        is_active:  true,
+        question:  question,
+        options:   options,
+        is_active: true,
     });
 
     if (error) {
