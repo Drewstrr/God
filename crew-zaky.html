@@ -1785,13 +1785,23 @@ async function loadActivePoll() {
     const { data: { session } } = await _sb.auth.getSession();
     const userId = session?.user?.id;
 
-    // Un singur query pentru toate voturile tuturor poll-urilor
+    // Fetch toate voturile (necesită RLS SELECT policy)
     const { data: allVotes } = await _sb
       .from('votes')
       .select('poll_id, option_id, user_id')
       .in('poll_id', polls.map(p => p.id));
 
-    const votes = allVotes || [];
+    let votes = allVotes || [];
+
+    // Fallback RLS: dacă nu am primit nimic, fetch doar voturile userului curent
+    if (votes.length === 0 && userId) {
+      const { data: myVotes } = await _sb
+        .from('votes')
+        .select('poll_id, option_id, user_id')
+        .eq('user_id', userId)
+        .in('poll_id', polls.map(p => p.id));
+      votes = myVotes || [];
+    }
 
     let html = '';
     for (const poll of polls) {
@@ -1912,19 +1922,24 @@ async function castVote(pollId) {
   });
 
   if (!error) {
-    // Fetch voturi actualizate și înlocuiește cardul
+    // Fetch voturi actualizate
     const { data: freshVotes } = await _sb
       .from('votes')
       .select('option_id, user_id')
       .eq('poll_id', pollId);
 
+    // Dacă RLS blochează SELECT, adăugăm manual votul curent
+    const allFresh = freshVotes ? [...freshVotes] : [];
+    if (!allFresh.some(v => v.user_id === session.user.id)) {
+      allFresh.push({ option_id: optionId, user_id: session.user.id });
+    }
+
     const poll = _pollCache[pollId];
     if (poll) {
       const tmp = document.createElement('div');
-      tmp.innerHTML = renderPollResults(poll, freshVotes || [], optionId);
+      tmp.innerHTML = renderPollResults(poll, allFresh, optionId);
       card.replaceWith(tmp.firstElementChild);
     } else {
-      // Fallback: reîncarcă tot dacă cache lipsește
       loadActivePoll();
     }
   } else {
