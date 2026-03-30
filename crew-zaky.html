@@ -812,12 +812,18 @@
 <!-- ═══════════════════════ DATA & LOGIC ═══════════════════════ -->
 <script>
 
-// ── Supabase client — trebuie să fie PRIMUL lucru inițializat ──
-const _sb = supabase.createClient(
-  'https://jdhpczzxighkydfvites.supabase.co',
-  'sb_publishable_dqGDI5IR_m4Er4y4yKpXbQ_u2sr6Iuw',
-  { auth: { persistSession: true, autoRefreshToken: true } }
-);
+// ── Supabase client ─────────────────────────────────────────────
+// var (nu const) → fără Temporal Dead Zone; rămâne null dacă CDN nu e gata
+var _sb = null;
+try {
+  _sb = supabase.createClient(
+    'https://jdhpczzxighkydfvites.supabase.co',
+    'sb_publishable_dqGDI5IR_m4Er4y4yKpXbQ_u2sr6Iuw',
+    { auth: { persistSession: true, autoRefreshToken: true } }
+  );
+} catch(e) {
+  console.error('Supabase init failed:', e);
+}
 
 // ── Day data ──────────────────────────────────────────────────
 const DAYS = [
@@ -1682,7 +1688,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 // ── Supabase Auth ──────────────────────────────────────────
-(function() {
+document.addEventListener('DOMContentLoaded', function() { (function() {
   const overlay   = document.getElementById('auth-overlay');
   const form      = document.getElementById('auth-form');
   const errEl     = document.getElementById('auth-error');
@@ -1752,7 +1758,7 @@ document.addEventListener('DOMContentLoaded', function() {
       showGreeting(data.user);
     }
   });
-})();
+})(); }); // end DOMContentLoaded + auth IIFE
 
 // ── WarRoom Polls ──────────────────────────────────────────────
 // Cache polls by ID pentru re-render rapid după vot
@@ -1760,6 +1766,7 @@ const _pollCache = {};
 const OPTION_COLORS = ['#0EA5E9', '#22C55E', '#F97316', '#A855F7', '#EF4444', '#F59E0B'];
 
 async function loadActivePoll() {
+  if (!_sb) return;
   const pollEl = document.getElementById('warroom-poll');
   if (!pollEl) return;
   pollEl.innerHTML = '<div class="warroom-loading">Se încarcă...</div>';
@@ -1891,6 +1898,7 @@ function selectOption(pollId, optionId) {
 }
 
 async function castVote(pollId) {
+  if (!_sb) return;
   const card      = document.getElementById(`poll-card-${pollId}`);
   const optionId  = card?.dataset.selectedOpt;
   const msgEl     = document.getElementById(`vote-msg-${pollId}`);
