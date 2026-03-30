@@ -1826,8 +1826,9 @@ function renderPollVoting(poll) {
     <div class="poll-card" id="poll-card-${poll.id}">
       <p class="poll-question">${poll.question}</p>
       <div class="poll-options" id="opts-${poll.id}">${btns}</div>
-      <button class="btn-vote-confirm" id="vote-confirm-${poll.id}"
-              onclick="castVote('${poll.id}')" disabled>
+      <div id="vote-msg-${poll.id}" style="min-height:18px; font-size:12px; color:#F97316; text-align:center; margin-top:8px;"></div>
+      <button type="button" class="btn-vote-confirm" id="vote-confirm-${poll.id}"
+              onclick="castVote('${poll.id}')">
         🗳 Votează!
       </button>
     </div>`;
@@ -1879,17 +1880,30 @@ function selectOption(pollId, optionId) {
 }
 
 async function castVote(pollId) {
-  const card     = document.getElementById(`poll-card-${pollId}`);
-  const optionId = card?.dataset.selectedOpt;
-  if (!optionId) return;
-
-  // Blocăm UI-ul imediat
+  const card      = document.getElementById(`poll-card-${pollId}`);
+  const optionId  = card?.dataset.selectedOpt;
+  const msgEl     = document.getElementById(`vote-msg-${pollId}`);
   const confirmBtn = document.getElementById(`vote-confirm-${pollId}`);
+
+  // Nicio opțiune selectată — arată mesaj vizibil
+  if (!optionId) {
+    if (msgEl) {
+      msgEl.textContent = '← Selectează o variantă mai întâi';
+      setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 2500);
+    }
+    return;
+  }
+
+  // Blochează UI
   if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Se trimite...'; }
   card.querySelectorAll('.vote-btn').forEach(b => { b.disabled = true; b.style.opacity = '0.45'; });
+  if (msgEl) msgEl.textContent = '';
 
   const { data: { session } } = await _sb.auth.getSession();
-  if (!session) return;
+  if (!session) {
+    if (msgEl) msgEl.textContent = 'Trebuie să fii logat.';
+    return;
+  }
 
   const { error } = await _sb.from('votes').insert({
     poll_id:   pollId,
@@ -1905,14 +1919,17 @@ async function castVote(pollId) {
       .eq('poll_id', pollId);
 
     const poll = _pollCache[pollId];
-    if (poll && card) {
+    if (poll) {
       const tmp = document.createElement('div');
       tmp.innerHTML = renderPollResults(poll, freshVotes || [], optionId);
       card.replaceWith(tmp.firstElementChild);
+    } else {
+      // Fallback: reîncarcă tot dacă cache lipsește
+      loadActivePoll();
     }
   } else {
-    console.error('Vote error:', error.message);
-    // Reactivează butoanele la eroare
+    // Arată eroarea direct în card
+    if (msgEl) msgEl.textContent = 'Eroare: ' + error.message;
     card.querySelectorAll('.vote-btn').forEach(b => { b.disabled = false; b.style.opacity = ''; });
     if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '🗳 Votează!'; }
   }
