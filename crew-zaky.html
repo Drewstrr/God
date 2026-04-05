@@ -497,8 +497,9 @@
             cursor: pointer; flex-shrink: 0;
             animation: go-pulse 1.8s ease-in-out infinite;
             display: flex; align-items: center; justify-content: center;
+            text-decoration: none;
         }
-        .btn-go:active { transform: scale(0.93); }
+        .btn-go:active { transform: scale(0.93); animation: none; }
         .btn-map-toggle {
             background: #0EA5E9;
             color: #FFFFFF;
@@ -1371,7 +1372,7 @@ function renderKalamaki() {
             <span class="text-sm">⭐</span>
             <span class="text-sm font-black" style="color:${th.t1};">${s.rating}</span>
           </div>
-          <button class="btn-go" onclick="goNavigate('${s.maps.replace(/'/g,"\\'")}')">GO</button>
+          <a class="btn-go" href="${s.maps}" target="_blank" rel="noopener">GO</a>
         </div>
       </div>`;
     });
@@ -2525,28 +2526,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-// ── Navigare Google Maps cu locație curentă ──────────────────
-function goNavigate(destUrl) {
-  if (!navigator.geolocation) {
-    // Fără geolocation — deschidem Maps direct (va folosi locația Google)
-    window.open(destUrl, '_blank');
-    return;
-  }
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      // Avem coordonatele — înlocuim origin cu locația exactă
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      const urlWithOrigin = destUrl + '&origin=' + lat + ',' + lng;
-      window.open(urlWithOrigin, '_blank');
-    },
-    function() {
-      // User a refuzat sau eroare — deschidem fără origin (Maps detectează automat)
-      window.open(destUrl, '_blank');
-    },
-    { timeout: 5000, maximumAge: 60000 }
-  );
-}
 
 // Logout — apelat din butonul din WarRoom
 async function crewLogout() {
