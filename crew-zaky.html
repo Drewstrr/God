@@ -766,18 +766,20 @@
         <!-- ─────────── TAB 1: COSTURI ─────────── -->
         <div id="tab-1" class="tab-content hidden pt-4">
 
-            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Estimare Costuri</h2>
-            <p class="text-xs mb-5" style="color:#555;">10 persoane · 7 zile · Kalamaki</p>
+            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Buget Estimat</h2>
+            <p class="text-xs mb-4" style="color:#555;">10 persoane · 7 zile · Kalamaki · Fără zbor</p>
 
             <!-- Summary cards -->
             <div class="flex gap-3 mb-5">
                 <div class="flex-1 rounded-2xl p-4" style="background:linear-gradient(135deg,#06111A,#0d1f30); border:1px solid #0EA5E933;">
                     <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#0EA5E9;">Per persoană</p>
-                    <p class="text-3xl font-black" style="font-family:'Playfair Display',serif; color:#F0F0F0;">€757</p>
+                    <p class="text-2xl font-black leading-tight" style="font-family:'Playfair Display',serif; color:#F0F0F0;">830–1.100€</p>
+                    <p class="text-[10px] mt-1" style="color:#0EA5E966;">toate incluse</p>
                 </div>
                 <div class="flex-1 rounded-2xl p-4" style="background:linear-gradient(135deg,#1C1008,#2d1a08); border:1px solid #F9731633;">
                     <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#F97316;">Total grup</p>
-                    <p class="text-3xl font-black" style="font-family:'Playfair Display',serif; color:#F0F0F0;">€7570</p>
+                    <p class="text-2xl font-black leading-tight" style="font-family:'Playfair Display',serif; color:#F0F0F0;">8.300–11K€</p>
+                    <p class="text-[10px] mt-1" style="color:#F9731666;">10 persoane</p>
                 </div>
             </div>
 
@@ -786,11 +788,23 @@
                 <div id="cost-rows"></div>
             </div>
 
+            <!-- Savings tip -->
+            <div class="mt-4 rounded-xl p-3" style="background:linear-gradient(135deg,#071209,#0a1f0f); border:1px solid #22C55E33;">
+                <p class="text-[11px] font-bold mb-2" style="color:#22C55E;">💰 Cum economisim 200–400€ pe grup</p>
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Mașini rezervate din timp (vs. last minute)</span><span style="color:#22C55E;font-weight:700;">~75€ econom.</span></div>
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Barcă direct la companie (vs. prin hotel)</span><span style="color:#22C55E;font-weight:700;">~150€ econom.</span></div>
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Blue Caves barcă mică (vs. excursie org.)</span><span style="color:#22C55E;font-weight:700;">~300€ econom.</span></div>
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Apă din minimarket (vs. pe plajă)</span><span style="color:#22C55E;font-weight:700;">~35€ econom.</span></div>
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Taverne locale (vs. restaurante turistice)</span><span style="color:#22C55E;font-weight:700;">~100€ econom.</span></div>
+                </div>
+            </div>
+
             <!-- Disclaimer -->
-            <div class="mt-4 rounded-xl p-3 flex gap-2" style="background:#141414; border:1px solid #1E1E1E;">
+            <div class="mt-3 rounded-xl p-3 flex gap-2" style="background:var(--card2); border:1px solid var(--bdr);">
                 <span style="color:#0EA5E9; flex-shrink:0;">ℹ️</span>
                 <p class="text-[11px] leading-relaxed" style="color:#555;">
-                    Estimări bazate pe prețuri medii 2024/25. Costurile reale pot varia în funcție de sezon, disponibilitate și preferințe personale.
+                    Estimări bazate pe prețuri medii 2025/26. Costurile reale pot varia în funcție de sezon și preferințe. Cazarea (427€/pp) este confirmată — Hector Studios.
                 </p>
             </div>
 
@@ -799,8 +813,8 @@
         <!-- ─────────── TAB 2: KALAMAKI ─────────── -->
         <div id="tab-2" class="tab-content hidden pt-4">
 
-            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Kalamaki Guide</h2>
-            <p class="text-xs mb-5" style="color:#555;">Tot ce ai nevoie la 5 minute de bază</p>
+            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Kalamaki & Zonă</h2>
+            <p class="text-xs mb-5" style="color:#555;">Restaurante, plaje, activități — totul în jurul bazei</p>
 
             <div id="kalamaki-rows" class="flex flex-col gap-3"></div>
 
@@ -1180,128 +1194,254 @@ function renderBeaches() {
 
 // ── Kalamaki Guide data ───────────────────────────────────────
 const KALAMAKI = [
+  // ── Restaurante & Taverne ──
   {
-    name: "Merlis Taverna",
-    type: "🐟 Seafood",
-    desc: "Pește proaspăt, caracatiță, vedere la apus direct de pe plajă.",
+    name: "Pandesia Restaurant",
+    type: "🍽️ Taverna grecească",
+    desc: "Musaka de vis, pește proaspăt, tzatziki. Prima masă de pe insulă — Z1 prânz.",
     rating: 4.7,
-    tag: "Recomandat",
-    tagColor: "#0EA5E9",
-    distance: "2 min plajă",
+    tag: "Z1 Prânz",
+    tagColor: "#F97316",
+    distance: "5 min mers",
   },
   {
     name: "Zepos Restaurant",
-    type: "🍖 Traditional",
-    desc: "Terasă în grădină, porții generoase, perfect pentru grupuri mari.",
+    type: "🍖 Grătar & Seafood",
+    desc: "Terasă în grădină, porții generoase, perfect pentru grupuri mari. Z1 cină.",
     rating: 4.6,
-    tag: "Grup-friendly",
+    tag: "Z1 Cină",
     tagColor: "#22C55E",
     distance: "5 min mers",
   },
   {
     name: "Arekia",
     type: "🌿 Farm-to-table",
-    desc: "Bucătărie greacă modernă, ingrediente locale. Rezervare obligatorie.",
+    desc: "Bucătărie greacă modernă cu ingrediente locale. Rezervare obligatorie pentru 10.",
     rating: 4.8,
-    tag: "Top pick",
+    tag: "Z3 Cină",
     tagColor: "#F59E0B",
     distance: "8 min mers",
   },
   {
+    name: "Taverna Planos",
+    type: "🫕 Traditional",
+    desc: "Una din cele mai bune taverne din Kalamaki. Porții mari, vin bun, prețuri corecte.",
+    rating: 4.6,
+    tag: "Z4 Cină",
+    tagColor: "#A78BFA",
+    distance: "4 min mers",
+  },
+  {
     name: "Kavos Psarou Café",
-    type: "☕ Breakfast",
-    desc: "Iaurt grecesc cu miere, patiserie, cafea tare. Ideal dimineața.",
+    type: "☕ Mic dejun",
+    desc: "Iaurt grecesc cu miere, patiserie proaspătă, cafea tare. Punct de start perfect.",
     rating: 4.5,
     tag: "Dimineață",
     tagColor: "#A78BFA",
     distance: "3 min mers",
   },
   {
+    name: "Merlis Taverna",
+    type: "🐟 Pește & Fructe de mare",
+    desc: "Pește proaspăt, caracatiță la grătar, vedere la apus direct de pe plajă.",
+    rating: 4.7,
+    tag: "Seafood",
+    tagColor: "#0EA5E9",
+    distance: "2 min plajă",
+  },
+  // ── Baruri & Relaxare ──
+  {
     name: "Crystal Beach Bar",
     type: "🍹 Beach Bar",
-    desc: "Șezlonguri, cocktailuri, muzică chill. Relaxare totală după plajă.",
+    desc: "Șezlonguri, cocktailuri, muzică chill. Relaxare totală după plajă sau înot.",
     rating: 4.4,
     tag: "Relaxare",
     tagColor: "#0EA5E9",
     distance: "1 min plajă",
   },
   {
-    name: "Cameo Island",
-    type: "🌅 Must-see",
-    desc: "Insuliță unită prin pod de lemn. Cel mai bun spot de apus din zonă.",
-    rating: 5.0,
-    tag: "Imperdibil",
-    tagColor: "#F97316",
+    name: "Laganas Strip",
+    type: "🎉 Baruri & Nightlife",
+    desc: "Strada principală cu baruri, restaurante, magazine. Viața de noapte a insulei. 4 km de bază.",
+    rating: 4.3,
+    tag: "Seară",
+    tagColor: "#EC4899",
     distance: "10 min taxi",
   },
+  // ── Plaje & Natură ──
   {
-    name: "Kalamaki Beach",
-    type: "🏖️ Beach",
-    desc: "Nisip fin auriu, apă puțin adâncă, zonă de cuibărit broaște țestoase.",
+    name: "Plaja Kalamaki",
+    type: "🏖️ Plajă",
+    desc: "Nisip fin auriu, apă puțin adâncă, turcoaz. Testoasele Caretta-Caretta vin dimineața devreme.",
     rating: 4.9,
+    tag: "Baza noastră",
+    tagColor: "#22C55E",
+    distance: "0 min",
+  },
+  {
+    name: "Cameo Island",
+    type: "🌅 Must-see",
+    desc: "Insuliță unită prin pod de lemn. CEL MAI BUN spot de apus din zona Kalamaki.",
+    rating: 5.0,
+    tag: "Apus Z1",
+    tagColor: "#F97316",
+    distance: "20 min mers / 5 min taxi",
+  },
+  {
+    name: "Agios Sostis Port",
+    type: "⛵ Port bărci",
+    desc: "De aici plecăm cu bărcile self-drive în Z3. Transfer gratuit de la compania de bărci.",
+    rating: 4.5,
+    tag: "Z3 Barcă",
+    tagColor: "#0EA5E9",
+    distance: "2 km / 5 min taxi",
+  },
+  {
+    name: "Marathonisi (Turtle Island)",
+    type: "🐢 Insulă",
+    desc: "Accesibilă cu barca în Z3. Nisip alb imaculat, pesteri, cuiburi broaște țestoase.",
+    rating: 4.9,
+    tag: "Z3 cu barca",
+    tagColor: "#22C55E",
+    distance: "20 min cu barca",
+  },
+  // ── Activități ──
+  {
+    name: "Caretta Fun Park",
+    type: "🎡 Parc distracții",
+    desc: "Bumper cars, jocuri, activități seara. Perfect după o zi de plajă — Z4 seară.",
+    rating: 4.3,
+    tag: "Z4 Seară",
+    tagColor: "#F59E0B",
+    distance: "10 min taxi",
+  },
+  // ── Practice ──
+  {
+    name: "Minimarket & ATM",
+    type: "🛒 Utilități",
+    desc: "Apă 0.50€ (vs. 3€ pe plajă!), snacksuri, bere, cremă de soare. ATM în apropiere.",
+    rating: 4.2,
+    tag: "Daily stop",
+    tagColor: "#6B7280",
+    distance: "3 min mers",
+  },
+  {
+    name: "Hector's Studios",
+    type: "🏠 Cazare",
+    desc: "Baza noastră. Camere curate, terasă pentru BBQ în Z6, proprietar helpful. Confirmat.",
+    rating: 4.8,
     tag: "Baza",
     tagColor: "#22C55E",
     distance: "0 min",
   },
 ];
 
+const KALAMAKI_SECTIONS = [
+  { label: '🍽️ Restaurante & Taverne', keys: ['Pandesia Restaurant','Zepos Restaurant','Arekia','Taverna Planos','Kavos Psarou Café','Merlis Taverna'] },
+  { label: '🍹 Baruri & Seară',         keys: ['Crystal Beach Bar','Laganas Strip'] },
+  { label: '🏖️ Plaje & Natură',         keys: ['Plaja Kalamaki','Cameo Island','Agios Sostis Port','Marathonisi (Turtle Island)'] },
+  { label: '🎡 Activități',             keys: ['Caretta Fun Park'] },
+  { label: '🛒 Practic',               keys: ['Minimarket & ATM','Hector\'s Studios'] },
+];
+
 function renderKalamaki() {
   const container = document.getElementById('kalamaki-rows');
   if (!container) return;
   const th = T();
-  container.innerHTML = KALAMAKI.map(s => `
-    <div class="rounded-2xl p-4 flex items-center gap-3"
-         style="background:${th.card}; border:1px solid ${th.bdr}; box-shadow:${th.shadow};">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 flex-wrap mb-1">
-          <span class="text-sm font-bold" style="color:${th.t1};">${s.name}</span>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style="background:${s.tagColor}18; color:${s.tagColor};">${s.tag}</span>
+  const byName = {};
+  KALAMAKI.forEach(s => { byName[s.name] = s; });
+  let html = '';
+  KALAMAKI_SECTIONS.forEach(sec => {
+    html += `<div class="text-[10px] font-bold uppercase tracking-widest px-1 pb-1 pt-3" style="color:${th.t3};">${sec.label}</div>`;
+    sec.keys.forEach(key => {
+      const s = byName[key]; if (!s) return;
+      html += `
+      <div class="rounded-2xl p-4 flex items-start gap-3"
+           style="background:${th.card}; border:1px solid ${th.bdr}; box-shadow:${th.shadow};">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="text-sm font-bold" style="color:${th.t1};">${s.name}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style="background:${s.tagColor}20; color:${s.tagColor};">${s.tag}</span>
+          </div>
+          <p class="text-[11px] mb-1.5" style="color:#0EA5E9;">${s.type} &nbsp;·&nbsp; <span style="color:${th.t4};">📍 ${s.distance}</span></p>
+          <p class="text-xs leading-relaxed" style="color:${th.t3};">${s.desc}</p>
         </div>
-        <p class="text-[11px] mb-1" style="color:#0EA5E9;">${s.type} &nbsp;·&nbsp; <span style="color:${th.t4};">${s.distance}</span></p>
-        <p class="text-xs leading-relaxed" style="color:${th.t3};">${s.desc}</p>
-      </div>
-      <div class="flex flex-col items-center flex-shrink-0 gap-1">
-        <span class="text-base">⭐</span>
-        <span class="text-sm font-black" style="color:${th.t1};">${s.rating}</span>
-      </div>
-    </div>
-  `).join('');
+        <div class="flex flex-col items-center flex-shrink-0 gap-0.5">
+          <span class="text-sm">⭐</span>
+          <span class="text-sm font-black" style="color:${th.t1};">${s.rating}</span>
+        </div>
+      </div>`;
+    });
+  });
+  container.innerHTML = html;
 }
 
 // ── Costs data ────────────────────────────────────────────────
 const COSTS = [
-  { category: "Cazare",    icon: "🏠", label: "Hektor's Studios (6 nopți × 10)",  pp: 427, total: 4270, color: "#0EA5E9" },
-  { category: "Transport", icon: "✈️", label: "Taxiuri aeroport (sosire + plecare)", pp: 8,   total: 80,   color: "#F97316" },
-  { category: "Transport", icon: "🚌", label: "Bus/taxi zilnic — Zilele 1–4",       pp: 30,  total: 300,  color: "#F97316" },
-  { category: "Transport", icon: "🚗", label: "Închiriere mașini (2 × 3 zile)",     pp: 45,  total: 450,  color: "#F97316" },
-  { category: "Transport", icon: "⛽", label: "Carburant mașini închiriate",         pp: 12,  total: 120,  color: "#F97316" },
-  { category: "Barcă",     icon: "🚢", label: "Barcă self-drive (o zi completă)",   pp: 30,  total: 300,  color: "#22C55E" },
-  { category: "Mâncare",   icon: "🍽️", label: "Mese estimate (6 zile × ~€30/zi)",  pp: 180, total: 1800, color: "#A78BFA" },
-  { category: "Activități",icon: "🎟️", label: "Muzee, Cameo Island, bacșișuri",    pp: 25,  total: 250,  color: "#F59E0B" },
+  // Cazare
+  { category: "Cazare",      icon: "🏠", label: "Hector's Studios — 7 nopți (confirmat)",         pp: 427, total: 4270, color: "#0EA5E9" },
+  // Mâncare
+  { category: "Mâncare",     icon: "🍽️", label: "Mese zilnice ~35€/zi (7 zile)",                  pp: 245, total: 2450, color: "#A78BFA" },
+  { category: "Mâncare",     icon: "🥐", label: "Mic dejun & snacksuri",                           pp: 35,  total: 350,  color: "#A78BFA" },
+  // Transport
+  { category: "Transport",   icon: "✈️", label: "Taxi aeroport sosire + plecare",                  pp: 8,   total: 80,   color: "#F97316" },
+  { category: "Transport",   icon: "🚌", label: "Bus KTEL Kalamaki ↔ Town (Z2, diverse)",          pp: 12,  total: 120,  color: "#F97316" },
+  { category: "Transport",   icon: "🚕", label: "Taxiuri locale (plaje, Gerakas etc.)",             pp: 18,  total: 180,  color: "#F97316" },
+  { category: "Transport",   icon: "⛵", label: "Barcă self-drive Z3 — Agios Sostis (5-6 pers)",   pp: 35,  total: 350,  color: "#0EA5E9" },
+  { category: "Transport",   icon: "🚗", label: "Mașini închiriate Z5-Z7 — AbbyCar (3 zile)",      pp: 42,  total: 420,  color: "#F97316" },
+  { category: "Transport",   icon: "⛽", label: "Benzină mașini (3 zile, vest + nord insulă)",      pp: 15,  total: 150,  color: "#F97316" },
+  // Activități
+  { category: "Activități",  icon: "🔵", label: "Blue Caves — barcă mică din Skinari",             pp: 15,  total: 150,  color: "#22C55E" },
+  { category: "Activități",  icon: "🎟️", label: "Muzeu Bizantin + Castel Venețian",               pp: 10,  total: 100,  color: "#22C55E" },
+  { category: "Activități",  icon: "🎡", label: "Caretta Fun Park, Cameo Island etc.",              pp: 15,  total: 150,  color: "#22C55E" },
+  { category: "Activități",  icon: "🍷", label: "Degustare cramă Callinico (Z6)",                   pp: 12,  total: 120,  color: "#22C55E" },
+  // Băuturi
+  { category: "Băuturi",     icon: "🍹", label: "Cocktailuri & bere (~5-8€ buc)",                  pp: 45,  total: 450,  color: "#F59E0B" },
+  // Suveniruri
+  { category: "Suveniruri",  icon: "🛍️", label: "Miere Volimes, măsline, Mandolato, ceramică",    pp: 35,  total: 350,  color: "#EC4899" },
+  // Diverse
+  { category: "Diverse",     icon: "💊", label: "Cremă de soare, farmacie, bacșișuri",              pp: 20,  total: 200,  color: "#6B7280" },
 ];
 
 function renderCosts() {
   const container = document.getElementById('cost-rows');
   if (!container) return;
   const th = T();
-  container.innerHTML = COSTS.map((c, i) => `
+  let html = '';
+  let lastCat = null;
+  COSTS.forEach((c, i) => {
+    if (c.category !== lastCat) {
+      lastCat = c.category;
+      html += `<div class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest"
+        style="background:${c.color}12; color:${c.color}; border-bottom:1px solid ${th.bdr};">${c.category}</div>`;
+    }
+    const isLast = i === COSTS.length - 1;
+    html += `
     <div class="flex items-center gap-3 px-4 py-3"
-         style="background:${th.card}; ${i < COSTS.length - 1 ? `border-bottom:1px solid ${th.bdr};` : ''}">
+         style="background:${th.card}; ${!isLast ? `border-bottom:1px solid ${th.bdr};` : ''}">
       <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
-           style="background:${c.color}15;">
-        ${c.icon}
-      </div>
+           style="background:${c.color}15;">${c.icon}</div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold truncate" style="color:${th.t1};">${c.label}</p>
-        <p class="text-[11px]" style="color:${th.t4};">${c.category}</p>
+        <p class="text-sm font-semibold" style="color:${th.t1};">${c.label}</p>
       </div>
       <div class="text-right flex-shrink-0">
-        <p class="text-sm font-bold" style="color:${th.t1};">€${c.total}</p>
-        <p class="text-[10px]" style="color:${th.t4};">€${c.pp}/pp</p>
+        <p class="text-sm font-bold" style="color:${th.t1};">€${c.pp}<span class="text-[10px] font-normal" style="color:${th.t4};">/pp</span></p>
+        <p class="text-[10px]" style="color:${th.t4};">€${c.total} total</p>
       </div>
+    </div>`;
+  });
+  const totalPP = COSTS.reduce((s,c) => s+c.pp, 0);
+  const totalGr = COSTS.reduce((s,c) => s+c.total, 0);
+  html += `<div class="flex items-center justify-between px-4 py-3"
+    style="background:linear-gradient(135deg,#06111A,#0d1f30); border-top:2px solid #0EA5E944;">
+    <span class="text-sm font-black" style="color:#F0F0F0;">TOTAL ESTIMAT</span>
+    <div class="text-right">
+      <p class="text-base font-black" style="color:#0EA5E9;">€${totalPP}<span class="text-[11px] font-normal" style="color:#0EA5E988;">/pp</span></p>
+      <p class="text-[10px]" style="color:#0EA5E966;">€${totalGr.toLocaleString()} grup</p>
     </div>
-  `).join('');
+  </div>`;
+  container.innerHTML = html;
 }
 
 // ── Theme helper ──────────────────────────────────────────────
