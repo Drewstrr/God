@@ -485,6 +485,20 @@
             60%  { box-shadow: 0 0 0 9px rgba(14,165,233,0.00); }
             100% { box-shadow: 0 0 0 0   rgba(14,165,233,0.55); }
         }
+        @keyframes go-pulse {
+            0%   { box-shadow: 0 0 0 0   rgba(220,38,38,0.7); transform: scale(1); }
+            50%  { box-shadow: 0 0 0 10px rgba(220,38,38,0.0); transform: scale(1.06); }
+            100% { box-shadow: 0 0 0 0   rgba(220,38,38,0.7); transform: scale(1); }
+        }
+        .btn-go {
+            width: 52px; height: 52px; border-radius: 50%; border: none;
+            background: #DC2626; color: #fff;
+            font-size: 13px; font-weight: 900; letter-spacing: 0.5px;
+            cursor: pointer; flex-shrink: 0;
+            animation: go-pulse 1.8s ease-in-out infinite;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-go:active { transform: scale(0.93); }
         .btn-map-toggle {
             background: #0EA5E9;
             color: #FFFFFF;
@@ -1199,140 +1213,125 @@ const KALAMAKI = [
     name: "Pandesia Restaurant",
     type: "🍽️ Taverna grecească",
     desc: "Musaka de vis, pește proaspăt, tzatziki. Prima masă de pe insulă — Z1 prânz.",
-    rating: 4.7,
-    tag: "Z1 Prânz",
-    tagColor: "#F97316",
+    rating: 4.7, tag: "Z1 Prânz", tagColor: "#F97316",
     distance: "5 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Pandesia+Restaurant+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Zepos Restaurant",
     type: "🍖 Grătar & Seafood",
     desc: "Terasă în grădină, porții generoase, perfect pentru grupuri mari. Z1 cină.",
-    rating: 4.6,
-    tag: "Z1 Cină",
-    tagColor: "#22C55E",
+    rating: 4.6, tag: "Z1 Cină", tagColor: "#22C55E",
     distance: "5 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Zepos+Restaurant+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Arekia",
     type: "🌿 Farm-to-table",
     desc: "Bucătărie greacă modernă cu ingrediente locale. Rezervare obligatorie pentru 10.",
-    rating: 4.8,
-    tag: "Z3 Cină",
-    tagColor: "#F59E0B",
+    rating: 4.8, tag: "Z3 Cină", tagColor: "#F59E0B",
     distance: "8 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Arekia+Restaurant+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Taverna Planos",
     type: "🫕 Traditional",
     desc: "Una din cele mai bune taverne din Kalamaki. Porții mari, vin bun, prețuri corecte.",
-    rating: 4.6,
-    tag: "Z4 Cină",
-    tagColor: "#A78BFA",
+    rating: 4.6, tag: "Z4 Cină", tagColor: "#A78BFA",
     distance: "4 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Taverna+Planos+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Kavos Psarou Café",
     type: "☕ Mic dejun",
     desc: "Iaurt grecesc cu miere, patiserie proaspătă, cafea tare. Punct de start perfect.",
-    rating: 4.5,
-    tag: "Dimineață",
-    tagColor: "#A78BFA",
+    rating: 4.5, tag: "Dimineață", tagColor: "#A78BFA",
     distance: "3 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Kavos+Psarou+Cafe+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Merlis Taverna",
     type: "🐟 Pește & Fructe de mare",
     desc: "Pește proaspăt, caracatiță la grătar, vedere la apus direct de pe plajă.",
-    rating: 4.7,
-    tag: "Seafood",
-    tagColor: "#0EA5E9",
+    rating: 4.7, tag: "Seafood", tagColor: "#0EA5E9",
     distance: "2 min plajă",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Merlis+Taverna+Kalamaki+Zakynthos&travelmode=walking",
   },
   // ── Baruri & Relaxare ──
   {
     name: "Crystal Beach Bar",
     type: "🍹 Beach Bar",
     desc: "Șezlonguri, cocktailuri, muzică chill. Relaxare totală după plajă sau înot.",
-    rating: 4.4,
-    tag: "Relaxare",
-    tagColor: "#0EA5E9",
+    rating: 4.4, tag: "Relaxare", tagColor: "#0EA5E9",
     distance: "1 min plajă",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Crystal+Beach+Bar+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Laganas Strip",
     type: "🎉 Baruri & Nightlife",
     desc: "Strada principală cu baruri, restaurante, magazine. Viața de noapte a insulei. 4 km de bază.",
-    rating: 4.3,
-    tag: "Seară",
-    tagColor: "#EC4899",
+    rating: 4.3, tag: "Seară", tagColor: "#EC4899",
     distance: "10 min taxi",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Laganas+Zakynthos&travelmode=driving",
   },
   // ── Plaje & Natură ──
   {
     name: "Plaja Kalamaki",
     type: "🏖️ Plajă",
     desc: "Nisip fin auriu, apă puțin adâncă, turcoaz. Testoasele Caretta-Caretta vin dimineața devreme.",
-    rating: 4.9,
-    tag: "Baza noastră",
-    tagColor: "#22C55E",
+    rating: 4.9, tag: "Baza noastră", tagColor: "#22C55E",
     distance: "0 min",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Kalamaki+Beach+Zakynthos&travelmode=walking",
   },
   {
     name: "Cameo Island",
     type: "🌅 Must-see",
     desc: "Insuliță unită prin pod de lemn. CEL MAI BUN spot de apus din zona Kalamaki.",
-    rating: 5.0,
-    tag: "Apus Z1",
-    tagColor: "#F97316",
+    rating: 5.0, tag: "Apus Z1", tagColor: "#F97316",
     distance: "20 min mers / 5 min taxi",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Cameo+Island+Zakynthos&travelmode=walking",
   },
   {
     name: "Agios Sostis Port",
     type: "⛵ Port bărci",
     desc: "De aici plecăm cu bărcile self-drive în Z3. Transfer gratuit de la compania de bărci.",
-    rating: 4.5,
-    tag: "Z3 Barcă",
-    tagColor: "#0EA5E9",
+    rating: 4.5, tag: "Z3 Barcă", tagColor: "#0EA5E9",
     distance: "2 km / 5 min taxi",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Agios+Sostis+Zakynthos+boat+rentals&travelmode=driving",
   },
   {
     name: "Marathonisi (Turtle Island)",
     type: "🐢 Insulă",
     desc: "Accesibilă cu barca în Z3. Nisip alb imaculat, pesteri, cuiburi broaște țestoase.",
-    rating: 4.9,
-    tag: "Z3 cu barca",
-    tagColor: "#22C55E",
+    rating: 4.9, tag: "Z3 cu barca", tagColor: "#22C55E",
     distance: "20 min cu barca",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Marathonisi+Island+Zakynthos&travelmode=driving",
   },
   // ── Activități ──
   {
     name: "Caretta Fun Park",
     type: "🎡 Parc distracții",
     desc: "Bumper cars, jocuri, activități seara. Perfect după o zi de plajă — Z4 seară.",
-    rating: 4.3,
-    tag: "Z4 Seară",
-    tagColor: "#F59E0B",
+    rating: 4.3, tag: "Z4 Seară", tagColor: "#F59E0B",
     distance: "10 min taxi",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Caretta+Fun+Park+Laganas+Zakynthos&travelmode=driving",
   },
   // ── Practice ──
   {
     name: "Minimarket & ATM",
     type: "🛒 Utilități",
     desc: "Apă 0.50€ (vs. 3€ pe plajă!), snacksuri, bere, cremă de soare. ATM în apropiere.",
-    rating: 4.2,
-    tag: "Daily stop",
-    tagColor: "#6B7280",
+    rating: 4.2, tag: "Daily stop", tagColor: "#6B7280",
     distance: "3 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=minimarket+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Hector's Studios",
     type: "🏠 Cazare",
     desc: "Baza noastră. Camere curate, terasă pentru BBQ în Z6, proprietar helpful. Confirmat.",
-    rating: 4.8,
-    tag: "Baza",
-    tagColor: "#22C55E",
+    rating: 4.8, tag: "Baza", tagColor: "#22C55E",
     distance: "0 min",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Hektor+Studios+Kalamaki+Zakynthos&travelmode=walking",
   },
 ];
 
@@ -1356,7 +1355,7 @@ function renderKalamaki() {
     sec.keys.forEach(key => {
       const s = byName[key]; if (!s) return;
       html += `
-      <div class="rounded-2xl p-4 flex items-start gap-3"
+      <div class="rounded-2xl p-4 flex items-center gap-3"
            style="background:${th.card}; border:1px solid ${th.bdr}; box-shadow:${th.shadow};">
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2 flex-wrap mb-1">
@@ -1367,9 +1366,12 @@ function renderKalamaki() {
           <p class="text-[11px] mb-1.5" style="color:#0EA5E9;">${s.type} &nbsp;·&nbsp; <span style="color:${th.t4};">📍 ${s.distance}</span></p>
           <p class="text-xs leading-relaxed" style="color:${th.t3};">${s.desc}</p>
         </div>
-        <div class="flex flex-col items-center flex-shrink-0 gap-0.5">
-          <span class="text-sm">⭐</span>
-          <span class="text-sm font-black" style="color:${th.t1};">${s.rating}</span>
+        <div class="flex flex-col items-center flex-shrink-0 gap-2">
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="text-sm">⭐</span>
+            <span class="text-sm font-black" style="color:${th.t1};">${s.rating}</span>
+          </div>
+          <button class="btn-go" onclick="goNavigate('${s.maps.replace(/'/g,"\\'")}')">GO</button>
         </div>
       </div>`;
     });
@@ -2522,6 +2524,29 @@ document.addEventListener('DOMContentLoaded', function() {
     prezRender();
   }
 });
+
+// ── Navigare Google Maps cu locație curentă ──────────────────
+function goNavigate(destUrl) {
+  if (!navigator.geolocation) {
+    // Fără geolocation — deschidem Maps direct (va folosi locația Google)
+    window.open(destUrl, '_blank');
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      // Avem coordonatele — înlocuim origin cu locația exactă
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      const urlWithOrigin = destUrl + '&origin=' + lat + ',' + lng;
+      window.open(urlWithOrigin, '_blank');
+    },
+    function() {
+      // User a refuzat sau eroare — deschidem fără origin (Maps detectează automat)
+      window.open(destUrl, '_blank');
+    },
+    { timeout: 5000, maximumAge: 60000 }
+  );
+}
 
 // Logout — apelat din butonul din WarRoom
 async function crewLogout() {
