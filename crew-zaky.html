@@ -509,6 +509,35 @@
             animation: none;
             box-shadow: 0 3px 12px rgba(14,165,233,0.45);
         }
+        /* ── Presentation animations ── */
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes growBar { to { transform: scaleX(1); } }
+        /* ── Prez toggle pills ── */
+        .prez-toggle-btn {
+            flex: 1; padding: 8px 0; border-radius: 20px; border: none;
+            font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .prez-toggle-btn.active { background: #F97316; color: #fff; }
+        .prez-toggle-btn:not(.active) { background: transparent; color: var(--t2); }
+        /* ── Slide container ── */
+        #prez-slide {
+            width: 100%; border-radius: 14px; overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08);
+            position: relative; min-height: 520px; cursor: pointer;
+            background: #FFFEF7; border: 1px solid #E5E7EB;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .prez-dot {
+            height: 8px; border-radius: 4px; border: none; cursor: pointer;
+            padding: 0; transition: all 0.3s ease;
+        }
+        #prez-nav-btn-prev, #prez-nav-btn-next {
+            width: 44px; height: 44px; border-radius: 50%; border: 2px solid;
+            background: #fff; font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -646,62 +675,91 @@
         <!-- ─────────── TAB 0: ITINERARIU ─────────── -->
         <div id="tab-0" class="tab-content pt-4">
 
-            <!-- Day selector -->
-            <div class="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
-
-                <button onclick="showDay(0)" id="db-0"
-                        class="day-btn active flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#F97316; border-color:#F97316; color:#fff;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider opacity-80">Zi</span>
-                    <span class="text-lg font-black leading-none">1</span>
+            <!-- View toggle -->
+            <div class="flex gap-1 mb-4 p-1 rounded-[22px]" style="background:var(--card2); border:1px solid var(--bdr2);">
+                <button id="prez-toggle-prez" class="prez-toggle-btn active" onclick="showPrezView()">
+                    ✦ Prezentare
                 </button>
-
-                <button onclick="showDay(1)" id="db-1"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">2</span>
+                <button id="prez-toggle-detail" class="prez-toggle-btn" onclick="showDetailView()">
+                    📅 Zile Detaliate
                 </button>
-
-                <button onclick="showDay(2)" id="db-2"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">3</span>
-                </button>
-
-                <button onclick="showDay(3)" id="db-3"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">4</span>
-                </button>
-
-                <button onclick="showDay(4)" id="db-4"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">5</span>
-                </button>
-
-                <button onclick="showDay(5)" id="db-5"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">6</span>
-                </button>
-
-                <button onclick="showDay(6)" id="db-6"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">7</span>
-                </button>
-
             </div>
 
-            <!-- Day panels -->
-            <div id="day-panels"></div>
+            <!-- Presentation view (default) -->
+            <div id="prez-view">
+                <!-- Progress dots -->
+                <div id="prez-dots" class="flex gap-1.5 mb-3 flex-wrap justify-center"></div>
+                <!-- Slide -->
+                <div id="prez-slide" onclick="prezClickNav(event)"></div>
+                <!-- Nav buttons -->
+                <div class="flex gap-3 mt-3 items-center justify-center">
+                    <button id="prez-nav-btn-prev" onclick="prezGo(prezCurrent-1)">◀</button>
+                    <span id="prez-label" class="text-xs font-bold text-center" style="min-width:90px;color:var(--t2);"></span>
+                    <button id="prez-nav-btn-next" onclick="prezGo(prezCurrent+1)">▶</button>
+                </div>
+            </div>
+
+            <!-- Detail view (hidden by default) -->
+            <div id="detail-view" class="hidden">
+
+                <!-- Day selector -->
+                <div class="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
+
+                    <button onclick="showDay(0)" id="db-0"
+                            class="day-btn active flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#F97316; border-color:#F97316; color:#fff;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider opacity-80">Zi</span>
+                        <span class="text-lg font-black leading-none">1</span>
+                    </button>
+
+                    <button onclick="showDay(1)" id="db-1"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">2</span>
+                    </button>
+
+                    <button onclick="showDay(2)" id="db-2"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">3</span>
+                    </button>
+
+                    <button onclick="showDay(3)" id="db-3"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">4</span>
+                    </button>
+
+                    <button onclick="showDay(4)" id="db-4"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">5</span>
+                    </button>
+
+                    <button onclick="showDay(5)" id="db-5"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">6</span>
+                    </button>
+
+                    <button onclick="showDay(6)" id="db-6"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">7</span>
+                    </button>
+
+                </div>
+
+                <!-- Day panels -->
+                <div id="day-panels"></div>
+
+            </div><!-- end detail-view -->
 
         </div><!-- end tab-0 -->
 
@@ -829,186 +887,192 @@ try {
 const DAYS = [
   {
     index: 0,
-    title: "Arrival & Kalamaki",
-    subtitle: "Settle in, feel the island",
+    title: "Sosire & Kalamaki",
+    subtitle: "Aterizare, cazare, primă înot",
     accent: "#F97316",
     accentBg: "#1C1008", accentBgLight: "#FFF4ED",
     transport: "✈️  Taxi · Walking",
     highlights: ["airport","kalamaki","laganas","cameo"],
     routes: ["airport","kalamaki","laganas","cameo"],
     activities: [
-      { time: "09:00", icon: "✈️", title: "Land at Zakynthos Airport",
-        desc: "• Acțiune: Recuperare bagaje și split în 3 taxiuri (stau chiar la ieșire).• Info: Cursa până în Kalamaki costă ~20€/mașină și durează 15 minute. Verificăm să avem cash (euro) pentru taxi." },
-      { time: "09:45", icon: "🏠", title: "Drop bags at Hektor's Studios",
-        desc: "Check-in or early bag drop. Grab keys, find your rooms, freshen up." },
-      { time: "10:30", icon: "🏖️", title: "Kalamaki Beach Morning",
-        desc: "Soft golden sand and shallow turquoise water. Perfect first swim of the trip." },
-      { time: "13:00", icon: "🍽️", title: "Lunch at Merlis Taverna",
-        desc: "Traditional Greek cuisine right on the beach. Try the fresh grilled fish and tzatziki." },
-      { time: "15:00", icon: "🚶", title: "Explore Laganas Strip",
-        desc: "Short taxi to Laganas — the island's main strip. Coffee, souvenir shops, vibes." },
-      { time: "17:30", icon: "🌅", title: "Cameo Island Sunset",
-        desc: "Tiny island connected by a wooden bridge. THE sunset spot near base. Don't miss it." },
-      { time: "20:00", icon: "🍷", title: "Dinner at Zepos",
-        desc: "Kalamaki local favourite. Garden terrace, fresh seafood and grilled meats. Book ahead for 10." },
+      { time: "09:00", icon: "✈️", title: "Aterizare la Zakynthos Airport",
+        desc: "Recuperare bagaje și split în 3 taxiuri (stau chiar la ieșire). Cursa până în Kalamaki costă ~20€/mașină și durează 15 minute. Verificăm să avem cash (euro) pentru taxi." },
+      { time: "09:45", icon: "🏠", title: "Check-in Hektor's Studios",
+        desc: "Check-in sau bag drop devreme. Luăm cheile, găsim camerele, ne împrospătăm." },
+      { time: "10:30", icon: "🏖️", title: "Prima Înot — Plaja Kalamaki",
+        desc: "Nisip auriu fin și apă turcoaz puțin adâncă. Primul înot perfect al vacanței. Testoasele Caretta-Caretta vin pe plajă dimineața devreme!" },
+      { time: "13:00", icon: "🍽️", title: "Prânz la Pandesia Restaurant",
+        desc: "Bucătărie grecească tradițională. Încearcă musaka, tzatziki și pește proaspăt la grătar." },
+      { time: "15:00", icon: "🚶", title: "Explorăm Laganas Strip",
+        desc: "Taxi scurt până în Laganas — strada principală a insulei. Cafea, magazine cu suveniruri, atmosferă." },
+      { time: "17:30", icon: "🌅", title: "Apus la Cameo Island",
+        desc: "Insuliță legată printr-un pod de lemn. CEL MAI FRUMOS punct de apus lângă bază. Nu ratați!" },
+      { time: "20:00", icon: "🍷", title: "Cină la Zepos Taverna",
+        desc: "Favorita localnicilor din Kalamaki. Terasă cu grădină, fructe de mare și carne la grătar. Rezervați din timp pentru 10 persoane." },
     ]
   },
   {
     index: 1,
-    title: "Boat Adventure",
-    subtitle: "Captain your own voyage",
-    accent: "#0EA5E9",
-    accentBg: "#06111A", accentBgLight: "#EFF8FF",
-    transport: "🚢  Self-drive Boat · Taxi",
-    highlights: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
-    routes: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
+    title: "Zakynthos Town",
+    subtitle: "Cultură venetiană & promenadă",
+    accent: "#F97316",
+    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
+    transport: "🚌  Bus KTEL · 1.80€",
+    highlights: ["kalamaki","zakynthosTown"],
+    routes: ["kalamaki","zakynthosTown","kalamaki"],
     activities: [
-      { time: "08:00", icon: "☕", title: "Breakfast at Kavos Psarou",
-        desc: "Fuel up with Greek yogurt, honey, and strong coffee before the sea day." },
-      { time: "09:30", icon: "🚕", title: "Taxi to Ag. Sostis Port",
-        desc: "Pick up your self-drive speedboat rental. No license needed. Full safety briefing." },
-      { time: "10:00", icon: "🐢", title: "Sail to Marathonisi (Turtle Island)",
-        desc: "20 min cruise south. Crystal water, white sand. Sea turtles nest here — spot them!" },
-      { time: "12:30", icon: "🗺️", title: "Keri Caves Exploration",
-        desc: "Navigate to the stunning blue sea grottos at the south tip. Snorkeling is incredible." },
-      { time: "14:00", icon: "🥪", title: "Beach Picnic & Swim",
-        desc: "Anchor near a quiet cove. Cold drinks, packed lunch, and total silence." },
-      { time: "16:30", icon: "⚓", title: "Return Boat & Transfer Back",
-        desc: "Head back to port, return the boat, taxi to base. Shower and relax." },
-      { time: "19:30", icon: "🌿", title: "Dinner at Arekia",
-        desc: "Farm-to-table Greek dishes, local produce. Reserve in advance for the group." },
+      { time: "09:00", icon: "🚌", title: "Bus spre Zakynthos Town",
+        desc: "Cursă de 15 min spre nord. Coborâm în Piața Solomos. Bilet 1.80€/persoană." },
+      { time: "09:30", icon: "🏛️", title: "Piața Solomos & Faleza",
+        desc: "Centrul orașului. Arhitectură venetiană, piață de marmură, vederi spre port și espresso." },
+      { time: "10:30", icon: "🎨", title: "Muzeul Bizantin",
+        desc: "Icoane și artă religioasă salvate din bisericile distruse de cutremurul din 1953. Oraș reconstruit complet — ca un Phoenix grecesc." },
+      { time: "12:00", icon: "🏰", title: "Castelul Venetian din Bochali",
+        desc: "Urcăm pe jos sau cu taxi. Panoramă 360° a orașului, portului și coastei. Construit în 1480." },
+      { time: "13:30", icon: "🍝", title: "Prânz la Malanos",
+        desc: "Instituție locală din 1949. Încearcă musaka, pastitsio și vinul de la butoi. Sofrito e obligatoriu." },
+      { time: "15:00", icon: "🛍️", title: "Shopping & Înghețată",
+        desc: "Magazine cu ulei de măsline local, miere, ceramică făcută manual. Închei cu înghețată artizanală." },
+      { time: "17:00", icon: "🏠", title: "Întoarcere la Kalamaki",
+        desc: "Bus sau taxi înapoi. Timp la piscină și odihnă înainte de seară." },
+      { time: "20:30", icon: "🎉", title: "Cină & Viața de Noapte în Laganas",
+        desc: "Cină în grup, apoi optional seara pe strip. Laganas nu doarme." },
     ]
   },
   {
     index: 2,
-    title: "Beach Hopping South",
-    subtitle: "Golden sands & turquoise waters",
+    title: "Ziua pe Barcă",
+    subtitle: "Suntem capitani pe mare!",
     accent: "#0EA5E9",
     accentBg: "#06111A", accentBgLight: "#EFF8FF",
-    transport: "🚌  Bus · Walking",
-    highlights: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi"],
-    routes: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi","kalamaki"],
+    transport: "⛵  Barcă self-drive · Fără permis",
+    highlights: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
+    routes: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
     activities: [
-      { time: "08:30", icon: "🍞", title: "Lazy Breakfast at Base",
-        desc: "Sleep in a bit. Coffee and toast at the studios or the nearby café." },
-      { time: "10:00", icon: "🍌", title: "Bus to Banana Beach",
-        desc: "The island's party beach — sunbeds, water sports, good energy." },
-      { time: "12:00", icon: "🌊", title: "Gerakas Beach",
-        desc: "Protected Caretta caretta nesting beach. Dramatic clay cliffs, no sunbeds, pure nature." },
-      { time: "14:00", icon: "🍽️", title: "Lunch at Gerakas Taverna",
-        desc: "Simple beachside food — Greek salad, tzatziki, grilled chicken and cold beers." },
-      { time: "15:30", icon: "🪨", title: "Porto Zoro Beach",
-        desc: "Wild rocky beauty, unique formations. Excellent snorkeling, very peaceful." },
-      { time: "17:30", icon: "🍹", title: "Quick Stop in Argassi",
-        desc: "Lively village, grab a cocktail and watch the sun go down over the bay." },
-      { time: "20:00", icon: "🫕", title: "Group Dinner in Kalamaki",
-        desc: "Back to base. Taverna Planos — one of Kalamaki's best. Big portions, good wine." },
+      { time: "08:00", icon: "☕", title: "Mic Dejun la Kavos Psarou",
+        desc: "Iaurturi grecești cu miere, fructe și cafea tare. Pregătim mâncare de dus pe barcă — picnic pe mare > orice restaurant!" },
+      { time: "09:30", icon: "🚕", title: "Taxi la Portul Agios Sostis",
+        desc: "2 km de hotel. Preluăm barcile self-drive — fără permis, cu briefing complet + GPS + hartă pe WhatsApp. Mai ușor decât pe DN1." },
+      { time: "10:00", icon: "🐢", title: "Laganas Bay — Vânătoare de Testoase",
+        desc: "Navigăm spre sud în Laganas Bay. Testoasele Caretta-Caretta se văd în apă limpede." },
+      { time: "11:30", icon: "🏝️", title: "Marathonisi — Turtle Island",
+        desc: "20 min de navigat. Nisip alb imaculat și pesteri. Cuiburi de broaște țestoase — respectăm natura!" },
+      { time: "13:00", icon: "🤿", title: "Keri Caves — Snorkeling în Pesteri",
+        desc: "Navigăm spre grotele marine albastre la capătul sudic. Snorkeling incredibil în caverne turcoaz." },
+      { time: "15:00", icon: "🪨", title: "Myzithres Rocks",
+        desc: "Stânci albe dramatice ieșite din mare. Stop pentru fotografii și înot în apă cristalină." },
+      { time: "16:30", icon: "⚓", title: "Întoarcere & Relaxare",
+        desc: "Înapoiem bărcile la port, taxi la bază. Duș și relaxare după o zi pe mare." },
+      { time: "19:30", icon: "🌿", title: "Cină la Arekia",
+        desc: "Preparate grecești farm-to-table, produse locale. Rezervare în avans pentru grup." },
     ]
   },
   {
     index: 3,
-    title: "Zakynthos Town Day",
-    subtitle: "Culture, history & harbour charm",
-    accent: "#F97316",
-    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
-    transport: "🚌  Bus · Walking",
-    highlights: ["kalamaki","zakynthosTown"],
-    routes: ["kalamaki","zakynthosTown","kalamaki"],
+    title: "Plaje Sudice",
+    subtitle: "Gerakas, Porto Zoro & chill",
+    accent: "#0EA5E9",
+    accentBg: "#06111A", accentBgLight: "#EFF8FF",
+    transport: "🚌  Bus · Taxi",
+    highlights: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi"],
+    routes: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi","kalamaki"],
     activities: [
-      { time: "09:00", icon: "🚌", title: "Bus to Zakynthos Town",
-        desc: "Quick 15 min ride north. Get dropped at Solomos Square." },
-      { time: "09:30", icon: "🏛️", title: "Solomos Square & Harbour Walk",
-        desc: "The heart of town. Venetian architecture, marble square, harbour views and espresso." },
-      { time: "10:30", icon: "🎨", title: "Byzantine Museum",
-        desc: "Beautiful religious icons and art rescued from churches after the 1953 earthquake." },
-      { time: "12:00", icon: "🏰", title: "Bohali Hill & Venetian Castle",
-        desc: "Walk up or take a short taxi. Panoramic views of the town, harbour and coastline." },
-      { time: "13:30", icon: "🍝", title: "Lunch at Malanos",
-        desc: "Local institution since 1949. Try moussaka, pastitsio, and the house barrel wine." },
-      { time: "15:00", icon: "🛍️", title: "Shopping & Gelato",
-        desc: "Browse shops for local olive oil, honey, and handmade ceramics. Finish with gelato." },
-      { time: "17:00", icon: "🏠", title: "Return to Kalamaki",
-        desc: "Bus or taxi back. Pool time and rest before the night out." },
-      { time: "20:30", icon: "🎉", title: "Dinner & Nightlife in Laganas",
-        desc: "Group dinner then optional night on the strip. Laganas doesn't sleep." },
+      { time: "08:30", icon: "🍞", title: "Mic Dejun Relaxat la Bază",
+        desc: "Dormim puțin. Cafea și toast la studios sau cafeneaua din apropiere." },
+      { time: "10:00", icon: "🍌", title: "Bus spre Banana Beach",
+        desc: "Plaja energică a insulei — șezlonguri, sporturi nautice, atmosferă bună." },
+      { time: "12:00", icon: "🌊", title: "Gerakas Beach",
+        desc: "Plajă protejată pentru cuibăritul testoaselor Caretta-Caretta. Faleze de argilă dramatice, fără șezlonguri — natură pură." },
+      { time: "14:00", icon: "🍽️", title: "Prânz la Taverna Gerakas",
+        desc: "Mâncare simplă la malul mării — salată grecească, tzatziki, pui la grătar și bere rece." },
+      { time: "15:30", icon: "🪨", title: "Porto Zoro Beach",
+        desc: "Frumusețe sălbatică stâncoasă, formații unice. Snorkeling excelent, liniște totală." },
+      { time: "17:30", icon: "🍹", title: "Stop în Argassi",
+        desc: "Sat animat, luăm un cocktail și privim apusul peste golf." },
+      { time: "20:00", icon: "🫕", title: "Cină în Grup în Kalamaki",
+        desc: "Înapoi la bază. Taverna Planos — una din cele mai bune din Kalamaki. Porții mari, vin bun." },
     ]
   },
   {
     index: 4,
-    title: "West Coast Wild",
-    subtitle: "Cliffs, caves & untouched shores",
+    title: "Blue Caves & Navagio",
+    subtitle: "Nordul insulei cu mașina",
     accent: "#22C55E",
     accentBg: "#071209", accentBgLight: "#F0FDF4",
-    transport: "🚗  Rented Cars (2 cars)",
-    highlights: ["kalamaki","portoLimnionas","korakonisi","shipwreck"],
-    routes: ["kalamaki","portoLimnionas","korakonisi","shipwreck","kalamaki"],
+    transport: "🚗  Mașini Închiriate (Ziua 1/3)",
+    highlights: ["kalamaki","xigia","blueCaves","volimes","shipwreck","portoVromi"],
+    routes: ["kalamaki","xigia","blueCaves","volimes","shipwreck","portoVromi","kalamaki"],
     activities: [
-      { time: "08:00", icon: "🚗", title: "Pick Up Rental Cars",
-        desc: "2 cars for 10 people. Pick up from local agency near Kalamaki." },
-      { time: "09:00", icon: "🛣️", title: "Drive to Porto Limnionas",
-        desc: "50 min scenic drive west through mountains and olive groves." },
-      { time: "09:50", icon: "💧", title: "Porto Limnionas Swim & Explore",
-        desc: "Dramatic emerald fjord carved into rock. Jump off ledges into crystal-clear water." },
-      { time: "12:00", icon: "🌿", title: "Drive to Korakonisi",
-        desc: "20 min north. Natural rock arch, hidden coves, completely undeveloped." },
-      { time: "13:30", icon: "🍖", title: "Lunch in Volimes Village",
-        desc: "Authentic mountain taverna. Local honey, fresh bread, and hearty stews." },
-      { time: "15:00", icon: "📸", title: "Shipwreck Beach Viewpoint",
-        desc: "THE iconic Zakynthos view. Look down at the MV Panagiotis wreck in turquoise blue." },
-      { time: "17:00", icon: "⛪", title: "Drive South via Anafonitria",
-        desc: "Stop at the medieval monastery. Winding roads through olive groves at golden hour." },
-      { time: "20:00", icon: "🔥", title: "BBQ Night at Studios",
-        desc: "Buy supplies en route. Group BBQ on the terrace. Best night of the trip." },
+      { time: "08:00", icon: "🚗", title: "Preluăm Mașinile",
+        desc: "2 mașini automatice pentru 10 persoane. AbbyCar — livrează mașina la hotel!" },
+      { time: "09:00", icon: "♨️", title: "Xigia Beach — Spa Natural",
+        desc: "45 min spre nord. Izvoare sulfuroase naturale care ies din fundul mării — spa gratuit cu efect detoxifiant." },
+      { time: "10:30", icon: "🔵", title: "Blue Caves — Reflexii Albastre",
+        desc: "Din Portul Skinari, barcă mică ~15€/pers. Cele mai frumoase 09:00-11:00 când reflexiile albastre sunt ireale. Rezervăm din timp!" },
+      { time: "13:00", icon: "🍯", title: "Prânz în Volimes + Shopping",
+        desc: "Sat de munte autentic. Taverna locală + miere locală și Mandolato (nougat) din Volimes la jumătate de preț față de magazine." },
+      { time: "15:00", icon: "📸", title: "Navagio Viewpoint — 200m Deasupra",
+        desc: "ATENȚIE: Navagio Beach e închisă în 2026 (alunecare teren). NU se coboară pe plajă. Dar viewpoint-ul de sus e DESCHIS — vedere spectaculoasă a epavei MV Panagiotis!" },
+      { time: "16:30", icon: "💧", title: "Porto Vromi — Baie Turcoaz",
+        desc: "Golf secret pe coasta de vest. Apă turcoaz în cală naturală, liniște totală." },
+      { time: "20:00", icon: "🍷", title: "Cină la Întoarcere",
+        desc: "Cină în taverna preferată din Kalamaki. Povestim ziua la o sticlă de Verdea." },
     ]
   },
   {
     index: 5,
-    title: "North & Hidden Gems",
-    subtitle: "Sulphur springs & mountain villages",
+    title: "Vestul Sălbatic",
+    subtitle: "Fiorduri, cramă & apus la Kambi",
     accent: "#22C55E",
     accentBg: "#071209", accentBgLight: "#F0FDF4",
-    transport: "🚗  Rented Cars",
-    highlights: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown"],
-    routes: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown","kalamaki"],
+    transport: "🚗  Mașini Închiriate (Ziua 2/3)",
+    highlights: ["kalamaki","portoLimnionas","korakonisi","kambi"],
+    routes: ["kalamaki","portoLimnionas","korakonisi","kambi","kalamaki"],
     activities: [
-      { time: "08:30", icon: "🥐", title: "Breakfast on the Go",
-        desc: "Grab pastries and coffee from the bakery. Pack the car with snacks and plenty of water." },
-      { time: "09:30", icon: "♨️", title: "Drive to Xigia Beach",
-        desc: "45 min north. Natural sulphur springs bubble up from underwater — a natural spa in the sea." },
-      { time: "11:00", icon: "🪨", title: "Makris Gialos Beach",
-        desc: "Secluded white pebble beach nearby. No facilities, no crowds — pure Zakynthos." },
-      { time: "13:00", icon: "🌯", title: "Lunch in Tsilivi",
-        desc: "Lively resort town. Great gyros spots and cold Mythos beer in the sun." },
-      { time: "14:30", icon: "🦩", title: "Alykes Salt Flats",
-        desc: "Unique landscape — old Venetian saltworks. Flamingos sometimes spotted in spring." },
-      { time: "16:00", icon: "🗺️", title: "Free Exploration Time",
-        desc: "Split up or stay together. Last chance for a hidden beach, a viewpoint, or a nap." },
-      { time: "18:00", icon: "🌇", title: "Sunset at Zakynthos Town",
-        desc: "Return south. Golden hour at the harbour — one last big view of the island." },
-      { time: "20:30", icon: "🥂", title: "Last Supper: Lofos Restaurant",
-        desc: "Hillside restaurant with valley views. Best food of the trip. Celebrate the crew." },
+      { time: "08:00", icon: "🚗", title: "Plecăm Dimineața Devreme",
+        desc: "Coasta de vest e lungă. Descărcăm Google Maps OFFLINE — pe vest nu ai semnal!" },
+      { time: "09:00", icon: "💧", title: "Porto Limnionas — Fiord de Smarald",
+        desc: "50 min spre vest. Golf în miniatură sculptat în stâncă. Sarituri de pe stânci în apă cristalină. Snorkeling WOW." },
+      { time: "11:00", icon: "🌿", title: "Korakonisi — Arc Natural din Piatră",
+        desc: "20 min spre nord. Arc natural, cale nedezvoltată. Porto Roxa (cală secretă) în apropiere." },
+      { time: "13:00", icon: "🍷", title: "Crama Callinico din 1918",
+        desc: "Cramă familială cu istoria de 100 de ani. Degustare de vin local — Verdea și vinuri albe din Zakynthos." },
+      { time: "15:30", icon: "⛪", title: "Mânăstirea Anafonitria",
+        desc: "Mânăstire medievală la 1.000m altitudine. Drumuri cu serpentine prin livezi de măslini la lumina aurie." },
+      { time: "17:30", icon: "🌅", title: "Apus la Kambi — CEL MAI FRUMOS!",
+        desc: "Crucea de 15m de pe marginea falezei. Apusul de la Kambi e cel mai dramatic din Zakynthos — valea cu livezi de ulei, marea roșie-portocalie. Dacă nu plângi, verifică-ți pulsul." },
+      { time: "20:00", icon: "🔥", title: "BBQ Night la Studios",
+        desc: "Cumpărăm provizii pe drum. BBQ de grup pe terasă. Cea mai bună seară a vacanței." },
     ]
   },
   {
     index: 6,
-    title: "Departure",
-    subtitle: "Last moments & safe travels",
+    title: "Keri & Vasilikos",
+    subtitle: "Ultimul apus + zbor acasă",
     accent: "#F97316",
     accentBg: "#1C1008", accentBgLight: "#FFF4ED",
-    transport: "🚗  Rental Cars → Airport",
-    highlights: ["kalamaki","airport"],
-    routes: ["kalamaki","airport"],
+    transport: "🚗  Mașini Închiriate → Aeroport",
+    highlights: ["kalamaki","bananaBeach","portoZoro","keriLighthouse","airport"],
+    routes: ["kalamaki","bananaBeach","portoZoro","keriLighthouse","kalamaki","airport"],
     activities: [
-      { time: "05:30", icon: "⏰", title: "Wake Up & Final Pack",
-        desc: "Alarm set. Pack bags, tidy studios, leave everything ready before leaving." },
-      { time: "06:00", icon: "☕", title: "Quick Coffee & Checkout",
-        desc: "Express checkout at Hektor's. Grab coffee from the 24h kiosk nearby." },
-      { time: "06:30", icon: "🚗", title: "Drive to Airport",
-        desc: "Return rental cars at the airport. Only 5 min from base — easy." },
-      { time: "07:00", icon: "🎫", title: "Airport Check-in",
-        desc: "Arrive 90 min early. Check bags, last Greek coffee at departures." },
-      { time: "08:35", icon: "✈️", title: "Takeoff!",
-        desc: "Window seat for one last view of that turquoise coast. Until next time, Zakynthos." },
+      { time: "09:00", icon: "🍌", title: "Banana Beach — Penultima Dimineață",
+        desc: "Peninsula Vasilikos pe coasta de sud-est. Nisip auriu, beach bar, sporturi nautice." },
+      { time: "11:00", icon: "🐠", title: "Dafni Beach — Snorkeling cu Pești Colorați",
+        desc: "Plajă liniștită cu apă limpede. Ultimul snorkeling al vacanței." },
+      { time: "13:00", icon: "🏝️", title: "Porto Zoro — Plajă între Stânci",
+        desc: "Plajă lungă cu formații stâncoase unice. Liniște deplină, snorkeling excelent." },
+      { time: "15:00", icon: "🏘️", title: "Keri Village",
+        desc: "Sat cu case de piatră la marginea sudică a insulei. Prânz în taverna cu vedere la mare." },
+      { time: "18:30", icon: "🌅", title: "KERI LIGHTHOUSE — Apusul Suprem",
+        desc: "La capătul sudic al insulei. Apus peste stâncile Myzithres. Cel mai frumos moment al vacanței. Luăm Verdea și savurăm fiecare secundă." },
+      { time: "21:00", icon: "🥂", title: "Cina de Rămas-Bun",
+        desc: "Cină finală în Kalamaki. Ridicăm un pahar pentru echipă, pentru Grecia, pentru aventura asta." },
+      { time: "05:30", icon: "⏰", title: "DIMINEAȚA: Trezire & Bagaje",
+        desc: "Alarma setată. Facem bagajele, curățăm studios, predăm cheile la Hektor." },
+      { time: "06:30", icon: "🚗", title: "Drive la Aeroport",
+        desc: "Predăm mașinile la aeroport. Doar 5 min de la bază — ușor." },
+      { time: "08:35", icon: "✈️", title: "Zbor Acasă!",
+        desc: "Loc la geam pentru ultima vedere a acelei coaste turcoaz. Până data viitoare, Zakynthos. 🇬🇷" },
     ]
   },
 ];
@@ -1282,6 +1346,11 @@ const POINTS = {
   gerakas:       { x: 346, y: 428, label: "Gerakas" },
   portoZoro:     { x: 328, y: 384, label: "Porto Zoro" },
   makrisGialos:  { x: 112, y: 152, label: "Makris Gialos" },
+  blueCaves:     { x: 182, y: 55,  label: "Blue Caves" },
+  keriLighthouse:{ x: 90,  y: 432, label: "Keri Lighthouse" },
+  portoVromi:    { x: 82,  y: 162, label: "Porto Vromi" },
+  kambi:         { x: 70,  y: 238, label: "Kambi" },
+  volimes:       { x: 110, y: 145, label: "Volimes" },
 };
 
 // Zakynthos outline path — clockwise from north cape
@@ -1958,6 +2027,361 @@ async function castVote(pollId) {
     if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '🗳 Votează!'; }
   }
 }
+
+
+// ── Presentation (Whiteboard Slides) ──────────────────────────
+var prezCurrent = 0;
+var _prezTouchX = null;
+var _prezInited = false;
+
+function _fi(content, delay, extraStyle) {
+  return '<div style="opacity:0;animation:fadeSlideUp 0.5s ease forwards '+delay+'s;'+(extraStyle||'')+'">'+content+'</div>';
+}
+function _ul(color, width, delay) {
+  return '<svg viewBox="0 0 200 8" style="width:'+(width||'60%')+';height:8px;display:block;margin:4px auto 0"><path d="M2 5 Q50 2, 100 4 T198 3" stroke="'+(color||'#0891B2')+'" stroke-width="3" fill="none" stroke-linecap="round" style="stroke-dasharray:250;stroke-dashoffset:250;animation:drawLine 0.8s ease forwards '+(delay||0.5)+'s"/></svg>';
+}
+function _chk(delay, color) {
+  return '<svg viewBox="0 0 30 30" style="width:18px;height:18px;flex-shrink:0;margin-top:2px"><path d="M5 16 L12 23 L25 7" stroke="'+(color||'#16A34A')+'" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:50;stroke-dashoffset:50;animation:drawLine 0.4s ease forwards '+delay+'s"/></svg>';
+}
+function _x(delay) {
+  return '<svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;margin-top:2px"><path d="M4 4 L20 20 M20 4 L4 20" stroke="#DC2626" stroke-width="3" fill="none" stroke-linecap="round" style="stroke-dasharray:50;stroke-dashoffset:50;animation:drawLine 0.4s ease forwards '+delay+'s"/></svg>';
+}
+function _arr(delay, color) {
+  return '<svg viewBox="0 0 60 30" style="width:44px;height:22px"><path d="M5 15 Q30 14, 55 15 M45 8 L57 15 L45 22" stroke="'+(color||'#1a2744')+'" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:200;stroke-dashoffset:200;animation:drawLine 0.6s ease forwards '+delay+'s"/></svg>';
+}
+
+const PREZ_SLIDES = [
+  { label:'Intro', render:function() { return (
+    '<div style="text-align:center;padding:20px 24px">'+
+    _fi('<div style="font-size:13px;color:#6B7280;letter-spacing:3px;margin-bottom:14px;font-family:Georgia,serif">— PREZENTARE EXCLUSIVĂ PENTRU ECHIPĂ —</div>',0.1)+
+    _fi('<div style="font-size:clamp(30px,7vw,48px);font-weight:900;color:#1a2744;line-height:1.1;font-family:Georgia,serif">PLANUL SUPREM</div>',0.3)+
+    _fi('<div style="font-size:clamp(22px,5vw,38px);font-weight:800;color:#0891B2;font-family:Georgia,serif;margin-top:6px">ZAKYNTHOS 2026</div>'+_ul('#0891B2','60%',0.8),0.5)+
+    _fi('<div style="font-size:15px;color:#6B7280;margin-top:16px;font-style:italic;font-family:Georgia,serif">6 – 13 August · 10 români · 1 plan genial</div>',0.9)+
+    _fi('<div style="margin-top:20px;padding:12px 18px;background:#F5E6CC;border-radius:10px;display:inline-block;border:2px dashed #EA580C"><span style="font-size:13px;color:#EA580C;font-weight:600">⚠️ Dacă cineva zice \"lăsați că ne descurcăm noi acolo\"...<br>arătați-i prezentarea asta.</span></div>',1.2)+
+    _fi('<span style="font-size:11px;color:#6B7280">swipe sau click ▸ pentru slide-ul următor</span>',1.5,'margin-top:20px;display:block')+
+    '</div>');
+  }},
+  { label:'Problema', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:clamp(20px,5vw,28px);font-weight:800;color:#DC2626;font-family:Georgia,serif;text-align:center">FĂRĂ PLAN = HAOS TOTAL</div>'+_ul('#DC2626','50%',0.4),0.1)+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">'+
+    _fi('<div style="background:#FEE2E2;border-radius:12px;padding:14px;border:2px solid #FECACA"><div style="font-weight:800;color:#DC2626;font-size:13px;margin-bottom:8px">❌ VARIANTA HAOS</div><div style="font-size:11px;color:#1a2744;line-height:1.7">'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_x(0.6)+'<span>"Mergem unde ne duce vântul"</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_x(0.8)+'<span>3 ore să decidem unde mâncăm</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_x(1.0)+'<span>Bărci sold out că n-am rezervat</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start">'+_x(1.2)+'<span>Ratat Blue Caves, Keri, tot</span></div>'+
+      '</div></div>',0.4)+
+    _fi('<div style="background:#DCFCE7;border-radius:12px;padding:14px;border:2px solid #BBF7D0"><div style="font-weight:800;color:#16A34A;font-size:13px;margin-bottom:8px">✅ CU PLANUL ĂSTA</div><div style="font-size:11px;color:#1a2744;line-height:1.7">'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_chk(0.8)+'<span>Fiecare zi are obiectiv clar</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_chk(1.0)+'<span>Restaurante testate, prețuri știute</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_chk(1.2)+'<span>Bărci + mașini rezervate din timp</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start">'+_chk(1.4)+'<span>Economii de 200-400€ pe grup</span></div>'+
+      '</div></div>',0.6)+
+    '</div>'+
+    _fi('<div style="text-align:center;margin-top:14px;font-size:11px;color:#EA580C;font-style:italic;font-family:Georgia,serif">\"Ultima oară când am zis ne descurcăm acolo am mâncat 3 zile doar gyros la 15€.\"</div>',1.6)+
+    '</div>');
+  }},
+
+  { label:'Overview', render:function() {
+    var days = [
+      {zi:'Z1',title:'Sosire + Kalamaki chill',icon:'✈️',color:'#2563EB',t:'taxi'},
+      {zi:'Z2',title:'Zakynthos Town — Istorie',icon:'🏛️',color:'#7C3AED',t:'bus 1.80€'},
+      {zi:'Z3',title:'BARCĂ pe mare!',icon:'⛵',color:'#0891B2',t:'barcă self-drive'},
+      {zi:'Z4',title:'Plaje sudice + cultură',icon:'🏖️',color:'#EA580C',t:'bus + taxi'},
+      {zi:'Z5',title:'Blue Caves + Navagio View',icon:'🔵',color:'#2563EB',t:'mașină 1/3'},
+      {zi:'Z6',title:'Vest sălbatic + cramă',icon:'🌿',color:'#16A34A',t:'mașină 2/3'},
+      {zi:'Z7',title:'Vasilikos + apus la Keri',icon:'🌅',color:'#DC2626',t:'mașină 3/3'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:clamp(20px,4vw,26px);font-weight:800;color:#1a2744;font-family:Georgia,serif;text-align:center">7 ZILE. 1 INSULĂ. 0 STRES.</div>'+_ul('#0891B2','40%',0.3),0.1)+
+      '<div style="margin-top:16px;display:flex;flex-direction:column;gap:7px">'+
+      days.map(function(d,i){return _fi('<div style="display:flex;align-items:center;gap:10px;background:white;border-radius:10px;padding:9px 12px;border-left:4px solid '+d.color+';box-shadow:0 1px 3px rgba(0,0,0,0.06)"><span style="font-size:20px;width:28px;text-align:center">'+d.icon+'</span><div style="flex:1"><span style="font-weight:800;color:'+d.color+';font-size:12px">'+d.zi+'</span><span style="font-weight:600;color:#1a2744;font-size:13px;margin-left:7px">'+d.title+'</span></div><span style="font-size:10px;color:#6B7280;background:#E5E7EB;padding:3px 7px;border-radius:12px">'+d.t+'</span></div>',0.3+i*0.13);}).join('')+
+      '</div>'+
+      _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#6B7280;font-style:italic">+ Ziua 8 = zbor acasă (cu lacrimi în ochi și 5kg de măsline în bagaj)</div>',1.8)+
+      '</div>';
+  }},
+
+  { label:'Zilele 1-2', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">ZILELE 1-2: Sosire + Cultură</div>'+_ul('#7C3AED','40%',0.3),0.1)+
+    _fi('<div style="margin-top:14px;background:#EDE9FE;border-radius:12px;padding:14px;border:2px solid #DDD6FE"><div style="font-weight:700;color:#7C3AED;font-size:14px;margin-bottom:6px">✈️ ZIUA 1 — Kalamaki vibes</div><div style="font-size:12px;color:#1a2744;line-height:1.7">Aterizare 08:00 → taxi 15 min → Hector Studios → plajă cu testoase Caretta-Caretta → prânz Pandesia (musaka de vis) → seară pe Main Street cu cocktailuri</div></div>',0.4)+
+    _fi('<div style="margin-top:10px;background:#EDE9FE;border-radius:12px;padding:14px;border:2px solid #DDD6FE"><div style="font-weight:700;color:#7C3AED;font-size:14px;margin-bottom:6px">🏛️ ZIUA 2 — Zakynthos Town</div><div style="font-size:12px;color:#1a2744;line-height:1.7">Bus 1.80€ → Piața Solomos (poetul imnului grecesc!) → Muzeul Bizantin → Castelul Venețian din Bochali (panoramă 360°) → Cumpărături pe Strada Roma → Cină + promenadă pe faleză</div></div>',0.7)+
+    _fi('<div style="display:flex;gap:10px;margin-top:14px"><div style="flex:1;background:#FEF3C7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px">🐢</div><div style="font-size:11px;font-weight:600;color:#1a2744;margin-top:3px">Testoase pe plajă</div></div><div style="flex:1;background:#FEF3C7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px">🏰</div><div style="font-size:11px;font-weight:600;color:#1a2744;margin-top:3px">Castel 1480</div></div><div style="flex:1;background:#FEF3C7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px">🍽️</div><div style="font-size:11px;font-weight:600;color:#1a2744;margin-top:3px">Sofrito (must try!)</div></div></div>',1.0)+
+    _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">Fun fact: Zakynthos Town a fost distrus de cutremur în 53 și reconstruit complet. E ca un Phoenix grecesc. 🔥</div>',1.3)+
+    '</div>');
+  }},
+  { label:'Barca Z3', render:function() {
+    var ruta = [
+      {t:'10:00',s:'Laganas Bay — vânătoare de testoase',e:'🐢'},
+      {t:'11:30',s:'Marathonisi (Turtle Island) — plajă + peșteri',e:'🏝️'},
+      {t:'13:00',s:'Keri Caves — snorkeling în peșteri turcoaz',e:'🤿'},
+      {t:'15:00',s:'Myzithres Rocks — stânci albe dramatice',e:'🪨'},
+      {t:'16:00',s:'Înapoi + Cameo Island opțional',e:'🎯'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#0891B2;font-family:Georgia,serif">ZIUA 3: SUNTEM CAPITANI! ⛵</div>'+_ul('#0891B2','45%',0.3),0.1)+
+      _fi('<div style="background:#ECFDF5;border-radius:12px;padding:14px;margin-top:12px;border:2px solid #A7F3D0"><div style="font-size:13px;color:#1a2744;line-height:1.7"><b>2 bărci self-drive, FĂRĂ permis!</b> Plecare din Agios Sostis (2 km de hotel, transfer gratuit). Primești briefing + GPS + hartă pe WhatsApp. E mai ușor decât pe DN1.</div></div>',0.4)+
+      _fi('<div style="margin-top:12px;font-size:14px;font-weight:700;color:#1a2744">RUTA SUDICĂ (5-7 ore):</div>',0.6)+
+      '<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">'+
+      ruta.map(function(r,i){return _fi('<div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="font-weight:700;color:#0891B2;width:42px;flex-shrink:0">'+r.t+'</span>'+_arr(0.8+i*0.12,'#0891B2')+'<span>'+r.e+' '+r.s+'</span></div>',0.7+i*0.12);}).join('')+
+      '</div>'+
+      _fi('<div style="margin-top:12px;background:#FFF7ED;border-radius:10px;padding:12px;border:2px dashed #FDBA74"><div style="font-size:12px;color:#1a2744"><b>💰 Cost barcă:</b> ~80-150€/barcă (5-6 pers) + combustibil ~100€/barcă<br><b>Per persoană:</b> ~25-40€ pentru O ZI PE MARE!<br><b>📍 Companii:</b> Traventure, Fun@Sea, Ramo&#39;s Boats</div></div>',1.5)+
+      '</div>';
+  }},
+
+  { label:'Ziua 4', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:22px;font-weight:800;color:#EA580C;font-family:Georgia,serif">ZIUA 4: Plaje + Chill grecesc</div>'+_ul('#EA580C','40%',0.3),0.1)+
+    _fi('<div style="font-size:13px;color:#1a2744;margin-top:12px;line-height:1.7">Zi relaxantă cu bus și taxi: dimineața pe plaja Kalamaki, după-amiaza la <b>Gerakas Beach</b> — una din cele mai frumoase plaje, cu nisip fin și testoase care vin să cuibărească.</div>',0.4)+
+    _fi('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><div style="background:#FFF7ED;border-radius:12px;padding:12px;text-align:center"><div style="font-size:26px">🏖️</div><div style="font-weight:700;font-size:12px;margin-top:5px;color:#1a2744">Gerakas Beach</div><div style="font-size:10px;color:#6B7280;margin-top:3px">Taxi ~18€ (nu 18€/pers!)</div></div><div style="background:#FFF7ED;border-radius:12px;padding:12px;text-align:center"><div style="font-size:26px">🎡</div><div style="font-weight:700;font-size:12px;margin-top:5px;color:#1a2744">Caretta Fun Park</div><div style="font-size:10px;color:#6B7280;margin-top:3px">Seara, bumper cars!</div></div></div>',0.7)+
+    _fi('<div style="margin-top:14px;background:#F5F3FF;border-radius:12px;padding:12px"><div style="font-weight:700;color:#7C3AED;font-size:13px;margin-bottom:6px">🍷 Cina: Michaelos Restaurant</div><div style="font-size:12px;color:#1a2744;line-height:1.6">Ascuns printre copaci, atmosferă intimă. Comandați <b>Kleftiko</b> (miel în pergament) sau <b>Stifado</b> (tocană de vită cu ceapă). Însoțit cu vin local. Chef&#39;s kiss. 🤌</div></div>',1.0)+
+    _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">Dacă cineva întreabă \"dar în Laganas e party?\" — da, e acolo la 4 km. Duceți-vă, dar nu ne așteptați. 😄</div>',1.3)+
+    '</div>');
+  }},
+  { label:'Zilele 5-6', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:22px;font-weight:800;color:#2563EB;font-family:Georgia,serif">ZILELE 5-6: Cu mașina 🚗💨</div>'+_ul('#2563EB','35%',0.3),0.1)+
+    _fi('<div style="margin-top:12px;background:#EFF6FF;border-radius:12px;padding:14px;border:2px solid #BFDBFE"><div style="font-weight:700;color:#2563EB;font-size:13px;margin-bottom:6px">🗺️ ZIUA 5 — Nordul insulei</div><div style="font-size:12px;color:#1a2744;line-height:1.7">Xigia Sulfur Beach (apă cu proprietăți terapeutice) → <b>BLUE CAVES</b> (15€/pers barcă mică, reflexii albastre ireale) → Volimes sat + miere locală → <b>NAVAGIO VIEWPOINT</b> (200m deasupra epavei!) → Porto Vromi baie turcoaz</div></div>',0.4)+
+    _fi('<div style="margin-top:10px;background:#F0FDF4;border-radius:12px;padding:14px;border:2px solid #BBF7D0"><div style="font-weight:700;color:#16A34A;font-size:13px;margin-bottom:6px">🌿 ZIUA 6 — Vestul sălbatic</div><div style="font-size:12px;color:#1a2744;line-height:1.7"><b>Porto Limnionas</b> (fiord în miniatură, snorkeling WOW) → Porto Roxa (cală secretă) → <b>Crama Callinico</b> din 1918 (degustare vin!) → Mânăstirea Anafonitria → <b>Apus la KAMBI</b> (cel mai frumos din Zakynthos!)</div></div>',0.7)+
+    _fi('<div style="margin-top:12px;background:#FEF2F2;border-radius:10px;padding:10px;display:flex;gap:8px;align-items:center"><span style="font-size:22px">⚠️</span><div style="font-size:11px;color:#DC2626;line-height:1.5"><b>Navagio Beach e ÎNCHISĂ în 2026</b> (alunecare teren). NU se coboară pe plajă. Dar viewpoint-ul de sus e DESCHIS — epava de la 200m înălțime!</div></div>',1.0)+
+    _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">Descărcați Google Maps OFFLINE. Pe vestul insulei, telefonul devine un ceas scump. ⏱️</div>',1.3)+
+    '</div>');
+  }},
+
+  { label:'Ziua 7', render:function() {
+    var spots = [
+      {s:'Banana Beach — nisip auriu, beach bar, sporturi',e:'🍌',h:false},
+      {s:'Dafni Beach — snorkeling cu pești colorați',e:'🐠',h:false},
+      {s:'Porto Zoro — plajă lungă între stânci',e:'🏝️',h:false},
+      {s:'Keri Village — sat cu case de piatră',e:'🏘️',h:false},
+      {s:'KERI LIGHTHOUSE — apus peste Myzithres!',e:'🌅',h:true},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#DC2626;font-family:Georgia,serif">ZIUA 7: Apusul Suprem 🌅</div>'+_ul('#DC2626','35%',0.3),0.1)+
+      _fi('<div style="font-size:13px;color:#1a2744;margin-top:12px;line-height:1.7">Ultima zi cu mașina — explorăm <b>Peninsula Vasilikos</b> pe coasta de sud-est, apoi închidem în stil mare cu apusul de la <b>Farul Keri</b>.</div>',0.4)+
+      '<div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">'+
+      spots.map(function(r,i){return _fi('<div style="display:flex;align-items:center;gap:8px;background:'+(r.h?'#FEF3C7':'white')+';border-radius:10px;padding:9px 12px;border:'+(r.h?'2px solid #FCD34D':'1px solid #E5E7EB')+';font-weight:'+(r.h?'700':'400')+'"><span style="font-size:18px">'+r.e+'</span><span style="font-size:12px;color:#1a2744">'+r.s+'</span></div>',0.6+i*0.12);}).join('')+
+      '</div>'+
+      _fi('<div style="text-align:center;margin-top:14px;font-size:12px;color:#EA580C;font-style:italic">Dacă nu plângeți la apusul de la Keri, verificați-vă pulsul. 💀</div>',1.5)+
+      '</div>';
+  }},
+  { label:'Transport', render:function() {
+    var t = [
+      {i:'🚶',ti:'Mers pe jos',d:'Kalamaki e mic, totul e walkable — restaurante, baruri, plajă',z:'Zilnic',c:'#16A34A'},
+      {i:'🚌',ti:'Bus KTEL',d:'Kalamaki ↔ Zakynthos Town: 1.80€, ~14 curse/zi',z:'Z1-Z4',c:'#2563EB'},
+      {i:'🚕',ti:'Taxi',d:'Fără aparat! Negociați ÎNAINTE. Kalamaki→Town: ~12-15€',z:'Când trebuie',c:'#F59E0B'},
+      {i:'⛵',ti:'Barcă self-drive',d:'2 bărci, fără permis, din Agios Sostis (2km)',z:'Z3',c:'#0891B2'},
+      {i:'🚗',ti:'Mașină închiriată',d:'2 mașini automat, 5 pers/mașină — AbbyCar recomandat',z:'Z5-Z7',c:'#DC2626'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">CUM NE MIȘCĂM?</div>'+_ul('#16A34A','30%',0.3),0.1)+
+      '<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">'+
+      t.map(function(x,i){return _fi('<div style="display:flex;align-items:center;gap:12px;background:white;border-radius:12px;padding:11px 14px;border-left:4px solid '+x.c+';box-shadow:0 1px 3px rgba(0,0,0,0.06)"><span style="font-size:24px">'+x.i+'</span><div style="flex:1"><div style="font-weight:700;font-size:13px;color:#1a2744">'+x.ti+'</div><div style="font-size:11px;color:#6B7280;margin-top:1px">'+x.d+'</div></div><span style="font-size:10px;font-weight:600;color:'+x.c+';background:'+x.c+'18;padding:3px 8px;border-radius:16px;flex-shrink:0">'+x.z+'</span></div>',0.3+i*0.14);}).join('')+
+      '</div>'+
+      _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">Trezirea nu e niciodată înainte de 9. Am zis. 😴</div>',1.3)+
+      '</div>';
+  }},
+
+  { label:'Mașini', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">MAȘINI: 3 zile, 2 mașini 🚗🚗</div>'+_ul('#2563EB','40%',0.3),0.1)+
+    _fi('<div style="margin-top:12px;font-size:13px;color:#1a2744;line-height:1.6">10 persoane ÷ 2 mașini = 5/mașină. Cutie <b>automată</b> (ca să nu mai auzim \"eu nu știu cu manuala\"\). Rezervăm pe 10, 11, 12 August.</div>',0.4)+
+    _fi('<div style="margin-top:12px;overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#1a2744"><th style="color:white;padding:7px 9px;text-align:left;font-weight:700">Firmă</th><th style="color:white;padding:7px 9px;text-align:left;font-weight:700">Mașină</th><th style="color:white;padding:7px 9px;text-align:left;font-weight:700">~Preț/3 zile</th><th style="color:white;padding:7px 9px;text-align:left;font-weight:700">Bonus</th></tr></thead><tbody><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB"><td style="padding:7px 9px;font-weight:600">AbbyCar ⭐</td><td style="padding:7px 9px">Fiat 500 auto</td><td style="padding:7px 9px">90-150€</td><td style="padding:7px 9px">Fără depozit!</td></tr><tr style="background:white;border-bottom:1px solid #E5E7EB"><td style="padding:7px 9px;font-weight:600">Yours Rental</td><td style="padding:7px 9px">Small auto</td><td style="padding:7px 9px">100-140€</td><td style="padding:7px 9px">Cel mai ieftin</td></tr><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB"><td style="padding:7px 9px;font-weight:600">SIXT</td><td style="padding:7px 9px">VW Polo auto</td><td style="padding:7px 9px">140-200€</td><td style="padding:7px 9px">International</td></tr><tr style="background:white"><td style="padding:7px 9px;font-weight:600">Ok Mobility</td><td style="padding:7px 9px">Economy auto</td><td style="padding:7px 9px">120-170€</td><td style="padding:7px 9px">Popular local</td></tr></tbody></table></div>',0.6)+
+    _fi('<div style="margin-top:12px;display:flex;gap:8px"><div style="flex:1;background:#DCFCE7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#16A34A">~30-50€</div><div style="font-size:10px;color:#1a2744;margin-top:3px">per persoană / 3 zile mașină</div></div><div style="flex:1;background:#FEF3C7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#EA580C">~15-25€</div><div style="font-size:10px;color:#1a2744;margin-top:3px">per persoană / benzină 3 zile</div></div></div>',1.0)+
+    _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">AbbyCar e recomandata #1 pe insulă. Livrează mașina la hotel. Ca Glovo, dar cu mașini. 🏎️</div>',1.3)+
+    '</div>');
+  }},
+  { label:'Mâncare', render:function() {
+    var foods = [
+      {n:'Sofrito',d:'Vițel în vin alb, usturoi, piper alb — se topește în gură',e:'🥩'},
+      {n:'Kleftiko',d:'Miel gătit lent în pergament cu ierburi',e:'🐑'},
+      {n:'Stifado',d:'Tocană de vită cu ceapă dulce caramelizată',e:'🍲'},
+      {n:'Caracatiță',d:'La grătar, cu lămâie și ulei de măsline',e:'🐙'},
+      {n:'Ladotyri',d:'Brânză de oaie în ulei — unică pe insulă',e:'🧀'},
+      {n:'Mandolato',d:'Nougat local din Volimes — suvenirulperfect',e:'🍬'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">CE MÂNCĂM? 🤤</div>'+_ul('#EA580C','25%',0.3),0.1)+
+      _fi('<div style="margin-top:12px;font-size:13px;font-weight:600;color:#1a2744">Feluri tradiționale de neratat:</div>',0.4)+
+      '<div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
+      foods.map(function(f,i){return _fi('<div style="background:white;border-radius:10px;padding:9px 11px;border:1px solid #E5E7EB"><div style="font-size:17px;display:inline">'+f.e+'</div><span style="font-weight:700;font-size:12px;color:#1a2744;margin-left:5px">'+f.n+'</span><div style="font-size:10px;color:#6B7280;margin-top:3px;line-height:1.4">'+f.d+'</div></div>',0.5+i*0.1);}).join('')+
+      '</div>'+
+      _fi('<div style="margin-top:12px;background:#DCFCE7;border-radius:10px;padding:10px"><div style="font-size:11px;color:#1a2744"><b>💡 Regula de aur:</b> Dacă restaurantul are poze în meniu și text în 5 limbi = turistic și scump. Dacă are meniu scris de mână și bunica gătește în spate = ACOLO mâncați.</div></div>',1.3)+
+      _fi('<div style="text-align:center;margin-top:10px;font-size:11px;color:#EA580C;font-style:italic">Vinul local \"Verdea\" e ușor dulce și perfect pe caniculă. Da, la 2 PM. Nu judecăm. 🍷</div>',1.5)+
+      '</div>';
+  }},
+
+  { label:'Economii', render:function() {
+    var rows = [
+      {h:'Mașină la fața locului în August: ~70€/zi',p:'Rezervată din timp: ~45€/zi',s:'~75€/mașină'},
+      {h:'Barcă prin hotel: ~50€/pers',p:'Direct la companie: ~25-40€/pers',s:'~15€/pers'},
+      {h:'Excursie organizată Blue Caves: ~45€/pers',p:'Barcă mică de la Skinari: ~15€/pers',s:'~30€/pers'},
+      {h:'Apă pe plajă: 3€/sticlă',p:'Din minimarket: 0.50€/sticlă',s:'~35€ vacanță'},
+      {h:'Restaurant turistic: 25€/masă',p:'Tavernă din sat: 10€/masă',s:'~100€ vacanță'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#16A34A;font-family:Georgia,serif">ECONOMII REALE 💰</div>'+_ul('#16A34A','30%',0.3),0.1)+
+      _fi('<div style="margin-top:12px;font-size:13px;color:#1a2744;line-height:1.6">Un plan bun nu înseamnă doar să știi unde mergi, ci să <b>nu arunci banii pe fereastră</b>:</div>',0.4)+
+      '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">'+
+      rows.map(function(r,i){return _fi('<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;background:'+(i%2===0?'#F9FAFB':'white')+';border-radius:8px;padding:7px 10px;font-size:11px"><div style="color:#DC2626;text-decoration:line-through;opacity:0.7">'+r.h+'</div><div style="color:#16A34A;font-weight:600">'+r.p+'</div><div style="background:#DCFCE7;color:#16A34A;font-weight:800;padding:3px 7px;border-radius:8px;font-size:10px;white-space:nowrap">-'+r.s+'</div></div>',0.5+i*0.14);}).join('')+
+      '</div>'+
+      _fi('<div style="margin-top:14px;background:#DCFCE7;border-radius:12px;padding:12px;text-align:center;border:2px solid #86EFAC"><div style="font-size:16px;font-weight:800;color:#16A34A">Economie totală pe grup: ~200-400€</div><div style="font-size:11px;color:#1a2744;margin-top:3px">Adică un prânz de adio în plus sau un souvenir mai generos 🎁</div></div>',1.5)+
+      '</div>';
+  }},
+  { label:'Tips', render:function() {
+    var tips = [
+      {i:'📱',t:'Google Maps OFFLINE — pe vest nu ai semnal',c:'#2563EB'},
+      {i:'💵',t:'CASH obligatoriu — tavernele din sate nu au POS',c:'#16A34A'},
+      {i:'👟',t:'Pantofi de apă — Porto Limnionas e stâncos',c:'#EA580C'},
+      {i:'🐢',t:'NU atingeți testoasele, NU flash, NU umbrele lângă cuiburi — amendă urâtă',c:'#DC2626'},
+      {i:'🔌',t:'Priză = ca în România. Fusul orar = la fel. Monedă = Euro',c:'#0891B2'},
+      {i:'🍽️',t:'Cina în Grecia: după 21:00. Nu e târziu, e normal',c:'#7C3AED'},
+      {i:'⛽',t:'Benzină: alimentați în Zakynthos Town, e mai ieftină',c:'#F59E0B'},
+      {i:'📸',t:'Blue Caves: cele mai frumoase 09:00-11:00 (reflexia albastră)',c:'#2563EB'},
+      {i:'🛒',t:'Miere + măsline din Volimes = jumătate de preț față de magazine',c:'#16A34A'},
+      {i:'🚕',t:'Taxi fără aparat! Negociați ÎNAINTE de urcare',c:'#DC2626'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">TIPS RAPIDE 🧠</div>'+_ul('#7C3AED','30%',0.3),0.1)+
+      '<div style="margin-top:12px;display:flex;flex-direction:column;gap:0">'+
+      tips.map(function(x,i){return _fi('<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#1a2744;line-height:1.4;padding:5px 0;border-bottom:'+(i<9?'1px solid #E5E7EB':'none')+'"><span style="font-size:17px;flex-shrink:0">'+x.i+'</span><span>'+x.t+'</span></div>',0.2+i*0.09);}).join('')+
+      '</div>'+
+      _fi('<div style="text-align:center;margin-top:10px;font-size:11px;color:#EA580C;font-style:italic">Cel mai important tip: nu încercați să faceți totul perfect. E vacanță, nu misiune NASA. 🚀</div>',1.5)+
+      '</div>';
+  }},
+
+  { label:'Buget', render:function() {
+    var cats = [
+      {c:'Cazare (7 nopți)',v:'427€',n:'Hector Studios ✓',p:40},
+      {c:'Masă (7 zile)',v:'200-300€',n:'~35€/zi mix',p:28},
+      {c:'Transport total',v:'85-135€',n:'bus+taxi+mașină+barcă',p:12},
+      {c:'Intrări + activități',v:'40-70€',n:'muzee, go-kart, Blue Caves',p:6},
+      {c:'Băuturi',v:'30-60€',n:'5-8€/cocktail',p:5},
+      {c:'Suveniruri',v:'20-50€',n:'miere, măsline, nougat',p:4},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">BUGET / PERSOANĂ 📊</div>'+_ul('#0891B2','35%',0.3),0.1)+
+      _fi('<div style="margin-top:12px;display:flex;flex-direction:column;gap:5px">'+
+      cats.map(function(x,i){return '<div style="display:flex;align-items:center;gap:8px;font-size:12px;opacity:0;animation:fadeSlideUp 0.5s ease forwards '+(0.5+i*0.1)+'s"><div style="width:110px;font-weight:600;color:#1a2744;flex-shrink:0">'+x.c+'</div><div style="flex:1;background:#E5E7EB;border-radius:6px;height:20px;position:relative;overflow:hidden"><div style="width:'+x.p+'%;height:100%;background:#0891B2;border-radius:6px;animation:growBar 0.8s ease forwards '+(0.7+i*0.1)+'s;transform:scaleX(0);transform-origin:left"></div></div><div style="width:75px;font-weight:700;color:#0891B2;text-align:right;flex-shrink:0;font-size:11px">'+x.v+'</div></div>';}).join('')+
+      '</div>',0.4)+
+      _fi('<div style="margin-top:16px;text-align:center;background:linear-gradient(135deg,#1a2744,#0891B2);border-radius:14px;padding:18px;color:white"><div style="font-size:13px;opacity:0.8;margin-bottom:4px">TOTAL ESTIMAT (fără zbor)</div><div style="font-size:clamp(26px,6vw,36px);font-weight:900;font-family:Georgia,serif">830 - 1.100€</div><div style="font-size:11px;opacity:0.7;margin-top:4px">per persoană, 7 zile, toate incluse</div></div>',1.4)+
+      _fi('<div style="text-align:center;margin-top:10px;font-size:11px;color:#EA580C;font-style:italic">Mai puțin decât o săptămână în Mamaia. Just saying. 🏖️</div>',1.7)+
+      '</div>';
+  }},
+  { label:'Final', render:function() {
+    var items = [
+      {e:'⛵',t:'Bărci pe mare turcoaz'},
+      {e:'🏛️',t:'Istorie venețiană de 500 ani'},
+      {e:'🐢',t:'Testoase care vin la tine'},
+      {e:'🌅',t:'Apusuri care te fac să plângi'},
+      {e:'🍷',t:'Vin și Sofrito pe terasă'},
+      {e:'💰',t:'Bine planificat, fără risipă'},
+    ];
+    return '<div style="padding:28px 24px;text-align:center">'+
+      _fi('<div style="font-size:clamp(26px,6vw,40px);font-weight:900;color:#1a2744;font-family:Georgia,serif;line-height:1.2">DECI...</div>',0.1)+
+      _fi('<div style="font-size:clamp(20px,4vw,30px);font-weight:800;color:#0891B2;font-family:Georgia,serif;margin-top:12px">CINE E CU MINE? 🙋</div>'+_ul('#0891B2','50%',0.8),0.5)+
+      '<div style="margin-top:20px;display:flex;flex-direction:column;gap:8px;max-width:320px;margin-left:auto;margin-right:auto">'+
+      items.map(function(x,i){return _fi('<div style="display:flex;align-items:center;gap:8px">'+_chk(1.2+i*0.12)+'<span style="font-size:14px;color:#1a2744">'+x.e+' '+x.t+'</span></div>',1.1+i*0.12);}).join('')+
+      '</div>'+
+      _fi('<div style="margin-top:24px;padding:16px 26px;background:linear-gradient(135deg,#1a2744,#0891B2);border-radius:14px;display:inline-block"><div style="color:white;font-size:16px;font-weight:800">Ne vedem în Zakynthos! 🇬🇷</div><div style="color:rgba(255,255,255,0.7);font-size:11px;margin-top:4px">6 August 2026 · Aeroportul Dionysios Solomos</div></div>',2.0)+
+      _fi('<div style="margin-top:16px;font-size:12px;color:#6B7280;font-style:italic">P.S. Cine nu vine, primește poza cu noi pe barcă. 📸😎</div>',2.4)+
+      '</div>';
+  }},
+];
+
+
+function prezRender() {
+  var slide = PREZ_SLIDES[prezCurrent];
+  var el = document.getElementById('prez-slide');
+  if (!el) return;
+
+  // Slide number badge + dot texture
+  el.innerHTML =
+    '<div style="position:absolute;top:10px;right:12px;font-size:10px;color:#6B7280;font-weight:600;background:rgba(255,255,255,0.85);padding:2px 8px;border-radius:10px;z-index:2">'+(prezCurrent+1)+' / '+PREZ_SLIDES.length+'</div>'+
+    '<div style="position:absolute;inset:0;opacity:0.025;pointer-events:none;background-image:radial-gradient(circle,#000 0.5px,transparent 0.5px);background-size:16px 16px"></div>'+
+    '<div style="position:relative;z-index:1">'+slide.render()+'</div>';
+
+  // Update dots
+  var dots = document.getElementById('prez-dots');
+  if (dots) {
+    dots.innerHTML = PREZ_SLIDES.map(function(s,i) {
+      var active = i === prezCurrent;
+      var done   = i < prezCurrent;
+      return '<button class="prez-dot" onclick="prezGo('+i+')" title="'+s.label+'" style="width:'+(active?'28px':'8px')+';background:'+(active?'#0891B2':done?'#1a2744':'#D1D5DB')+'"></button>';
+    }).join('');
+  }
+
+  // Update nav
+  var lbl  = document.getElementById('prez-label');
+  var prev = document.getElementById('prez-nav-btn-prev');
+  var next = document.getElementById('prez-nav-btn-next');
+  if (lbl)  lbl.textContent = slide.label;
+  if (prev) { prev.style.borderColor = prezCurrent===0?'#D1D5DB':'#1a2744'; prev.style.color = prezCurrent===0?'#D1D5DB':'#1a2744'; prev.disabled = prezCurrent===0; }
+  if (next) { next.style.borderColor = prezCurrent===PREZ_SLIDES.length-1?'#D1D5DB':'#0891B2'; next.style.background = prezCurrent===PREZ_SLIDES.length-1?'white':'#0891B2'; next.style.color = prezCurrent===PREZ_SLIDES.length-1?'#D1D5DB':'white'; next.disabled = prezCurrent===PREZ_SLIDES.length-1; }
+}
+
+function prezGo(n) {
+  n = Math.max(0, Math.min(PREZ_SLIDES.length - 1, n));
+  if (n === prezCurrent) return;
+  prezCurrent = n;
+  prezRender();
+}
+
+function prezClickNav(e) {
+  var rect = e.currentTarget.getBoundingClientRect();
+  var x = e.clientX - rect.left;
+  if (x > rect.width * 0.65) prezGo(prezCurrent + 1);
+  else if (x < rect.width * 0.35) prezGo(prezCurrent - 1);
+}
+
+function _prezKeyNav(e) {
+  var pv = document.getElementById('prez-view');
+  if (!pv || pv.classList.contains('hidden')) return;
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); prezGo(prezCurrent + 1); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); prezGo(prezCurrent - 1); }
+}
+
+function _prezTouchStart(e) { _prezTouchX = e.touches[0].clientX; }
+function _prezTouchEnd(e) {
+  if (_prezTouchX === null) return;
+  var diff = _prezTouchX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) { if (diff > 0) prezGo(prezCurrent+1); else prezGo(prezCurrent-1); }
+  _prezTouchX = null;
+}
+
+function showPrezView() {
+  document.getElementById('prez-view').classList.remove('hidden');
+  document.getElementById('detail-view').classList.add('hidden');
+  document.getElementById('prez-toggle-prez').classList.add('active');
+  document.getElementById('prez-toggle-detail').classList.remove('active');
+  if (!_prezInited) {
+    var sl = document.getElementById('prez-slide');
+    if (sl) { sl.addEventListener('touchstart', _prezTouchStart, {passive:true}); sl.addEventListener('touchend', _prezTouchEnd); }
+    document.addEventListener('keydown', _prezKeyNav);
+    _prezInited = true;
+  }
+  prezRender();
+}
+
+function showDetailView() {
+  document.getElementById('prez-view').classList.add('hidden');
+  document.getElementById('detail-view').classList.remove('hidden');
+  document.getElementById('prez-toggle-prez').classList.remove('active');
+  document.getElementById('prez-toggle-detail').classList.add('active');
+}
+
+// Init presentation when Tab 0 is first opened (after DOM ready)
+document.addEventListener('DOMContentLoaded', function() {
+  var prezView = document.getElementById('prez-view');
+  if (prezView) {
+    // Wire swipe on slide container
+    var sl = document.getElementById('prez-slide');
+    if (sl) { sl.addEventListener('touchstart', _prezTouchStart, {passive:true}); sl.addEventListener('touchend', _prezTouchEnd); }
+    document.addEventListener('keydown', _prezKeyNav);
+    _prezInited = true;
+    prezRender();
+  }
+});
 
 // Logout — apelat din butonul din WarRoom
 async function crewLogout() {
