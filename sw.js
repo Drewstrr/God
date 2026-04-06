@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zaky-v1';
+const CACHE_NAME = 'zaky-v2';
 
 // Fișiere esențiale care se salvează offline la prima vizită
 const PRECACHE = [
