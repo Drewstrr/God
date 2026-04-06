@@ -2185,7 +2185,7 @@ async function loadActivePoll() {
     // Fetch toate voturile (necesită RLS SELECT policy)
     const { data: allVotes } = await _sb
       .from('votes')
-      .select('poll_id, option_id, user_id')
+      .select('poll_id, option_id, user_id, voter_name')
       .in('poll_id', polls.map(p => p.id));
 
     let votes = allVotes || [];
@@ -2194,7 +2194,7 @@ async function loadActivePoll() {
     if (votes.length === 0 && userId) {
       const { data: myVotes } = await _sb
         .from('votes')
-        .select('poll_id, option_id, user_id')
+        .select('poll_id, option_id, user_id, voter_name')
         .eq('user_id', userId)
         .in('poll_id', polls.map(p => p.id));
       votes = myVotes || [];
@@ -2206,7 +2206,7 @@ async function loadActivePoll() {
       const pollVotes = votes.filter(v => v.poll_id === poll.id);
       const myVote    = pollVotes.find(v => v.user_id === userId);
       html += myVote
-        ? renderPollResults(poll, pollVotes, String(myVote.option_id))
+        ? renderPollResults(poll, pollVotes, String(myVote.option_id), userId)
         : renderPollVoting(poll);
     }
     pollEl.innerHTML = html;
@@ -2241,28 +2241,55 @@ function renderPollVoting(poll) {
     </div>`;
 }
 
-function renderPollResults(poll, votes, myOptionId) {
-  const opts  = poll.options || [];
-  const total = votes.length;
-  const rows  = opts.map((opt, i) => {
-    const count  = votes.filter(v => String(v.option_id) === String(opt.id)).length;
-    const pct    = total > 0 ? Math.round(count / total * 100) : 0;
-    const isMine = String(opt.id) === String(myOptionId);
-    const color  = OPTION_COLORS[i % OPTION_COLORS.length];
+const OPTION_COLORS_RGB = [
+  '14,165,233', '34,197,94', '249,115,22', '168,85,247', '239,68,68', '245,158,11'
+];
+
+function renderPollResults(poll, votes, myOptionId, myUserId) {
+  const opts     = poll.options || [];
+  const total    = votes.length;
+  const counts   = opts.map(opt => votes.filter(v => String(v.option_id) === String(opt.id)).length);
+  const maxCount = Math.max(...counts, 0);
+
+  const rows = opts.map((opt, i) => {
+    const optVotes   = votes.filter(v => String(v.option_id) === String(opt.id));
+    const count      = optVotes.length;
+    const pct        = total > 0 ? Math.round(count / total * 100) : 0;
+    const isMine     = String(opt.id) === String(myOptionId);
+    const color      = OPTION_COLORS[i % OPTION_COLORS.length];
+    const colorRgb   = OPTION_COLORS_RGB[i % OPTION_COLORS_RGB.length];
+    const isWinner   = count === maxCount && maxCount > 0;
+    const isMinority = !isWinner && count > 0;
+
+    const namePills = optVotes.map(v => {
+      const name  = v.voter_name || '?';
+      const isMe  = v.user_id === myUserId;
+      if (isMinority) {
+        return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:800;background:rgba(239,68,68,0.15);color:#FCA5A5;border:1px solid rgba(239,68,68,0.35);">${name}${isMe ? ' 👤' : ''}</span>`;
+      }
+      return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(${colorRgb},0.13);color:${color};border:1px solid rgba(${colorRgb},0.3);">${name}${isMe ? ' 👤' : ''}</span>`;
+    }).join(' ');
+
+    const badge = isMinority
+      ? `<span style="font-size:9px;font-weight:800;color:#EF4444;letter-spacing:0.05em;margin-left:6px;">⚡ REBELI</span>`
+      : isWinner ? `<span style="font-size:9px;font-weight:800;color:#22C55E;letter-spacing:0.05em;margin-left:6px;">👑 MAJORITATE</span>` : '';
+
     return `
       <div class="vote-result-row${isMine ? ' my-vote' : ''}">
         <div class="vote-result-label">
-          <span>${opt.text}${isMine ? ' ✓' : ''}</span>
+          <span>${opt.text}${isMine ? ' ✓' : ''}${badge}</span>
           <span class="vote-result-count">
-            <strong style="font-size:14px; color:${isMine ? color : 'var(--t2)'};">${count}</strong>
-            <span style="font-size:11px; color:var(--t3);"> vot${count !== 1 ? 'uri' : ''} · ${pct}%</span>
+            <strong style="font-size:14px;color:${isMine ? color : 'var(--t2)'};">${count}</strong>
+            <span style="font-size:11px;color:var(--t3);"> vot${count !== 1 ? 'uri' : ''} · ${pct}%</span>
           </span>
         </div>
         <div class="vote-bar-track">
-          <div class="vote-bar" style="width:${pct}%; background:${color}; opacity:${isMine ? '1' : '0.45'};"></div>
+          <div class="vote-bar" style="width:${pct}%;background:${color};opacity:${isMine ? '1' : '0.45'};"></div>
         </div>
+        ${count > 0 ? `<div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:4px;">${namePills}</div>` : ''}
       </div>`;
   }).join('');
+
   return `
     <div class="poll-card" id="poll-card-${poll.id}">
       <p class="poll-question">${poll.question}</p>
@@ -2313,29 +2340,31 @@ async function castVote(pollId) {
     return;
   }
 
+  const voterName = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
   const { error } = await _sb.from('votes').insert({
-    poll_id:   pollId,
-    user_id:   session.user.id,
-    option_id: optionId,
+    poll_id:    pollId,
+    user_id:    session.user.id,
+    option_id:  optionId,
+    voter_name: voterName,
   });
 
   if (!error) {
     // Fetch voturi actualizate
     const { data: freshVotes } = await _sb
       .from('votes')
-      .select('option_id, user_id')
+      .select('option_id, user_id, voter_name')
       .eq('poll_id', pollId);
 
     // Dacă RLS blochează SELECT, adăugăm manual votul curent
     const allFresh = freshVotes ? [...freshVotes] : [];
     if (!allFresh.some(v => v.user_id === session.user.id)) {
-      allFresh.push({ option_id: optionId, user_id: session.user.id });
+      allFresh.push({ option_id: optionId, user_id: session.user.id, voter_name: voterName });
     }
 
     const poll = _pollCache[pollId];
     if (poll) {
       const tmp = document.createElement('div');
-      tmp.innerHTML = renderPollResults(poll, allFresh, optionId);
+      tmp.innerHTML = renderPollResults(poll, allFresh, optionId, session.user.id);
       card.replaceWith(tmp.firstElementChild);
     } else {
       loadActivePoll();
