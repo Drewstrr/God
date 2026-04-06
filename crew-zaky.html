@@ -2149,6 +2149,15 @@ document.addEventListener('DOMContentLoaded', function() { (function() {
   });
 })(); }); // end DOMContentLoaded + auth IIFE
 
+// ── Shared helper (global scope) ─────────────────────────────
+function getDisplayName(user) {
+  if (!user) return '';
+  const meta = user.user_metadata || {};
+  if (meta.full_name && meta.full_name.trim()) return meta.full_name.trim();
+  const prefix = (user.email || '').split('@')[0];
+  return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+}
+
 // ── WarRoom Polls ──────────────────────────────────────────────
 // Cache polls by ID pentru re-render rapid după vot
 const _pollCache = {};
