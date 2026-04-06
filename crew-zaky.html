@@ -147,6 +147,12 @@
             background: rgba(178,34,34,0.12) !important;
             color: #B22222 !important;
         }
+        /* Day buttons light mode override (inline styles are dark-mode hardcoded) */
+        body.light .day-btn:not(.active) {
+            background: #F0F0F0 !important;
+            border-color: #D0D0D0 !important;
+            color: #333 !important;
+        }
 
         /* ══════════════════════════════════════
            MOMENT 2 — Responsive grid layout
