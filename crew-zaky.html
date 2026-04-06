@@ -6,6 +6,7 @@
     <meta name="robots" content="noindex, nofollow">
     <title>Crew Zaky '26</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -54,9 +55,99 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         .fade-up { animation: fadeUp 0.35s ease forwards; }
-        .tab-btn  { transition: background 0.2s, color 0.2s; }
+
+        /* ══════════════════════════════════════
+           MOMENT 1 — Bold-Minimalist tab buttons
+        ══════════════════════════════════════ */
+        .tab-btn {
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(30,30,30,0.90);
+            color: rgba(200,200,200,0.85);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 9px 14px;
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body.light .tab-btn {
+            background: rgba(240,240,240,0.90);
+            color: rgba(60,60,60,0.85);
+            border-color: rgba(0,0,0,0.08);
+        }
+        .tab-btn:hover   { transform: scale(1.05); filter: brightness(1.18); }
+        /* MOMENT 5 — Active press feedback */
+        .tab-btn:active  { transform: scale(0.95); filter: brightness(0.92); }
+        .tab-btn.active-tab {
+            background: rgba(240,240,240,0.97);
+            color: #0A0A0A;
+            border-color: rgba(255,255,255,0.25);
+            box-shadow: 0 3px 14px rgba(0,0,0,0.30);
+        }
+        body.light .tab-btn.active-tab {
+            background: rgba(15,15,15,0.92);
+            color: #FFFFFF;
+            border-color: rgba(0,0,0,0.15);
+            box-shadow: 0 3px 14px rgba(0,0,0,0.18);
+        }
+
+        /* ══════════════════════════════════════
+           MOMENT 1 — WarRoom: Deep Red #B22222
+        ══════════════════════════════════════ */
+        @keyframes warPulse {
+            0%   { box-shadow: 0 0 0 0   rgba(178,34,34,0.45); }
+            60%  { box-shadow: 0 0 0 8px rgba(178,34,34,0.00); }
+            100% { box-shadow: 0 0 0 0   rgba(178,34,34,0.45); }
+        }
+        .tab-btn-warroom {
+            background: #B22222 !important;
+            color: #FFFFFF !important;
+            border-color: rgba(178,34,34,0.4) !important;
+            animation: warPulse 3.2s ease-in-out infinite;
+        }
+        .tab-btn-warroom.active-tab {
+            background: #8B0000 !important;
+            box-shadow: 0 3px 14px rgba(178,34,34,0.45) !important;
+        }
+        body.light .tab-btn-warroom {
+            background: #B22222 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* ══════════════════════════════════════
+           MOMENT 2 — Responsive grid layout
+        ══════════════════════════════════════ */
+        /* Nav main row — 4 butoane sticky, grid uniform */
+        .nav-main-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            padding: 10px 12px 8px;
+        }
+        .nav-main-row .tab-btn {
+            padding: 9px 4px;
+            font-size: 10px;
+            letter-spacing: 0.04em;
+            text-align: center;
+        }
+        /* WarRoom — întotdeauna full-width, non-sticky */
+        .nav-warroom-row {
+            padding: 0 12px 10px;
+            background: var(--bg);
+        }
+        .nav-warroom-row .tab-btn-warroom {
+            width: 100%;
+            text-align: center;
+            display: block;
+        }
+
         .day-btn  { transition: background 0.2s, color 0.2s, transform 0.15s; }
         .day-btn.active  { transform: scale(1.06); }
+        .day-btn:active  { transform: scale(0.96); }
         .theme-bg    { background: var(--bg) !important; }
         .theme-bg1   { background: var(--bg1) !important; }
         .theme-card  { background: var(--card) !important; }
@@ -69,9 +160,430 @@
         body.light #cost-wrapper { box-shadow: 0 4px 24px rgba(0,0,0,0.10), 0 1.5px 6px rgba(0,0,0,0.07); }
         body.light .rounded-2xl.theme-bg1 { box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
         body.light header { box-shadow: 0 4px 20px rgba(0,0,0,0.18); }
+
+        /* ══════════════════════════════════════
+           Auth Overlay / Login Modal
+        ══════════════════════════════════════ */
+        #auth-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,0.94);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            padding: 24px;
+        }
+        #auth-overlay.hidden { display: none; }
+        #auth-modal {
+            background: #111111;
+            border: 1px solid #222222;
+            border-radius: 22px;
+            padding: 38px 28px 34px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 28px 72px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.04);
+        }
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .auth-logo-tag {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.26em;
+            text-transform: uppercase;
+            color: #F97316;
+            margin-bottom: 8px;
+        }
+        .auth-logo-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.1rem;
+            font-weight: 700;
+            font-style: italic;
+            color: #F0F0F0;
+            line-height: 1;
+        }
+        .auth-logo-title span { color: #0EA5E9; }
+        .auth-logo-sub {
+            font-size: 11px;
+            color: #555;
+            margin-top: 8px;
+            letter-spacing: 0.04em;
+        }
+        .auth-field { margin-bottom: 16px; }
+        .auth-field label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #555;
+            margin-bottom: 8px;
+        }
+        .auth-field input {
+            width: 100%;
+            background: #1A1A1A;
+            border: 1px solid #2A2A2A;
+            border-radius: 13px;
+            color: #F0F0F0;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 16px;
+            padding: 15px 16px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+        }
+        .auth-field input::placeholder { color: #3A3A3A; }
+        .auth-field input:focus {
+            border-color: #0EA5E9;
+            box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+        }
+        #auth-error {
+            font-size: 12px;
+            font-weight: 600;
+            color: #EF4444;
+            text-align: center;
+            min-height: 20px;
+            margin-bottom: 10px;
+        }
+        #auth-submit {
+            width: 100%;
+            background: #0EA5E9;
+            color: #FFFFFF;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            border: none;
+            border-radius: 14px;
+            padding: 17px;
+            cursor: pointer;
+            transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #auth-submit:hover:not(:disabled) {
+            background: #0284C7;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(14,165,233,0.45);
+        }
+        #auth-submit:active:not(:disabled) { transform: scale(0.97); }
+        #auth-submit:disabled {
+            background: #152636;
+            color: #2A5A72;
+            cursor: not-allowed;
+        }
+        #logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 28px auto 0;
+            padding: 9px 20px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 10px;
+            color: #555;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #logout-btn:hover {
+            border-color: rgba(239,68,68,0.35);
+            color: #EF4444;
+            background: rgba(239,68,68,0.06);
+        }
+
+        /* ══════════════════════════════════════
+           WarRoom — Polls
+        ══════════════════════════════════════ */
+        .btn-create-poll {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 9px 16px;
+            background: rgba(14,165,233,0.12);
+            border: 1px solid rgba(14,165,233,0.30);
+            border-radius: 10px;
+            color: #0EA5E9;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s, transform 0.15s;
+            white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-create-poll:hover {
+            background: rgba(14,165,233,0.20);
+            border-color: rgba(14,165,233,0.55);
+            transform: translateY(-1px);
+        }
+        .poll-card {
+            background: var(--card);
+            border: 1px solid var(--bdr2);
+            border-radius: 18px;
+            padding: 22px 18px 18px;
+            margin-bottom: 16px;
+        }
+        body.light .poll-card {
+            box-shadow: 0 3px 16px rgba(0,0,0,0.08);
+        }
+        .poll-question {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--t1);
+            margin-bottom: 18px;
+            line-height: 1.3;
+        }
+        /* Butoane opțiuni poll (selecție) */
+        .vote-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            background: var(--card2);
+            border: 1.5px solid var(--bdr2);
+            border-radius: 14px;
+            color: var(--t1);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+        }
+        .vote-btn:active { transform: scale(0.98); }
+        .vote-btn .radio-dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid var(--bdr2);
+            flex-shrink: 0;
+            transition: background 0.18s, border-color 0.18s;
+        }
+        .vote-btn.selected .radio-dot {
+            border-color: var(--opt-color, #0EA5E9);
+            background: var(--opt-color, #0EA5E9);
+        }
+        .vote-btn.selected {
+            border-color: var(--opt-color, #0EA5E9);
+            background: color-mix(in srgb, var(--opt-color, #0EA5E9) 8%, var(--card2));
+            box-shadow: 0 0 0 1px color-mix(in srgb, var(--opt-color, #0EA5E9) 30%, transparent);
+        }
+        /* Buton confirmare vot */
+        .btn-vote-confirm {
+            display: block;
+            width: 100%;
+            margin-top: 14px;
+            padding: 15px;
+            background: #B22222;
+            color: #fff;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: background 0.18s, transform 0.15s, box-shadow 0.18s, opacity 0.18s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-vote-confirm:disabled {
+            background: var(--bdr2);
+            color: var(--t3);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .btn-vote-confirm:not(:disabled):hover {
+            background: #8B0000;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(139,0,0,0.35);
+        }
+        .btn-vote-confirm:not(:disabled):active { transform: scale(0.98); }
+        .poll-voted-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #22C55E;
+            background: rgba(34,197,94,0.10);
+            border: 1px solid rgba(34,197,94,0.25);
+            border-radius: 999px;
+            padding: 4px 10px;
+            margin-bottom: 16px;
+        }
+        .vote-result-row {
+            margin-bottom: 12px;
+        }
+        .vote-result-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--t2);
+        }
+        .vote-result-row.my-vote .vote-result-label { color: var(--t1); }
+        .vote-result-count {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--t3);
+        }
+        .vote-bar-track {
+            height: 10px;
+            background: var(--bdr2);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .vote-bar {
+            height: 100%;
+            border-radius: 999px;
+            transition: width 0.65s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+        .vote-result-row.my-vote .vote-result-label { color: var(--t1); font-weight: 700; }
+        .poll-total {
+            font-size: 11px;
+            color: var(--t3);
+            text-align: right;
+            margin-top: 10px;
+        }
+        .poll-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--t3);
+        }
+        .warroom-loading {
+            text-align: center;
+            padding: 32px;
+            font-size: 12px;
+            color: var(--t3);
+            letter-spacing: 0.08em;
+        }
+
+        /* ══════════════════════════════════════
+           Map toggle button — "Vezi Harta"
+        ══════════════════════════════════════ */
+        @keyframes map-pulse {
+            0%   { box-shadow: 0 0 0 0   rgba(14,165,233,0.55); }
+            60%  { box-shadow: 0 0 0 9px rgba(14,165,233,0.00); }
+            100% { box-shadow: 0 0 0 0   rgba(14,165,233,0.55); }
+        }
+        @keyframes go-pulse {
+            0%   { box-shadow: 0 0 0 0   rgba(220,38,38,0.7); transform: scale(1); }
+            50%  { box-shadow: 0 0 0 10px rgba(220,38,38,0.0); transform: scale(1.06); }
+            100% { box-shadow: 0 0 0 0   rgba(220,38,38,0.7); transform: scale(1); }
+        }
+        .btn-go {
+            width: 52px; height: 52px; border-radius: 50%; border: none;
+            background: #DC2626; color: #fff;
+            font-size: 13px; font-weight: 900; letter-spacing: 0.5px;
+            cursor: pointer; flex-shrink: 0;
+            animation: go-pulse 1.8s ease-in-out infinite;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none;
+        }
+        .btn-go:active { transform: scale(0.93); animation: none; }
+        .btn-map-toggle {
+            background: #0EA5E9;
+            color: #FFFFFF;
+            font-weight: 700;
+            border: none;
+            border-radius: 999px;
+            padding: 7px 14px;
+            font-size: 11px;
+            white-space: nowrap;
+            cursor: pointer;
+            flex-shrink: 0;
+            animation: map-pulse 2s ease-in-out infinite;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .btn-map-toggle:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(14,165,233,0.55);
+            animation: none;
+        }
+        .btn-map-toggle.map-open {
+            background: #0284C7;
+            animation: none;
+            box-shadow: 0 3px 12px rgba(14,165,233,0.45);
+        }
+        /* ── Presentation animations ── */
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+        @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes growBar { to { transform: scaleX(1); } }
+        /* ── Prez toggle pills ── */
+        .prez-toggle-btn {
+            flex: 1; padding: 8px 0; border-radius: 20px; border: none;
+            font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .prez-toggle-btn.active { background: #F97316; color: #fff; }
+        .prez-toggle-btn:not(.active) { background: transparent; color: var(--t2); }
+        /* ── Slide container ── */
+        #prez-slide {
+            width: 100%; border-radius: 14px; overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.08);
+            position: relative; min-height: 520px; cursor: pointer;
+            background: #FFFEF7; border: 1px solid #E5E7EB;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .prez-dot {
+            height: 8px; border-radius: 4px; border: none; cursor: pointer;
+            padding: 0; transition: all 0.3s ease;
+        }
+        #prez-nav-btn-prev, #prez-nav-btn-next {
+            width: 44px; height: 44px; border-radius: 50%; border: 2px solid;
+            background: #fff; font-size: 16px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
+
+<!-- ═══════════════════════ AUTH OVERLAY ═══════════════════════ -->
+<div id="auth-overlay">
+    <div id="auth-modal">
+        <div class="auth-logo">
+            <div class="auth-logo-tag">✦ The Crew</div>
+            <div class="auth-logo-title"><span>Zakynthos</span> '26</div>
+            <div class="auth-logo-sub">Acces exclusiv membri crew</div>
+        </div>
+        <form id="auth-form" autocomplete="off" onsubmit="return false;">
+            <div class="auth-field">
+                <label for="auth-name">Nume</label>
+                <input type="text" id="auth-name"
+                       placeholder="ex: Zaky"
+                       required autocomplete="off"
+                       autocapitalize="none" spellcheck="false">
+            </div>
+            <div class="auth-field">
+                <label for="auth-password">Parolă</label>
+                <input type="password" id="auth-password"
+                       placeholder="••••••••"
+                       required autocomplete="current-password">
+            </div>
+            <div id="auth-error"></div>
+            <button type="submit" id="auth-submit">Acces Crew ✈</button>
+        </form>
+    </div>
+</div>
 
 <div class="max-w-md mx-auto min-h-screen flex flex-col">
 
@@ -88,8 +600,12 @@
         <div class="relative z-10">
             <!-- label + theme toggle -->
             <div class="flex items-center justify-between mb-3">
-                <span class="text-xs font-bold tracking-[0.25em] uppercase"
-                      style="color: #F97316;">✦ The Crew</span>
+                <div class="flex flex-col gap-0.5">
+                    <span class="text-xs font-bold tracking-[0.25em] uppercase"
+                          style="color: #F97316;">✦ The Crew</span>
+                    <span id="crew-greeting" class="text-xs font-semibold"
+                          style="color:rgba(255,255,255,0.55); display:none;"></span>
+                </div>
                 <button id="theme-toggle" onclick="toggleTheme()"
                         class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold"
                         style="background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.15); cursor:pointer;">
@@ -154,21 +670,18 @@
         </div>
     </div>
 
-    <!-- ═══════════════════════ TAB BAR ═══════════════════════ -->
-    <div class="flex gap-2 px-4 py-3 overflow-x-auto no-scrollbar sticky top-0 z-30"
-         style="background:var(--bg); border-bottom:1px solid var(--bdr);">
-        <button onclick="switchTab(0)" id="tb-0"
-                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:#F0F0F0; color:#0A0A0A;">Itinerariu</button>
-        <button onclick="switchTab(1)" id="tb-1"
-                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:var(--card2); color:var(--t3);">Costuri</button>
-        <button onclick="switchTab(2)" id="tb-2"
-                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:var(--card2); color:var(--t3);">Kalamaki</button>
-        <button onclick="switchTab(3)" id="tb-3"
-                class="tab-btn flex-shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide"
-                style="background:var(--card2); color:var(--t3);">Plaje</button>
+    <!-- ══ STICKY: primele 4 butoane ══ -->
+    <div class="sticky top-0 z-30" style="background:var(--bg); border-bottom:1px solid var(--bdr);">
+        <div class="nav-main-row">
+            <button onclick="switchTab(0)" id="tb-0" class="tab-btn active-tab">Itinerariu</button>
+            <button onclick="switchTab(1)" id="tb-1" class="tab-btn">Costuri</button>
+            <button onclick="switchTab(2)" id="tb-2" class="tab-btn">Kalamaki</button>
+            <button onclick="switchTab(3)" id="tb-3" class="tab-btn">Plaje</button>
+        </div>
+    </div>
+    <!-- ══ NON-STICKY: WarRoom întotdeauna pe rândul 2 ══ -->
+    <div class="nav-warroom-row" style="background:var(--bg);">
+        <button onclick="switchTab(4)" id="tb-4" class="tab-btn tab-btn-warroom">⚔ WarRoom</button>
     </div>
 
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
@@ -177,80 +690,111 @@
         <!-- ─────────── TAB 0: ITINERARIU ─────────── -->
         <div id="tab-0" class="tab-content pt-4">
 
-            <!-- Day selector -->
-            <div class="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
-
-                <button onclick="showDay(0)" id="db-0"
-                        class="day-btn active flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#F97316; border-color:#F97316; color:#fff;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider opacity-80">Zi</span>
-                    <span class="text-lg font-black leading-none">1</span>
+            <!-- View toggle -->
+            <div class="flex gap-1 mb-4 p-1 rounded-[22px]" style="background:var(--card2); border:1px solid var(--bdr2);">
+                <button id="prez-toggle-prez" class="prez-toggle-btn active" onclick="showPrezView()">
+                    ✦ Prezentare
                 </button>
-
-                <button onclick="showDay(1)" id="db-1"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">2</span>
+                <button id="prez-toggle-detail" class="prez-toggle-btn" onclick="showDetailView()">
+                    📅 Zile Detaliate
                 </button>
-
-                <button onclick="showDay(2)" id="db-2"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">3</span>
-                </button>
-
-                <button onclick="showDay(3)" id="db-3"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">4</span>
-                </button>
-
-                <button onclick="showDay(4)" id="db-4"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">5</span>
-                </button>
-
-                <button onclick="showDay(5)" id="db-5"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">6</span>
-                </button>
-
-                <button onclick="showDay(6)" id="db-6"
-                        class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
-                        style="background:#141414; border-color:#2A2A2A; color:#555;">
-                    <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
-                    <span class="text-lg font-black leading-none">7</span>
-                </button>
-
             </div>
 
-            <!-- Day panels -->
-            <div id="day-panels"></div>
+            <!-- Presentation view (default) -->
+            <div id="prez-view">
+                <!-- Progress dots -->
+                <div id="prez-dots" class="flex gap-1.5 mb-3 flex-wrap justify-center"></div>
+                <!-- Slide -->
+                <div id="prez-slide" onclick="prezClickNav(event)"></div>
+                <!-- Nav buttons -->
+                <div class="flex gap-3 mt-3 items-center justify-center">
+                    <button id="prez-nav-btn-prev" onclick="prezGo(prezCurrent-1)">◀</button>
+                    <span id="prez-label" class="text-xs font-bold text-center" style="min-width:90px;color:var(--t2);"></span>
+                    <button id="prez-nav-btn-next" onclick="prezGo(prezCurrent+1)">▶</button>
+                </div>
+            </div>
+
+            <!-- Detail view (hidden by default) -->
+            <div id="detail-view" class="hidden">
+
+                <!-- Day selector -->
+                <div class="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
+
+                    <button onclick="showDay(0)" id="db-0"
+                            class="day-btn active flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#F97316; border-color:#F97316; color:#fff;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider opacity-80">Zi</span>
+                        <span class="text-lg font-black leading-none">1</span>
+                    </button>
+
+                    <button onclick="showDay(1)" id="db-1"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">2</span>
+                    </button>
+
+                    <button onclick="showDay(2)" id="db-2"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">3</span>
+                    </button>
+
+                    <button onclick="showDay(3)" id="db-3"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">4</span>
+                    </button>
+
+                    <button onclick="showDay(4)" id="db-4"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">5</span>
+                    </button>
+
+                    <button onclick="showDay(5)" id="db-5"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">6</span>
+                    </button>
+
+                    <button onclick="showDay(6)" id="db-6"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-[9px] font-bold uppercase tracking-wider">Zi</span>
+                        <span class="text-lg font-black leading-none">7</span>
+                    </button>
+
+                </div>
+
+                <!-- Day panels -->
+                <div id="day-panels"></div>
+
+            </div><!-- end detail-view -->
 
         </div><!-- end tab-0 -->
 
         <!-- ─────────── TAB 1: COSTURI ─────────── -->
         <div id="tab-1" class="tab-content hidden pt-4">
 
-            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Estimare Costuri</h2>
-            <p class="text-xs mb-5" style="color:#555;">10 persoane · 7 zile · Kalamaki</p>
+            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Buget Estimat</h2>
+            <p class="text-xs mb-4" style="color:#555;">10 persoane · 7 zile · Kalamaki · Fără zbor</p>
 
             <!-- Summary cards -->
             <div class="flex gap-3 mb-5">
                 <div class="flex-1 rounded-2xl p-4" style="background:linear-gradient(135deg,#06111A,#0d1f30); border:1px solid #0EA5E933;">
                     <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#0EA5E9;">Per persoană</p>
-                    <p class="text-3xl font-black" style="font-family:'Playfair Display',serif; color:#F0F0F0;">€757</p>
+                    <p class="text-2xl font-black leading-tight" style="font-family:'Playfair Display',serif; color:#F0F0F0;">830–1.100€</p>
+                    <p class="text-[10px] mt-1" style="color:#0EA5E966;">toate incluse</p>
                 </div>
                 <div class="flex-1 rounded-2xl p-4" style="background:linear-gradient(135deg,#1C1008,#2d1a08); border:1px solid #F9731633;">
                     <p class="text-[10px] font-bold uppercase tracking-widest mb-1" style="color:#F97316;">Total grup</p>
-                    <p class="text-3xl font-black" style="font-family:'Playfair Display',serif; color:#F0F0F0;">€7570</p>
+                    <p class="text-2xl font-black leading-tight" style="font-family:'Playfair Display',serif; color:#F0F0F0;">8.300–11K€</p>
+                    <p class="text-[10px] mt-1" style="color:#F9731666;">10 persoane</p>
                 </div>
             </div>
 
@@ -259,11 +803,23 @@
                 <div id="cost-rows"></div>
             </div>
 
+            <!-- Savings tip -->
+            <div class="mt-4 rounded-xl p-3" style="background:linear-gradient(135deg,#071209,#0a1f0f); border:1px solid #22C55E33;">
+                <p class="text-[11px] font-bold mb-2" style="color:#22C55E;">💰 Cum economisim 200–400€ pe grup</p>
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Mașini rezervate din timp (vs. last minute)</span><span style="color:#22C55E;font-weight:700;">~75€ econom.</span></div>
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Barcă direct la companie (vs. prin hotel)</span><span style="color:#22C55E;font-weight:700;">~150€ econom.</span></div>
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Blue Caves barcă mică (vs. excursie org.)</span><span style="color:#22C55E;font-weight:700;">~300€ econom.</span></div>
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Apă din minimarket (vs. pe plajă)</span><span style="color:#22C55E;font-weight:700;">~35€ econom.</span></div>
+                    <div class="flex justify-between text-[11px]"><span style="color:#666;">Taverne locale (vs. restaurante turistice)</span><span style="color:#22C55E;font-weight:700;">~100€ econom.</span></div>
+                </div>
+            </div>
+
             <!-- Disclaimer -->
-            <div class="mt-4 rounded-xl p-3 flex gap-2" style="background:#141414; border:1px solid #1E1E1E;">
+            <div class="mt-3 rounded-xl p-3 flex gap-2" style="background:var(--card2); border:1px solid var(--bdr);">
                 <span style="color:#0EA5E9; flex-shrink:0;">ℹ️</span>
                 <p class="text-[11px] leading-relaxed" style="color:#555;">
-                    Estimări bazate pe prețuri medii 2024/25. Costurile reale pot varia în funcție de sezon, disponibilitate și preferințe personale.
+                    Estimări bazate pe prețuri medii 2025/26. Costurile reale pot varia în funcție de sezon și preferințe. Cazarea (427€/pp) este confirmată — Hector Studios.
                 </p>
             </div>
 
@@ -272,8 +828,8 @@
         <!-- ─────────── TAB 2: KALAMAKI ─────────── -->
         <div id="tab-2" class="tab-content hidden pt-4">
 
-            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Kalamaki Guide</h2>
-            <p class="text-xs mb-5" style="color:#555;">Tot ce ai nevoie la 5 minute de bază</p>
+            <h2 class="text-xl font-black mb-1" style="font-family:'Playfair Display',serif;">Kalamaki & Zonă</h2>
+            <p class="text-xs mb-5" style="color:#555;">Restaurante, plaje, activități — totul în jurul bazei</p>
 
             <div id="kalamaki-rows" class="flex flex-col gap-3"></div>
 
@@ -296,6 +852,34 @@
 
         </div>
 
+        <!-- ─────────── TAB 4: WARROOM ─────────── -->
+        <div id="tab-4" class="tab-content hidden pt-4">
+
+            <!-- Header row: titlu + buton Poll Nou -->
+            <div class="flex items-center justify-between gap-3 mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl flex-shrink-0"
+                         style="background:rgba(139,0,0,0.2); border:1px solid rgba(139,0,0,0.3);">⚔</div>
+                    <div>
+                        <h2 class="text-xl font-black" style="font-family:'Playfair Display',serif;">WarRoom</h2>
+                        <p class="text-xs" style="color:#666;">Votează. Decideți împreună.</p>
+                    </div>
+                </div>
+                <a href="create-poll.html" class="btn-create-poll">➕ Poll Nou</a>
+            </div>
+
+            <!-- Poll activ -->
+            <div id="warroom-poll">
+                <div class="warroom-loading">Se încarcă...</div>
+            </div>
+
+            <!-- Logout -->
+            <button id="logout-btn" onclick="crewLogout()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Ieșire
+            </button>
+        </div>
+
     </main>
 
     <!-- ═══════════════════════ FOOTER ═══════════════════════ -->
@@ -315,190 +899,209 @@
 <!-- ═══════════════════════ DATA & LOGIC ═══════════════════════ -->
 <script>
 
+// ── Supabase client ─────────────────────────────────────────────
+// var (nu const) → fără Temporal Dead Zone; rămâne null dacă CDN nu e gata
+var _sb = null;
+try {
+  _sb = supabase.createClient(
+    'https://jdhpczzxighkydfvites.supabase.co',
+    'sb_publishable_dqGDI5IR_m4Er4y4yKpXbQ_u2sr6Iuw',
+    { auth: { persistSession: true, autoRefreshToken: true } }
+  );
+} catch(e) {
+  console.error('Supabase init failed:', e);
+}
+
 // ── Day data ──────────────────────────────────────────────────
 const DAYS = [
   {
     index: 0,
-    title: "Arrival & Kalamaki",
-    subtitle: "Settle in, feel the island",
+    title: "Sosire & Kalamaki",
+    subtitle: "Aterizare, cazare, primă înot",
     accent: "#F97316",
     accentBg: "#1C1008", accentBgLight: "#FFF4ED",
     transport: "✈️  Taxi · Walking",
     highlights: ["airport","kalamaki","laganas","cameo"],
     routes: ["airport","kalamaki","laganas","cameo"],
     activities: [
-      { time: "09:00", icon: "✈️", title: "Land at Zakynthos Airport",
-        desc: "Collect luggage, split into taxis for Kalamaki. ~15 min drive south." },
-      { time: "09:45", icon: "🏠", title: "Drop bags at Hektor's Studios",
-        desc: "Check-in or early bag drop. Grab keys, find your rooms, freshen up." },
-      { time: "10:30", icon: "🏖️", title: "Kalamaki Beach Morning",
-        desc: "Soft golden sand and shallow turquoise water. Perfect first swim of the trip." },
-      { time: "13:00", icon: "🍽️", title: "Lunch at Merlis Taverna",
-        desc: "Traditional Greek cuisine right on the beach. Try the fresh grilled fish and tzatziki." },
-      { time: "15:00", icon: "🚶", title: "Explore Laganas Strip",
-        desc: "Short taxi to Laganas — the island's main strip. Coffee, souvenir shops, vibes." },
-      { time: "17:30", icon: "🌅", title: "Cameo Island Sunset",
-        desc: "Tiny island connected by a wooden bridge. THE sunset spot near base. Don't miss it." },
-      { time: "20:00", icon: "🍷", title: "Dinner at Zepos",
-        desc: "Kalamaki local favourite. Garden terrace, fresh seafood and grilled meats. Book ahead for 10." },
+      { time: "09:00", icon: "✈️", title: "Aterizare la Zakynthos Airport",
+        desc: "Recuperare bagaje și split în 3 taxiuri (stau chiar la ieșire). Cursa până în Kalamaki costă ~20€/mașină și durează 15 minute. Verificăm să avem cash (euro) pentru taxi." },
+      { time: "09:45", icon: "🏠", title: "Check-in Hektor's Studios",
+        desc: "Check-in sau bag drop devreme. Luăm cheile, găsim camerele, ne împrospătăm." },
+      { time: "10:30", icon: "🏖️", title: "Prima Înot — Plaja Kalamaki",
+        desc: "Nisip auriu fin și apă turcoaz puțin adâncă. Primul înot perfect al vacanței. Testoasele Caretta-Caretta vin pe plajă dimineața devreme!" },
+      { time: "13:00", icon: "🍽️", title: "Prânz la Pandesia Restaurant",
+        desc: "Bucătărie grecească tradițională. Încearcă musaka, tzatziki și pește proaspăt la grătar." },
+      { time: "15:00", icon: "🚶", title: "Explorăm Laganas Strip",
+        desc: "Taxi scurt până în Laganas — strada principală a insulei. Cafea, magazine cu suveniruri, atmosferă." },
+      { time: "17:30", icon: "🌅", title: "Apus la Cameo Island",
+        desc: "Insuliță legată printr-un pod de lemn. CEL MAI FRUMOS punct de apus lângă bază. Nu ratați!" },
+      { time: "20:00", icon: "🍷", title: "Cină la Zepos Taverna",
+        desc: "Favorita localnicilor din Kalamaki. Terasă cu grădină, fructe de mare și carne la grătar. Rezervați din timp pentru 10 persoane." },
     ]
   },
   {
     index: 1,
-    title: "Boat Adventure",
-    subtitle: "Captain your own voyage",
-    accent: "#0EA5E9",
-    accentBg: "#06111A", accentBgLight: "#EFF8FF",
-    transport: "🚢  Self-drive Boat · Taxi",
-    highlights: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
-    routes: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
+    title: "Zakynthos Town",
+    subtitle: "Cultură venetiană & promenadă",
+    accent: "#F97316",
+    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
+    transport: "🚌  Bus KTEL · 1.80€",
+    highlights: ["kalamaki","zakynthosTown"],
+    routes: ["kalamaki","zakynthosTown","kalamaki"],
     activities: [
-      { time: "08:00", icon: "☕", title: "Breakfast at Kavos Psarou",
-        desc: "Fuel up with Greek yogurt, honey, and strong coffee before the sea day." },
-      { time: "09:30", icon: "🚕", title: "Taxi to Ag. Sostis Port",
-        desc: "Pick up your self-drive speedboat rental. No license needed. Full safety briefing." },
-      { time: "10:00", icon: "🐢", title: "Sail to Marathonisi (Turtle Island)",
-        desc: "20 min cruise south. Crystal water, white sand. Sea turtles nest here — spot them!" },
-      { time: "12:30", icon: "🗺️", title: "Keri Caves Exploration",
-        desc: "Navigate to the stunning blue sea grottos at the south tip. Snorkeling is incredible." },
-      { time: "14:00", icon: "🥪", title: "Beach Picnic & Swim",
-        desc: "Anchor near a quiet cove. Cold drinks, packed lunch, and total silence." },
-      { time: "16:30", icon: "⚓", title: "Return Boat & Transfer Back",
-        desc: "Head back to port, return the boat, taxi to base. Shower and relax." },
-      { time: "19:30", icon: "🌿", title: "Dinner at Arekia",
-        desc: "Farm-to-table Greek dishes, local produce. Reserve in advance for the group." },
+      { time: "09:00", icon: "🚌", title: "Bus spre Zakynthos Town",
+        desc: "Cursă de 15 min spre nord. Coborâm în Piața Solomos. Bilet 1.80€/persoană." },
+      { time: "09:30", icon: "🏛️", title: "Piața Solomos & Faleza",
+        desc: "Centrul orașului. Arhitectură venetiană, piață de marmură, vederi spre port și espresso." },
+      { time: "10:30", icon: "🎨", title: "Muzeul Bizantin",
+        desc: "Icoane și artă religioasă salvate din bisericile distruse de cutremurul din 1953. Oraș reconstruit complet — ca un Phoenix grecesc." },
+      { time: "12:00", icon: "🏰", title: "Castelul Venetian din Bochali",
+        desc: "Urcăm pe jos sau cu taxi. Panoramă 360° a orașului, portului și coastei. Construit în 1480." },
+      { time: "13:30", icon: "🍝", title: "Prânz la Malanos",
+        desc: "Instituție locală din 1949. Încearcă musaka, pastitsio și vinul de la butoi. Sofrito e obligatoriu." },
+      { time: "15:00", icon: "🛍️", title: "Shopping & Înghețată",
+        desc: "Magazine cu ulei de măsline local, miere, ceramică făcută manual. Închei cu înghețată artizanală." },
+      { time: "17:00", icon: "🏠", title: "Întoarcere la Kalamaki",
+        desc: "Bus sau taxi înapoi. Timp la piscină și odihnă înainte de seară." },
+      { time: "20:30", icon: "🎉", title: "Cină & Viața de Noapte în Laganas",
+        desc: "Cină în grup, apoi optional seara pe strip. Laganas nu doarme." },
     ]
   },
   {
     index: 2,
-    title: "Beach Hopping South",
-    subtitle: "Golden sands & turquoise waters",
+    title: "Ziua pe Barcă",
+    subtitle: "Suntem capitani pe mare!",
     accent: "#0EA5E9",
     accentBg: "#06111A", accentBgLight: "#EFF8FF",
-    transport: "🚌  Bus · Walking",
-    highlights: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi"],
-    routes: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi","kalamaki"],
+    transport: "⛵  Barcă self-drive · Fără permis",
+    highlights: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
+    routes: ["kalamaki","agiosSostis","marathonisi","keriCaves","laganas"],
     activities: [
-      { time: "08:30", icon: "🍞", title: "Lazy Breakfast at Base",
-        desc: "Sleep in a bit. Coffee and toast at the studios or the nearby café." },
-      { time: "10:00", icon: "🍌", title: "Bus to Banana Beach",
-        desc: "The island's party beach — sunbeds, water sports, good energy." },
-      { time: "12:00", icon: "🌊", title: "Gerakas Beach",
-        desc: "Protected Caretta caretta nesting beach. Dramatic clay cliffs, no sunbeds, pure nature." },
-      { time: "14:00", icon: "🍽️", title: "Lunch at Gerakas Taverna",
-        desc: "Simple beachside food — Greek salad, tzatziki, grilled chicken and cold beers." },
-      { time: "15:30", icon: "🪨", title: "Porto Zoro Beach",
-        desc: "Wild rocky beauty, unique formations. Excellent snorkeling, very peaceful." },
-      { time: "17:30", icon: "🍹", title: "Quick Stop in Argassi",
-        desc: "Lively village, grab a cocktail and watch the sun go down over the bay." },
-      { time: "20:00", icon: "🫕", title: "Group Dinner in Kalamaki",
-        desc: "Back to base. Taverna Planos — one of Kalamaki's best. Big portions, good wine." },
+      { time: "08:00", icon: "☕", title: "Mic Dejun la Kavos Psarou",
+        desc: "Iaurturi grecești cu miere, fructe și cafea tare. Pregătim mâncare de dus pe barcă — picnic pe mare > orice restaurant!" },
+      { time: "09:30", icon: "🚕", title: "Taxi la Portul Agios Sostis",
+        desc: "2 km de hotel. Preluăm barcile self-drive — fără permis, cu briefing complet + GPS + hartă pe WhatsApp. Mai ușor decât pe DN1." },
+      { time: "10:00", icon: "🐢", title: "Laganas Bay — Vânătoare de Testoase",
+        desc: "Navigăm spre sud în Laganas Bay. Testoasele Caretta-Caretta se văd în apă limpede." },
+      { time: "11:30", icon: "🏝️", title: "Marathonisi — Turtle Island",
+        desc: "20 min de navigat. Nisip alb imaculat și pesteri. Cuiburi de broaște țestoase — respectăm natura!" },
+      { time: "13:00", icon: "🤿", title: "Keri Caves — Snorkeling în Pesteri",
+        desc: "Navigăm spre grotele marine albastre la capătul sudic. Snorkeling incredibil în caverne turcoaz." },
+      { time: "15:00", icon: "🪨", title: "Myzithres Rocks",
+        desc: "Stânci albe dramatice ieșite din mare. Stop pentru fotografii și înot în apă cristalină." },
+      { time: "16:30", icon: "⚓", title: "Întoarcere & Relaxare",
+        desc: "Înapoiem bărcile la port, taxi la bază. Duș și relaxare după o zi pe mare." },
+      { time: "19:30", icon: "🌿", title: "Cină la Arekia",
+        desc: "Preparate grecești farm-to-table, produse locale. Rezervare în avans pentru grup." },
     ]
   },
   {
     index: 3,
-    title: "Zakynthos Town Day",
-    subtitle: "Culture, history & harbour charm",
-    accent: "#F97316",
-    accentBg: "#1C1008", accentBgLight: "#FFF4ED",
-    transport: "🚌  Bus · Walking",
-    highlights: ["kalamaki","zakynthosTown"],
-    routes: ["kalamaki","zakynthosTown","kalamaki"],
+    title: "Plaje Sudice",
+    subtitle: "Gerakas, Porto Zoro & chill",
+    accent: "#0EA5E9",
+    accentBg: "#06111A", accentBgLight: "#EFF8FF",
+    transport: "🚌  Bus · Taxi",
+    highlights: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi"],
+    routes: ["kalamaki","bananaBeach","gerakas","portoZoro","argassi","kalamaki"],
     activities: [
-      { time: "09:00", icon: "🚌", title: "Bus to Zakynthos Town",
-        desc: "Quick 15 min ride north. Get dropped at Solomos Square." },
-      { time: "09:30", icon: "🏛️", title: "Solomos Square & Harbour Walk",
-        desc: "The heart of town. Venetian architecture, marble square, harbour views and espresso." },
-      { time: "10:30", icon: "🎨", title: "Byzantine Museum",
-        desc: "Beautiful religious icons and art rescued from churches after the 1953 earthquake." },
-      { time: "12:00", icon: "🏰", title: "Bohali Hill & Venetian Castle",
-        desc: "Walk up or take a short taxi. Panoramic views of the town, harbour and coastline." },
-      { time: "13:30", icon: "🍝", title: "Lunch at Malanos",
-        desc: "Local institution since 1949. Try moussaka, pastitsio, and the house barrel wine." },
-      { time: "15:00", icon: "🛍️", title: "Shopping & Gelato",
-        desc: "Browse shops for local olive oil, honey, and handmade ceramics. Finish with gelato." },
-      { time: "17:00", icon: "🏠", title: "Return to Kalamaki",
-        desc: "Bus or taxi back. Pool time and rest before the night out." },
-      { time: "20:30", icon: "🎉", title: "Dinner & Nightlife in Laganas",
-        desc: "Group dinner then optional night on the strip. Laganas doesn't sleep." },
+      { time: "08:30", icon: "🍞", title: "Mic Dejun Relaxat la Bază",
+        desc: "Dormim puțin. Cafea și toast la studios sau cafeneaua din apropiere." },
+      { time: "10:00", icon: "🍌", title: "Bus spre Banana Beach",
+        desc: "Plaja energică a insulei — șezlonguri, sporturi nautice, atmosferă bună." },
+      { time: "12:00", icon: "🌊", title: "Gerakas Beach",
+        desc: "Plajă protejată pentru cuibăritul testoaselor Caretta-Caretta. Faleze de argilă dramatice, fără șezlonguri — natură pură." },
+      { time: "14:00", icon: "🍽️", title: "Prânz la Taverna Gerakas",
+        desc: "Mâncare simplă la malul mării — salată grecească, tzatziki, pui la grătar și bere rece." },
+      { time: "15:30", icon: "🪨", title: "Porto Zoro Beach",
+        desc: "Frumusețe sălbatică stâncoasă, formații unice. Snorkeling excelent, liniște totală." },
+      { time: "17:30", icon: "🍹", title: "Stop în Argassi",
+        desc: "Sat animat, luăm un cocktail și privim apusul peste golf." },
+      { time: "20:00", icon: "🫕", title: "Cină în Grup în Kalamaki",
+        desc: "Înapoi la bază. Taverna Planos — una din cele mai bune din Kalamaki. Porții mari, vin bun." },
     ]
   },
   {
     index: 4,
-    title: "West Coast Wild",
-    subtitle: "Cliffs, caves & untouched shores",
+    title: "Blue Caves & Navagio",
+    subtitle: "Nordul insulei cu mașina",
     accent: "#22C55E",
     accentBg: "#071209", accentBgLight: "#F0FDF4",
-    transport: "🚗  Rented Cars (2 cars)",
-    highlights: ["kalamaki","portoLimnionas","korakonisi","shipwreck"],
-    routes: ["kalamaki","portoLimnionas","korakonisi","shipwreck","kalamaki"],
+    transport: "🚗  Mașini Închiriate (Ziua 1/3)",
+    highlights: ["kalamaki","xigia","blueCaves","volimes","shipwreck","portoVromi"],
+    routes: ["kalamaki","xigia","blueCaves","volimes","shipwreck","portoVromi","kalamaki"],
     activities: [
-      { time: "08:00", icon: "🚗", title: "Pick Up Rental Cars",
-        desc: "2 cars for 10 people. Pick up from local agency near Kalamaki." },
-      { time: "09:00", icon: "🛣️", title: "Drive to Porto Limnionas",
-        desc: "50 min scenic drive west through mountains and olive groves." },
-      { time: "09:50", icon: "💧", title: "Porto Limnionas Swim & Explore",
-        desc: "Dramatic emerald fjord carved into rock. Jump off ledges into crystal-clear water." },
-      { time: "12:00", icon: "🌿", title: "Drive to Korakonisi",
-        desc: "20 min north. Natural rock arch, hidden coves, completely undeveloped." },
-      { time: "13:30", icon: "🍖", title: "Lunch in Volimes Village",
-        desc: "Authentic mountain taverna. Local honey, fresh bread, and hearty stews." },
-      { time: "15:00", icon: "📸", title: "Shipwreck Beach Viewpoint",
-        desc: "THE iconic Zakynthos view. Look down at the MV Panagiotis wreck in turquoise blue." },
-      { time: "17:00", icon: "⛪", title: "Drive South via Anafonitria",
-        desc: "Stop at the medieval monastery. Winding roads through olive groves at golden hour." },
-      { time: "20:00", icon: "🔥", title: "BBQ Night at Studios",
-        desc: "Buy supplies en route. Group BBQ on the terrace. Best night of the trip." },
+      { time: "08:00", icon: "🚗", title: "Preluăm Mașinile",
+        desc: "2 mașini automatice pentru 10 persoane. AbbyCar — livrează mașina la hotel!" },
+      { time: "09:00", icon: "♨️", title: "Xigia Beach — Spa Natural",
+        desc: "45 min spre nord. Izvoare sulfuroase naturale care ies din fundul mării — spa gratuit cu efect detoxifiant." },
+      { time: "10:30", icon: "🔵", title: "Blue Caves — Reflexii Albastre",
+        desc: "Din Portul Skinari, barcă mică ~15€/pers. Cele mai frumoase 09:00-11:00 când reflexiile albastre sunt ireale. Rezervăm din timp!" },
+      { time: "13:00", icon: "🍯", title: "Prânz în Volimes + Shopping",
+        desc: "Sat de munte autentic. Taverna locală + miere locală și Mandolato (nougat) din Volimes la jumătate de preț față de magazine." },
+      { time: "15:00", icon: "📸", title: "Navagio Viewpoint — 200m Deasupra",
+        desc: "ATENȚIE: Navagio Beach e închisă în 2026 (alunecare teren). NU se coboară pe plajă. Dar viewpoint-ul de sus e DESCHIS — vedere spectaculoasă a epavei MV Panagiotis!" },
+      { time: "16:30", icon: "💧", title: "Porto Vromi — Baie Turcoaz",
+        desc: "Golf secret pe coasta de vest. Apă turcoaz în cală naturală, liniște totală." },
+      { time: "20:00", icon: "🍷", title: "Cină la Întoarcere",
+        desc: "Cină în taverna preferată din Kalamaki. Povestim ziua la o sticlă de Verdea." },
     ]
   },
   {
     index: 5,
-    title: "North & Hidden Gems",
-    subtitle: "Sulphur springs & mountain villages",
+    title: "Vestul Sălbatic",
+    subtitle: "Fiorduri, cramă & apus la Kambi",
     accent: "#22C55E",
     accentBg: "#071209", accentBgLight: "#F0FDF4",
-    transport: "🚗  Rented Cars",
-    highlights: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown"],
-    routes: ["kalamaki","xigia","makrisGialos","tsilivi","zakynthosTown","kalamaki"],
+    transport: "🚗  Mașini Închiriate (Ziua 2/3)",
+    highlights: ["kalamaki","portoLimnionas","korakonisi","kambi"],
+    routes: ["kalamaki","portoLimnionas","korakonisi","kambi","kalamaki"],
     activities: [
-      { time: "08:30", icon: "🥐", title: "Breakfast on the Go",
-        desc: "Grab pastries and coffee from the bakery. Pack the car with snacks and plenty of water." },
-      { time: "09:30", icon: "♨️", title: "Drive to Xigia Beach",
-        desc: "45 min north. Natural sulphur springs bubble up from underwater — a natural spa in the sea." },
-      { time: "11:00", icon: "🪨", title: "Makris Gialos Beach",
-        desc: "Secluded white pebble beach nearby. No facilities, no crowds — pure Zakynthos." },
-      { time: "13:00", icon: "🌯", title: "Lunch in Tsilivi",
-        desc: "Lively resort town. Great gyros spots and cold Mythos beer in the sun." },
-      { time: "14:30", icon: "🦩", title: "Alykes Salt Flats",
-        desc: "Unique landscape — old Venetian saltworks. Flamingos sometimes spotted in spring." },
-      { time: "16:00", icon: "🗺️", title: "Free Exploration Time",
-        desc: "Split up or stay together. Last chance for a hidden beach, a viewpoint, or a nap." },
-      { time: "18:00", icon: "🌇", title: "Sunset at Zakynthos Town",
-        desc: "Return south. Golden hour at the harbour — one last big view of the island." },
-      { time: "20:30", icon: "🥂", title: "Last Supper: Lofos Restaurant",
-        desc: "Hillside restaurant with valley views. Best food of the trip. Celebrate the crew." },
+      { time: "08:00", icon: "🚗", title: "Plecăm Dimineața Devreme",
+        desc: "Coasta de vest e lungă. Descărcăm Google Maps OFFLINE — pe vest nu ai semnal!" },
+      { time: "09:00", icon: "💧", title: "Porto Limnionas — Fiord de Smarald",
+        desc: "50 min spre vest. Golf în miniatură sculptat în stâncă. Sarituri de pe stânci în apă cristalină. Snorkeling WOW." },
+      { time: "11:00", icon: "🌿", title: "Korakonisi — Arc Natural din Piatră",
+        desc: "20 min spre nord. Arc natural, cale nedezvoltată. Porto Roxa (cală secretă) în apropiere." },
+      { time: "13:00", icon: "🍷", title: "Crama Callinico din 1918",
+        desc: "Cramă familială cu istoria de 100 de ani. Degustare de vin local — Verdea și vinuri albe din Zakynthos." },
+      { time: "15:30", icon: "⛪", title: "Mânăstirea Anafonitria",
+        desc: "Mânăstire medievală la 1.000m altitudine. Drumuri cu serpentine prin livezi de măslini la lumina aurie." },
+      { time: "17:30", icon: "🌅", title: "Apus la Kambi — CEL MAI FRUMOS!",
+        desc: "Crucea de 15m de pe marginea falezei. Apusul de la Kambi e cel mai dramatic din Zakynthos — valea cu livezi de ulei, marea roșie-portocalie. Dacă nu plângi, verifică-ți pulsul." },
+      { time: "20:00", icon: "🔥", title: "BBQ Night la Studios",
+        desc: "Cumpărăm provizii pe drum. BBQ de grup pe terasă. Cea mai bună seară a vacanței." },
     ]
   },
   {
     index: 6,
-    title: "Departure",
-    subtitle: "Last moments & safe travels",
+    title: "Keri & Vasilikos",
+    subtitle: "Ultimul apus + zbor acasă",
     accent: "#F97316",
     accentBg: "#1C1008", accentBgLight: "#FFF4ED",
-    transport: "🚗  Rental Cars → Airport",
-    highlights: ["kalamaki","airport"],
-    routes: ["kalamaki","airport"],
+    transport: "🚗  Mașini Închiriate → Aeroport",
+    highlights: ["kalamaki","bananaBeach","portoZoro","keriLighthouse","airport"],
+    routes: ["kalamaki","bananaBeach","portoZoro","keriLighthouse","kalamaki","airport"],
     activities: [
-      { time: "05:30", icon: "⏰", title: "Wake Up & Final Pack",
-        desc: "Alarm set. Pack bags, tidy studios, leave everything ready before leaving." },
-      { time: "06:00", icon: "☕", title: "Quick Coffee & Checkout",
-        desc: "Express checkout at Hektor's. Grab coffee from the 24h kiosk nearby." },
-      { time: "06:30", icon: "🚗", title: "Drive to Airport",
-        desc: "Return rental cars at the airport. Only 5 min from base — easy." },
-      { time: "07:00", icon: "🎫", title: "Airport Check-in",
-        desc: "Arrive 90 min early. Check bags, last Greek coffee at departures." },
-      { time: "08:35", icon: "✈️", title: "Takeoff!",
-        desc: "Window seat for one last view of that turquoise coast. Until next time, Zakynthos." },
+      { time: "09:00", icon: "🍌", title: "Banana Beach — Penultima Dimineață",
+        desc: "Peninsula Vasilikos pe coasta de sud-est. Nisip auriu, beach bar, sporturi nautice." },
+      { time: "11:00", icon: "🐠", title: "Dafni Beach — Snorkeling cu Pești Colorați",
+        desc: "Plajă liniștită cu apă limpede. Ultimul snorkeling al vacanței." },
+      { time: "13:00", icon: "🏝️", title: "Porto Zoro — Plajă între Stânci",
+        desc: "Plajă lungă cu formații stâncoase unice. Liniște deplină, snorkeling excelent." },
+      { time: "15:00", icon: "🏘️", title: "Keri Village",
+        desc: "Sat cu case de piatră la marginea sudică a insulei. Prânz în taverna cu vedere la mare." },
+      { time: "18:30", icon: "🌅", title: "KERI LIGHTHOUSE — Apusul Suprem",
+        desc: "La capătul sudic al insulei. Apus peste stâncile Myzithres. Cel mai frumos moment al vacanței. Luăm Verdea și savurăm fiecare secundă." },
+      { time: "21:00", icon: "🥂", title: "Cina de Rămas-Bun",
+        desc: "Cină finală în Kalamaki. Ridicăm un pahar pentru echipă, pentru Grecia, pentru aventura asta." },
+      { time: "05:30", icon: "⏰", title: "DIMINEAȚA: Trezire & Bagaje",
+        desc: "Alarma setată. Facem bagajele, curățăm studios, predăm cheile la Hektor." },
+      { time: "06:30", icon: "🚗", title: "Drive la Aeroport",
+        desc: "Predăm mașinile la aeroport. Doar 5 min de la bază — ușor." },
+      { time: "08:35", icon: "✈️", title: "Zbor Acasă!",
+        desc: "Loc la geam pentru ultima vedere a acelei coaste turcoaz. Până data viitoare, Zakynthos. 🇬🇷" },
     ]
   },
 ];
@@ -606,128 +1209,242 @@ function renderBeaches() {
 
 // ── Kalamaki Guide data ───────────────────────────────────────
 const KALAMAKI = [
+  // ── Restaurante & Taverne ──
   {
-    name: "Merlis Taverna",
-    type: "🐟 Seafood",
-    desc: "Pește proaspăt, caracatiță, vedere la apus direct de pe plajă.",
-    rating: 4.7,
-    tag: "Recomandat",
-    tagColor: "#0EA5E9",
-    distance: "2 min plajă",
+    name: "Pandesia Restaurant",
+    type: "🍽️ Taverna grecească",
+    desc: "Musaka de vis, pește proaspăt, tzatziki. Prima masă de pe insulă — Z1 prânz.",
+    rating: 4.7, tag: "Z1 Prânz", tagColor: "#F97316",
+    distance: "5 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Pandesia+Restaurant+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Zepos Restaurant",
-    type: "🍖 Traditional",
-    desc: "Terasă în grădină, porții generoase, perfect pentru grupuri mari.",
-    rating: 4.6,
-    tag: "Grup-friendly",
-    tagColor: "#22C55E",
+    type: "🍖 Grătar & Seafood",
+    desc: "Terasă în grădină, porții generoase, perfect pentru grupuri mari. Z1 cină.",
+    rating: 4.6, tag: "Z1 Cină", tagColor: "#22C55E",
     distance: "5 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Zepos+Restaurant+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Arekia",
     type: "🌿 Farm-to-table",
-    desc: "Bucătărie greacă modernă, ingrediente locale. Rezervare obligatorie.",
-    rating: 4.8,
-    tag: "Top pick",
-    tagColor: "#F59E0B",
+    desc: "Bucătărie greacă modernă cu ingrediente locale. Rezervare obligatorie pentru 10.",
+    rating: 4.8, tag: "Z3 Cină", tagColor: "#F59E0B",
     distance: "8 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Arekia+Restaurant+Kalamaki+Zakynthos&travelmode=walking",
+  },
+  {
+    name: "Taverna Planos",
+    type: "🫕 Traditional",
+    desc: "Una din cele mai bune taverne din Kalamaki. Porții mari, vin bun, prețuri corecte.",
+    rating: 4.6, tag: "Z4 Cină", tagColor: "#A78BFA",
+    distance: "4 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Taverna+Planos+Kalamaki+Zakynthos&travelmode=walking",
   },
   {
     name: "Kavos Psarou Café",
-    type: "☕ Breakfast",
-    desc: "Iaurt grecesc cu miere, patiserie, cafea tare. Ideal dimineața.",
-    rating: 4.5,
-    tag: "Dimineață",
-    tagColor: "#A78BFA",
+    type: "☕ Mic dejun",
+    desc: "Iaurt grecesc cu miere, patiserie proaspătă, cafea tare. Punct de start perfect.",
+    rating: 4.5, tag: "Dimineață", tagColor: "#A78BFA",
     distance: "3 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Kavos+Psarou+Cafe+Kalamaki+Zakynthos&travelmode=walking",
   },
+  {
+    name: "Merlis Taverna",
+    type: "🐟 Pește & Fructe de mare",
+    desc: "Pește proaspăt, caracatiță la grătar, vedere la apus direct de pe plajă.",
+    rating: 4.7, tag: "Seafood", tagColor: "#0EA5E9",
+    distance: "2 min plajă",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Merlis+Taverna+Kalamaki+Zakynthos&travelmode=walking",
+  },
+  // ── Baruri & Relaxare ──
   {
     name: "Crystal Beach Bar",
     type: "🍹 Beach Bar",
-    desc: "Șezlonguri, cocktailuri, muzică chill. Relaxare totală după plajă.",
-    rating: 4.4,
-    tag: "Relaxare",
-    tagColor: "#0EA5E9",
+    desc: "Șezlonguri, cocktailuri, muzică chill. Relaxare totală după plajă sau înot.",
+    rating: 4.4, tag: "Relaxare", tagColor: "#0EA5E9",
     distance: "1 min plajă",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Crystal+Beach+Bar+Kalamaki+Zakynthos&travelmode=walking",
+  },
+  {
+    name: "Laganas Strip",
+    type: "🎉 Baruri & Nightlife",
+    desc: "Strada principală cu baruri, restaurante, magazine. Viața de noapte a insulei. 4 km de bază.",
+    rating: 4.3, tag: "Seară", tagColor: "#EC4899",
+    distance: "10 min taxi",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Laganas+Zakynthos&travelmode=driving",
+  },
+  // ── Plaje & Natură ──
+  {
+    name: "Plaja Kalamaki",
+    type: "🏖️ Plajă",
+    desc: "Nisip fin auriu, apă puțin adâncă, turcoaz. Testoasele Caretta-Caretta vin dimineața devreme.",
+    rating: 4.9, tag: "Baza noastră", tagColor: "#22C55E",
+    distance: "0 min",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Kalamaki+Beach+Zakynthos&travelmode=walking",
   },
   {
     name: "Cameo Island",
     type: "🌅 Must-see",
-    desc: "Insuliță unită prin pod de lemn. Cel mai bun spot de apus din zonă.",
-    rating: 5.0,
-    tag: "Imperdibil",
-    tagColor: "#F97316",
-    distance: "10 min taxi",
+    desc: "Insuliță unită prin pod de lemn. CEL MAI BUN spot de apus din zona Kalamaki.",
+    rating: 5.0, tag: "Apus Z1", tagColor: "#F97316",
+    distance: "20 min mers / 5 min taxi",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Cameo+Island+Zakynthos&travelmode=walking",
   },
   {
-    name: "Kalamaki Beach",
-    type: "🏖️ Beach",
-    desc: "Nisip fin auriu, apă puțin adâncă, zonă de cuibărit broaște țestoase.",
-    rating: 4.9,
-    tag: "Baza",
-    tagColor: "#22C55E",
-    distance: "0 min",
+    name: "Agios Sostis Port",
+    type: "⛵ Port bărci",
+    desc: "De aici plecăm cu bărcile self-drive în Z3. Transfer gratuit de la compania de bărci.",
+    rating: 4.5, tag: "Z3 Barcă", tagColor: "#0EA5E9",
+    distance: "2 km / 5 min taxi",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Agios+Sostis+Zakynthos+boat+rentals&travelmode=driving",
   },
+  {
+    name: "Marathonisi (Turtle Island)",
+    type: "🐢 Insulă",
+    desc: "Accesibilă cu barca în Z3. Nisip alb imaculat, pesteri, cuiburi broaște țestoase.",
+    rating: 4.9, tag: "Z3 cu barca", tagColor: "#22C55E",
+    distance: "20 min cu barca",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Marathonisi+Island+Zakynthos&travelmode=driving",
+  },
+  // ── Activități ──
+  {
+    name: "Caretta Fun Park",
+    type: "🎡 Parc distracții",
+    desc: "Bumper cars, jocuri, activități seara. Perfect după o zi de plajă — Z4 seară.",
+    rating: 4.3, tag: "Z4 Seară", tagColor: "#F59E0B",
+    distance: "10 min taxi",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Caretta+Fun+Park+Laganas+Zakynthos&travelmode=driving",
+  },
+  // ── Practice ──
+  {
+    name: "Minimarket & ATM",
+    type: "🛒 Utilități",
+    desc: "Apă 0.50€ (vs. 3€ pe plajă!), snacksuri, bere, cremă de soare. ATM în apropiere.",
+    rating: 4.2, tag: "Daily stop", tagColor: "#6B7280",
+    distance: "3 min mers",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=minimarket+Kalamaki+Zakynthos&travelmode=walking",
+  },
+  {
+    name: "Hector's Studios",
+    type: "🏠 Cazare",
+    desc: "Baza noastră. Camere curate, terasă pentru BBQ în Z6, proprietar helpful. Confirmat.",
+    rating: 4.8, tag: "Baza", tagColor: "#22C55E",
+    distance: "0 min",
+    maps: "https://www.google.com/maps/dir/?api=1&destination=Hektor+Studios+Kalamaki+Zakynthos&travelmode=walking",
+  },
+];
+
+const KALAMAKI_SECTIONS = [
+  { label: '🍽️ Restaurante & Taverne', keys: ['Pandesia Restaurant','Zepos Restaurant','Arekia','Taverna Planos','Kavos Psarou Café','Merlis Taverna'] },
+  { label: '🍹 Baruri & Seară',         keys: ['Crystal Beach Bar','Laganas Strip'] },
+  { label: '🏖️ Plaje & Natură',         keys: ['Plaja Kalamaki','Cameo Island','Agios Sostis Port','Marathonisi (Turtle Island)'] },
+  { label: '🎡 Activități',             keys: ['Caretta Fun Park'] },
+  { label: '🛒 Practic',               keys: ['Minimarket & ATM','Hector\'s Studios'] },
 ];
 
 function renderKalamaki() {
   const container = document.getElementById('kalamaki-rows');
   if (!container) return;
   const th = T();
-  container.innerHTML = KALAMAKI.map(s => `
-    <div class="rounded-2xl p-4 flex items-center gap-3"
-         style="background:${th.card}; border:1px solid ${th.bdr}; box-shadow:${th.shadow};">
-      <div class="flex-1 min-w-0">
-        <div class="flex items-center gap-2 flex-wrap mb-1">
-          <span class="text-sm font-bold" style="color:${th.t1};">${s.name}</span>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                style="background:${s.tagColor}18; color:${s.tagColor};">${s.tag}</span>
+  const byName = {};
+  KALAMAKI.forEach(s => { byName[s.name] = s; });
+  let html = '';
+  KALAMAKI_SECTIONS.forEach(sec => {
+    html += `<div class="text-[10px] font-bold uppercase tracking-widest px-1 pb-1 pt-3" style="color:${th.t3};">${sec.label}</div>`;
+    sec.keys.forEach(key => {
+      const s = byName[key]; if (!s) return;
+      html += `
+      <div class="rounded-2xl p-4 flex items-center gap-3"
+           style="background:${th.card}; border:1px solid ${th.bdr}; box-shadow:${th.shadow};">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="text-sm font-bold" style="color:${th.t1};">${s.name}</span>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  style="background:${s.tagColor}20; color:${s.tagColor};">${s.tag}</span>
+          </div>
+          <p class="text-[11px] mb-1.5" style="color:#0EA5E9;">${s.type} &nbsp;·&nbsp; <span style="color:${th.t4};">📍 ${s.distance}</span></p>
+          <p class="text-xs leading-relaxed" style="color:${th.t3};">${s.desc}</p>
         </div>
-        <p class="text-[11px] mb-1" style="color:#0EA5E9;">${s.type} &nbsp;·&nbsp; <span style="color:${th.t4};">${s.distance}</span></p>
-        <p class="text-xs leading-relaxed" style="color:${th.t3};">${s.desc}</p>
-      </div>
-      <div class="flex flex-col items-center flex-shrink-0 gap-1">
-        <span class="text-base">⭐</span>
-        <span class="text-sm font-black" style="color:${th.t1};">${s.rating}</span>
-      </div>
-    </div>
-  `).join('');
+        <div class="flex flex-col items-center flex-shrink-0 gap-2">
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="text-sm">⭐</span>
+            <span class="text-sm font-black" style="color:${th.t1};">${s.rating}</span>
+          </div>
+          <a class="btn-go" href="${s.maps}" target="_blank" rel="noopener">GO</a>
+        </div>
+      </div>`;
+    });
+  });
+  container.innerHTML = html;
 }
 
 // ── Costs data ────────────────────────────────────────────────
 const COSTS = [
-  { category: "Cazare",    icon: "🏠", label: "Hektor's Studios (6 nopți × 10)",  pp: 427, total: 4270, color: "#0EA5E9" },
-  { category: "Transport", icon: "✈️", label: "Taxiuri aeroport (sosire + plecare)", pp: 8,   total: 80,   color: "#F97316" },
-  { category: "Transport", icon: "🚌", label: "Bus/taxi zilnic — Zilele 1–4",       pp: 30,  total: 300,  color: "#F97316" },
-  { category: "Transport", icon: "🚗", label: "Închiriere mașini (2 × 3 zile)",     pp: 45,  total: 450,  color: "#F97316" },
-  { category: "Transport", icon: "⛽", label: "Carburant mașini închiriate",         pp: 12,  total: 120,  color: "#F97316" },
-  { category: "Barcă",     icon: "🚢", label: "Barcă self-drive (o zi completă)",   pp: 30,  total: 300,  color: "#22C55E" },
-  { category: "Mâncare",   icon: "🍽️", label: "Mese estimate (6 zile × ~€30/zi)",  pp: 180, total: 1800, color: "#A78BFA" },
-  { category: "Activități",icon: "🎟️", label: "Muzee, Cameo Island, bacșișuri",    pp: 25,  total: 250,  color: "#F59E0B" },
+  // Cazare
+  { category: "Cazare",      icon: "🏠", label: "Hector's Studios — 7 nopți (confirmat)",         pp: 427, total: 4270, color: "#0EA5E9" },
+  // Mâncare
+  { category: "Mâncare",     icon: "🍽️", label: "Mese zilnice ~35€/zi (7 zile)",                  pp: 245, total: 2450, color: "#A78BFA" },
+  { category: "Mâncare",     icon: "🥐", label: "Mic dejun & snacksuri",                           pp: 35,  total: 350,  color: "#A78BFA" },
+  // Transport
+  { category: "Transport",   icon: "✈️", label: "Taxi aeroport sosire + plecare",                  pp: 8,   total: 80,   color: "#F97316" },
+  { category: "Transport",   icon: "🚌", label: "Bus KTEL Kalamaki ↔ Town (Z2, diverse)",          pp: 12,  total: 120,  color: "#F97316" },
+  { category: "Transport",   icon: "🚕", label: "Taxiuri locale (plaje, Gerakas etc.)",             pp: 18,  total: 180,  color: "#F97316" },
+  { category: "Transport",   icon: "⛵", label: "Barcă self-drive Z3 — Agios Sostis (5-6 pers)",   pp: 35,  total: 350,  color: "#0EA5E9" },
+  { category: "Transport",   icon: "🚗", label: "Mașini închiriate Z5-Z7 — AbbyCar (3 zile)",      pp: 42,  total: 420,  color: "#F97316" },
+  { category: "Transport",   icon: "⛽", label: "Benzină mașini (3 zile, vest + nord insulă)",      pp: 15,  total: 150,  color: "#F97316" },
+  // Activități
+  { category: "Activități",  icon: "🔵", label: "Blue Caves — barcă mică din Skinari",             pp: 15,  total: 150,  color: "#22C55E" },
+  { category: "Activități",  icon: "🎟️", label: "Muzeu Bizantin + Castel Venețian",               pp: 10,  total: 100,  color: "#22C55E" },
+  { category: "Activități",  icon: "🎡", label: "Caretta Fun Park, Cameo Island etc.",              pp: 15,  total: 150,  color: "#22C55E" },
+  { category: "Activități",  icon: "🍷", label: "Degustare cramă Callinico (Z6)",                   pp: 12,  total: 120,  color: "#22C55E" },
+  // Băuturi
+  { category: "Băuturi",     icon: "🍹", label: "Cocktailuri & bere (~5-8€ buc)",                  pp: 45,  total: 450,  color: "#F59E0B" },
+  // Suveniruri
+  { category: "Suveniruri",  icon: "🛍️", label: "Miere Volimes, măsline, Mandolato, ceramică",    pp: 35,  total: 350,  color: "#EC4899" },
+  // Diverse
+  { category: "Diverse",     icon: "💊", label: "Cremă de soare, farmacie, bacșișuri",              pp: 20,  total: 200,  color: "#6B7280" },
 ];
 
 function renderCosts() {
   const container = document.getElementById('cost-rows');
   if (!container) return;
   const th = T();
-  container.innerHTML = COSTS.map((c, i) => `
+  let html = '';
+  let lastCat = null;
+  COSTS.forEach((c, i) => {
+    if (c.category !== lastCat) {
+      lastCat = c.category;
+      html += `<div class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest"
+        style="background:${c.color}12; color:${c.color}; border-bottom:1px solid ${th.bdr};">${c.category}</div>`;
+    }
+    const isLast = i === COSTS.length - 1;
+    html += `
     <div class="flex items-center gap-3 px-4 py-3"
-         style="background:${th.card}; ${i < COSTS.length - 1 ? `border-bottom:1px solid ${th.bdr};` : ''}">
+         style="background:${th.card}; ${!isLast ? `border-bottom:1px solid ${th.bdr};` : ''}">
       <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-base"
-           style="background:${c.color}15;">
-        ${c.icon}
-      </div>
+           style="background:${c.color}15;">${c.icon}</div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-semibold truncate" style="color:${th.t1};">${c.label}</p>
-        <p class="text-[11px]" style="color:${th.t4};">${c.category}</p>
+        <p class="text-sm font-semibold" style="color:${th.t1};">${c.label}</p>
       </div>
       <div class="text-right flex-shrink-0">
-        <p class="text-sm font-bold" style="color:${th.t1};">€${c.total}</p>
-        <p class="text-[10px]" style="color:${th.t4};">€${c.pp}/pp</p>
+        <p class="text-sm font-bold" style="color:${th.t1};">€${c.pp}<span class="text-[10px] font-normal" style="color:${th.t4};">/pp</span></p>
+        <p class="text-[10px]" style="color:${th.t4};">€${c.total} total</p>
       </div>
+    </div>`;
+  });
+  const totalPP = COSTS.reduce((s,c) => s+c.pp, 0);
+  const totalGr = COSTS.reduce((s,c) => s+c.total, 0);
+  html += `<div class="flex items-center justify-between px-4 py-3"
+    style="background:linear-gradient(135deg,#06111A,#0d1f30); border-top:2px solid #0EA5E944;">
+    <span class="text-sm font-black" style="color:#F0F0F0;">TOTAL ESTIMAT</span>
+    <div class="text-right">
+      <p class="text-base font-black" style="color:#0EA5E9;">€${totalPP}<span class="text-[11px] font-normal" style="color:#0EA5E988;">/pp</span></p>
+      <p class="text-[10px]" style="color:#0EA5E966;">€${totalGr.toLocaleString()} grup</p>
     </div>
-  `).join('');
+  </div>`;
+  container.innerHTML = html;
 }
 
 // ── Theme helper ──────────────────────────────────────────────
@@ -772,6 +1489,11 @@ const POINTS = {
   gerakas:       { x: 346, y: 428, label: "Gerakas" },
   portoZoro:     { x: 328, y: 384, label: "Porto Zoro" },
   makrisGialos:  { x: 112, y: 152, label: "Makris Gialos" },
+  blueCaves:     { x: 182, y: 55,  label: "Blue Caves" },
+  keriLighthouse:{ x: 90,  y: 432, label: "Keri Lighthouse" },
+  portoVromi:    { x: 82,  y: 162, label: "Porto Vromi" },
+  kambi:         { x: 70,  y: 238, label: "Kambi" },
+  volimes:       { x: 110, y: 145, label: "Volimes" },
 };
 
 // Zakynthos outline path — clockwise from north cape
@@ -915,13 +1637,11 @@ function toggleMap(dayIndex) {
   if (!mapContainer || !btn) return;
   if (mapContainer.innerHTML === '') {
     mapContainer.innerHTML = buildMap(day.highlights, day.routes, day.accent);
-    btn.style.background = day.accent;
-    btn.style.color = '#0A0A0A';
+    btn.classList.add('map-open');
     btn.textContent = '🗺 Ascunde harta';
   } else {
     mapContainer.innerHTML = '';
-    btn.style.background = '#1A1A1A';
-    btn.style.color = day.accent;
+    btn.classList.remove('map-open');
     btn.textContent = '🗺 Vezi harta';
   }
 }
@@ -952,8 +1672,7 @@ function renderDays() {
             <p class="text-xs mt-1" style="color:${th.t3};">${day.subtitle}</p>
           </div>
           <button id="mapbtn-${day.index}" onclick="toggleMap(${day.index})"
-                  class="flex-shrink-0 px-3 py-1.5 rounded-full text-[11px] font-bold"
-                  style="background:${th.mapBg}; color:${day.accent}; border:1px solid ${day.accent}33; white-space:nowrap; cursor:pointer;">
+                  class="btn-map-toggle">
             🗺 Vezi harta
           </button>
         </div>
@@ -996,21 +1715,30 @@ function renderDays() {
 
 // ── Switch tab ────────────────────────────────────────────────
 function switchTab(index) {
-  // hide all
+  // MOMENT 4 — scroll to top on every tab click
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(`tab-${index}`).classList.remove('hidden');
 
-  const th = T();
-  for (let i = 0; i < 4; i++) {
-    const btn = document.getElementById(`tb-${i}`);
-    if (i === index) {
-      btn.style.background = th.t1;
-      btn.style.color = isDark() ? '#0A0A0A' : '#FFFFFF';
-    } else {
-      btn.style.background = th.card2;
-      btn.style.color = th.t3;
-    }
+  // Update all .tab-btn elements (both the sticky and the mobile non-sticky WarRoom clone)
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const i = parseInt(btn.id?.replace('tb-', '') ?? '-1');
+    btn.classList.remove('active-tab');
+    // Reset inline overrides — CSS classes handle the rest
+    btn.style.opacity = '1';
+  });
+
+  // Mark active on the #tb-N button (sticky row)
+  const activeBtn = document.getElementById(`tb-${index}`);
+  if (activeBtn) activeBtn.classList.add('active-tab');
+
+  // Also mark active on the mobile WarRoom clone if index === 4
+  if (index === 4) {
+    document.querySelectorAll('.tab-btn-warroom').forEach(b => b.classList.add('active-tab'));
+    loadActivePoll();
   }
+
   activeTab = index;
 }
 
@@ -1118,9 +1846,17 @@ function toggleTheme() {
 }
 
 // ── Init ──────────────────────────────────────────────────────
-// Aplică tema salvată (default: light)
-const savedTheme = localStorage.getItem('zaky-theme') || 'light';
-applyTheme(savedTheme === 'light');
+document.addEventListener('DOMContentLoaded', function() {
+  const savedTheme = localStorage.getItem('zaky-theme') || 'light';
+  applyTheme(savedTheme === 'light');
+
+  // Deschide WarRoom automat dacă vine redirect de la create-poll.html
+  // _sb e garantat inițializat la acest punct
+  if (window.location.hash === '#warroom') {
+    history.replaceState(null, '', window.location.pathname);
+    switchTab(4);
+  }
+});
 
 // ── Swipe between days ────────────────────────────────────────
 (function() {
@@ -1162,6 +1898,640 @@ applyTheme(savedTheme === 'light');
   }
 })();
 
+
+// ── Supabase Auth ──────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() { (function() {
+  const overlay   = document.getElementById('auth-overlay');
+  const form      = document.getElementById('auth-form');
+  const errEl     = document.getElementById('auth-error');
+  const submitBtn = document.getElementById('auth-submit');
+
+  // Extrage numele afișabil dintr-un user Supabase
+  // Prioritate: user_metadata.full_name → email prefix (înainte de @)
+  function getDisplayName(user) {
+    if (!user) return '';
+    const meta = user.user_metadata || {};
+    if (meta.full_name && meta.full_name.trim()) return meta.full_name.trim();
+    // fallback: "zaky@crew.ro" → "Zaky"
+    const prefix = (user.email || '').split('@')[0];
+    return prefix.charAt(0).toUpperCase() + prefix.slice(1);
+  }
+
+  function showGreeting(user) {
+    const el = document.getElementById('crew-greeting');
+    if (!el) return;
+    const name = getDisplayName(user);
+    if (name) {
+      el.textContent = 'Salut, ' + name + '!';
+      el.style.display = 'block';
+    }
+  }
+
+  // Block Esc key while modal is visible
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !overlay.classList.contains('hidden')) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    }
+  }, true);
+
+  // Block click on the dark backdrop (don't close)
+  overlay.addEventListener('click', function(e) { e.stopPropagation(); });
+
+  // Check existing session → hide overlay + show greeting if already logged in
+  _sb.auth.getSession().then(function({ data: { session } }) {
+    if (session) {
+      overlay.classList.add('hidden');
+      showGreeting(session.user);
+    }
+  });
+
+  // Form submit
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    // Transformare Nume → email: "Zaky" → "zaky@crew.ro"
+    const raw      = document.getElementById('auth-name').value.trim();
+    const email    = raw.toLowerCase().replace(/\s+/g, '') + '@crew.ro';
+    const password = document.getElementById('auth-password').value;
+
+    errEl.textContent     = '';
+    submitBtn.disabled    = true;
+    submitBtn.textContent = 'Se verifică...';
+
+    const { data, error } = await _sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      errEl.textContent     = 'Acces Respins. Încearcă din nou.';
+      submitBtn.disabled    = false;
+      submitBtn.textContent = 'Acces Crew ✈';
+    } else {
+      overlay.classList.add('hidden');
+      showGreeting(data.user);
+    }
+  });
+})(); }); // end DOMContentLoaded + auth IIFE
+
+// ── WarRoom Polls ──────────────────────────────────────────────
+// Cache polls by ID pentru re-render rapid după vot
+const _pollCache = {};
+const OPTION_COLORS = ['#0EA5E9', '#22C55E', '#F97316', '#A855F7', '#EF4444', '#F59E0B'];
+
+async function loadActivePoll() {
+  if (!_sb) return;
+  const pollEl = document.getElementById('warroom-poll');
+  if (!pollEl) return;
+  pollEl.innerHTML = '<div class="warroom-loading">Se încarcă...</div>';
+
+  try {
+    // Toate poll-urile, cele mai noi primele (fără limit)
+    const { data: polls, error } = await _sb
+      .from('polls')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (!polls || polls.length === 0) {
+      pollEl.innerHTML = `
+        <div class="poll-empty">
+          <p style="font-size:2.5rem; margin-bottom:12px;">🗳</p>
+          <p class="text-sm font-bold" style="color:var(--t2);">Niciun poll încă</p>
+          <p class="text-xs mt-2" style="color:var(--t3);">Creează primul poll pentru crew!</p>
+        </div>`;
+      return;
+    }
+
+    const { data: { session } } = await _sb.auth.getSession();
+    const userId = session?.user?.id;
+
+    // Fetch toate voturile (necesită RLS SELECT policy)
+    const { data: allVotes } = await _sb
+      .from('votes')
+      .select('poll_id, option_id, user_id')
+      .in('poll_id', polls.map(p => p.id));
+
+    let votes = allVotes || [];
+
+    // Fallback RLS: dacă nu am primit nimic, fetch doar voturile userului curent
+    if (votes.length === 0 && userId) {
+      const { data: myVotes } = await _sb
+        .from('votes')
+        .select('poll_id, option_id, user_id')
+        .eq('user_id', userId)
+        .in('poll_id', polls.map(p => p.id));
+      votes = myVotes || [];
+    }
+
+    let html = '';
+    for (const poll of polls) {
+      _pollCache[poll.id] = poll;
+      const pollVotes = votes.filter(v => v.poll_id === poll.id);
+      const myVote    = pollVotes.find(v => v.user_id === userId);
+      html += myVote
+        ? renderPollResults(poll, pollVotes, String(myVote.option_id))
+        : renderPollVoting(poll);
+    }
+    pollEl.innerHTML = html;
+
+  } catch (e) {
+    pollEl.innerHTML = `<div class="poll-empty"><p style="color:#EF4444; font-size:12px;">Eroare: ${e.message}</p></div>`;
+  }
+}
+
+function renderPollVoting(poll) {
+  const opts = poll.options || [];
+  const btns = opts.map((opt, i) => {
+    const color = OPTION_COLORS[i % OPTION_COLORS.length];
+    return `
+      <button class="vote-btn"
+              id="opt-${poll.id}-${opt.id}"
+              style="border-left:3px solid ${color}; --opt-color:${color};"
+              onclick="selectOption('${poll.id}','${opt.id}')">
+        <span class="radio-dot"></span>
+        <span>${opt.text}</span>
+      </button>`;
+  }).join('');
+  return `
+    <div class="poll-card" id="poll-card-${poll.id}">
+      <p class="poll-question">${poll.question}</p>
+      <div class="poll-options" id="opts-${poll.id}">${btns}</div>
+      <div id="vote-msg-${poll.id}" style="min-height:18px; font-size:12px; color:#F97316; text-align:center; margin-top:8px;"></div>
+      <button type="button" class="btn-vote-confirm" id="vote-confirm-${poll.id}"
+              onclick="castVote('${poll.id}')">
+        🗳 Votează!
+      </button>
+    </div>`;
+}
+
+function renderPollResults(poll, votes, myOptionId) {
+  const opts  = poll.options || [];
+  const total = votes.length;
+  const rows  = opts.map((opt, i) => {
+    const count  = votes.filter(v => String(v.option_id) === String(opt.id)).length;
+    const pct    = total > 0 ? Math.round(count / total * 100) : 0;
+    const isMine = String(opt.id) === String(myOptionId);
+    const color  = OPTION_COLORS[i % OPTION_COLORS.length];
+    return `
+      <div class="vote-result-row${isMine ? ' my-vote' : ''}">
+        <div class="vote-result-label">
+          <span>${opt.text}${isMine ? ' ✓' : ''}</span>
+          <span class="vote-result-count">
+            <strong style="font-size:14px; color:${isMine ? color : 'var(--t2)'};">${count}</strong>
+            <span style="font-size:11px; color:var(--t3);"> vot${count !== 1 ? 'uri' : ''} · ${pct}%</span>
+          </span>
+        </div>
+        <div class="vote-bar-track">
+          <div class="vote-bar" style="width:${pct}%; background:${color}; opacity:${isMine ? '1' : '0.45'};"></div>
+        </div>
+      </div>`;
+  }).join('');
+  return `
+    <div class="poll-card" id="poll-card-${poll.id}">
+      <p class="poll-question">${poll.question}</p>
+      <div class="poll-voted-badge">✓ Ai votat</div>
+      <div class="poll-results">${rows}</div>
+      <p class="poll-total">${total} vot${total !== 1 ? 'uri' : ''} total</p>
+    </div>`;
+}
+
+function selectOption(pollId, optionId) {
+  // Deselect all options in this poll
+  document.querySelectorAll(`#opts-${pollId} .vote-btn`).forEach(b => b.classList.remove('selected'));
+  // Select the clicked one
+  const btn = document.getElementById(`opt-${pollId}-${optionId}`);
+  if (btn) btn.classList.add('selected');
+  // Store selection on card
+  const card = document.getElementById(`poll-card-${pollId}`);
+  if (card) card.dataset.selectedOpt = optionId;
+  // Enable confirm button
+  const confirmBtn = document.getElementById(`vote-confirm-${pollId}`);
+  if (confirmBtn) confirmBtn.disabled = false;
+}
+
+async function castVote(pollId) {
+  if (!_sb) return;
+  const card      = document.getElementById(`poll-card-${pollId}`);
+  const optionId  = card?.dataset.selectedOpt;
+  const msgEl     = document.getElementById(`vote-msg-${pollId}`);
+  const confirmBtn = document.getElementById(`vote-confirm-${pollId}`);
+
+  // Nicio opțiune selectată — arată mesaj vizibil
+  if (!optionId) {
+    if (msgEl) {
+      msgEl.textContent = '← Selectează o variantă mai întâi';
+      setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 2500);
+    }
+    return;
+  }
+
+  // Blochează UI
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Se trimite...'; }
+  card.querySelectorAll('.vote-btn').forEach(b => { b.disabled = true; b.style.opacity = '0.45'; });
+  if (msgEl) msgEl.textContent = '';
+
+  const { data: { session } } = await _sb.auth.getSession();
+  if (!session) {
+    if (msgEl) msgEl.textContent = 'Trebuie să fii logat.';
+    return;
+  }
+
+  const { error } = await _sb.from('votes').insert({
+    poll_id:   pollId,
+    user_id:   session.user.id,
+    option_id: optionId,
+  });
+
+  if (!error) {
+    // Fetch voturi actualizate
+    const { data: freshVotes } = await _sb
+      .from('votes')
+      .select('option_id, user_id')
+      .eq('poll_id', pollId);
+
+    // Dacă RLS blochează SELECT, adăugăm manual votul curent
+    const allFresh = freshVotes ? [...freshVotes] : [];
+    if (!allFresh.some(v => v.user_id === session.user.id)) {
+      allFresh.push({ option_id: optionId, user_id: session.user.id });
+    }
+
+    const poll = _pollCache[pollId];
+    if (poll) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderPollResults(poll, allFresh, optionId);
+      card.replaceWith(tmp.firstElementChild);
+    } else {
+      loadActivePoll();
+    }
+  } else {
+    // Arată eroarea direct în card
+    if (msgEl) msgEl.textContent = 'Eroare: ' + error.message;
+    card.querySelectorAll('.vote-btn').forEach(b => { b.disabled = false; b.style.opacity = ''; });
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '🗳 Votează!'; }
+  }
+}
+
+
+// ── Presentation (Whiteboard Slides) ──────────────────────────
+var prezCurrent = 0;
+var _prezTouchX = null;
+var _prezInited = false;
+
+function _fi(content, delay, extraStyle) {
+  return '<div style="opacity:0;animation:fadeSlideUp 0.5s ease forwards '+delay+'s;'+(extraStyle||'')+'">'+content+'</div>';
+}
+function _ul(color, width, delay) {
+  return '<svg viewBox="0 0 200 8" style="width:'+(width||'60%')+';height:8px;display:block;margin:4px auto 0"><path d="M2 5 Q50 2, 100 4 T198 3" stroke="'+(color||'#0891B2')+'" stroke-width="3" fill="none" stroke-linecap="round" style="stroke-dasharray:250;stroke-dashoffset:250;animation:drawLine 0.8s ease forwards '+(delay||0.5)+'s"/></svg>';
+}
+function _chk(delay, color) {
+  return '<svg viewBox="0 0 30 30" style="width:18px;height:18px;flex-shrink:0;margin-top:2px"><path d="M5 16 L12 23 L25 7" stroke="'+(color||'#16A34A')+'" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:50;stroke-dashoffset:50;animation:drawLine 0.4s ease forwards '+delay+'s"/></svg>';
+}
+function _x(delay) {
+  return '<svg viewBox="0 0 24 24" style="width:18px;height:18px;flex-shrink:0;margin-top:2px"><path d="M4 4 L20 20 M20 4 L4 20" stroke="#DC2626" stroke-width="3" fill="none" stroke-linecap="round" style="stroke-dasharray:50;stroke-dashoffset:50;animation:drawLine 0.4s ease forwards '+delay+'s"/></svg>';
+}
+function _arr(delay, color) {
+  return '<svg viewBox="0 0 60 30" style="width:44px;height:22px"><path d="M5 15 Q30 14, 55 15 M45 8 L57 15 L45 22" stroke="'+(color||'#1a2744')+'" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="stroke-dasharray:200;stroke-dashoffset:200;animation:drawLine 0.6s ease forwards '+delay+'s"/></svg>';
+}
+
+const PREZ_SLIDES = [
+  { label:'Intro', render:function() { return (
+    '<div style="text-align:center;padding:20px 24px">'+
+    _fi('<div style="font-size:13px;color:#6B7280;letter-spacing:3px;margin-bottom:14px;font-family:Georgia,serif">— PREZENTARE EXCLUSIVĂ PENTRU ECHIPĂ —</div>',0.1)+
+    _fi('<div style="font-size:clamp(30px,7vw,48px);font-weight:900;color:#1a2744;line-height:1.1;font-family:Georgia,serif">PLANUL SUPREM</div>',0.3)+
+    _fi('<div style="font-size:clamp(22px,5vw,38px);font-weight:800;color:#0891B2;font-family:Georgia,serif;margin-top:6px">ZAKYNTHOS 2026</div>'+_ul('#0891B2','60%',0.8),0.5)+
+    _fi('<div style="font-size:15px;color:#6B7280;margin-top:16px;font-style:italic;font-family:Georgia,serif">6 – 13 August · 10 români · 1 plan genial</div>',0.9)+
+    _fi('<div style="margin-top:20px;padding:12px 18px;background:#F5E6CC;border-radius:10px;display:inline-block;border:2px dashed #EA580C"><span style="font-size:13px;color:#EA580C;font-weight:600">⚠️ Dacă cineva zice \"lăsați că ne descurcăm noi acolo\"...<br>arătați-i prezentarea asta.</span></div>',1.2)+
+    _fi('<span style="font-size:11px;color:#6B7280">swipe sau click ▸ pentru slide-ul următor</span>',1.5,'margin-top:20px;display:block')+
+    '</div>');
+  }},
+  { label:'Problema', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:clamp(20px,5vw,28px);font-weight:800;color:#DC2626;font-family:Georgia,serif;text-align:center">FĂRĂ PLAN = HAOS TOTAL</div>'+_ul('#DC2626','50%',0.4),0.1)+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px">'+
+    _fi('<div style="background:#FEE2E2;border-radius:12px;padding:14px;border:2px solid #FECACA"><div style="font-weight:800;color:#DC2626;font-size:13px;margin-bottom:8px">❌ VARIANTA HAOS</div><div style="font-size:11px;color:#1a2744;line-height:1.7">'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_x(0.6)+'<span>"Mergem unde ne duce vântul"</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_x(0.8)+'<span>3 ore să decidem unde mâncăm</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_x(1.0)+'<span>Bărci sold out că n-am rezervat</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start">'+_x(1.2)+'<span>Ratat Blue Caves, Keri, tot</span></div>'+
+      '</div></div>',0.4)+
+    _fi('<div style="background:#DCFCE7;border-radius:12px;padding:14px;border:2px solid #BBF7D0"><div style="font-weight:800;color:#16A34A;font-size:13px;margin-bottom:8px">✅ CU PLANUL ĂSTA</div><div style="font-size:11px;color:#1a2744;line-height:1.7">'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_chk(0.8)+'<span>Fiecare zi are obiectiv clar</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_chk(1.0)+'<span>Restaurante testate, prețuri știute</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start;margin-bottom:4px">'+_chk(1.2)+'<span>Bărci + mașini rezervate din timp</span></div>'+
+      '<div style="display:flex;gap:5px;align-items:flex-start">'+_chk(1.4)+'<span>Economii de 200-400€ pe grup</span></div>'+
+      '</div></div>',0.6)+
+    '</div>'+
+    _fi('<div style="text-align:center;margin-top:14px;font-size:11px;color:#EA580C;font-style:italic;font-family:Georgia,serif">\"Ultima oară când am zis ne descurcăm acolo am mâncat 3 zile doar gyros la 15€.\"</div>',1.6)+
+    '</div>');
+  }},
+
+  { label:'Overview', render:function() {
+    var days = [
+      {zi:'Z1',title:'Sosire + Kalamaki chill',icon:'✈️',color:'#2563EB',t:'taxi'},
+      {zi:'Z2',title:'Zakynthos Town — Istorie',icon:'🏛️',color:'#7C3AED',t:'bus 1.80€'},
+      {zi:'Z3',title:'BARCĂ pe mare!',icon:'⛵',color:'#0891B2',t:'barcă self-drive'},
+      {zi:'Z4',title:'Plaje sudice + cultură',icon:'🏖️',color:'#EA580C',t:'bus + taxi'},
+      {zi:'Z5',title:'Blue Caves + Navagio View',icon:'🔵',color:'#2563EB',t:'mașină 1/3'},
+      {zi:'Z6',title:'Vest sălbatic + cramă',icon:'🌿',color:'#16A34A',t:'mașină 2/3'},
+      {zi:'Z7',title:'Vasilikos + apus la Keri',icon:'🌅',color:'#DC2626',t:'mașină 3/3'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:clamp(20px,4vw,26px);font-weight:800;color:#1a2744;font-family:Georgia,serif;text-align:center">7 ZILE. 1 INSULĂ. 0 STRES.</div>'+_ul('#0891B2','40%',0.3),0.1)+
+      '<div style="margin-top:16px;display:flex;flex-direction:column;gap:7px">'+
+      days.map(function(d,i){return _fi('<div style="display:flex;align-items:center;gap:10px;background:white;border-radius:10px;padding:9px 12px;border-left:4px solid '+d.color+';box-shadow:0 1px 3px rgba(0,0,0,0.06)"><span style="font-size:20px;width:28px;text-align:center">'+d.icon+'</span><div style="flex:1"><span style="font-weight:800;color:'+d.color+';font-size:12px">'+d.zi+'</span><span style="font-weight:600;color:#1a2744;font-size:13px;margin-left:7px">'+d.title+'</span></div><span style="font-size:10px;color:#6B7280;background:#E5E7EB;padding:3px 7px;border-radius:12px">'+d.t+'</span></div>',0.3+i*0.13);}).join('')+
+      '</div>'+
+      _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#6B7280;font-style:italic">+ Ziua 8 = zbor acasă (cu lacrimi în ochi și 5kg de măsline în bagaj)</div>',1.8)+
+      '</div>';
+  }},
+
+  { label:'Zilele 1-2', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">ZILELE 1-2: Sosire + Cultură</div>'+_ul('#7C3AED','40%',0.3),0.1)+
+    _fi('<div style="margin-top:14px;background:#EDE9FE;border-radius:12px;padding:14px;border:2px solid #DDD6FE"><div style="font-weight:700;color:#7C3AED;font-size:14px;margin-bottom:6px">✈️ ZIUA 1 — Kalamaki vibes</div><div style="font-size:12px;color:#1a2744;line-height:1.7">Aterizare 08:00 → taxi 15 min → Hector Studios → plajă cu testoase Caretta-Caretta → prânz Pandesia (musaka de vis) → seară pe Main Street cu cocktailuri</div></div>',0.4)+
+    _fi('<div style="margin-top:10px;background:#EDE9FE;border-radius:12px;padding:14px;border:2px solid #DDD6FE"><div style="font-weight:700;color:#7C3AED;font-size:14px;margin-bottom:6px">🏛️ ZIUA 2 — Zakynthos Town</div><div style="font-size:12px;color:#1a2744;line-height:1.7">Bus 1.80€ → Piața Solomos (poetul imnului grecesc!) → Muzeul Bizantin → Castelul Venețian din Bochali (panoramă 360°) → Cumpărături pe Strada Roma → Cină + promenadă pe faleză</div></div>',0.7)+
+    _fi('<div style="display:flex;gap:10px;margin-top:14px"><div style="flex:1;background:#FEF3C7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px">🐢</div><div style="font-size:11px;font-weight:600;color:#1a2744;margin-top:3px">Testoase pe plajă</div></div><div style="flex:1;background:#FEF3C7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px">🏰</div><div style="font-size:11px;font-weight:600;color:#1a2744;margin-top:3px">Castel 1480</div></div><div style="flex:1;background:#FEF3C7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:22px">🍽️</div><div style="font-size:11px;font-weight:600;color:#1a2744;margin-top:3px">Sofrito (must try!)</div></div></div>',1.0)+
+    _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">Fun fact: Zakynthos Town a fost distrus de cutremur în 53 și reconstruit complet. E ca un Phoenix grecesc. 🔥</div>',1.3)+
+    '</div>');
+  }},
+  { label:'Barca Z3', render:function() {
+    var ruta = [
+      {t:'10:00',s:'Laganas Bay — vânătoare de testoase',e:'🐢'},
+      {t:'11:30',s:'Marathonisi (Turtle Island) — plajă + peșteri',e:'🏝️'},
+      {t:'13:00',s:'Keri Caves — snorkeling în peșteri turcoaz',e:'🤿'},
+      {t:'15:00',s:'Myzithres Rocks — stânci albe dramatice',e:'🪨'},
+      {t:'16:00',s:'Înapoi + Cameo Island opțional',e:'🎯'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#0891B2;font-family:Georgia,serif">ZIUA 3: SUNTEM CAPITANI! ⛵</div>'+_ul('#0891B2','45%',0.3),0.1)+
+      _fi('<div style="background:#ECFDF5;border-radius:12px;padding:14px;margin-top:12px;border:2px solid #A7F3D0"><div style="font-size:13px;color:#1a2744;line-height:1.7"><b>2 bărci self-drive, FĂRĂ permis!</b> Plecare din Agios Sostis (2 km de hotel, transfer gratuit). Primești briefing + GPS + hartă pe WhatsApp. E mai ușor decât pe DN1.</div></div>',0.4)+
+      _fi('<div style="margin-top:12px;font-size:14px;font-weight:700;color:#1a2744">RUTA SUDICĂ (5-7 ore):</div>',0.6)+
+      '<div style="margin-top:8px;display:flex;flex-direction:column;gap:5px">'+
+      ruta.map(function(r,i){return _fi('<div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="font-weight:700;color:#0891B2;width:42px;flex-shrink:0">'+r.t+'</span>'+_arr(0.8+i*0.12,'#0891B2')+'<span>'+r.e+' '+r.s+'</span></div>',0.7+i*0.12);}).join('')+
+      '</div>'+
+      _fi('<div style="margin-top:12px;background:#FFF7ED;border-radius:10px;padding:12px;border:2px dashed #FDBA74"><div style="font-size:12px;color:#1a2744"><b>💰 Cost barcă:</b> ~80-150€/barcă (5-6 pers) + combustibil ~100€/barcă<br><b>Per persoană:</b> ~25-40€ pentru O ZI PE MARE!<br><b>📍 Companii:</b> Traventure, Fun@Sea, Ramo&#39;s Boats</div></div>',1.5)+
+      '</div>';
+  }},
+
+  { label:'Ziua 4', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:22px;font-weight:800;color:#EA580C;font-family:Georgia,serif">ZIUA 4: Plaje + Chill grecesc</div>'+_ul('#EA580C','40%',0.3),0.1)+
+    _fi('<div style="font-size:13px;color:#1a2744;margin-top:12px;line-height:1.7">Zi relaxantă cu bus și taxi: dimineața pe plaja Kalamaki, după-amiaza la <b>Gerakas Beach</b> — una din cele mai frumoase plaje, cu nisip fin și testoase care vin să cuibărească.</div>',0.4)+
+    _fi('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px"><div style="background:#FFF7ED;border-radius:12px;padding:12px;text-align:center"><div style="font-size:26px">🏖️</div><div style="font-weight:700;font-size:12px;margin-top:5px;color:#1a2744">Gerakas Beach</div><div style="font-size:10px;color:#6B7280;margin-top:3px">Taxi ~18€ (nu 18€/pers!)</div></div><div style="background:#FFF7ED;border-radius:12px;padding:12px;text-align:center"><div style="font-size:26px">🎡</div><div style="font-weight:700;font-size:12px;margin-top:5px;color:#1a2744">Caretta Fun Park</div><div style="font-size:10px;color:#6B7280;margin-top:3px">Seara, bumper cars!</div></div></div>',0.7)+
+    _fi('<div style="margin-top:14px;background:#F5F3FF;border-radius:12px;padding:12px"><div style="font-weight:700;color:#7C3AED;font-size:13px;margin-bottom:6px">🍷 Cina: Michaelos Restaurant</div><div style="font-size:12px;color:#1a2744;line-height:1.6">Ascuns printre copaci, atmosferă intimă. Comandați <b>Kleftiko</b> (miel în pergament) sau <b>Stifado</b> (tocană de vită cu ceapă). Însoțit cu vin local. Chef&#39;s kiss. 🤌</div></div>',1.0)+
+    _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">Dacă cineva întreabă \"dar în Laganas e party?\" — da, e acolo la 4 km. Duceți-vă, dar nu ne așteptați. 😄</div>',1.3)+
+    '</div>');
+  }},
+  { label:'Zilele 5-6', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:22px;font-weight:800;color:#2563EB;font-family:Georgia,serif">ZILELE 5-6: Cu mașina 🚗💨</div>'+_ul('#2563EB','35%',0.3),0.1)+
+    _fi('<div style="margin-top:12px;background:#EFF6FF;border-radius:12px;padding:14px;border:2px solid #BFDBFE"><div style="font-weight:700;color:#2563EB;font-size:13px;margin-bottom:6px">🗺️ ZIUA 5 — Nordul insulei</div><div style="font-size:12px;color:#1a2744;line-height:1.7">Xigia Sulfur Beach (apă cu proprietăți terapeutice) → <b>BLUE CAVES</b> (15€/pers barcă mică, reflexii albastre ireale) → Volimes sat + miere locală → <b>NAVAGIO VIEWPOINT</b> (200m deasupra epavei!) → Porto Vromi baie turcoaz</div></div>',0.4)+
+    _fi('<div style="margin-top:10px;background:#F0FDF4;border-radius:12px;padding:14px;border:2px solid #BBF7D0"><div style="font-weight:700;color:#16A34A;font-size:13px;margin-bottom:6px">🌿 ZIUA 6 — Vestul sălbatic</div><div style="font-size:12px;color:#1a2744;line-height:1.7"><b>Porto Limnionas</b> (fiord în miniatură, snorkeling WOW) → Porto Roxa (cală secretă) → <b>Crama Callinico</b> din 1918 (degustare vin!) → Mânăstirea Anafonitria → <b>Apus la KAMBI</b> (cel mai frumos din Zakynthos!)</div></div>',0.7)+
+    _fi('<div style="margin-top:12px;background:#FEF2F2;border-radius:10px;padding:10px;display:flex;gap:8px;align-items:center"><span style="font-size:22px">⚠️</span><div style="font-size:11px;color:#DC2626;line-height:1.5"><b>Navagio Beach e ÎNCHISĂ în 2026</b> (alunecare teren). NU se coboară pe plajă. Dar viewpoint-ul de sus e DESCHIS — epava de la 200m înălțime!</div></div>',1.0)+
+    _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">Descărcați Google Maps OFFLINE. Pe vestul insulei, telefonul devine un ceas scump. ⏱️</div>',1.3)+
+    '</div>');
+  }},
+
+  { label:'Ziua 7', render:function() {
+    var spots = [
+      {s:'Banana Beach — nisip auriu, beach bar, sporturi',e:'🍌',h:false},
+      {s:'Dafni Beach — snorkeling cu pești colorați',e:'🐠',h:false},
+      {s:'Porto Zoro — plajă lungă între stânci',e:'🏝️',h:false},
+      {s:'Keri Village — sat cu case de piatră',e:'🏘️',h:false},
+      {s:'KERI LIGHTHOUSE — apus peste Myzithres!',e:'🌅',h:true},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#DC2626;font-family:Georgia,serif">ZIUA 7: Apusul Suprem 🌅</div>'+_ul('#DC2626','35%',0.3),0.1)+
+      _fi('<div style="font-size:13px;color:#1a2744;margin-top:12px;line-height:1.7">Ultima zi cu mașina — explorăm <b>Peninsula Vasilikos</b> pe coasta de sud-est, apoi închidem în stil mare cu apusul de la <b>Farul Keri</b>.</div>',0.4)+
+      '<div style="margin-top:12px;display:flex;flex-direction:column;gap:7px">'+
+      spots.map(function(r,i){return _fi('<div style="display:flex;align-items:center;gap:8px;background:'+(r.h?'#FEF3C7':'white')+';border-radius:10px;padding:9px 12px;border:'+(r.h?'2px solid #FCD34D':'1px solid #E5E7EB')+';font-weight:'+(r.h?'700':'400')+'"><span style="font-size:18px">'+r.e+'</span><span style="font-size:12px;color:#1a2744">'+r.s+'</span></div>',0.6+i*0.12);}).join('')+
+      '</div>'+
+      _fi('<div style="text-align:center;margin-top:14px;font-size:12px;color:#EA580C;font-style:italic">Dacă nu plângeți la apusul de la Keri, verificați-vă pulsul. 💀</div>',1.5)+
+      '</div>';
+  }},
+  { label:'Transport', render:function() {
+    var t = [
+      {i:'🚶',ti:'Mers pe jos',d:'Kalamaki e mic, totul e walkable — restaurante, baruri, plajă',z:'Zilnic',c:'#16A34A'},
+      {i:'🚌',ti:'Bus KTEL',d:'Kalamaki ↔ Zakynthos Town: 1.80€, ~14 curse/zi',z:'Z1-Z4',c:'#2563EB'},
+      {i:'🚕',ti:'Taxi',d:'Fără aparat! Negociați ÎNAINTE. Kalamaki→Town: ~12-15€',z:'Când trebuie',c:'#F59E0B'},
+      {i:'⛵',ti:'Barcă self-drive',d:'2 bărci, fără permis, din Agios Sostis (2km)',z:'Z3',c:'#0891B2'},
+      {i:'🚗',ti:'Mașină închiriată',d:'2 mașini automat, 5 pers/mașină — AbbyCar recomandat',z:'Z5-Z7',c:'#DC2626'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">CUM NE MIȘCĂM?</div>'+_ul('#16A34A','30%',0.3),0.1)+
+      '<div style="margin-top:14px;display:flex;flex-direction:column;gap:9px">'+
+      t.map(function(x,i){return _fi('<div style="display:flex;align-items:center;gap:12px;background:white;border-radius:12px;padding:11px 14px;border-left:4px solid '+x.c+';box-shadow:0 1px 3px rgba(0,0,0,0.06)"><span style="font-size:24px">'+x.i+'</span><div style="flex:1"><div style="font-weight:700;font-size:13px;color:#1a2744">'+x.ti+'</div><div style="font-size:11px;color:#6B7280;margin-top:1px">'+x.d+'</div></div><span style="font-size:10px;font-weight:600;color:'+x.c+';background:'+x.c+'18;padding:3px 8px;border-radius:16px;flex-shrink:0">'+x.z+'</span></div>',0.3+i*0.14);}).join('')+
+      '</div>'+
+      _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">Trezirea nu e niciodată înainte de 9. Am zis. 😴</div>',1.3)+
+      '</div>';
+  }},
+
+  { label:'Mașini', render:function() { return (
+    '<div style="padding:18px 22px">'+
+    _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">MAȘINI: 3 zile, 2 mașini 🚗🚗</div>'+_ul('#2563EB','40%',0.3),0.1)+
+    _fi('<div style="margin-top:12px;font-size:13px;color:#1a2744;line-height:1.6">10 persoane ÷ 2 mașini = 5/mașină. Cutie <b>automată</b> (ca să nu mai auzim \"eu nu știu cu manuala\"\). Rezervăm pe 10, 11, 12 August.</div>',0.4)+
+    _fi('<div style="margin-top:12px;overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#1a2744"><th style="color:white;padding:7px 9px;text-align:left;font-weight:700">Firmă</th><th style="color:white;padding:7px 9px;text-align:left;font-weight:700">Mașină</th><th style="color:white;padding:7px 9px;text-align:left;font-weight:700">~Preț/3 zile</th><th style="color:white;padding:7px 9px;text-align:left;font-weight:700">Bonus</th></tr></thead><tbody><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB"><td style="padding:7px 9px;font-weight:600">AbbyCar ⭐</td><td style="padding:7px 9px">Fiat 500 auto</td><td style="padding:7px 9px">90-150€</td><td style="padding:7px 9px">Fără depozit!</td></tr><tr style="background:white;border-bottom:1px solid #E5E7EB"><td style="padding:7px 9px;font-weight:600">Yours Rental</td><td style="padding:7px 9px">Small auto</td><td style="padding:7px 9px">100-140€</td><td style="padding:7px 9px">Cel mai ieftin</td></tr><tr style="background:#F9FAFB;border-bottom:1px solid #E5E7EB"><td style="padding:7px 9px;font-weight:600">SIXT</td><td style="padding:7px 9px">VW Polo auto</td><td style="padding:7px 9px">140-200€</td><td style="padding:7px 9px">International</td></tr><tr style="background:white"><td style="padding:7px 9px;font-weight:600">Ok Mobility</td><td style="padding:7px 9px">Economy auto</td><td style="padding:7px 9px">120-170€</td><td style="padding:7px 9px">Popular local</td></tr></tbody></table></div>',0.6)+
+    _fi('<div style="margin-top:12px;display:flex;gap:8px"><div style="flex:1;background:#DCFCE7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#16A34A">~30-50€</div><div style="font-size:10px;color:#1a2744;margin-top:3px">per persoană / 3 zile mașină</div></div><div style="flex:1;background:#FEF3C7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:#EA580C">~15-25€</div><div style="font-size:10px;color:#1a2744;margin-top:3px">per persoană / benzină 3 zile</div></div></div>',1.0)+
+    _fi('<div style="text-align:center;margin-top:12px;font-size:11px;color:#EA580C;font-style:italic">AbbyCar e recomandata #1 pe insulă. Livrează mașina la hotel. Ca Glovo, dar cu mașini. 🏎️</div>',1.3)+
+    '</div>');
+  }},
+  { label:'Mâncare', render:function() {
+    var foods = [
+      {n:'Sofrito',d:'Vițel în vin alb, usturoi, piper alb — se topește în gură',e:'🥩'},
+      {n:'Kleftiko',d:'Miel gătit lent în pergament cu ierburi',e:'🐑'},
+      {n:'Stifado',d:'Tocană de vită cu ceapă dulce caramelizată',e:'🍲'},
+      {n:'Caracatiță',d:'La grătar, cu lămâie și ulei de măsline',e:'🐙'},
+      {n:'Ladotyri',d:'Brânză de oaie în ulei — unică pe insulă',e:'🧀'},
+      {n:'Mandolato',d:'Nougat local din Volimes — suvenirulperfect',e:'🍬'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">CE MÂNCĂM? 🤤</div>'+_ul('#EA580C','25%',0.3),0.1)+
+      _fi('<div style="margin-top:12px;font-size:13px;font-weight:600;color:#1a2744">Feluri tradiționale de neratat:</div>',0.4)+
+      '<div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:7px">'+
+      foods.map(function(f,i){return _fi('<div style="background:white;border-radius:10px;padding:9px 11px;border:1px solid #E5E7EB"><div style="font-size:17px;display:inline">'+f.e+'</div><span style="font-weight:700;font-size:12px;color:#1a2744;margin-left:5px">'+f.n+'</span><div style="font-size:10px;color:#6B7280;margin-top:3px;line-height:1.4">'+f.d+'</div></div>',0.5+i*0.1);}).join('')+
+      '</div>'+
+      _fi('<div style="margin-top:12px;background:#DCFCE7;border-radius:10px;padding:10px"><div style="font-size:11px;color:#1a2744"><b>💡 Regula de aur:</b> Dacă restaurantul are poze în meniu și text în 5 limbi = turistic și scump. Dacă are meniu scris de mână și bunica gătește în spate = ACOLO mâncați.</div></div>',1.3)+
+      _fi('<div style="text-align:center;margin-top:10px;font-size:11px;color:#EA580C;font-style:italic">Vinul local \"Verdea\" e ușor dulce și perfect pe caniculă. Da, la 2 PM. Nu judecăm. 🍷</div>',1.5)+
+      '</div>';
+  }},
+
+  { label:'Economii', render:function() {
+    var rows = [
+      {h:'Mașină la fața locului în August: ~70€/zi',p:'Rezervată din timp: ~45€/zi',s:'~75€/mașină'},
+      {h:'Barcă prin hotel: ~50€/pers',p:'Direct la companie: ~25-40€/pers',s:'~15€/pers'},
+      {h:'Excursie organizată Blue Caves: ~45€/pers',p:'Barcă mică de la Skinari: ~15€/pers',s:'~30€/pers'},
+      {h:'Apă pe plajă: 3€/sticlă',p:'Din minimarket: 0.50€/sticlă',s:'~35€ vacanță'},
+      {h:'Restaurant turistic: 25€/masă',p:'Tavernă din sat: 10€/masă',s:'~100€ vacanță'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#16A34A;font-family:Georgia,serif">ECONOMII REALE 💰</div>'+_ul('#16A34A','30%',0.3),0.1)+
+      _fi('<div style="margin-top:12px;font-size:13px;color:#1a2744;line-height:1.6">Un plan bun nu înseamnă doar să știi unde mergi, ci să <b>nu arunci banii pe fereastră</b>:</div>',0.4)+
+      '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">'+
+      rows.map(function(r,i){return _fi('<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;background:'+(i%2===0?'#F9FAFB':'white')+';border-radius:8px;padding:7px 10px;font-size:11px"><div style="color:#DC2626;text-decoration:line-through;opacity:0.7">'+r.h+'</div><div style="color:#16A34A;font-weight:600">'+r.p+'</div><div style="background:#DCFCE7;color:#16A34A;font-weight:800;padding:3px 7px;border-radius:8px;font-size:10px;white-space:nowrap">-'+r.s+'</div></div>',0.5+i*0.14);}).join('')+
+      '</div>'+
+      _fi('<div style="margin-top:14px;background:#DCFCE7;border-radius:12px;padding:12px;text-align:center;border:2px solid #86EFAC"><div style="font-size:16px;font-weight:800;color:#16A34A">Economie totală pe grup: ~200-400€</div><div style="font-size:11px;color:#1a2744;margin-top:3px">Adică un prânz de adio în plus sau un souvenir mai generos 🎁</div></div>',1.5)+
+      '</div>';
+  }},
+  { label:'Tips', render:function() {
+    var tips = [
+      {i:'📱',t:'Google Maps OFFLINE — pe vest nu ai semnal',c:'#2563EB'},
+      {i:'💵',t:'CASH obligatoriu — tavernele din sate nu au POS',c:'#16A34A'},
+      {i:'👟',t:'Pantofi de apă — Porto Limnionas e stâncos',c:'#EA580C'},
+      {i:'🐢',t:'NU atingeți testoasele, NU flash, NU umbrele lângă cuiburi — amendă urâtă',c:'#DC2626'},
+      {i:'🔌',t:'Priză = ca în România. Fusul orar = la fel. Monedă = Euro',c:'#0891B2'},
+      {i:'🍽️',t:'Cina în Grecia: după 21:00. Nu e târziu, e normal',c:'#7C3AED'},
+      {i:'⛽',t:'Benzină: alimentați în Zakynthos Town, e mai ieftină',c:'#F59E0B'},
+      {i:'📸',t:'Blue Caves: cele mai frumoase 09:00-11:00 (reflexia albastră)',c:'#2563EB'},
+      {i:'🛒',t:'Miere + măsline din Volimes = jumătate de preț față de magazine',c:'#16A34A'},
+      {i:'🚕',t:'Taxi fără aparat! Negociați ÎNAINTE de urcare',c:'#DC2626'},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">TIPS RAPIDE 🧠</div>'+_ul('#7C3AED','30%',0.3),0.1)+
+      '<div style="margin-top:12px;display:flex;flex-direction:column;gap:0">'+
+      tips.map(function(x,i){return _fi('<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#1a2744;line-height:1.4;padding:5px 0;border-bottom:'+(i<9?'1px solid #E5E7EB':'none')+'"><span style="font-size:17px;flex-shrink:0">'+x.i+'</span><span>'+x.t+'</span></div>',0.2+i*0.09);}).join('')+
+      '</div>'+
+      _fi('<div style="text-align:center;margin-top:10px;font-size:11px;color:#EA580C;font-style:italic">Cel mai important tip: nu încercați să faceți totul perfect. E vacanță, nu misiune NASA. 🚀</div>',1.5)+
+      '</div>';
+  }},
+
+  { label:'Buget', render:function() {
+    var cats = [
+      {c:'Cazare (7 nopți)',v:'427€',n:'Hector Studios ✓',p:40},
+      {c:'Masă (7 zile)',v:'200-300€',n:'~35€/zi mix',p:28},
+      {c:'Transport total',v:'85-135€',n:'bus+taxi+mașină+barcă',p:12},
+      {c:'Intrări + activități',v:'40-70€',n:'muzee, go-kart, Blue Caves',p:6},
+      {c:'Băuturi',v:'30-60€',n:'5-8€/cocktail',p:5},
+      {c:'Suveniruri',v:'20-50€',n:'miere, măsline, nougat',p:4},
+    ];
+    return '<div style="padding:18px 22px">'+
+      _fi('<div style="font-size:22px;font-weight:800;color:#1a2744;font-family:Georgia,serif">BUGET / PERSOANĂ 📊</div>'+_ul('#0891B2','35%',0.3),0.1)+
+      _fi('<div style="margin-top:12px;display:flex;flex-direction:column;gap:5px">'+
+      cats.map(function(x,i){return '<div style="display:flex;align-items:center;gap:8px;font-size:12px;opacity:0;animation:fadeSlideUp 0.5s ease forwards '+(0.5+i*0.1)+'s"><div style="width:110px;font-weight:600;color:#1a2744;flex-shrink:0">'+x.c+'</div><div style="flex:1;background:#E5E7EB;border-radius:6px;height:20px;position:relative;overflow:hidden"><div style="width:'+x.p+'%;height:100%;background:#0891B2;border-radius:6px;animation:growBar 0.8s ease forwards '+(0.7+i*0.1)+'s;transform:scaleX(0);transform-origin:left"></div></div><div style="width:75px;font-weight:700;color:#0891B2;text-align:right;flex-shrink:0;font-size:11px">'+x.v+'</div></div>';}).join('')+
+      '</div>',0.4)+
+      _fi('<div style="margin-top:16px;text-align:center;background:linear-gradient(135deg,#1a2744,#0891B2);border-radius:14px;padding:18px;color:white"><div style="font-size:13px;opacity:0.8;margin-bottom:4px">TOTAL ESTIMAT (fără zbor)</div><div style="font-size:clamp(26px,6vw,36px);font-weight:900;font-family:Georgia,serif">830 - 1.100€</div><div style="font-size:11px;opacity:0.7;margin-top:4px">per persoană, 7 zile, toate incluse</div></div>',1.4)+
+      _fi('<div style="text-align:center;margin-top:10px;font-size:11px;color:#EA580C;font-style:italic">Mai puțin decât o săptămână în Mamaia. Just saying. 🏖️</div>',1.7)+
+      '</div>';
+  }},
+  { label:'Final', render:function() {
+    var items = [
+      {e:'⛵',t:'Bărci pe mare turcoaz'},
+      {e:'🏛️',t:'Istorie venețiană de 500 ani'},
+      {e:'🐢',t:'Testoase care vin la tine'},
+      {e:'🌅',t:'Apusuri care te fac să plângi'},
+      {e:'🍷',t:'Vin și Sofrito pe terasă'},
+      {e:'💰',t:'Bine planificat, fără risipă'},
+    ];
+    return '<div style="padding:28px 24px;text-align:center">'+
+      _fi('<div style="font-size:clamp(26px,6vw,40px);font-weight:900;color:#1a2744;font-family:Georgia,serif;line-height:1.2">DECI...</div>',0.1)+
+      _fi('<div style="font-size:clamp(20px,4vw,30px);font-weight:800;color:#0891B2;font-family:Georgia,serif;margin-top:12px">CINE E CU MINE? 🙋</div>'+_ul('#0891B2','50%',0.8),0.5)+
+      '<div style="margin-top:20px;display:flex;flex-direction:column;gap:8px;max-width:320px;margin-left:auto;margin-right:auto">'+
+      items.map(function(x,i){return _fi('<div style="display:flex;align-items:center;gap:8px">'+_chk(1.2+i*0.12)+'<span style="font-size:14px;color:#1a2744">'+x.e+' '+x.t+'</span></div>',1.1+i*0.12);}).join('')+
+      '</div>'+
+      _fi('<div style="margin-top:24px;padding:16px 26px;background:linear-gradient(135deg,#1a2744,#0891B2);border-radius:14px;display:inline-block"><div style="color:white;font-size:16px;font-weight:800">Ne vedem în Zakynthos! 🇬🇷</div><div style="color:rgba(255,255,255,0.7);font-size:11px;margin-top:4px">6 August 2026 · Aeroportul Dionysios Solomos</div></div>',2.0)+
+      _fi('<div style="margin-top:16px;font-size:12px;color:#6B7280;font-style:italic">P.S. Cine nu vine, primește poza cu noi pe barcă. 📸😎</div>',2.4)+
+      '</div>';
+  }},
+];
+
+
+function prezRender() {
+  var slide = PREZ_SLIDES[prezCurrent];
+  var el = document.getElementById('prez-slide');
+  if (!el) return;
+
+  // Slide number badge + dot texture
+  el.innerHTML =
+    '<div style="position:absolute;top:10px;right:12px;font-size:10px;color:#6B7280;font-weight:600;background:rgba(255,255,255,0.85);padding:2px 8px;border-radius:10px;z-index:2">'+(prezCurrent+1)+' / '+PREZ_SLIDES.length+'</div>'+
+    '<div style="position:absolute;inset:0;opacity:0.025;pointer-events:none;background-image:radial-gradient(circle,#000 0.5px,transparent 0.5px);background-size:16px 16px"></div>'+
+    '<div style="position:relative;z-index:1">'+slide.render()+'</div>';
+
+  // Update dots
+  var dots = document.getElementById('prez-dots');
+  if (dots) {
+    dots.innerHTML = PREZ_SLIDES.map(function(s,i) {
+      var active = i === prezCurrent;
+      var done   = i < prezCurrent;
+      return '<button class="prez-dot" onclick="prezGo('+i+')" title="'+s.label+'" style="width:'+(active?'28px':'8px')+';background:'+(active?'#0891B2':done?'#1a2744':'#D1D5DB')+'"></button>';
+    }).join('');
+  }
+
+  // Update nav
+  var lbl  = document.getElementById('prez-label');
+  var prev = document.getElementById('prez-nav-btn-prev');
+  var next = document.getElementById('prez-nav-btn-next');
+  if (lbl)  lbl.textContent = slide.label;
+  if (prev) { prev.style.borderColor = prezCurrent===0?'#D1D5DB':'#1a2744'; prev.style.color = prezCurrent===0?'#D1D5DB':'#1a2744'; prev.disabled = prezCurrent===0; }
+  if (next) { next.style.borderColor = prezCurrent===PREZ_SLIDES.length-1?'#D1D5DB':'#0891B2'; next.style.background = prezCurrent===PREZ_SLIDES.length-1?'white':'#0891B2'; next.style.color = prezCurrent===PREZ_SLIDES.length-1?'#D1D5DB':'white'; next.disabled = prezCurrent===PREZ_SLIDES.length-1; }
+}
+
+function prezGo(n) {
+  n = Math.max(0, Math.min(PREZ_SLIDES.length - 1, n));
+  if (n === prezCurrent) return;
+  prezCurrent = n;
+  prezRender();
+}
+
+function prezClickNav(e) {
+  var rect = e.currentTarget.getBoundingClientRect();
+  var x = e.clientX - rect.left;
+  if (x > rect.width * 0.65) prezGo(prezCurrent + 1);
+  else if (x < rect.width * 0.35) prezGo(prezCurrent - 1);
+}
+
+function _prezKeyNav(e) {
+  var pv = document.getElementById('prez-view');
+  if (!pv || pv.classList.contains('hidden')) return;
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); prezGo(prezCurrent + 1); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); prezGo(prezCurrent - 1); }
+}
+
+function _prezTouchStart(e) { _prezTouchX = e.touches[0].clientX; }
+function _prezTouchEnd(e) {
+  if (_prezTouchX === null) return;
+  var diff = _prezTouchX - e.changedTouches[0].clientX;
+  if (Math.abs(diff) > 50) { if (diff > 0) prezGo(prezCurrent+1); else prezGo(prezCurrent-1); }
+  _prezTouchX = null;
+}
+
+function showPrezView() {
+  document.getElementById('prez-view').classList.remove('hidden');
+  document.getElementById('detail-view').classList.add('hidden');
+  document.getElementById('prez-toggle-prez').classList.add('active');
+  document.getElementById('prez-toggle-detail').classList.remove('active');
+  if (!_prezInited) {
+    var sl = document.getElementById('prez-slide');
+    if (sl) { sl.addEventListener('touchstart', _prezTouchStart, {passive:true}); sl.addEventListener('touchend', _prezTouchEnd); }
+    document.addEventListener('keydown', _prezKeyNav);
+    _prezInited = true;
+  }
+  prezRender();
+}
+
+function showDetailView() {
+  document.getElementById('prez-view').classList.add('hidden');
+  document.getElementById('detail-view').classList.remove('hidden');
+  document.getElementById('prez-toggle-prez').classList.remove('active');
+  document.getElementById('prez-toggle-detail').classList.add('active');
+}
+
+// Init presentation when Tab 0 is first opened (after DOM ready)
+document.addEventListener('DOMContentLoaded', function() {
+  var prezView = document.getElementById('prez-view');
+  if (prezView) {
+    // Wire swipe on slide container
+    var sl = document.getElementById('prez-slide');
+    if (sl) { sl.addEventListener('touchstart', _prezTouchStart, {passive:true}); sl.addEventListener('touchend', _prezTouchEnd); }
+    document.addEventListener('keydown', _prezKeyNav);
+    _prezInited = true;
+    prezRender();
+  }
+});
+
+
+// Logout — apelat din butonul din WarRoom
+async function crewLogout() {
+  await _sb.auth.signOut();
+  window.location.reload();
+}
 </script>
 </body>
 </html>
