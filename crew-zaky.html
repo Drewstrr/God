@@ -2200,6 +2200,12 @@ async function loadActivePoll() {
       votes = myVotes || [];
     }
 
+    // Enrichim voter_name null pentru userul curent (voturi vechi fără coloană)
+    const myDisplayName = getDisplayName(session?.user);
+    votes.forEach(v => {
+      if (v.user_id === userId && !v.voter_name) v.voter_name = myDisplayName;
+    });
+
     let html = '';
     for (const poll of polls) {
       _pollCache[poll.id] = poll;
