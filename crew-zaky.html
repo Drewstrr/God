@@ -1153,6 +1153,7 @@ const BEACHES = [
     access: "🚗 Cu mașina",
     day: 5,
     icon: "💧",
+    photo: "IMG_0496.webp",
   },
   {
     name: "Marathonisi (Turtle Island)",
@@ -1161,6 +1162,7 @@ const BEACHES = [
     access: "🚢 Cu barca",
     day: 2,
     icon: "🐢",
+    photo: "IMG_0497.webp",
   },
   {
     name: "Keri Caves",
@@ -1169,6 +1171,7 @@ const BEACHES = [
     access: "🚢 Cu barca",
     day: 2,
     icon: "🗺️",
+    photo: "IMG_0498.jpeg",
   },
   {
     name: "Gerakas Beach",
@@ -1177,6 +1180,7 @@ const BEACHES = [
     access: "🚌 Cu busul",
     day: 3,
     icon: "🌊",
+    photo: "IMG_0499.webp",
   },
   {
     name: "Porto Zoro",
@@ -1185,6 +1189,7 @@ const BEACHES = [
     access: "🚌 Cu busul",
     day: 3,
     icon: "🪨",
+    photo: "IMG_0500.webp",
   },
   {
     name: "Korakonisi",
@@ -1193,6 +1198,7 @@ const BEACHES = [
     access: "🚗 Cu mașina",
     day: 5,
     icon: "🌿",
+    photo: "IMG_0501.jpeg",
   },
   {
     name: "Xigia Beach",
@@ -1201,6 +1207,7 @@ const BEACHES = [
     access: "🚗 Cu mașina",
     day: 6,
     icon: "♨️",
+    photo: "IMG_0502.jpeg",
   },
   {
     name: "Makris Gialos",
@@ -1209,6 +1216,7 @@ const BEACHES = [
     access: "🚗 Cu mașina",
     day: 6,
     icon: "🏝️",
+    photo: "IMG_0503.jpeg",
   },
 ];
 
@@ -1225,20 +1233,31 @@ function renderBeaches() {
   container.innerHTML = BEACHES.map(b => {
     const dc = DIFF_COLORS[b.difficulty];
     return `
-      <div class="rounded-2xl p-4"
+      <div class="rounded-2xl overflow-hidden"
            style="background:${th.card}; border:1px solid ${th.bdr}; border-left:3px solid ${dc.text}; box-shadow:${th.shadow};">
-        <div class="flex items-start justify-between gap-2 mb-2">
-          <div class="flex items-center gap-2">
-            <span class="text-lg">${b.icon}</span>
-            <h3 class="text-sm font-bold" style="color:${th.t1};">${b.name}</h3>
+        ${b.photo ? `
+        <div style="width:100%;height:180px;overflow:hidden;position:relative;">
+          <img src="${b.photo}" alt="${b.name}"
+               style="width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.4s ease;"
+               onmouseover="this.style.transform='scale(1.04)'"
+               onmouseout="this.style.transform='scale(1)'"
+               loading="lazy">
+          <div style="position:absolute;inset:0;background:linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.55) 100%);"></div>
+        </div>` : ''}
+        <div class="p-4">
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg">${b.icon}</span>
+              <h3 class="text-sm font-bold" style="color:${th.t1};">${b.name}</h3>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
+                  style="background:${dc.bg}; color:${dc.text};">${b.difficulty}</span>
           </div>
-          <span class="text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0"
-                style="background:${dc.bg}; color:${dc.text};">${b.difficulty}</span>
-        </div>
-        <p class="text-xs leading-relaxed mb-3" style="color:${th.t3};">${b.desc}</p>
-        <div class="flex items-center gap-4 text-[11px]" style="color:${th.t4};">
-          <span>${b.access}</span>
-          <span>📅 Ziua ${b.day}</span>
+          <p class="text-xs leading-relaxed mb-3" style="color:${th.t3};">${b.desc}</p>
+          <div class="flex items-center gap-4 text-[11px]" style="color:${th.t4};">
+            <span>${b.access}</span>
+            <span>📅 Ziua ${b.day}</span>
+          </div>
         </div>
       </div>
     `;
