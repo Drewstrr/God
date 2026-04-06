@@ -625,12 +625,19 @@
                     <span id="crew-greeting" class="text-xs font-semibold"
                           style="color:rgba(255,255,255,0.55); display:none;"></span>
                 </div>
+                <div class="flex items-center gap-2">
                 <button id="theme-toggle" onclick="toggleTheme()"
                         class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold"
                         style="background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.15); cursor:pointer;">
                     <span id="theme-icon">☀️</span>
                     <span id="theme-label">Light</span>
                 </button>
+                <button onclick="location.reload()" title="Refresh"
+                        class="flex items-center justify-center w-8 h-8 rounded-full text-sm"
+                        style="background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.7); border:1px solid rgba(255,255,255,0.15); cursor:pointer;">
+                    ↻
+                </button>
+                </div>
             </div>
 
             <!-- title -->
