@@ -59,40 +59,58 @@
         /* ══════════════════════════════════════
            MOMENT 1 — Bold-Minimalist tab buttons
         ══════════════════════════════════════ */
+        /* ── Tab buttons: Glassmorphism ── */
         .tab-btn {
-            border-radius: 10px;
-            border: 1px solid rgba(255,255,255,0.10);
-            background: rgba(30,30,30,0.90);
-            color: rgba(200,200,200,0.85);
-            font-size: 11px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.09);
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: rgba(180,180,180,0.65);
+            font-size: 9.5px;
             font-weight: 700;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            padding: 9px 14px;
+            padding: 8px 4px 7px;
             cursor: pointer;
-            transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.22s ease;
             white-space: nowrap;
             -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.18),
+                        inset 0 1px 0 rgba(255,255,255,0.06);
         }
-        body.light .tab-btn {
-            background: rgba(240,240,240,0.90);
-            color: rgba(60,60,60,0.85);
-            border-color: rgba(0,0,0,0.08);
+        .tab-btn .tb-icon {
+            font-size: 17px;
+            line-height: 1;
+            transition: transform 0.2s ease;
         }
-        .tab-btn:hover   { transform: scale(1.05); filter: brightness(1.18); }
-        /* MOMENT 5 — Active press feedback */
-        .tab-btn:active  { transform: scale(0.95); filter: brightness(0.92); }
+        .tab-btn:hover { transform: translateY(-1px); filter: brightness(1.2); }
+        .tab-btn:active { transform: scale(0.94); }
+        /* Active: glow colorat via --tc setată de JS */
         .tab-btn.active-tab {
-            background: rgba(240,240,240,0.97);
-            color: #0A0A0A;
-            border-color: rgba(255,255,255,0.25);
-            box-shadow: 0 3px 14px rgba(0,0,0,0.30);
+            background: rgba(var(--tc-rgb, 14,165,233), 0.13);
+            color: rgb(var(--tc-rgb, 14,165,233));
+            border-color: rgba(var(--tc-rgb, 14,165,233), 0.45);
+            box-shadow: 0 0 0 1px rgba(var(--tc-rgb, 14,165,233), 0.25),
+                        0 4px 16px rgba(var(--tc-rgb, 14,165,233), 0.22),
+                        inset 0 1px 0 rgba(255,255,255,0.10);
+        }
+        .tab-btn.active-tab .tb-icon { transform: scale(1.15); }
+        /* Light mode */
+        body.light .tab-btn {
+            background: rgba(0,0,0,0.03);
+            color: rgba(60,60,60,0.6);
+            border-color: rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8);
         }
         body.light .tab-btn.active-tab {
-            background: rgba(15,15,15,0.92);
-            color: #FFFFFF;
-            border-color: rgba(0,0,0,0.15);
-            box-shadow: 0 3px 14px rgba(0,0,0,0.18);
+            background: rgba(var(--tc-rgb, 14,165,233), 0.10);
+            color: rgb(var(--tc-rgb, 14,165,233));
+            border-color: rgba(var(--tc-rgb, 14,165,233), 0.4);
         }
 
         /* ══════════════════════════════════════
@@ -104,18 +122,24 @@
             100% { box-shadow: 0 0 0 0   rgba(178,34,34,0.45); }
         }
         .tab-btn-warroom {
-            background: #B22222 !important;
-            color: #FFFFFF !important;
-            border-color: rgba(178,34,34,0.4) !important;
+            background: rgba(178,34,34,0.18) !important;
+            color: #ff6b6b !important;
+            border-color: rgba(178,34,34,0.45) !important;
             animation: warPulse 3.2s ease-in-out infinite;
+            box-shadow: 0 0 0 1px rgba(178,34,34,0.2),
+                        0 4px 16px rgba(178,34,34,0.18),
+                        inset 0 1px 0 rgba(255,255,255,0.08) !important;
         }
         .tab-btn-warroom.active-tab {
-            background: #8B0000 !important;
-            box-shadow: 0 3px 14px rgba(178,34,34,0.45) !important;
+            background: rgba(178,34,34,0.30) !important;
+            color: #ff8080 !important;
+            box-shadow: 0 0 0 1px rgba(178,34,34,0.5),
+                        0 4px 20px rgba(178,34,34,0.35),
+                        inset 0 1px 0 rgba(255,255,255,0.10) !important;
         }
         body.light .tab-btn-warroom {
-            background: #B22222 !important;
-            color: #FFFFFF !important;
+            background: rgba(178,34,34,0.12) !important;
+            color: #B22222 !important;
         }
 
         /* ══════════════════════════════════════
@@ -125,14 +149,8 @@
         .nav-main-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
+            gap: 7px;
             padding: 10px 12px 8px;
-        }
-        .nav-main-row .tab-btn {
-            padding: 9px 4px;
-            font-size: 10px;
-            letter-spacing: 0.04em;
-            text-align: center;
         }
         /* WarRoom — întotdeauna full-width, non-sticky */
         .nav-warroom-row {
@@ -142,7 +160,11 @@
         .nav-warroom-row .tab-btn-warroom {
             width: 100%;
             text-align: center;
-            display: block;
+            flex-direction: row;
+            justify-content: center;
+            gap: 7px;
+            padding: 9px 16px;
+            font-size: 11px;
         }
 
         .day-btn  { transition: background 0.2s, color 0.2s, transform 0.15s; }
@@ -673,15 +695,25 @@
     <!-- ══ STICKY: primele 4 butoane ══ -->
     <div class="sticky top-0 z-30" style="background:var(--bg); border-bottom:1px solid var(--bdr);">
         <div class="nav-main-row">
-            <button onclick="switchTab(0)" id="tb-0" class="tab-btn active-tab">Itinerariu</button>
-            <button onclick="switchTab(1)" id="tb-1" class="tab-btn">Costuri</button>
-            <button onclick="switchTab(2)" id="tb-2" class="tab-btn">Kalamaki</button>
-            <button onclick="switchTab(3)" id="tb-3" class="tab-btn">Plaje</button>
+            <button onclick="switchTab(0)" id="tb-0" class="tab-btn active-tab">
+                <span class="tb-icon">✈️</span>Itinerariu
+            </button>
+            <button onclick="switchTab(1)" id="tb-1" class="tab-btn">
+                <span class="tb-icon">💰</span>Costuri
+            </button>
+            <button onclick="switchTab(2)" id="tb-2" class="tab-btn">
+                <span class="tb-icon">📍</span>Kalamaki
+            </button>
+            <button onclick="switchTab(3)" id="tb-3" class="tab-btn">
+                <span class="tb-icon">🌊</span>Plaje
+            </button>
         </div>
     </div>
     <!-- ══ NON-STICKY: WarRoom întotdeauna pe rândul 2 ══ -->
     <div class="nav-warroom-row" style="background:var(--bg);">
-        <button onclick="switchTab(4)" id="tb-4" class="tab-btn tab-btn-warroom">⚔ WarRoom</button>
+        <button onclick="switchTab(4)" id="tb-4" class="tab-btn tab-btn-warroom">
+            <span class="tb-icon">⚔️</span>WarRoom
+        </button>
     </div>
 
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
@@ -1714,6 +1746,15 @@ function renderDays() {
 }
 
 // ── Switch tab ────────────────────────────────────────────────
+// Culori RGB per tab pentru glow glassmorphism
+const TAB_COLORS_RGB = [
+  '14,165,233',   // 0 Itinerariu — sky blue
+  '34,197,94',    // 1 Costuri    — green
+  '249,115,22',   // 2 Kalamaki  — orange
+  '8,145,178',    // 3 Plaje     — teal
+  '178,34,34',    // 4 WarRoom   — red
+];
+
 function switchTab(index) {
   // MOMENT 4 — scroll to top on every tab click
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1721,17 +1762,18 @@ function switchTab(index) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(`tab-${index}`).classList.remove('hidden');
 
-  // Update all .tab-btn elements (both the sticky and the mobile non-sticky WarRoom clone)
+  // Reset toate butoanele
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    const i = parseInt(btn.id?.replace('tb-', '') ?? '-1');
     btn.classList.remove('active-tab');
-    // Reset inline overrides — CSS classes handle the rest
-    btn.style.opacity = '1';
+    btn.style.removeProperty('--tc-rgb');
   });
 
-  // Mark active on the #tb-N button (sticky row)
+  // Activează butonul selectat cu culoarea sa
   const activeBtn = document.getElementById(`tb-${index}`);
-  if (activeBtn) activeBtn.classList.add('active-tab');
+  if (activeBtn) {
+    activeBtn.classList.add('active-tab');
+    activeBtn.style.setProperty('--tc-rgb', TAB_COLORS_RGB[index] || TAB_COLORS_RGB[0]);
+  }
 
   // Also mark active on the mobile WarRoom clone if index === 4
   if (index === 4) {
