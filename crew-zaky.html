@@ -572,31 +572,8 @@
         @keyframes drawLine { to { stroke-dashoffset: 0; } }
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes growBar { to { transform: scaleX(1); } }
-        @keyframes hintBounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50%       { transform: translateX(-50%) translateY(-5px); }
-        }
-        #detail-hint {
-            position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
-            z-index: 50; display: flex; align-items: center; gap-8px;
-            padding: 10px 20px; border-radius: 30px;
-            background: rgba(249,115,22,0.92);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 4px 20px rgba(249,115,22,0.45), 0 2px 8px rgba(0,0,0,0.3);
-            color: #fff; font-size: 13px; font-weight: 800; letter-spacing: 0.02em;
-            cursor: pointer; white-space: nowrap;
-            animation: hintBounce 2.2s ease-in-out infinite;
-            transition: opacity 0.25s, transform 0.25s;
-        }
-        #detail-hint.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(12px); animation: none; }
-        /* ── Prez toggle pills ── */
-        .prez-toggle-btn {
-            flex: 1; padding: 8px 0; border-radius: 20px; border: none;
-            font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;
-        }
-        .prez-toggle-btn.active { background: #F97316; color: #fff; }
-        .prez-toggle-btn:not(.active) { background: transparent; color: var(--t2); }
+        /* ── Prez toggle pills (kept for legacy) ── */
+        .prez-toggle-btn { display: none; }
         /* ── Slide container ── */
         #prez-slide {
             width: 100%; border-radius: 14px; overflow: hidden;
@@ -764,46 +741,25 @@
         </div>
     </div>
 
-    <!-- Floating hint: Zile Detaliate -->
-    <button id="detail-hint" onclick="showDetailView(); this.classList.add('hidden')">
-        📅 Zile Detaliate →
-    </button>
-
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
     <main class="flex-1 px-4 pb-8">
 
         <!-- ─────────── TAB 0: ITINERARIU ─────────── -->
         <div id="tab-0" class="tab-content pt-4">
 
-            <!-- View toggle -->
-            <div class="flex gap-1 mb-4 p-1 rounded-[22px]" style="background:var(--card2); border:1px solid var(--bdr2);">
-                <button id="prez-toggle-prez" class="prez-toggle-btn active" onclick="showPrezView()">
-                    ✦ Prezentare
-                </button>
-                <button id="prez-toggle-detail" class="prez-toggle-btn" onclick="showDetailView()">
-                    📅 Zile Detaliate
-                </button>
-            </div>
-
-            <!-- Presentation view (default) -->
-            <div id="prez-view">
-                <!-- Progress dots -->
-                <div id="prez-dots" class="flex gap-1.5 mb-3 flex-wrap justify-center"></div>
-                <!-- Slide -->
-                <div id="prez-slide" onclick="prezClickNav(event)"></div>
-                <!-- Nav buttons -->
-                <div class="flex gap-3 mt-3 items-center justify-center">
-                    <button id="prez-nav-btn-prev" onclick="prezGo(prezCurrent-1)">◀</button>
-                    <span id="prez-label" class="text-xs font-bold text-center" style="min-width:90px;color:var(--t2);"></span>
-                    <button id="prez-nav-btn-next" onclick="prezGo(prezCurrent+1)">▶</button>
-                </div>
-            </div>
-
-            <!-- Detail view (hidden by default) -->
-            <div id="detail-view" class="hidden">
+            <!-- Detail view (default) -->
+            <div id="detail-view">
 
                 <!-- Day selector -->
                 <div class="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
+
+                    <!-- Buton Rezumat -->
+                    <button onclick="showRezumat()" id="db-rezumat"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555;">
+                        <span class="text-lg leading-none">✦</span>
+                        <span class="text-[9px] font-bold uppercase tracking-wider mt-0.5">Rezumat</span>
+                    </button>
 
                     <button onclick="showDay(0)" id="db-0"
                             class="day-btn active flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
@@ -858,6 +814,17 @@
 
                 <!-- Day panels -->
                 <div id="day-panels"></div>
+
+                <!-- Rezumat panel (presentation slides) -->
+                <div id="prez-view" class="hidden">
+                    <div id="prez-dots" class="flex gap-1.5 mb-3 flex-wrap justify-center"></div>
+                    <div id="prez-slide" onclick="prezClickNav(event)"></div>
+                    <div class="flex gap-3 mt-3 items-center justify-center">
+                        <button id="prez-nav-btn-prev" onclick="prezGo(prezCurrent-1)">◀</button>
+                        <span id="prez-label" class="text-xs font-bold text-center" style="min-width:90px;color:var(--t2);"></span>
+                        <button id="prez-nav-btn-next" onclick="prezGo(prezCurrent+1)">▶</button>
+                    </div>
+                </div>
 
             </div><!-- end detail-view -->
 
@@ -1951,12 +1918,7 @@ function switchTab(index) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(`tab-${index}`).classList.remove('hidden');
 
-  // Arată hint doar pe Tab 0 în view Prezentare
-  var hint = document.getElementById('detail-hint');
-  if (hint) {
-    var inPrez = !document.getElementById('prez-view')?.classList.contains('hidden');
-    hint.classList.toggle('hidden', index !== 0 || !inPrez);
-  }
+
 
   // Reset toate butoanele
   document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -1997,6 +1959,13 @@ function showDay(index) {
     panel.classList.add('fade-up');
   }
 
+  // hide rezumat, show day panels
+  document.getElementById('prez-view').classList.add('hidden');
+  document.getElementById('day-panels').style.display = '';
+  // deselect rezumat button
+  var rezBtn = document.getElementById('db-rezumat');
+  if (rezBtn) { rezBtn.style.background='#141414'; rezBtn.style.borderColor='#2A2A2A'; rezBtn.style.color='#555'; }
+
   // update day buttons
   for (let i = 0; i < 7; i++) {
     const btn = document.getElementById(`db-${i}`);
@@ -2014,6 +1983,29 @@ function showDay(index) {
     }
   }
   activeDay = index;
+}
+
+function showRezumat() {
+  // hide day panels, show presentation
+  document.getElementById('day-panels').style.display = 'none';
+  const pv = document.getElementById('prez-view');
+  pv.classList.remove('hidden');
+  // deselect all day buttons
+  for (let i = 0; i < 7; i++) {
+    const btn = document.getElementById(`db-${i}`);
+    if (btn) { btn.style.background='#141414'; btn.style.borderColor='#2A2A2A'; btn.style.color='#555'; btn.classList.remove('active'); }
+  }
+  // highlight Rezumat button
+  var rezBtn = document.getElementById('db-rezumat');
+  if (rezBtn) { rezBtn.style.background='#0EA5E9'; rezBtn.style.borderColor='#0EA5E9'; rezBtn.style.color='#fff'; }
+  // init + render presentation
+  if (!_prezInited) {
+    var sl = document.getElementById('prez-slide');
+    if (sl) { sl.addEventListener('touchstart', _prezTouchStart, {passive:true}); sl.addEventListener('touchend', _prezTouchEnd); }
+    document.addEventListener('keydown', _prezKeyNav);
+    _prezInited = true;
+  }
+  prezRender();
 }
 
 // ── Countdown ────────────────────────────────────────────────
@@ -2773,30 +2765,8 @@ function _prezTouchEnd(e) {
   _prezTouchX = null;
 }
 
-function showPrezView() {
-  document.getElementById('prez-view').classList.remove('hidden');
-  document.getElementById('detail-view').classList.add('hidden');
-  document.getElementById('prez-toggle-prez').classList.add('active');
-  document.getElementById('prez-toggle-detail').classList.remove('active');
-  var hint = document.getElementById('detail-hint');
-  if (hint) hint.classList.remove('hidden');
-  if (!_prezInited) {
-    var sl = document.getElementById('prez-slide');
-    if (sl) { sl.addEventListener('touchstart', _prezTouchStart, {passive:true}); sl.addEventListener('touchend', _prezTouchEnd); }
-    document.addEventListener('keydown', _prezKeyNav);
-    _prezInited = true;
-  }
-  prezRender();
-}
-
-function showDetailView() {
-  document.getElementById('prez-view').classList.add('hidden');
-  document.getElementById('detail-view').classList.remove('hidden');
-  document.getElementById('prez-toggle-prez').classList.remove('active');
-  document.getElementById('prez-toggle-detail').classList.add('active');
-  var hint = document.getElementById('detail-hint');
-  if (hint) hint.classList.add('hidden');
-}
+function showPrezView() { showRezumat(); }
+function showDetailView() { showDay(activeDay); }
 
 // Init presentation when Tab 0 is first opened (after DOM ready)
 document.addEventListener('DOMContentLoaded', function() {
