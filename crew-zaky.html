@@ -572,6 +572,24 @@
         @keyframes drawLine { to { stroke-dashoffset: 0; } }
         @keyframes fadeSlideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes growBar { to { transform: scaleX(1); } }
+        @keyframes hintBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50%       { transform: translateX(-50%) translateY(-5px); }
+        }
+        #detail-hint {
+            position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+            z-index: 50; display: flex; align-items: center; gap-8px;
+            padding: 10px 20px; border-radius: 30px;
+            background: rgba(249,115,22,0.92);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 20px rgba(249,115,22,0.45), 0 2px 8px rgba(0,0,0,0.3);
+            color: #fff; font-size: 13px; font-weight: 800; letter-spacing: 0.02em;
+            cursor: pointer; white-space: nowrap;
+            animation: hintBounce 2.2s ease-in-out infinite;
+            transition: opacity 0.25s, transform 0.25s;
+        }
+        #detail-hint.hidden { opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(12px); animation: none; }
         /* ── Prez toggle pills ── */
         .prez-toggle-btn {
             flex: 1; padding: 8px 0; border-radius: 20px; border: none;
@@ -745,6 +763,11 @@
 
         </div>
     </div>
+
+    <!-- Floating hint: Zile Detaliate -->
+    <button id="detail-hint" onclick="showDetailView(); this.classList.add('hidden')">
+        📅 Zile Detaliate →
+    </button>
 
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
     <main class="flex-1 px-4 pb-8">
@@ -1928,6 +1951,13 @@ function switchTab(index) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
   document.getElementById(`tab-${index}`).classList.remove('hidden');
 
+  // Arată hint doar pe Tab 0 în view Prezentare
+  var hint = document.getElementById('detail-hint');
+  if (hint) {
+    var inPrez = !document.getElementById('prez-view')?.classList.contains('hidden');
+    hint.classList.toggle('hidden', index !== 0 || !inPrez);
+  }
+
   // Reset toate butoanele
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.classList.remove('active-tab');
@@ -2748,6 +2778,8 @@ function showPrezView() {
   document.getElementById('detail-view').classList.add('hidden');
   document.getElementById('prez-toggle-prez').classList.add('active');
   document.getElementById('prez-toggle-detail').classList.remove('active');
+  var hint = document.getElementById('detail-hint');
+  if (hint) hint.classList.remove('hidden');
   if (!_prezInited) {
     var sl = document.getElementById('prez-slide');
     if (sl) { sl.addEventListener('touchstart', _prezTouchStart, {passive:true}); sl.addEventListener('touchend', _prezTouchEnd); }
@@ -2762,6 +2794,8 @@ function showDetailView() {
   document.getElementById('detail-view').classList.remove('hidden');
   document.getElementById('prez-toggle-prez').classList.remove('active');
   document.getElementById('prez-toggle-detail').classList.add('active');
+  var hint = document.getElementById('detail-hint');
+  if (hint) hint.classList.add('hidden');
 }
 
 // Init presentation when Tab 0 is first opened (after DOM ready)
