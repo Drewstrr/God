@@ -1331,6 +1331,16 @@ const GREEK_SECTIONS = [
   },
 ];
 
+function speakGreek(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'el-GR';
+  utt.rate = 0.82;
+  utt.pitch = 1;
+  window.speechSynthesis.speak(utt);
+}
+
 function renderGreek() {
   const container = document.getElementById('greek-content');
   if (!container) return;
@@ -1356,9 +1366,16 @@ function renderGreek() {
       });
     } else {
       sec.phrases.forEach(p => {
+        const grEsc = p.gr.replace(/'/g, "\\'");
         html += `
         <div class="rounded-2xl px-4 py-3 mb-2 flex items-center gap-3"
              style="background:${th.card}; border:1px solid ${th.bdr};">
+          <button onclick="speakGreek('${grEsc}')"
+                  style="width:38px;height:38px;border-radius:50%;border:1px solid rgba(96,165,250,0.35);background:rgba(96,165,250,0.10);color:#60A5FA;font-size:16px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;"
+                  onmousedown="this.style.background='rgba(96,165,250,0.25)'"
+                  onmouseup="this.style.background='rgba(96,165,250,0.10)'"
+                  ontouchstart="this.style.background='rgba(96,165,250,0.25)'"
+                  ontouchend="this.style.background='rgba(96,165,250,0.10)'">🔊</button>
           <div class="flex-1 min-w-0">
             <div class="text-xs font-semibold mb-0.5" style="color:${th.t2};">${p.ro}</div>
             <div class="text-base font-bold" style="color:#60A5FA;">${p.gr}</div>
