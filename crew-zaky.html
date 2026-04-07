@@ -562,13 +562,15 @@
             transition: opacity 0.25s;
         }
         #videos-overlay.hidden { display: none; }
-        #videos-close {
-            position: fixed; top: 16px; right: 16px; z-index: 201;
-            width: 38px; height: 38px; border-radius: 50%; border: none;
+        #videos-close, #videos-mute-btn {
+            position: fixed; z-index: 201;
+            width: 42px; height: 42px; border-radius: 50%; border: none;
             background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
             color: #fff; font-size: 18px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
+        #videos-close { top: 16px; right: 16px; }
+        #videos-mute-btn { bottom: 40px; right: 16px; font-size: 22px; }
         #videos-container {
             width: 100%; height: 100%;
             overflow-y: scroll; scroll-snap-type: y mandatory;
@@ -798,6 +800,7 @@
     <!-- ═══════════════════════ VIDEOS OVERLAY ═══════════════════════ -->
     <div id="videos-overlay" class="hidden">
         <button id="videos-close" onclick="closeVideos()">✕</button>
+        <button id="videos-mute-btn" onclick="toggleVideosMute()">🔇</button>
         <div id="videos-container"></div>
     </div>
 
@@ -2858,11 +2861,27 @@ const VIDEOS = [
 
 var _videoObserver = null;
 
+var _videosMuted = true;
+
 function _buildIframe(id) {
+  var muteParam = _videosMuted ? '&mute=1' : '&mute=0';
   return '<iframe src="https://www.youtube.com/embed/' + id +
     '?autoplay=1&loop=1&playlist=' + id +
-    '&controls=1&rel=0&modestbranding=1&playsinline=1" ' +
+    '&controls=1&rel=0&modestbranding=1&playsinline=1' + muteParam + '" ' +
     'allow="autoplay; fullscreen" allowfullscreen></iframe>';
+}
+
+function toggleVideosMute() {
+  _videosMuted = !_videosMuted;
+  var btn = document.getElementById('videos-mute-btn');
+  if (btn) btn.textContent = _videosMuted ? '🔇' : '🔊';
+  // Reîncarcă iframe-ul activ cu noua setare de sunet
+  var container = document.getElementById('videos-container');
+  var slots = container ? container.querySelectorAll('.video-slot') : [];
+  slots.forEach(function(slot) {
+    var iframe = slot.querySelector('iframe');
+    if (iframe) slot.innerHTML = _buildIframe(slot.dataset.id);
+  });
 }
 
 function _buildThumb(id) {
@@ -2918,7 +2937,10 @@ function closeVideos() {
       slot.innerHTML = _buildThumb(slot.dataset.id);
     }
   });
-  // Scroll înapoi la primul la next open
+  // Reset mute + scroll la primul
+  _videosMuted = true;
+  var muteBtn = document.getElementById('videos-mute-btn');
+  if (muteBtn) muteBtn.textContent = '🔇';
   var container = document.getElementById('videos-container');
   if (container) container.scrollTop = 0;
 }
