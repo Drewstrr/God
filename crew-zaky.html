@@ -815,6 +815,14 @@
                         <span class="text-[9px] font-bold uppercase tracking-wider mt-0.5">Rezumat</span>
                     </button>
 
+                    <!-- Buton Ghid PDF -->
+                    <a href="zakynthos-itinerary.pdf" target="_blank" id="db-ghid"
+                            class="day-btn flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
+                            style="background:#141414; border-color:#2A2A2A; color:#555; text-decoration:none;">
+                        <span class="text-lg leading-none">🗺️</span>
+                        <span class="text-[9px] font-bold uppercase tracking-wider mt-0.5">Ghid</span>
+                    </a>
+
                     <button onclick="showDay(0)" id="db-0"
                             class="day-btn active flex-shrink-0 flex flex-col items-center justify-center w-[60px] h-[60px] rounded-2xl border"
                             style="background:#F97316; border-color:#F97316; color:#fff;">
@@ -2018,7 +2026,7 @@ function showDay(index) {
   document.getElementById('day-panels').style.display = '';
   // deselect rezumat button
   var rezBtn = document.getElementById('db-rezumat');
-  if (rezBtn) { rezBtn.style.background='#141414'; rezBtn.style.borderColor='#2A2A2A'; rezBtn.style.color='#555'; }
+  if (rezBtn) { rezBtn.classList.remove('active'); rezBtn.style.background='#141414'; rezBtn.style.borderColor='#2A2A2A'; rezBtn.style.color='#555'; }
 
   // update day buttons
   for (let i = 0; i < 7; i++) {
@@ -2051,7 +2059,7 @@ function showRezumat() {
   }
   // highlight Rezumat button
   var rezBtn = document.getElementById('db-rezumat');
-  if (rezBtn) { rezBtn.style.background='#0EA5E9'; rezBtn.style.borderColor='#0EA5E9'; rezBtn.style.color='#fff'; }
+  if (rezBtn) { rezBtn.classList.add('active'); rezBtn.style.background='#0EA5E9'; rezBtn.style.borderColor='#0EA5E9'; rezBtn.style.color='#fff'; }
   // init + render presentation
   if (!_prezInited) {
     var sl = document.getElementById('prez-slide');
