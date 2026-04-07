@@ -541,6 +541,47 @@
             transition: background 0.15s;
         }
         .btn-speak:active { background: rgba(220,38,38,0.30); animation: none; transform: scale(0.92); }
+        /* ── Videos button ── */
+        @keyframes videos-pulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(14,165,233,0.55); }
+            60%      { box-shadow: 0 0 0 9px rgba(14,165,233,0.00); }
+        }
+        #btn-videos {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 16px; border-radius: 22px; border: 1px solid rgba(14,165,233,0.5);
+            background: rgba(14,165,233,0.15);
+            color: #38BDF8; font-size: 12px; font-weight: 800; letter-spacing: 0.03em;
+            cursor: pointer; flex-shrink: 0; white-space: nowrap;
+            animation: videos-pulse 2.4s ease-in-out infinite;
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+        }
+        #btn-videos:active { transform: scale(0.94); animation: none; }
+        /* ── Videos overlay ── */
+        #videos-overlay {
+            position: fixed; inset: 0; background: #000; z-index: 200;
+            transition: opacity 0.25s;
+        }
+        #videos-overlay.hidden { display: none; }
+        #videos-close {
+            position: fixed; top: 16px; right: 16px; z-index: 201;
+            width: 38px; height: 38px; border-radius: 50%; border: none;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            color: #fff; font-size: 18px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #videos-container {
+            width: 100%; height: 100%;
+            overflow-y: scroll; scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .video-slot {
+            width: 100%; height: 100vh;
+            scroll-snap-align: start; position: relative;
+            background: #000; flex-shrink: 0;
+        }
+        .video-slot iframe {
+            width: 100%; height: 100%; border: none; display: block;
+        }
         .btn-reviews {
             display: flex; align-items: center; justify-content: center; gap: 3px;
             padding: 5px 9px; border-radius: 20px; border: 1px solid rgba(251,191,36,0.45);
@@ -666,12 +707,18 @@
                 </div>
             </div>
 
-            <!-- title -->
-            <h1 class="leading-none mb-3"
+            <!-- title + Videos button -->
+            <div class="flex items-center justify-between gap-3 mb-3">
+            <h1 class="leading-none"
                 style="font-family:'Playfair Display',serif; font-size:2.6rem; font-weight:700; font-style:italic;">
                 <span style="color:#0EA5E9;">Zakynthos</span>
                 <span style="color:#F0F0F0;"> '26</span>
             </h1>
+            <button onclick="openVideos()" id="btn-videos">
+                <svg width="11" height="13" viewBox="0 0 11 13" fill="currentColor"><path d="M1 1.5l9 5-9 5V1.5z"/></svg>
+                Videos
+            </button>
+            </div>
 
             <!-- meta pills -->
             <div class="flex flex-wrap gap-2 mt-4">
@@ -745,6 +792,12 @@
             </button>
 
         </div>
+    </div>
+
+    <!-- ═══════════════════════ VIDEOS OVERLAY ═══════════════════════ -->
+    <div id="videos-overlay" class="hidden">
+        <button id="videos-close" onclick="closeVideos()">✕</button>
+        <div id="videos-container"></div>
     </div>
 
     <!-- ═══════════════════════ MAIN CONTENT ═══════════════════════ -->
@@ -2792,6 +2845,42 @@ document.addEventListener('DOMContentLoaded', function() {
 async function crewLogout() {
   await _sb.auth.signOut();
   window.location.reload();
+}
+
+// ── Videos TikTok-style ───────────────────────────────────────
+const VIDEOS = [
+  'PzAOXxfrbrc',
+  'joeHnnUdLVQ',
+  'K6bRg-vZjeA',
+  'OMjir5PWwjE',
+];
+
+function openVideos() {
+  var overlay = document.getElementById('videos-overlay');
+  var container = document.getElementById('videos-container');
+  // Build slots only once
+  if (!container.hasChildNodes()) {
+    container.innerHTML = VIDEOS.map(function(id) {
+      return '<div class="video-slot">' +
+        '<iframe src="https://www.youtube.com/embed/' + id +
+        '?autoplay=1&loop=1&playlist=' + id +
+        '&controls=1&rel=0&modestbranding=1&playsinline=1&mute=0" ' +
+        'allow="autoplay; fullscreen" allowfullscreen></iframe>' +
+        '</div>';
+    }).join('');
+  }
+  overlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeVideos() {
+  var overlay = document.getElementById('videos-overlay');
+  overlay.classList.add('hidden');
+  document.body.style.overflow = '';
+  // Pause all iframes by reloading src
+  document.querySelectorAll('#videos-container iframe').forEach(function(f) {
+    f.src = f.src;
+  });
 }
 
 // ── PWA Service Worker ──────────────────────────────────────
