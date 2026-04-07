@@ -1,6 +1,5 @@
-const CACHE_NAME = 'zaky-v2';
+const CACHE_NAME = 'zaky-v3';
 
-// Fișiere esențiale care se salvează offline la prima vizită
 const PRECACHE = [
   '/crew-zaky.html',
   '/manifest.json'
@@ -14,7 +13,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// Activate: șterge cache-urile vechi
+// Activate: șterge cache-urile vechi + preia controlul imediat
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -26,25 +25,37 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch: cache-first pentru fișiere locale, network-first pentru externe (CDN, fonts, Supabase)
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Resurse externe (CDN, Google Fonts, Supabase) — nu le cache-uim, le cerem din rețea
-  if (url.origin !== self.location.origin) {
-    return; // browser handles normally
-  }
+  // Resurse externe — browser le gestionează normal
+  if (url.origin !== self.location.origin) return;
 
-  // Fișiere locale — cache first, fallback network
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        if (!response || response.status !== 200) return response;
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        return response;
-      });
-    })
-  );
+  const isHTML = url.pathname.endsWith('.html') || url.pathname === '/crew-zaky';
+
+  if (isHTML) {
+    // Network-first pentru HTML: mereu versiunea proaspătă, fallback cache dacă offline
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+  } else {
+    // Cache-first pentru restul (imagini, manifest etc.)
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(response => {
+          if (!response || response.status !== 200) return response;
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        });
+      })
+    );
+  }
 });
