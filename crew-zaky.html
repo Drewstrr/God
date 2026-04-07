@@ -2350,13 +2350,23 @@ function renderPollVoting(poll) {
   const opts = poll.options || [];
   const btns = opts.map((opt, i) => {
     const color = OPTION_COLORS[i % OPTION_COLORS.length];
+    const photoEl = opt.photo
+      ? `<img src="${opt.photo}" alt="" style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-bottom:6px;display:block;" onerror="this.style.display='none'">`
+      : '';
+    const linkEl = opt.link
+      ? `<a href="${opt.link}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#60A5FA;text-decoration:none;margin-top:4px;">🔗 Vezi mai mult</a>`
+      : '';
     return `
       <button class="vote-btn"
               id="opt-${poll.id}-${opt.id}"
-              style="border-left:3px solid ${color}; --opt-color:${color};"
+              style="border-left:3px solid ${color}; --opt-color:${color}; flex-direction:column; align-items:flex-start;"
               onclick="selectOption('${poll.id}','${opt.id}')">
-        <span class="radio-dot"></span>
-        <span>${opt.text}</span>
+        ${photoEl}
+        <div style="display:flex;align-items:center;gap:8px;width:100%;">
+          <span class="radio-dot"></span>
+          <span>${opt.text}</span>
+        </div>
+        ${linkEl}
       </button>`;
   }).join('');
   return `
@@ -2404,8 +2414,16 @@ function renderPollResults(poll, votes, myOptionId, myUserId) {
       ? `<span style="font-size:9px;font-weight:800;color:#EF4444;letter-spacing:0.05em;margin-left:6px;">⚡ REBELI</span>`
       : isWinner ? `<span style="font-size:9px;font-weight:800;color:#22C55E;letter-spacing:0.05em;margin-left:6px;">👑 MAJORITATE</span>` : '';
 
+    const photoEl = opt.photo
+      ? `<img src="${opt.photo}" alt="" style="width:100%;max-height:160px;object-fit:cover;border-radius:10px;margin-bottom:8px;display:block;" onerror="this.style.display='none'">`
+      : '';
+    const linkEl = opt.link
+      ? `<a href="${opt.link}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#60A5FA;text-decoration:none;margin-top:4px;">🔗 Vezi mai mult</a>`
+      : '';
+
     return `
       <div class="vote-result-row${isMine ? ' my-vote' : ''}">
+        ${photoEl}
         <div class="vote-result-label">
           <span>${opt.text}${isMine ? ' ✓' : ''}${badge}</span>
           <span class="vote-result-count">
@@ -2417,6 +2435,7 @@ function renderPollResults(poll, votes, myOptionId, myUserId) {
           <div class="vote-bar" style="width:${pct}%;background:${color};opacity:${isMine ? '1' : '0.45'};"></div>
         </div>
         ${count > 0 ? `<div style="margin-top:7px;display:flex;flex-wrap:wrap;gap:4px;">${namePills}</div>` : ''}
+        ${linkEl}
       </div>`;
   }).join('');
 

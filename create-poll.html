@@ -131,14 +131,43 @@
         .options-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 12px;
         }
         .option-row {
+            background: var(--card2);
+            border: 1.5px solid var(--bdr2);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .option-row-top {
             display: flex;
             align-items: center;
             gap: 8px;
         }
+        .option-extra {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-left: 34px;
+        }
+        .option-extra-input {
+            width: 100%;
+            background: var(--card);
+            border: 1px solid var(--bdr2);
+            border-radius: 10px;
+            color: var(--t2);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            padding: 8px 12px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .option-extra-input::placeholder { color: var(--t3); }
+        .option-extra-input:focus { border-color: #0EA5E9; }
         .option-number {
             flex-shrink: 0;
             width: 26px;
@@ -154,7 +183,13 @@
         }
         .option-row .cp-input {
             margin: 0;
+            background: transparent;
+            border: none;
+            padding: 4px 0;
+            font-size: 14px;
+            box-shadow: none !important;
         }
+        .option-row .cp-input:focus { border: none; box-shadow: none; }
         .btn-remove-option {
             flex-shrink: 0;
             width: 32px;
@@ -360,27 +395,29 @@ let optionCount = 0;
 function addOption(value = '') {
     optionCount++;
     const list = document.getElementById('options-list');
+    const idx  = list.children.length + 1;
     const row  = document.createElement('div');
     row.className = 'option-row';
     row.dataset.optId = String(optionCount);
     row.innerHTML = `
-        <div class="option-number">${list.children.length + 1}</div>
-        <input type="text" class="cp-input option-input"
-               placeholder="Variantă ${list.children.length + 1}"
-               value="${value.replace(/"/g, '&quot;')}"
-               maxlength="120">
-        <button class="btn-remove-option" onclick="removeOption(this)" title="Șterge">×</button>
+        <div class="option-row-top">
+            <div class="option-number">${idx}</div>
+            <input type="text" class="cp-input option-input"
+                   placeholder="Variantă ${idx}"
+                   value="${value.replace(/"/g, '&quot;')}"
+                   maxlength="120">
+            <button class="btn-remove-option" onclick="removeOption(this)" title="Șterge">×</button>
+        </div>
+        <div class="option-extra">
+            <input type="url" class="option-extra-input option-photo"
+                   placeholder="🖼️  URL poză (opțional)">
+            <input type="url" class="option-extra-input option-link"
+                   placeholder="🔗  Link relevant (opțional)">
+        </div>
     `;
     list.appendChild(row);
     renumberOptions();
-    row.querySelector('input').focus();
-}
-
-function removeOption(btn) {
-    const list = document.getElementById('options-list');
-    if (list.children.length <= 2) return; // minim 2
-    btn.closest('.option-row').remove();
-    renumberOptions();
+    row.querySelector('.option-input').focus();
 }
 
 function renumberOptions() {
@@ -389,6 +426,13 @@ function renumberOptions() {
         row.querySelector('.option-number').textContent = i + 1;
         row.querySelector('.option-input').placeholder  = `Variantă ${i + 1}`;
     });
+}
+
+function removeOption(btn) {
+    const list = document.getElementById('options-list');
+    if (list.children.length <= 2) return;
+    btn.closest('.option-row').remove();
+    renumberOptions();
 }
 
 // Inițializare cu 2 opțiuni goale
@@ -411,9 +455,14 @@ async function submitPoll() {
         return;
     }
 
-    const inputs = Array.from(document.querySelectorAll('#options-list .option-input'));
-    const options = inputs
-        .map((inp, i) => ({ id: String(i + 1), text: inp.value.trim() }))
+    const rows = Array.from(document.querySelectorAll('#options-list .option-row'));
+    const options = rows
+        .map((row, i) => ({
+            id:    String(i + 1),
+            text:  row.querySelector('.option-input').value.trim(),
+            photo: row.querySelector('.option-photo').value.trim() || null,
+            link:  row.querySelector('.option-link').value.trim() || null,
+        }))
         .filter(o => o.text.length > 0);
 
     if (options.length < 2) {
