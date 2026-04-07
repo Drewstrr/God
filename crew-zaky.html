@@ -579,8 +579,9 @@
             scroll-snap-align: start; position: relative;
             background: #000; flex-shrink: 0;
         }
-        .video-slot iframe {
+        .video-slot iframe, .video-slot img {
             width: 100%; height: 100%; border: none; display: block;
+            object-fit: cover;
         }
         .btn-reviews {
             display: flex; align-items: center; justify-content: center; gap: 3px;
@@ -2855,20 +2856,54 @@ const VIDEOS = [
   'OMjir5PWwjE',
 ];
 
+var _videoObserver = null;
+
+function _buildIframe(id) {
+  return '<iframe src="https://www.youtube.com/embed/' + id +
+    '?autoplay=1&loop=1&playlist=' + id +
+    '&controls=1&rel=0&modestbranding=1&playsinline=1" ' +
+    'allow="autoplay; fullscreen" allowfullscreen></iframe>';
+}
+
+function _buildThumb(id) {
+  return '<img src="https://img.youtube.com/vi/' + id + '/maxresdefault.jpg" ' +
+    'style="width:100%;height:100%;object-fit:cover;display:block;">';
+}
+
 function openVideos() {
   var overlay = document.getElementById('videos-overlay');
   var container = document.getElementById('videos-container');
-  // Build slots only once
+
   if (!container.hasChildNodes()) {
-    container.innerHTML = VIDEOS.map(function(id) {
-      return '<div class="video-slot">' +
-        '<iframe src="https://www.youtube.com/embed/' + id +
-        '?autoplay=1&loop=1&playlist=' + id +
-        '&controls=1&rel=0&modestbranding=1&playsinline=1&mute=0" ' +
-        'allow="autoplay; fullscreen" allowfullscreen></iframe>' +
+    // Primul video cu iframe direct, restul cu thumbnail
+    container.innerHTML = VIDEOS.map(function(id, i) {
+      return '<div class="video-slot" data-id="' + id + '">' +
+        (i === 0 ? _buildIframe(id) : _buildThumb(id)) +
         '</div>';
     }).join('');
+
+    // IntersectionObserver: când un slot e >70% vizibil → încarcă iframe cu autoplay
+    _videoObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        var slot = entry.target;
+        var id = slot.dataset.id;
+        if (entry.intersectionRatio >= 0.7) {
+          if (!slot.querySelector('iframe')) {
+            slot.innerHTML = _buildIframe(id);
+          }
+        } else {
+          if (slot.querySelector('iframe')) {
+            slot.innerHTML = _buildThumb(id);
+          }
+        }
+      });
+    }, { threshold: 0.7 });
+
+    document.querySelectorAll('.video-slot').forEach(function(slot) {
+      _videoObserver.observe(slot);
+    });
   }
+
   overlay.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
 }
@@ -2877,10 +2912,15 @@ function closeVideos() {
   var overlay = document.getElementById('videos-overlay');
   overlay.classList.add('hidden');
   document.body.style.overflow = '';
-  // Pause all iframes by reloading src
-  document.querySelectorAll('#videos-container iframe').forEach(function(f) {
-    f.src = f.src;
+  // Oprește toate videoclipurile — înlocuiește iframes cu thumbnails
+  document.querySelectorAll('.video-slot').forEach(function(slot) {
+    if (slot.querySelector('iframe')) {
+      slot.innerHTML = _buildThumb(slot.dataset.id);
+    }
   });
+  // Scroll înapoi la primul la next open
+  var container = document.getElementById('videos-container');
+  if (container) container.scrollTop = 0;
 }
 
 // ── PWA Service Worker ──────────────────────────────────────
