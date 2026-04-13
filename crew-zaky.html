@@ -56,6 +56,10 @@
         }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 4px #22C55E; opacity: 1; }
+            50%       { box-shadow: 0 0 10px #22C55E; opacity: 0.7; }
+        }
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(14px); }
             to   { opacity: 1; transform: translateY(0); }
@@ -708,10 +712,18 @@
                 <span style="color:#0EA5E9;">Zakynthos</span>
                 <span style="color:#F0F0F0;"> '26</span>
             </h1>
-            <button onclick="openVideos()" id="btn-videos">
+            <div class="flex items-center gap-2">
+              <span id="online-pill" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                    style="background:rgba(34,197,94,0.12); border:1px solid rgba(34,197,94,0.35); color:#4ADE80;">
+                <span style="width:7px;height:7px;border-radius:50%;background:#22C55E;display:inline-block;
+                             box-shadow:0 0 6px #22C55E; animation: pulse-green 2s infinite;"></span>
+                <span id="online-count">1</span> online
+              </span>
+              <button onclick="openVideos()" id="btn-videos">
                 <svg width="11" height="13" viewBox="0 0 11 13" fill="currentColor"><path d="M1 1.5l9 5-9 5V1.5z"/></svg>
                 Videos
-            </button>
+              </button>
+            </div>
             </div>
 
             <!-- meta pills -->
