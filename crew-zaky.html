@@ -2166,6 +2166,16 @@ async function fetchSeaTemp() {
 }
 fetchSeaTemp();
 
+// ── Last seen tracker ─────────────────────────────────────────
+async function trackLastSeen() {
+  if (!_sb) return;
+  try {
+    await _sb.auth.updateUser({
+      data: { last_seen: new Date().toISOString() }
+    });
+  } catch(e) {}
+}
+
 // ── Theme toggle ──────────────────────────────────────────────
 function applyTheme(light) {
   if (light) {
@@ -2292,6 +2302,7 @@ document.addEventListener('DOMContentLoaded', function() { (function() {
     if (session) {
       overlay.classList.add('hidden');
       showGreeting(session.user);
+      trackLastSeen();
     }
   });
 
