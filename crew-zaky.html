@@ -728,6 +728,10 @@
                       style="border:1px solid var(--bdr2);">
                     🏠 Kalamaki base
                 </span>
+                <span id="sea-temp-pill" class="px-3 py-1 rounded-full text-xs font-600"
+                      style="border:1px solid rgba(14,165,233,0.35); background:rgba(14,165,233,0.08); color:#38BDF8;">
+                    🌊 --°C
+                </span>
             </div>
         </div>
     </header>
@@ -2120,6 +2124,35 @@ function updateCountdown() {
 
 updateCountdown();
 setInterval(updateCountdown, 1000);
+
+// ── Sea temperature (Open-Meteo Marine API) ───────────────────
+async function fetchSeaTemp() {
+  const pill = document.getElementById('sea-temp-pill');
+  if (!pill) return;
+  // Try cache first for instant display
+  const cached = localStorage.getItem('zaky-sea-temp');
+  if (cached) {
+    const { temp, ts } = JSON.parse(cached);
+    pill.textContent = '🌊 ' + temp + '°C';
+  }
+  try {
+    const res = await fetch(
+      'https://marine-api.open-meteo.com/v1/marine?latitude=37.79&longitude=20.90&current=sea_surface_temperature',
+      { signal: AbortSignal.timeout(6000) }
+    );
+    const json = await res.json();
+    const temp = json.current && json.current.sea_surface_temperature;
+    if (temp !== undefined && temp !== null) {
+      const rounded = Math.round(temp * 10) / 10;
+      pill.textContent = '🌊 ' + rounded + '°C';
+      localStorage.setItem('zaky-sea-temp', JSON.stringify({ temp: rounded, ts: Date.now() }));
+    }
+  } catch(e) {
+    // offline sau eroare — păstrăm cache-ul
+    if (!cached) pill.textContent = '🌊 ~26°C';
+  }
+}
+fetchSeaTemp();
 
 // ── Theme toggle ──────────────────────────────────────────────
 function applyTheme(light) {
