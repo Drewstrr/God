@@ -1,4 +1,4 @@
-const CACHE_NAME = 'zaky-v3';
+const CACHE_NAME = 'zaky-v4';
 
 const PRECACHE = [
   '/crew-zaky.html',

@@ -3090,20 +3090,30 @@ function closeVideos() {
 
 // ── PWA Service Worker ──────────────────────────────────────
 if ('serviceWorker' in navigator) {
+  // Reload o singură dată când SW-ul nou preia controlul (guard anti-buclă)
+  var _swRefreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    if (_swRefreshing) return;
+    _swRefreshing = true;
+    location.reload();
+  });
+
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('/sw.js').then(function(reg) {
-      // Când găsește un SW nou, îl activează imediat
-      reg.addEventListener('updatefound', function() {
-        var newWorker = reg.installing;
-        newWorker.addEventListener('statechange', function() {
-          if (newWorker.state === 'activated') location.reload();
-        });
-      });
+      // Verifică update imediat la deschidere
+      reg.update();
+      // Verifică periodic cât timp pagina e deschisă (fiecare 60s)
+      setInterval(function() { reg.update(); }, 60000);
     }).catch(function() {});
-    // Reload automat când SW-ul nou preia controlul
-    navigator.serviceWorker.addEventListener('controllerchange', function() {
-      location.reload();
-    });
+  });
+
+  // Verifică update și când revii în aplicație (din background)
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible') {
+      navigator.serviceWorker.getRegistration().then(function(reg) {
+        if (reg) reg.update();
+      });
+    }
   });
 }
 </script>
