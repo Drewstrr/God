@@ -457,6 +457,18 @@
             padding: 4px 10px;
             margin-bottom: 16px;
         }
+        .multi-badge {
+            display: inline-flex;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #0EA5E9;
+            background: rgba(14,165,233,0.10);
+            border: 1px solid rgba(14,165,233,0.25);
+            border-radius: 8px;
+            padding: 3px 9px;
+            margin-bottom: 10px;
+        }
         .vote-result-row {
             margin-bottom: 12px;
         }
@@ -2401,10 +2413,11 @@ async function loadActivePoll() {
     let html = '';
     for (const poll of polls) {
       _pollCache[poll.id] = poll;
-      const pollVotes = votes.filter(v => v.poll_id === poll.id);
-      const myVote    = pollVotes.find(v => v.user_id === userId);
-      html += myVote
-        ? renderPollResults(poll, pollVotes, String(myVote.option_id), userId)
+      const pollVotes  = votes.filter(v => v.poll_id === poll.id);
+      const myVotes    = pollVotes.filter(v => v.user_id === userId);
+      const myOptIds   = myVotes.map(v => String(v.option_id));
+      html += myVotes.length > 0
+        ? renderPollResults(poll, pollVotes, myOptIds, userId)
         : renderPollVoting(poll);
     }
     pollEl.innerHTML = html;
@@ -2416,6 +2429,8 @@ async function loadActivePoll() {
 
 function renderPollVoting(poll) {
   const opts = poll.options || [];
+  const isMulti = !!poll.multi_vote;
+  const maxVotes = poll.max_votes || 2;
   const btns = opts.map((opt, i) => {
     const color = OPTION_COLORS[i % OPTION_COLORS.length];
     const photoEl = opt.photo
@@ -2427,6 +2442,7 @@ function renderPollVoting(poll) {
     return `
       <button class="vote-btn"
               id="opt-${poll.id}-${opt.id}"
+              data-opt-id="${opt.id}"
               style="border-left:3px solid ${color}; --opt-color:${color}; flex-direction:column; align-items:flex-start;"
               onclick="selectOption('${poll.id}','${opt.id}')">
         ${photoEl}
@@ -2437,13 +2453,16 @@ function renderPollVoting(poll) {
         ${linkEl}
       </button>`;
   }).join('');
+  const multiBadge = isMulti ? `<div class="multi-badge">☑ Vot multiplu · selectează până la ${maxVotes}</div>` : '';
   return `
     <div class="poll-card" id="poll-card-${poll.id}">
       <p class="poll-question">${poll.question}</p>
-      <div class="poll-options" id="opts-${poll.id}">${btns}</div>
+      ${multiBadge}
+      <div class="poll-options" id="opts-${poll.id}"
+           ${isMulti ? `data-multi="1" data-max="${maxVotes}"` : ''}>${btns}</div>
       <div id="vote-msg-${poll.id}" style="min-height:18px; font-size:12px; color:#F97316; text-align:center; margin-top:8px;"></div>
       <button type="button" class="btn-vote-confirm" id="vote-confirm-${poll.id}"
-              onclick="castVote('${poll.id}')">
+              onclick="castVote('${poll.id}')" ${isMulti ? 'disabled' : ''}>
         🗳 Votează!
       </button>
     </div>`;
@@ -2453,7 +2472,11 @@ const OPTION_COLORS_RGB = [
   '14,165,233', '34,197,94', '249,115,22', '168,85,247', '239,68,68', '245,158,11'
 ];
 
-function renderPollResults(poll, votes, myOptionId, myUserId) {
+function renderPollResults(poll, votes, myOptionIds, myUserId) {
+  // Normalize myOptionIds to array of strings
+  if (!Array.isArray(myOptionIds)) myOptionIds = myOptionIds ? [String(myOptionIds)] : [];
+  else myOptionIds = myOptionIds.map(String);
+
   const opts     = poll.options || [];
   const total    = votes.length;
   const counts   = opts.map(opt => votes.filter(v => String(v.option_id) === String(opt.id)).length);
@@ -2463,7 +2486,7 @@ function renderPollResults(poll, votes, myOptionId, myUserId) {
     const optVotes   = votes.filter(v => String(v.option_id) === String(opt.id));
     const count      = optVotes.length;
     const pct        = total > 0 ? Math.round(count / total * 100) : 0;
-    const isMine     = String(opt.id) === String(myOptionId);
+    const isMine     = myOptionIds.includes(String(opt.id));
     const color      = OPTION_COLORS[i % OPTION_COLORS.length];
     const colorRgb   = OPTION_COLORS_RGB[i % OPTION_COLORS_RGB.length];
     const isWinner   = count === maxCount && maxCount > 0;
@@ -2517,28 +2540,59 @@ function renderPollResults(poll, votes, myOptionId, myUserId) {
 }
 
 function selectOption(pollId, optionId) {
-  // Deselect all options in this poll
-  document.querySelectorAll(`#opts-${pollId} .vote-btn`).forEach(b => b.classList.remove('selected'));
-  // Select the clicked one
-  const btn = document.getElementById(`opt-${pollId}-${optionId}`);
-  if (btn) btn.classList.add('selected');
-  // Store selection on card
+  const optsEl = document.getElementById(`opts-${pollId}`);
   const card = document.getElementById(`poll-card-${pollId}`);
-  if (card) card.dataset.selectedOpt = optionId;
-  // Enable confirm button
   const confirmBtn = document.getElementById(`vote-confirm-${pollId}`);
-  if (confirmBtn) confirmBtn.disabled = false;
+  const msgEl = document.getElementById(`vote-msg-${pollId}`);
+  const isMulti = optsEl?.dataset.multi === '1';
+  const maxVotes = parseInt(optsEl?.dataset.max || '1', 10);
+
+  if (isMulti) {
+    const btn = document.getElementById(`opt-${pollId}-${optionId}`);
+    if (btn.classList.contains('selected')) {
+      btn.classList.remove('selected');
+    } else {
+      const selectedNow = optsEl.querySelectorAll('.vote-btn.selected').length;
+      if (selectedNow >= maxVotes) {
+        if (msgEl) {
+          msgEl.textContent = `Poți selecta maxim ${maxVotes} opțiuni`;
+          setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 2000);
+        }
+        return;
+      }
+      btn.classList.add('selected');
+    }
+    const selectedBtns = optsEl.querySelectorAll('.vote-btn.selected');
+    if (card) card.dataset.selectedOpts = Array.from(selectedBtns).map(b => b.dataset.optId).join(',');
+    if (confirmBtn) confirmBtn.disabled = selectedBtns.length === 0;
+  } else {
+    document.querySelectorAll(`#opts-${pollId} .vote-btn`).forEach(b => b.classList.remove('selected'));
+    const btn = document.getElementById(`opt-${pollId}-${optionId}`);
+    if (btn) btn.classList.add('selected');
+    if (card) card.dataset.selectedOpt = optionId;
+    if (confirmBtn) confirmBtn.disabled = false;
+  }
 }
 
 async function castVote(pollId) {
   if (!_sb) return;
   const card      = document.getElementById(`poll-card-${pollId}`);
-  const optionId  = card?.dataset.selectedOpt;
+  const optsEl    = document.getElementById(`opts-${pollId}`);
   const msgEl     = document.getElementById(`vote-msg-${pollId}`);
   const confirmBtn = document.getElementById(`vote-confirm-${pollId}`);
+  const isMulti   = optsEl?.dataset.multi === '1';
 
-  // Nicio opțiune selectată — arată mesaj vizibil
-  if (!optionId) {
+  // Colectăm opțiunile selectate
+  let optionIds;
+  if (isMulti) {
+    const raw = card?.dataset.selectedOpts || '';
+    optionIds = raw ? raw.split(',').filter(Boolean) : [];
+  } else {
+    const single = card?.dataset.selectedOpt;
+    optionIds = single ? [single] : [];
+  }
+
+  if (optionIds.length === 0) {
     if (msgEl) {
       msgEl.textContent = '← Selectează o variantă mai întâi';
       setTimeout(() => { if (msgEl) msgEl.textContent = ''; }, 2500);
@@ -2557,37 +2611,39 @@ async function castVote(pollId) {
     return;
   }
 
-  const voterName = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
-  const { error } = await _sb.from('votes').insert({
+  const voterName = getDisplayName(session.user);
+  const voteRows  = optionIds.map(optId => ({
     poll_id:    pollId,
     user_id:    session.user.id,
-    option_id:  optionId,
+    option_id:  optId,
     voter_name: voterName,
-  });
+  }));
+
+  const { error } = await _sb.from('votes').insert(voteRows);
 
   if (!error) {
-    // Fetch voturi actualizate
     const { data: freshVotes } = await _sb
       .from('votes')
       .select('option_id, user_id, voter_name')
       .eq('poll_id', pollId);
 
-    // Dacă RLS blochează SELECT, adăugăm manual votul curent
     const allFresh = freshVotes ? [...freshVotes] : [];
-    if (!allFresh.some(v => v.user_id === session.user.id)) {
-      allFresh.push({ option_id: optionId, user_id: session.user.id, voter_name: voterName });
+    // Fallback dacă RLS blochează SELECT
+    for (const optId of optionIds) {
+      if (!allFresh.some(v => v.user_id === session.user.id && String(v.option_id) === String(optId))) {
+        allFresh.push({ option_id: optId, user_id: session.user.id, voter_name: voterName });
+      }
     }
 
     const poll = _pollCache[pollId];
     if (poll) {
       const tmp = document.createElement('div');
-      tmp.innerHTML = renderPollResults(poll, allFresh, optionId, session.user.id);
+      tmp.innerHTML = renderPollResults(poll, allFresh, optionIds, session.user.id);
       card.replaceWith(tmp.firstElementChild);
     } else {
       loadActivePoll();
     }
   } else {
-    // Arată eroarea direct în card
     if (msgEl) msgEl.textContent = 'Eroare: ' + error.message;
     card.querySelectorAll('.vote-btn').forEach(b => { b.disabled = false; b.style.opacity = ''; });
     if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '🗳 Votează!'; }

@@ -361,6 +361,32 @@
             Adaugă variantă
         </button>
 
+        <div class="cp-divider"></div>
+
+        <!-- Opțiuni avansate -->
+        <div class="cp-section-label">Tip vot</div>
+        <div style="background:var(--card2); border:1.5px solid var(--bdr2); border-radius:14px; padding:16px;">
+            <label style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; gap:12px;">
+                <div>
+                    <div style="font-size:14px; font-weight:700; color:var(--t1);">☑ Vot multiplu</div>
+                    <div style="font-size:11px; color:var(--t3); margin-top:2px;">Fiecare votant poate alege mai multe opțiuni</div>
+                </div>
+                <input type="checkbox" id="multi-vote-toggle"
+                       style="width:20px; height:20px; accent-color:#0EA5E9; cursor:pointer; flex-shrink:0;"
+                       onchange="toggleMultiVote(this.checked)">
+            </label>
+            <div id="max-votes-row" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--bdr);">
+                <label style="font-size:12px; font-weight:700; color:var(--t2); display:block; margin-bottom:8px;">
+                    Câte opțiuni poate selecta fiecare votant?
+                </label>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <button onclick="changeMaxVotes(-1)" style="width:36px;height:36px;border-radius:10px;background:var(--bdr2);border:none;color:var(--t1);font-size:18px;font-weight:700;cursor:pointer;">−</button>
+                    <span id="max-votes-display" style="font-size:22px;font-weight:900;color:#0EA5E9;min-width:28px;text-align:center;">2</span>
+                    <button onclick="changeMaxVotes(1)" style="width:36px;height:36px;border-radius:10px;background:var(--bdr2);border:none;color:var(--t1);font-size:18px;font-weight:700;cursor:pointer;">+</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Submit -->
         <button class="btn-submit-poll" id="cp-submit" onclick="submitPoll()">
             🗳 Lansează Votul
@@ -439,6 +465,19 @@ function removeOption(btn) {
 addOption();
 addOption();
 
+// ── Multi-vote toggle ─────────────────────────────────────────
+let _maxVotes = 2;
+
+function toggleMultiVote(enabled) {
+    document.getElementById('max-votes-row').style.display = enabled ? 'block' : 'none';
+}
+
+function changeMaxVotes(delta) {
+    const opts = document.querySelectorAll('#options-list .option-row').length;
+    _maxVotes = Math.max(2, Math.min(opts, _maxVotes + delta));
+    document.getElementById('max-votes-display').textContent = _maxVotes;
+}
+
 // ── Submit ────────────────────────────────────────────────────
 async function submitPoll() {
     const statusEl = document.getElementById('cp-status');
@@ -480,10 +519,13 @@ async function submitPoll() {
     submitBtn.disabled    = true;
     submitBtn.textContent = 'Se salvează...';
 
+    const isMulti = document.getElementById('multi-vote-toggle').checked;
     const { error } = await _sb.from('polls').insert({
-        question:  question,
-        options:   options,
-        is_active: true,
+        question:   question,
+        options:    options,
+        is_active:  true,
+        multi_vote: isMulti,
+        max_votes:  isMulti ? _maxVotes : 1,
     });
 
     if (error) {
