@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>⚔️ Versus — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0A; --card:#141414; --card2:#1A1A1A; --bdr:#262626;
+    --t1:#F0F0F0; --t2:#A0A0A0; --t3:#666; --sky:#0EA5E9; --red:#EF4444; --green:#22C55E;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--t1);
+    margin:0; min-height:100vh; overflow-x:hidden;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .wrap{ width:100%; max-width:440px; padding:0 16px 40px; }
+
+  /* Header */
+  .hdr{
+    text-align:center; padding:26px 0 14px;
+  }
+  .hdr .kicker{
+    font-size:10px; font-weight:800; letter-spacing:0.22em; text-transform:uppercase;
+    color:var(--red);
+  }
+  .hdr h1{
+    font-family:'Playfair Display',serif; font-style:italic; font-weight:700;
+    font-size:2rem; margin:4px 0 2px;
+  }
+  .hdr .demo-tag{
+    display:inline-block; margin-top:6px; font-size:10px; font-weight:700;
+    letter-spacing:0.1em; text-transform:uppercase; color:var(--t3);
+    background:var(--card); border:1px solid var(--bdr); border-radius:20px; padding:4px 12px;
+  }
+
+  /* Progress */
+  .progress{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    margin:6px 0 20px;
+  }
+  .round-label{ font-size:12px; font-weight:700; color:var(--sky); }
+  .pbar{ flex:1; max-width:140px; height:5px; background:var(--card); border-radius:99px; overflow:hidden; }
+  .pbar i{ display:block; height:100%; width:0; background:var(--sky); border-radius:99px; transition:width .4s ease; }
+  .match-count{ font-size:11px; color:var(--t3); font-weight:600; }
+
+  /* VS arena */
+  .arena{ position:relative; }
+  .vs-badge{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    z-index:5; width:52px; height:52px; border-radius:50%;
+    background:linear-gradient(135deg,#1a1a2e,#0d1f30);
+    border:2px solid var(--bdr);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Playfair Display',serif; font-style:italic; font-weight:700;
+    font-size:18px; color:var(--red); box-shadow:0 4px 16px rgba(0,0,0,.5);
+  }
+
+  .card{
+    position:relative; width:100%; height:200px; border-radius:20px; overflow:hidden;
+    cursor:pointer; border:1.5px solid var(--bdr); background:var(--card2);
+    transition:transform .18s ease, border-color .18s ease, opacity .35s ease, filter .35s ease;
+    user-select:none;
+  }
+  .card:first-child{ margin-bottom:14px; }
+  .card:active{ transform:scale(.98); }
+  .card .emoji{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:80px; opacity:.9;
+  }
+  .card .grad{ position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.78) 0%, rgba(0,0,0,.15) 55%, transparent 100%); }
+  .card .meta{ position:absolute; left:0; right:0; bottom:0; padding:16px 18px; }
+  .card .name{ font-size:20px; font-weight:800; line-height:1.15; }
+  .card .sub{ font-size:12px; color:var(--t2); margin-top:3px; }
+  .card .tap-hint{
+    position:absolute; top:12px; right:12px; font-size:10px; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--t1);
+    background:rgba(14,165,233,.85); border-radius:20px; padding:5px 11px;
+    opacity:0; transition:opacity .18s;
+  }
+  .card:hover .tap-hint{ opacity:1; }
+
+  /* win / lose animations */
+  .card.win{ border-color:var(--green); filter:saturate(1.2) brightness(1.05); transform:scale(1.03); }
+  .card.win .meta::after{
+    content:'✓ ALES'; position:absolute; top:-150px; right:18px;
+    font-size:11px; font-weight:800; color:var(--green); letter-spacing:.1em;
+  }
+  .card.lose{ opacity:0; transform:scale(.85) translateY(10px); filter:grayscale(1); }
+  .card.win-badge::before{
+    content:'WINNER'; position:absolute; z-index:3; top:12px; left:12px;
+    font-size:10px; font-weight:800; letter-spacing:.12em; color:#052e16;
+    background:var(--green); border-radius:20px; padding:5px 11px;
+  }
+
+  /* champion screen */
+  .champion{ text-align:center; padding-top:8px; animation:pop .5s ease; }
+  @keyframes pop{ from{opacity:0; transform:scale(.9);} to{opacity:1; transform:scale(1);} }
+  .champion .crown{ font-size:54px; }
+  .champion .clabel{ font-size:11px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--green); margin-top:8px; }
+  .champ-card{
+    position:relative; height:240px; border-radius:22px; overflow:hidden; margin:14px 0 18px;
+    border:2px solid var(--green); box-shadow:0 0 40px rgba(34,197,94,.25);
+  }
+  .champ-card .emoji{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:100px; }
+  .champ-card .grad{ position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.8), transparent 60%); }
+  .champ-card .cname{ position:absolute; bottom:16px; left:18px; font-size:26px; font-weight:800; }
+  .runners{ text-align:left; margin-top:18px; }
+  .runners h3{ font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--t3); margin:0 0 10px; }
+  .runner-row{ display:flex; align-items:center; gap:10px; padding:9px 12px; background:var(--card); border:1px solid var(--bdr); border-radius:12px; margin-bottom:8px; }
+  .runner-row .rk{ font-size:12px; font-weight:800; color:var(--sky); width:18px; }
+  .runner-row .re{ font-size:20px; }
+  .runner-row .rn{ font-size:14px; font-weight:600; }
+
+  .btn{
+    display:block; width:100%; text-align:center; margin-top:22px;
+    background:var(--sky); color:#fff; font-weight:800; font-size:15px;
+    border:none; border-radius:14px; padding:16px; cursor:pointer;
+    font-family:'DM Sans',sans-serif; transition:transform .15s, background .18s;
+  }
+  .btn:active{ transform:scale(.98); }
+  .btn.ghost{ background:transparent; border:1.5px solid var(--bdr); color:var(--t2); }
+
+  .explainer{
+    margin-top:26px; background:var(--card); border:1px solid var(--bdr);
+    border-radius:16px; padding:16px 18px; font-size:12.5px; line-height:1.6; color:var(--t2);
+  }
+  .explainer b{ color:var(--t1); }
+  .explainer .step{ display:flex; gap:10px; margin-top:8px; }
+  .explainer .step span{ color:var(--sky); font-weight:800; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <div class="kicker">⚔ WarRoom</div>
+    <h1>Versus Mode</h1>
+    <div class="demo-tag">🔒 Demo privat · doar pentru tine</div>
+  </div>
+
+  <div id="game">
+    <div class="progress">
+      <span class="round-label" id="round-label">Optimi</span>
+      <div class="pbar"><i id="pbar-fill"></i></div>
+      <span class="match-count" id="match-count">1 / 4</span>
+    </div>
+
+    <div class="arena" id="arena">
+      <div class="vs-badge">VS</div>
+      <div class="card" id="card-a"></div>
+      <div class="card" id="card-b"></div>
+    </div>
+
+    <p style="text-align:center; font-size:12px; color:var(--t3); margin-top:16px;">
+      👆 Apasă pe varianta preferată — câștigătoarea avansează
+    </p>
+  </div>
+
+  <div id="result" style="display:none;"></div>
+
+  <div class="explainer" id="explainer">
+    <b>Cum funcționează:</b> opțiunile se înfruntă 2 câte 2, ca într-un turneu.
+    <div class="step"><span>1.</span> Apeși pe varianta care îți place mai mult din fiecare duel.</div>
+    <div class="step"><span>2.</span> Câștigătoarele avansează în runda următoare.</div>
+    <div class="step"><span>3.</span> La final rămâne o singură campioană — alegerea grupului.</div>
+    <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--bdr); color:var(--t3);">
+      În aplicația reală, fiecare membru joacă turneul lui, iar rezultatele se combină ca să vedem ce a votat tot grupul.
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Sample options (Zakynthos) ────────────────────────────────
+const OPTIONS = [
+  { name:"Navagio Beach",        sub:"Shipwreck Bay",        emoji:"⛵" },
+  { name:"Blue Caves",           sub:"Peșteri turcoaz",      emoji:"🏞️" },
+  { name:"Marathonisi",          sub:"Turtle Island",        emoji:"🐢" },
+  { name:"Porto Limnionas",      sub:"Golf de stânci",       emoji:"🪨" },
+  { name:"Cameo Island",         sub:"Apus + pod de lemn",   emoji:"🌅" },
+  { name:"Xigia Beach",          sub:"Plajă cu sulf",        emoji:"🧖" },
+  { name:"Gerakas",              sub:"Nisip auriu protejat", emoji:"🏖️" },
+  { name:"Keri Caves",           sub:"Snorkeling",           emoji:"🤿" },
+];
+
+// ── Tournament state ──────────────────────────────────────────
+let bracket = [];      // current round contestants
+let nextRound = [];    // winners of current round
+let matchIdx = 0;      // index into current round (pairs)
+let totalMatchesThisRound = 0;
+let eliminated = [];    // track losers in order (for ranking-ish)
+
+const ROUND_NAMES = { 8:"Optimi", 4:"Sferturi", 2:"Finală", 1:"Campion" };
+
+function startGame(){
+  // shuffle
+  bracket = [...OPTIONS].sort(()=>Math.random()-0.5);
+  nextRound = [];
+  matchIdx = 0;
+  eliminated = [];
+  document.getElementById('game').style.display='block';
+  document.getElementById('result').style.display='none';
+  document.getElementById('explainer').style.display='block';
+  newRoundMeta();
+  loadMatch();
+}
+
+function newRoundMeta(){
+  totalMatchesThisRound = Math.floor(bracket.length/2);
+}
+
+function loadMatch(){
+  const a = bracket[matchIdx*2];
+  const b = bracket[matchIdx*2+1];
+
+  document.getElementById('round-label').textContent = ROUND_NAMES[bracket.length] || 'Runda';
+  document.getElementById('match-count').textContent = (matchIdx+1)+' / '+totalMatchesThisRound;
+  const overallPct = (matchIdx/totalMatchesThisRound)*100;
+  document.getElementById('pbar-fill').style.width = overallPct+'%';
+
+  const cardA = document.getElementById('card-a');
+  const cardB = document.getElementById('card-b');
+  cardA.className = 'card'; cardB.className = 'card';
+  cardA.innerHTML = cardInner(a);
+  cardB.innerHTML = cardInner(b);
+  cardA.onclick = ()=>pick('a', a, b);
+  cardB.onclick = ()=>pick('b', a, b);
+}
+
+function cardInner(o){
+  return `
+    <div class="emoji">${o.emoji}</div>
+    <div class="grad"></div>
+    <div class="tap-hint">Alege ⚡</div>
+    <div class="meta">
+      <div class="name">${o.name}</div>
+      <div class="sub">${o.sub}</div>
+    </div>`;
+}
+
+function pick(side, a, b){
+  const cardA = document.getElementById('card-a');
+  const cardB = document.getElementById('card-b');
+  cardA.onclick = null; cardB.onclick = null;
+
+  const winner = side==='a' ? a : b;
+  const loser  = side==='a' ? b : a;
+  eliminated.unshift(loser);
+
+  if(side==='a'){ cardA.classList.add('win','win-badge'); cardB.classList.add('lose'); }
+  else { cardB.classList.add('win','win-badge'); cardA.classList.add('lose'); }
+
+  nextRound.push(winner);
+
+  setTimeout(()=>{
+    matchIdx++;
+    if(matchIdx*2 >= bracket.length){
+      // round done
+      if(nextRound.length===1){
+        showChampion(nextRound[0]);
+        return;
+      }
+      bracket = nextRound;
+      nextRound = [];
+      matchIdx = 0;
+      newRoundMeta();
+    }
+    loadMatch();
+  }, 520);
+}
+
+function showChampion(champ){
+  document.getElementById('game').style.display='none';
+  document.getElementById('explainer').style.display='none';
+  const top3 = eliminated.slice(0,3); // most-recently eliminated = went furthest
+  const r = document.getElementById('result');
+  r.style.display='block';
+  r.innerHTML = `
+    <div class="champion">
+      <div class="crown">🏆</div>
+      <div class="clabel">Campioana grupului</div>
+      <div class="champ-card">
+        <div class="emoji">${champ.emoji}</div>
+        <div class="grad"></div>
+        <div class="cname">${champ.name}</div>
+      </div>
+      <div class="runners">
+        <h3>Au pierdut în drum spre finală</h3>
+        ${top3.map((o,i)=>`
+          <div class="runner-row">
+            <span class="rk">#${i+2}</span>
+            <span class="re">${o.emoji}</span>
+            <span class="rn">${o.name}</span>
+          </div>`).join('')}
+      </div>
+      <button class="btn" onclick="startGame()">🔁 Joacă din nou</button>
+    </div>`;
+}
+
+// ── Swipe support ─────────────────────────────────────────────
+let touchStartY=null, touchTarget=null;
+document.getElementById('arena').addEventListener('touchstart',e=>{
+  touchTarget = e.target.closest('.card');
+  touchStartY = e.touches[0].clientX;
+},{passive:true});
+document.getElementById('arena').addEventListener('touchend',e=>{
+  if(!touchTarget || touchStartY===null) return;
+  touchStartY=null;
+},{passive:true});
+
+startGame();
+</script>
+</body>
+</html>
