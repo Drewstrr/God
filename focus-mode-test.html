@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Test · Mod Focus</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0A; --bg1:#111; --card:#141414; --card2:#1A1A1A; --bdr:#262626; --bdr2:#2A2A2A;
+    --t1:#F0F0F0; --t2:#A0A0A0; --t3:#666; --sky:#0EA5E9; --orange:#F97316; --green:#22C55E;
+  }
+  body.light{ --bg:#FFF; --bg1:#FFF; --card:#FFF; --card2:#F8F8F8; --bdr:#EFEFEF; --bdr2:#E8E8E8; --t1:#0A0A0A; --t2:#444; --t3:#888; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--t1); margin:0; min-height:100vh; transition:background .3s,color .3s; }
+  .wrap{ max-width:440px; margin:0 auto; }
+
+  /* ─── HERO (collapsible) ─── */
+  .hero{
+    background:linear-gradient(135deg,#0A0A0A,#111827 60%,#0A0A0A);
+    padding:16px 20px 20px; overflow:hidden;
+    max-height:400px; opacity:1;
+    transition:max-height .45s cubic-bezier(.4,0,.2,1), opacity .3s, padding .45s;
+  }
+  .hero-toolbar{ display:flex; justify-content:flex-end; gap:8px; margin-bottom:8px; }
+  .icon-btn{ width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.16); color:rgba(255,255,255,.8); font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .hero h1{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:2.5rem; margin:0; line-height:1; }
+  .hero h1 .sky{ color:var(--sky); } .hero h1 .w{ color:#F0F0F0; }
+  .pills{ display:flex; flex-wrap:wrap; gap:7px; margin-top:14px; }
+  .pill{ font-size:11px; font-weight:600; padding:5px 11px; border-radius:20px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); color:#bbb; }
+  .pill.sea{ background:rgba(14,165,233,.1); border-color:rgba(14,165,233,.35); color:#38BDF8; }
+
+  .focus-cta{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%;
+    margin-top:16px; padding:12px; border-radius:12px; border:1px solid rgba(14,165,233,.4);
+    background:rgba(14,165,233,.12); color:#38BDF8; font-family:'DM Sans',sans-serif;
+    font-size:13px; font-weight:800; cursor:pointer;
+  }
+
+  /* countdown (collapsible) */
+  .cd{ padding:16px; overflow:hidden; max-height:120px; opacity:1; transition:max-height .45s cubic-bezier(.4,0,.2,1), opacity .3s, padding .45s; border-bottom:1px solid var(--bdr); }
+  .cd-inner{ background:var(--bg1); border:1px solid var(--bdr); border-radius:16px; padding:14px; text-align:center; }
+  .cd-label{ font-size:10px; font-weight:800; letter-spacing:.2em; text-transform:uppercase; color:var(--t3); }
+  .cd-time{ font-family:'Playfair Display',serif; font-size:1.6rem; font-weight:700; color:var(--sky); margin-top:6px; }
+
+  /* ─── COMPACT BAR (hidden in full mode) ─── */
+  .compact-bar{
+    display:none; align-items:center; gap:8px; padding:10px 12px;
+    background:var(--bg1); border-bottom:1px solid var(--bdr); position:sticky; top:0; z-index:40;
+  }
+  .cb-temps{ display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .cb-chip{ font-size:12px; font-weight:800; padding:5px 9px; border-radius:11px; white-space:nowrap; }
+  .cb-chip.sea{ background:rgba(14,165,233,.12); color:#38BDF8; border:1px solid rgba(14,165,233,.3); }
+  .cb-chip.air{ background:rgba(249,115,22,.12); color:var(--orange); border:1px solid rgba(249,115,22,.3); }
+  .cb-strip{ display:flex; gap:6px; overflow-x:auto; flex:1; }
+  .cb-strip::-webkit-scrollbar{ display:none; } .cb-strip{ scrollbar-width:none; }
+  .cb-mini{ flex:0 0 auto; text-align:center; background:var(--card); border:1px solid var(--bdr); border-radius:9px; padding:4px 7px; }
+  .cb-mini .z{ font-size:9px; font-weight:800; color:var(--sky); } .cb-mini .e{ font-size:14px; line-height:1.1; } .cb-mini .t{ font-size:10px; font-weight:700; }
+  .cb-actions{ display:flex; gap:6px; flex-shrink:0; }
+  .cb-ic{ width:32px; height:32px; border-radius:9px; background:var(--card); border:1px solid var(--bdr2); color:var(--t2); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .cb-ic.home{ background:var(--sky); border-color:var(--sky); color:#fff; }
+
+  /* ─── NAV ─── */
+  .nav{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:14px 16px; position:sticky; z-index:30; background:var(--bg); border-bottom:1px solid var(--bdr); }
+  .nav .b{ background:var(--card); border:1px solid var(--bdr2); border-radius:13px; padding:11px 4px; text-align:center; cursor:pointer; }
+  .nav .b.on{ border-color:var(--sky); background:rgba(14,165,233,.08); }
+  .nav .b .i{ font-size:18px; } .nav .b .l{ font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; color:var(--t2); margin-top:3px; }
+  .nav .b.on .l{ color:var(--sky); }
+
+  .content{ padding:18px 16px 60px; }
+  .content h2{ font-family:'Playfair Display',serif; font-size:1.3rem; margin:0 0 6px; }
+  .content p{ font-size:13px; color:var(--t2); line-height:1.6; }
+  .card{ background:var(--card); border:1px solid var(--bdr); border-radius:14px; padding:16px; margin-top:12px; }
+
+  /* ─── COMPACT STATE ─── */
+  body.compact .hero{ max-height:0; opacity:0; padding-top:0; padding-bottom:0; }
+  body.compact .cd{ max-height:0; opacity:0; padding-top:0; padding-bottom:0; border-bottom:none; }
+  body.compact .compact-bar{ display:flex; }
+  body.compact .nav{ top:52px; } /* sits right under compact bar */
+
+  .hint{ margin:18px 16px 0; background:rgba(14,165,233,.08); border:1px solid rgba(14,165,233,.25); border-radius:12px; padding:12px 14px; font-size:12px; color:var(--t2); line-height:1.55; }
+  .hint b{ color:var(--t1); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero" id="hero">
+    <div class="hero-toolbar">
+      <button class="icon-btn" onclick="location.reload()" title="Refresh">↻</button>
+      <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Temă">🌙</button>
+    </div>
+    <h1><span class="sky">Zakynthos</span><span class="w"> '26</span></h1>
+    <div class="pills">
+      <span class="pill">👥 10 explorers</span>
+      <span class="pill">📅 7 zile</span>
+      <span class="pill">🏠 Kalamaki</span>
+      <span class="pill sea" id="hero-sea">🌊 --°</span>
+    </div>
+    <button class="focus-cta" onclick="enterFocus()">
+      ⤢ Mod Focus — ascunde tot, lasă doar esențialul
+    </button>
+  </div>
+
+  <!-- COUNTDOWN -->
+  <div class="cd" id="cd">
+    <div class="cd-inner">
+      <div class="cd-label">✦ Countdown</div>
+      <div class="cd-time" id="cd-time">-- zile</div>
+    </div>
+  </div>
+
+  <!-- COMPACT BAR (only in focus mode) -->
+  <div class="compact-bar" id="compact-bar">
+    <div class="cb-temps">
+      <span class="cb-chip sea" id="cb-sea">🌊 --°</span>
+      <span class="cb-chip air" id="cb-air">☀️ --°</span>
+    </div>
+    <div class="cb-strip" id="cb-strip"></div>
+    <div class="cb-actions">
+      <button class="cb-ic" onclick="location.reload()" title="Refresh">↻</button>
+      <button class="cb-ic" onclick="toggleTheme()" id="cb-theme" title="Temă">🌙</button>
+      <button class="cb-ic home" onclick="exitFocus()" title="Înapoi acasă">⌂</button>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav" id="nav">
+    <div class="b on"><div class="i">✈️</div><div class="l">Itinerariu</div></div>
+    <div class="b"><div class="i">💰</div><div class="l">Costuri</div></div>
+    <div class="b"><div class="i">📍</div><div class="l">Kalamaki</div></div>
+    <div class="b"><div class="i">🌊</div><div class="l">Plaje</div></div>
+    <div class="b"><div class="i">🇬🇷</div><div class="l">Greacă</div></div>
+    <div class="b"><div class="i">⚔️</div><div class="l">WarRoom</div></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+    <div class="hint">
+      <b>Cum se testează:</b> apasă <b>„⤢ Mod Focus"</b> din header. Vezi cum header-ul și countdown-ul urcă și dispar, iar sus rămâne doar bara subțire cu vremea, temperatura apei, temă și refresh. Butonul <b>⌂</b> te aduce înapoi la varianta completă.
+    </div>
+    <h2>Ziua 1 — Sosire</h2>
+    <p>Conținut demonstrativ. În modul Focus, meniul urcă lipit de bara subțire și ai mai mult spațiu pentru conținut, fără să pierzi vremea și temperatura apei.</p>
+    <div class="card">🏖️ 10:30 — Prima înot pe plaja Kalamaki</div>
+    <div class="card">🍽️ 13:00 — Prânz la Pandesia</div>
+    <div class="card">🌅 20:24 — Apus la Cameo Island</div>
+  </div>
+
+</div>
+
+<script>
+// theme
+(function(){ const s=localStorage.getItem('zaky-theme')||'light'; if(s==='light'){document.body.classList.add('light'); setThemeIcons('☀️');} })();
+function setThemeIcons(x){ const a=document.getElementById('theme-btn'), b=document.getElementById('cb-theme'); if(a)a.textContent=x; if(b)b.textContent=x; }
+function toggleTheme(){ const l=document.body.classList.toggle('light'); setThemeIcons(l?'☀️':'🌙'); localStorage.setItem('zaky-theme', l?'light':'dark'); }
+
+// focus mode
+function enterFocus(){ document.body.classList.add('compact'); window.scrollTo({top:0,behavior:'smooth'}); localStorage.setItem('zaky-focus','1'); }
+function exitFocus(){ document.body.classList.remove('compact'); localStorage.removeItem('zaky-focus'); }
+// remember last state
+if(localStorage.getItem('zaky-focus')==='1') document.body.classList.add('compact');
+
+// countdown
+(function(){
+  const t=new Date('2026-08-06T09:00:00')-new Date();
+  const d=Math.max(0,Math.floor(t/86400000));
+  const el=document.getElementById('cd-time'); if(el) el.textContent=d+' zile';
+})();
+
+// sea temp (marine API)
+(async function(){
+  try{
+    const j=await (await fetch('https://marine-api.open-meteo.com/v1/marine?latitude=37.79&longitude=20.90&current=sea_surface_temperature',{signal:AbortSignal.timeout(6000)})).json();
+    const tmp=j.current&&j.current.sea_surface_temperature;
+    if(tmp!=null){ const r=Math.round(tmp); document.getElementById('hero-sea').textContent='🌊 '+r+'°'; document.getElementById('cb-sea').textContent='🌊 '+r+'°'; }
+  }catch(e){ document.getElementById('hero-sea').textContent='🌊 ~26°'; document.getElementById('cb-sea').textContent='🌊 ~26°'; }
+})();
+
+// air weather strip (today-ish preview + vacation fallback)
+const WX=[
+  {z:'Z1',d:'2026-08-06',e:'☀️',h:31},{z:'Z2',d:'2026-08-07',e:'☀️',h:32},{z:'Z3',d:'2026-08-08',e:'🌤️',h:31},
+  {z:'Z4',d:'2026-08-09',e:'☀️',h:33},{z:'Z5',d:'2026-08-10',e:'⛅',h:30},{z:'Z6',d:'2026-08-11',e:'☀️',h:32},{z:'Z7',d:'2026-08-12',e:'☀️',h:31}
+];
+function wmo(c){ if(c===0)return'☀️'; if(c===1||c===2)return'🌤️'; if(c===3)return'☁️'; if(c>=61&&c<=82)return'🌧️'; if(c>=95)return'⛈️'; return'🌤️'; }
+function renderStrip(){
+  document.getElementById('cb-strip').innerHTML=WX.map(w=>`<div class="cb-mini"><div class="z">${w.z}</div><div class="e">${w.e}</div><div class="t">${w.h}°</div></div>`).join('');
+  document.getElementById('cb-air').textContent=WX[0].e+' '+WX[0].h+'°';
+}
+(async function(){
+  renderStrip();
+  try{
+    const j=await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=37.79&longitude=20.90&daily=weather_code,temperature_2m_max&timezone=auto&start_date=2026-08-06&end_date=2026-08-12',{signal:AbortSignal.timeout(7000)})).json();
+    if(j.daily&&j.daily.time){ const t=j.daily.time; let m=0;
+      WX.forEach(w=>{ const i=t.indexOf(w.d); if(i>=0&&j.daily.temperature_2m_max[i]!=null){ w.e=wmo(j.daily.weather_code[i]); w.h=Math.round(j.daily.temperature_2m_max[i]); m++; } });
+      if(m>0) renderStrip();
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

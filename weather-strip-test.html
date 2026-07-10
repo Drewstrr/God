@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Test · Vreme orizontală</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0A; --bg1:#111; --card:#141414; --card2:#1A1A1A; --bdr:#262626; --bdr2:#2A2A2A;
+    --t1:#F0F0F0; --t2:#A0A0A0; --t3:#666; --sky:#0EA5E9; --orange:#F97316;
+  }
+  body.light{ --bg:#FFF; --bg1:#FFF; --card:#FFF; --card2:#F8F8F8; --bdr:#EFEFEF; --bdr2:#E8E8E8; --t1:#0A0A0A; --t2:#444; --t3:#888; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--t1); margin:0; min-height:100vh; transition:background .3s,color .3s; }
+  .wrap{ max-width:440px; margin:0 auto; padding:0 0 60px; }
+  .top{ background:linear-gradient(135deg,#0A0A0A,#111827 60%,#0A0A0A); padding:22px 20px 18px; text-align:center; }
+  .top .kicker{ font-size:10px; font-weight:800; letter-spacing:.22em; text-transform:uppercase; color:var(--orange); }
+  .top h1{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:1.8rem; margin:5px 0 2px; color:#F0F0F0; }
+  .top .tag{ display:inline-block; margin-top:6px; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#888; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:4px 12px; }
+
+  .sec-label{ font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--t3); margin:26px 16px 10px; }
+  .note{ font-size:11px; color:var(--t3); margin:0 16px 12px; line-height:1.5; }
+
+  /* horizontal strip */
+  .wx-strip{ display:flex; gap:10px; overflow-x:auto; padding:2px 16px 10px; scroll-snap-type:x mandatory; }
+  .wx-strip::-webkit-scrollbar{ display:none; }
+  .wx-strip{ scrollbar-width:none; }
+  .wx-card{
+    scroll-snap-align:start; flex:0 0 auto; width:78px; background:var(--card); border:1.5px solid var(--bdr);
+    border-radius:16px; padding:12px 8px; text-align:center; transition:border-color .18s;
+  }
+  .wx-card.today{ border-color:var(--sky); background:rgba(14,165,233,.07); }
+  .wx-card .zi{ font-size:12px; font-weight:800; color:var(--sky); }
+  .wx-card .date{ font-size:9px; color:var(--t3); margin-top:1px; }
+  .wx-card .emoji{ font-size:30px; margin:7px 0 4px; }
+  .wx-card .hi{ font-size:15px; font-weight:800; }
+  .wx-card .lo{ font-size:11px; color:var(--t3); }
+
+  .theme-btn{ position:fixed; top:14px; right:14px; z-index:50; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:#fff; font-size:17px; cursor:pointer; }
+  .foot{ text-align:center; margin:34px 16px 0; padding-top:20px; border-top:1px solid var(--bdr); font-size:11px; color:var(--t3); line-height:1.6; }
+
+  /* mock content to show it doesn't push things far */
+  .mock{ margin:24px 16px 0; background:var(--card); border:1px solid var(--bdr); border-radius:14px; padding:16px; }
+  .mock .m1{ font-size:14px; font-weight:700; }
+  .mock .m2{ font-size:12px; color:var(--t3); margin-top:4px; line-height:1.5; }
+</style>
+</head>
+<body>
+<button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+
+<div class="wrap">
+  <div class="top">
+    <div class="kicker">☀ Test layout</div>
+    <h1>Vreme orizontală</h1>
+    <div class="tag">🔒 Pagină de test</div>
+  </div>
+
+  <div class="sec-label">Prognoza — swipe lateral →</div>
+  <p class="note" id="wx-note">Se încarcă vremea...</p>
+  <div class="wx-strip" id="wx-strip"></div>
+
+  <div class="mock">
+    <div class="m1">📍 Restul aplicației continuă aici</div>
+    <div class="m2">Vezi? Strip-ul ocupă o singură linie. Conținutul de sub el nu e împins jos — meniul și restul rămân la locul lor.</div>
+  </div>
+
+  <div class="foot">Îți place strip-ul orizontal?<br>Spune-mi și îl integrez în app.</div>
+</div>
+
+<script>
+(function(){ const s=localStorage.getItem('zaky-theme')||'light'; if(s==='light'){document.body.classList.add('light'); document.getElementById('theme-btn').textContent='☀️';} })();
+function toggleTheme(){ const l=document.body.classList.toggle('light'); document.getElementById('theme-btn').textContent=l?'☀️':'🌙'; localStorage.setItem('zaky-theme', l?'light':'dark'); }
+
+const WX_DAYS = [
+  { zi:'Z1', date:'2026-08-06', fEmoji:'☀️', fHi:31, fLo:23 },
+  { zi:'Z2', date:'2026-08-07', fEmoji:'☀️', fHi:32, fLo:23 },
+  { zi:'Z3', date:'2026-08-08', fEmoji:'🌤️', fHi:31, fLo:24 },
+  { zi:'Z4', date:'2026-08-09', fEmoji:'☀️', fHi:33, fLo:24 },
+  { zi:'Z5', date:'2026-08-10', fEmoji:'⛅', fHi:30, fLo:23 },
+  { zi:'Z6', date:'2026-08-11', fEmoji:'☀️', fHi:32, fLo:23 },
+  { zi:'Z7', date:'2026-08-12', fEmoji:'☀️', fHi:31, fLo:22 },
+];
+function wmo(c){
+  if(c===0)return{e:'☀️'}; if(c===1||c===2)return{e:'🌤️'}; if(c===3)return{e:'☁️'};
+  if(c>=45&&c<=48)return{e:'🌫️'}; if(c>=51&&c<=57)return{e:'🌦️'}; if(c>=61&&c<=67)return{e:'🌧️'};
+  if(c>=80&&c<=82)return{e:'🌦️'}; if(c>=95)return{e:'⛈️'}; return{e:'🌤️'};
+}
+function render(){
+  document.getElementById('wx-strip').innerHTML = WX_DAYS.map(d=>{
+    const day=d.date.split('-')[2];
+    return `<div class="wx-card">
+      <div class="zi">${d.zi}</div><div class="date">${day} aug</div>
+      <div class="emoji">${d.emoji||d.fEmoji}</div>
+      <div class="hi">${d.hi||d.fHi}°</div><div class="lo">${d.lo||d.fLo}°</div>
+    </div>`;
+  }).join('');
+}
+async function load(){
+  render();
+  const note=document.getElementById('wx-note');
+  try{
+    const url='https://api.open-meteo.com/v1/forecast?latitude=37.79&longitude=20.90&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&start_date=2026-08-06&end_date=2026-08-12';
+    const j=await (await fetch(url,{signal:AbortSignal.timeout(7000)})).json();
+    let matched=0;
+    if(j.daily&&j.daily.time){ const t=j.daily.time;
+      WX_DAYS.forEach(d=>{ const i=t.indexOf(d.date); if(i>=0&&j.daily.temperature_2m_max[i]!=null){ d.emoji=wmo(j.daily.weather_code[i]).e; d.hi=Math.round(j.daily.temperature_2m_max[i]); d.lo=Math.round(j.daily.temperature_2m_min[i]); matched++; } });
+    }
+    if(matched>0){ note.innerHTML='🟢 <b>Prognoză live</b> Open-Meteo.'; render(); }
+    else note.innerHTML='📅 Vacanța e prea departe pentru prognoză live — arăt mediile pentru august. Devine live cu ~2 săpt. înainte de plecare.';
+  }catch(e){ note.innerHTML='📅 Medii pentru august (prognoza live apare aproape de plecare).'; }
+}
+load();
+</script>
+</body>
+</html>
