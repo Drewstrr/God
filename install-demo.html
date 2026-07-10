@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Demo · Instalare + Vreme + Nav</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0A0A; --bg1:#111; --card:#141414; --card2:#1A1A1A; --bdr:#262626; --bdr2:#2A2A2A;
+    --t1:#F0F0F0; --t2:#A0A0A0; --t3:#666; --sky:#0EA5E9; --green:#22C55E; --orange:#F97316;
+  }
+  body.light{
+    --bg:#FFF; --bg1:#FFF; --card:#FFF; --card2:#F8F8F8; --bdr:#EFEFEF; --bdr2:#E8E8E8;
+    --t1:#0A0A0A; --t2:#444; --t3:#888;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{
+    font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--t1);
+    margin:0; min-height:100vh; transition:background .3s,color .3s;
+  }
+  .wrap{ max-width:440px; margin:0 auto; padding:0 16px 60px; }
+
+  .top{
+    background:linear-gradient(135deg,#0A0A0A 0%,#111827 60%,#0A0A0A 100%);
+    padding:24px 20px 20px; text-align:center; border-radius:0 0 22px 22px;
+  }
+  .top .kicker{ font-size:10px; font-weight:800; letter-spacing:.22em; text-transform:uppercase; color:var(--orange); }
+  .top h1{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:1.9rem; margin:5px 0 2px; color:#F0F0F0; }
+  .top .tag{ display:inline-block; margin-top:6px; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#888; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:4px 12px; }
+
+  .section-title{ font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--t3); margin:32px 4px 12px; display:flex; align-items:center; gap:8px; }
+  .section-title .num{ width:20px; height:20px; border-radius:6px; background:var(--sky); color:#fff; font-size:11px; display:flex; align-items:center; justify-content:center; }
+
+  /* ═══════ 1. INSTALL BANNER ═══════ */
+  .os-toggle{ display:flex; gap:8px; margin-bottom:14px; }
+  .os-toggle button{
+    flex:1; padding:10px; border-radius:12px; border:1.5px solid var(--bdr2); background:var(--card);
+    color:var(--t2); font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:all .18s;
+  }
+  .os-toggle button.active{ border-color:var(--sky); background:rgba(14,165,233,.1); color:var(--sky); }
+
+  .install-banner{
+    background:var(--card); border:1.5px solid var(--bdr2); border-radius:20px; padding:20px; position:relative; overflow:hidden;
+    box-shadow:0 8px 30px rgba(0,0,0,.25);
+  }
+  .install-banner .glow{ position:absolute; top:-40px; right:-40px; width:130px; height:130px; background:radial-gradient(circle, rgba(14,165,233,.25), transparent 70%); }
+  .ib-head{ display:flex; align-items:center; gap:14px; position:relative; }
+  .ib-icon{ width:54px; height:54px; border-radius:15px; background:linear-gradient(135deg,var(--sky),#0284C7); display:flex; align-items:center; justify-content:center; font-size:28px; flex-shrink:0; box-shadow:0 4px 14px rgba(14,165,233,.4); }
+  .ib-title{ font-size:17px; font-weight:800; line-height:1.2; }
+  .ib-sub{ font-size:12.5px; color:var(--t2); margin-top:2px; }
+
+  .ib-steps{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
+  .ib-step{ display:flex; align-items:center; gap:12px; background:var(--card2); border:1px solid var(--bdr); border-radius:13px; padding:11px 13px; }
+  .ib-step .n{ width:24px; height:24px; border-radius:50%; background:var(--sky); color:#fff; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .ib-step .txt{ font-size:13px; font-weight:600; flex:1; }
+  .ib-step .glyph{ width:34px; height:34px; border-radius:9px; background:var(--bg1); border:1px solid var(--bdr2); display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--sky); }
+
+  .ib-actions{ display:flex; gap:10px; margin-top:16px; }
+  .ib-btn{ flex:1; padding:14px; border-radius:13px; border:none; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:800; cursor:pointer; transition:transform .15s; }
+  .ib-btn:active{ transform:scale(.97); }
+  .ib-btn.primary{ background:var(--sky); color:#fff; }
+  .ib-btn.ghost{ background:transparent; border:1.5px solid var(--bdr2); color:var(--t3); flex:0 0 auto; padding:14px 18px; }
+
+  /* ═══════ 2. WEATHER ═══════ */
+  .weather-note{ font-size:11px; color:var(--t3); margin:0 4px 12px; line-height:1.5; }
+  .weather-grid{ display:flex; flex-direction:column; gap:9px; }
+  .wx-row{
+    display:flex; align-items:center; gap:13px; background:var(--card); border:1px solid var(--bdr);
+    border-radius:14px; padding:12px 15px;
+  }
+  .wx-day{ display:flex; flex-direction:column; flex-shrink:0; width:52px; }
+  .wx-day .zi{ font-size:13px; font-weight:800; color:var(--sky); }
+  .wx-day .date{ font-size:10px; color:var(--t3); margin-top:1px; }
+  .wx-emoji{ font-size:30px; width:40px; text-align:center; flex-shrink:0; }
+  .wx-desc{ flex:1; min-width:0; }
+  .wx-desc .cond{ font-size:13px; font-weight:600; }
+  .wx-desc .loc{ font-size:11px; color:var(--t3); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .wx-temp{ text-align:right; flex-shrink:0; }
+  .wx-temp .hi{ font-size:16px; font-weight:800; }
+  .wx-temp .lo{ font-size:12px; color:var(--t3); }
+  .wx-loading{ text-align:center; padding:20px; color:var(--t3); font-size:13px; }
+
+  /* ═══════ 3. BIGGER NAV ═══════ */
+  .nav-compare{ font-size:11px; color:var(--t3); margin:0 4px 12px; }
+  /* OLD (small) */
+  .nav-old{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:8px; opacity:.55; }
+  .nav-old .b{ background:var(--card); border:1px solid var(--bdr); border-radius:11px; padding:7px 3px; text-align:center; }
+  .nav-old .b .i{ font-size:15px; }
+  .nav-old .b .l{ font-size:8.5px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.03em; margin-top:2px; }
+  .nav-vs{ text-align:center; font-size:10px; font-weight:800; letter-spacing:.1em; color:var(--t3); text-transform:uppercase; margin:12px 0; }
+
+  /* NEW (big) */
+  .nav-new{ display:grid; grid-template-columns:repeat(2,1fr); gap:11px; }
+  .nav-new .b{
+    background:var(--card); border:1.5px solid var(--bdr2); border-radius:18px; padding:18px 12px;
+    display:flex; align-items:center; gap:13px; cursor:pointer; transition:all .18s;
+  }
+  .nav-new .b:active{ transform:scale(.97); }
+  .nav-new .b.on{ border-color:var(--sky); background:rgba(14,165,233,.08); }
+  .nav-new .b .i{ font-size:26px; flex-shrink:0; }
+  .nav-new .b .l{ font-size:14px; font-weight:800; }
+  .nav-new .b.on .l{ color:var(--sky); }
+
+  .theme-btn{ position:fixed; top:14px; right:14px; z-index:50; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:#fff; font-size:17px; cursor:pointer; }
+
+  .foot{ text-align:center; margin-top:36px; padding-top:20px; border-top:1px solid var(--bdr); font-size:11px; color:var(--t3); line-height:1.6; }
+</style>
+</head>
+<body>
+<button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+
+<div class="top">
+  <div class="kicker">⚙ Preview privat</div>
+  <h1>Demo Features</h1>
+  <div class="tag">🔒 Doar pentru tine · nu e în app</div>
+</div>
+
+<div class="wrap">
+
+  <!-- ═══════ 1. INSTALL BANNER ═══════ -->
+  <div class="section-title"><span class="num">1</span> Banner de instalare</div>
+  <div class="os-toggle">
+    <button id="os-android" onclick="setOS('android')">🤖 Android</button>
+    <button id="os-ios" onclick="setOS('ios')">🍎 iOS</button>
+  </div>
+  <div id="banner-mount"></div>
+
+  <!-- ═══════ 2. WEATHER ═══════ -->
+  <div class="section-title"><span class="num">2</span> Vremea pe fiecare zi</div>
+  <p class="weather-note" id="wx-note">Se încarcă vremea live din Open-Meteo...</p>
+  <div class="weather-grid" id="weather-grid">
+    <div class="wx-loading">☁️ Se încarcă prognoza...</div>
+  </div>
+
+  <!-- ═══════ 3. NAV ═══════ -->
+  <div class="section-title"><span class="num">3</span> Nav mai mare & mai simplu</div>
+  <p class="nav-compare">Sus = varianta actuală (mică). Jos = varianta nouă propusă (butoane mari, tap ușor).</p>
+
+  <div class="nav-old">
+    <div class="b"><div class="i">✈️</div><div class="l">Itinerariu</div></div>
+    <div class="b"><div class="i">💰</div><div class="l">Costuri</div></div>
+    <div class="b"><div class="i">📍</div><div class="l">Kalamaki</div></div>
+    <div class="b"><div class="i">🌊</div><div class="l">Plaje</div></div>
+    <div class="b"><div class="i">🇬🇷</div><div class="l">Greacă</div></div>
+    <div class="b"><div class="i">⚔️</div><div class="l">WarRoom</div></div>
+  </div>
+
+  <div class="nav-vs">↓ propunere nouă ↓</div>
+
+  <div class="nav-new" id="nav-new">
+    <div class="b on" onclick="pickNav(this)"><div class="i">✈️</div><div class="l">Itinerariu</div></div>
+    <div class="b" onclick="pickNav(this)"><div class="i">💰</div><div class="l">Costuri</div></div>
+    <div class="b" onclick="pickNav(this)"><div class="i">📍</div><div class="l">Kalamaki</div></div>
+    <div class="b" onclick="pickNav(this)"><div class="i">🌊</div><div class="l">Plaje</div></div>
+    <div class="b" onclick="pickNav(this)"><div class="i">🇬🇷</div><div class="l">Greacă</div></div>
+    <div class="b" onclick="pickNav(this)"><div class="i">⚔️</div><div class="l">WarRoom</div></div>
+  </div>
+
+  <div class="foot">
+    Astea sunt doar mockup-uri de preview.<br>
+    Spune-mi ce îți place și le integrez în aplicația reală.
+  </div>
+
+</div>
+
+<script>
+// ═══════ THEME ═══════
+(function(){
+  const saved = localStorage.getItem('zaky-theme') || 'light';
+  if(saved==='light'){ document.body.classList.add('light'); document.getElementById('theme-btn').textContent='☀️'; }
+})();
+function toggleTheme(){
+  const light = document.body.classList.toggle('light');
+  document.getElementById('theme-btn').textContent = light ? '☀️' : '🌙';
+  localStorage.setItem('zaky-theme', light ? 'light':'dark');
+}
+
+// ═══════ 1. INSTALL BANNER ═══════
+const SHARE_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/></svg>`;
+const ADD_SVG = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/></svg>`;
+
+function renderBanner(os){
+  const mount = document.getElementById('banner-mount');
+  if(os==='android'){
+    mount.innerHTML = `
+      <div class="install-banner">
+        <div class="glow"></div>
+        <div class="ib-head">
+          <div class="ib-icon">📲</div>
+          <div>
+            <div class="ib-title">Instalează Crew Zaky</div>
+            <div class="ib-sub">Acces instant de pe ecran — fără browser</div>
+          </div>
+        </div>
+        <div class="ib-actions">
+          <button class="ib-btn primary" onclick="fakeInstall()">Instalează</button>
+          <button class="ib-btn ghost" onclick="fakeSkip()">Mai târziu</button>
+        </div>
+      </div>`;
+  } else {
+    mount.innerHTML = `
+      <div class="install-banner">
+        <div class="glow"></div>
+        <div class="ib-head">
+          <div class="ib-icon">📲</div>
+          <div>
+            <div class="ib-title">Adaugă pe ecranul principal</div>
+            <div class="ib-sub">2 pași rapizi în Safari</div>
+          </div>
+        </div>
+        <div class="ib-steps">
+          <div class="ib-step">
+            <div class="n">1</div>
+            <div class="txt">Apasă butonul <b>Share</b> din bara Safari</div>
+            <div class="glyph">${SHARE_SVG}</div>
+          </div>
+          <div class="ib-step">
+            <div class="n">2</div>
+            <div class="txt">Alege <b>„Adaugă la ecran principal"</b></div>
+            <div class="glyph">${ADD_SVG}</div>
+          </div>
+        </div>
+        <div class="ib-actions">
+          <button class="ib-btn primary" onclick="fakeSkip()" style="flex:1;">Am înțeles 👍</button>
+        </div>
+      </div>`;
+  }
+}
+function setOS(os){
+  document.getElementById('os-android').classList.toggle('active', os==='android');
+  document.getElementById('os-ios').classList.toggle('active', os==='ios');
+  renderBanner(os);
+}
+function fakeInstall(){ alert('✅ (Demo) Aici s-ar declanșa promptul nativ Android de instalare.'); }
+function fakeSkip(){ alert('(Demo) Bannerul dispare. În app-ul real reapare peste ~3 zile dacă nu ai instalat — și niciodată dacă ai instalat deja.'); }
+
+// Auto-detect real OS to preselect
+const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+setOS(isIOS ? 'ios' : 'android');
+
+// ═══════ 2. WEATHER (Open-Meteo) ═══════
+const WX_DAYS = [
+  { zi:'Z1', date:'2026-08-06', loc:'Sosire & Kalamaki',  fEmoji:'☀️', fCond:'Însorit',        fHi:31, fLo:23 },
+  { zi:'Z2', date:'2026-08-07', loc:'Zakynthos Town',     fEmoji:'☀️', fCond:'Însorit',        fHi:32, fLo:23 },
+  { zi:'Z3', date:'2026-08-08', loc:'Barcă & Marathonisi',fEmoji:'🌤️', fCond:'Parțial înnorat', fHi:31, fLo:24 },
+  { zi:'Z4', date:'2026-08-09', loc:'Explorare',          fEmoji:'☀️', fCond:'Însorit',        fHi:33, fLo:24 },
+  { zi:'Z5', date:'2026-08-10', loc:'Mașini închiriate',  fEmoji:'⛅', fCond:'Variabil',       fHi:30, fLo:23 },
+  { zi:'Z6', date:'2026-08-11', loc:'Mașini + BBQ',       fEmoji:'☀️', fCond:'Însorit',        fHi:32, fLo:23 },
+  { zi:'Z7', date:'2026-08-12', loc:'Ultima zi',          fEmoji:'☀️', fCond:'Însorit',        fHi:31, fLo:22 },
+];
+
+function wmoToWeather(code){
+  if(code===0) return { e:'☀️', c:'Însorit' };
+  if(code===1||code===2) return { e:'🌤️', c:'Parțial înnorat' };
+  if(code===3) return { e:'☁️', c:'Înnorat' };
+  if(code>=45&&code<=48) return { e:'🌫️', c:'Ceață' };
+  if(code>=51&&code<=57) return { e:'🌦️', c:'Burniță' };
+  if(code>=61&&code<=67) return { e:'🌧️', c:'Ploaie' };
+  if(code>=71&&code<=77) return { e:'🌨️', c:'Ninsoare' };
+  if(code>=80&&code<=82) return { e:'🌦️', c:'Averse' };
+  if(code>=95) return { e:'⛈️', c:'Furtună' };
+  return { e:'🌤️', c:'Variabil' };
+}
+
+function renderWeather(useLive){
+  const grid = document.getElementById('weather-grid');
+  grid.innerHTML = WX_DAYS.map(d => {
+    const [y,m,day] = d.date.split('-');
+    return `
+      <div class="wx-row">
+        <div class="wx-day"><span class="zi">${d.zi}</span><span class="date">${day} aug</span></div>
+        <div class="wx-emoji">${d.emoji||d.fEmoji}</div>
+        <div class="wx-desc">
+          <div class="cond">${d.cond||d.fCond}</div>
+          <div class="loc">${d.loc}</div>
+        </div>
+        <div class="wx-temp"><span class="hi">${d.hi||d.fHi}°</span> <span class="lo">/ ${d.lo||d.fLo}°</span></div>
+      </div>`;
+  }).join('');
+}
+
+async function loadWeather(){
+  const note = document.getElementById('wx-note');
+  renderWeather(false); // show fallback immediately
+  try{
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=37.79&longitude=20.90'
+      + '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto'
+      + '&start_date=2026-08-06&end_date=2026-08-12';
+    const res = await fetch(url, { signal: AbortSignal.timeout(7000) });
+    const j = await res.json();
+    if(j.daily && j.daily.time && j.daily.time.length){
+      const t = j.daily.time;
+      let matched = 0;
+      WX_DAYS.forEach(d => {
+        const i = t.indexOf(d.date);
+        if(i>=0 && j.daily.temperature_2m_max[i]!=null){
+          const w = wmoToWeather(j.daily.weather_code[i]);
+          d.emoji = w.e; d.cond = w.c;
+          d.hi = Math.round(j.daily.temperature_2m_max[i]);
+          d.lo = Math.round(j.daily.temperature_2m_min[i]);
+          matched++;
+        }
+      });
+      if(matched>0){
+        note.innerHTML = '🟢 <b>Prognoză live</b> din Open-Meteo pentru zilele voastre.';
+        renderWeather(true);
+        return;
+      }
+    }
+    // No live data (dates too far in future)
+    note.innerHTML = '📅 Vacanța e prea departe pentru prognoză live (max ~16 zile înainte). Arăt <b>mediile pentru august</b>. Cu ~2 săptămâni înainte de plecare, devine automat prognoză live exactă.';
+  }catch(e){
+    note.innerHTML = '📅 Momentan afișez mediile pentru august. Aproape de plecare, se încarcă prognoza live exactă.';
+  }
+}
+loadWeather();
+
+// ═══════ 3. NAV ═══════
+function pickNav(el){
+  document.querySelectorAll('#nav-new .b').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+}
+</script>
+</body>
+</html>
