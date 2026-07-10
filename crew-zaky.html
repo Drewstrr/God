@@ -649,6 +649,45 @@
             display: flex; align-items: center; justify-content: center;
             transition: all 0.2s; flex-shrink: 0;
         }
+
+        /* ═══ Weather strip (orizontal) ═══ */
+        .wx-strip { display:flex; gap:9px; overflow-x:auto; padding:2px 0 4px; scroll-snap-type:x mandatory; }
+        .wx-strip::-webkit-scrollbar { display:none; }
+        .wx-strip { scrollbar-width:none; }
+        .wx-card {
+            scroll-snap-align:start; flex:0 0 auto; width:70px; text-align:center;
+            background:var(--card); border:1.5px solid var(--bdr); border-radius:14px; padding:9px 6px;
+            transition:border-color .18s;
+        }
+        .wx-card .z  { font-size:11px; font-weight:800; color:#0EA5E9; }
+        .wx-card .d  { font-size:9px; color:var(--t3); margin-top:1px; }
+        .wx-card .e  { font-size:26px; margin:5px 0 3px; line-height:1; }
+        .wx-card .h  { font-size:14px; font-weight:800; color:var(--t1); }
+        .wx-card .l  { font-size:10px; color:var(--t3); }
+
+        /* ═══ Focus mode ═══ */
+        #collapsible-top { transition: none; }
+        body.focus #collapsible-top { display:none; }
+
+        #compact-bar {
+            display:none; align-items:center; gap:8px; padding:9px 12px;
+            background:var(--bg1); border-bottom:1px solid var(--bdr);
+            position:sticky; top:0; z-index:40;
+        }
+        body.focus #compact-bar { display:flex; }
+        body.focus #sticky-nav { top:50px; }
+        .cb-chip { font-size:12px; font-weight:800; padding:5px 9px; border-radius:11px; white-space:nowrap; flex-shrink:0; }
+        .cb-chip.sea { background:rgba(14,165,233,0.12); color:#38BDF8; border:1px solid rgba(14,165,233,0.3); }
+        .cb-strip { display:flex; gap:6px; overflow-x:auto; flex:1; }
+        .cb-strip::-webkit-scrollbar { display:none; }
+        .cb-strip { scrollbar-width:none; }
+        .cb-mini { flex:0 0 auto; text-align:center; background:var(--card); border:1px solid var(--bdr); border-radius:9px; padding:3px 7px; }
+        .cb-mini .z { font-size:9px; font-weight:800; color:#0EA5E9; }
+        .cb-mini .e { font-size:14px; line-height:1.1; }
+        .cb-mini .t { font-size:10px; font-weight:700; color:var(--t1); }
+        .cb-ic { width:32px; height:32px; border-radius:9px; background:var(--card); border:1px solid var(--bdr2); color:var(--t2); font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .cb-ic.home { background:#0EA5E9; border-color:#0EA5E9; color:#fff; }
+        .cb-actions { display:flex; gap:6px; flex-shrink:0; }
     </style>
 </head>
 <body>
@@ -682,6 +721,9 @@
 </div>
 
 <div class="max-w-md mx-auto min-h-screen flex flex-col">
+
+  <!-- ══ COLLAPSIBLE TOP (dispare în Focus mode) ══ -->
+  <div id="collapsible-top">
 
     <!-- ═══════════════════════ HEADER ═══════════════════════ -->
     <header class="relative overflow-hidden px-6 pt-10 pb-8"
@@ -791,8 +833,30 @@
         </div>
     </div>
 
+    <!-- ═══════════════════════ WEATHER STRIP ═══════════════════════ -->
+    <div class="px-4 pb-3">
+        <p class="text-[10px] font-bold uppercase tracking-[0.2em] mb-2 theme-t3">☀ Vremea pe zile</p>
+        <div id="weather-strip" class="wx-strip"></div>
+    </div>
+
+  </div><!-- end #collapsible-top -->
+
+  <!-- sentinel: când iese din ecran → auto Focus -->
+  <div id="focus-sentinel" style="height:1px;"></div>
+
+  <!-- ══ COMPACT BAR (doar în Focus mode) ══ -->
+  <div id="compact-bar">
+      <span class="cb-chip sea" id="cb-sea-temp">🌊 --°</span>
+      <div class="cb-strip" id="cb-weather-strip"></div>
+      <div class="cb-actions">
+          <button class="cb-ic" onclick="location.reload()" title="Refresh">↻</button>
+          <button class="cb-ic" onclick="toggleTheme()" id="cb-theme-btn" title="Temă">☀️</button>
+          <button class="cb-ic home" onclick="exitFocus()" title="Înapoi sus">⌂</button>
+      </div>
+  </div>
+
     <!-- ══ STICKY NAV: 2 rânduri × 3 coloane ══ -->
-    <div class="sticky top-0 z-30" style="background:var(--bg); border-bottom:1px solid var(--bdr);">
+    <div id="sticky-nav" class="sticky top-0 z-30" style="background:var(--bg); border-bottom:1px solid var(--bdr);">
         <div class="nav-main-row">
             <button onclick="switchTab(0)" id="tb-0" class="tab-btn active-tab">
                 <span class="tb-icon">✈️</span>Itinerariu
@@ -2150,14 +2214,19 @@ updateCountdown();
 setInterval(updateCountdown, 1000);
 
 // ── Sea temperature (Open-Meteo Marine API) ───────────────────
-async function fetchSeaTemp() {
+function _setSeaTemp(txt) {
   const pill = document.getElementById('sea-temp-pill');
-  if (!pill) return;
+  const cb   = document.getElementById('cb-sea-temp');
+  if (pill) pill.textContent = txt;
+  if (cb)   cb.textContent = txt;
+}
+async function fetchSeaTemp() {
+  if (!document.getElementById('sea-temp-pill')) return;
   // Try cache first for instant display
   const cached = localStorage.getItem('zaky-sea-temp');
   if (cached) {
-    const { temp, ts } = JSON.parse(cached);
-    pill.textContent = '🌊 ' + temp + '°C';
+    const { temp } = JSON.parse(cached);
+    _setSeaTemp('🌊 ' + temp + '°C');
   }
   try {
     const res = await fetch(
@@ -2168,15 +2237,97 @@ async function fetchSeaTemp() {
     const temp = json.current && json.current.sea_surface_temperature;
     if (temp !== undefined && temp !== null) {
       const rounded = Math.round(temp * 10) / 10;
-      pill.textContent = '🌊 ' + rounded + '°C';
+      _setSeaTemp('🌊 ' + rounded + '°C');
       localStorage.setItem('zaky-sea-temp', JSON.stringify({ temp: rounded, ts: Date.now() }));
     }
   } catch(e) {
-    // offline sau eroare — păstrăm cache-ul
-    if (!cached) pill.textContent = '🌊 ~26°C';
+    if (!cached) _setSeaTemp('🌊 ~26°C');
   }
 }
 fetchSeaTemp();
+
+// ── Weather strip (Open-Meteo, per zi) ────────────────────────
+const WX_DAYS = [
+  { z:'Z1', date:'2026-08-06', e:'☀️', h:31, l:23 },
+  { z:'Z2', date:'2026-08-07', e:'☀️', h:32, l:23 },
+  { z:'Z3', date:'2026-08-08', e:'🌤️', h:31, l:24 },
+  { z:'Z4', date:'2026-08-09', e:'☀️', h:33, l:24 },
+  { z:'Z5', date:'2026-08-10', e:'⛅', h:30, l:23 },
+  { z:'Z6', date:'2026-08-11', e:'☀️', h:32, l:23 },
+  { z:'Z7', date:'2026-08-12', e:'☀️', h:31, l:22 },
+];
+function _wmoEmoji(c) {
+  if (c === 0) return '☀️';
+  if (c === 1 || c === 2) return '🌤️';
+  if (c === 3) return '☁️';
+  if (c >= 45 && c <= 48) return '🌫️';
+  if (c >= 51 && c <= 57) return '🌦️';
+  if (c >= 61 && c <= 67) return '🌧️';
+  if (c >= 80 && c <= 82) return '🌦️';
+  if (c >= 95) return '⛈️';
+  return '🌤️';
+}
+function renderWeatherStrip() {
+  const full = document.getElementById('weather-strip');
+  const mini = document.getElementById('cb-weather-strip');
+  if (full) full.innerHTML = WX_DAYS.map(d => {
+    const day = d.date.split('-')[2];
+    return `<div class="wx-card"><div class="z">${d.z}</div><div class="d">${day} aug</div>`
+      + `<div class="e">${d.e}</div><div class="h">${d.h}°</div><div class="l">${d.l}°</div></div>`;
+  }).join('');
+  if (mini) mini.innerHTML = WX_DAYS.map(d =>
+    `<div class="cb-mini"><div class="z">${d.z}</div><div class="e">${d.e}</div><div class="t">${d.h}°</div></div>`
+  ).join('');
+}
+async function loadWeatherStrip() {
+  renderWeatherStrip();
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast?latitude=37.79&longitude=20.90'
+      + '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto'
+      + '&start_date=2026-08-06&end_date=2026-08-12';
+    const j = await (await fetch(url, { signal: AbortSignal.timeout(7000) })).json();
+    if (j.daily && j.daily.time) {
+      const t = j.daily.time; let matched = 0;
+      WX_DAYS.forEach(d => {
+        const i = t.indexOf(d.date);
+        if (i >= 0 && j.daily.temperature_2m_max[i] != null) {
+          d.e = _wmoEmoji(j.daily.weather_code[i]);
+          d.h = Math.round(j.daily.temperature_2m_max[i]);
+          d.l = Math.round(j.daily.temperature_2m_min[i]);
+          matched++;
+        }
+      });
+      if (matched > 0) renderWeatherStrip();
+    }
+  } catch(e) { /* păstrăm mediile pentru august */ }
+}
+loadWeatherStrip();
+
+// ── Focus mode ────────────────────────────────────────────────
+function enterFocusFromScroll() {
+  if (document.body.classList.contains('focus')) return;
+  const top = document.getElementById('collapsible-top');
+  const h = top ? top.offsetHeight : 0;
+  const y = window.scrollY;
+  document.body.classList.add('focus');
+  window.scrollTo(0, Math.max(0, y - h)); // compensează, ca să nu sară pagina
+}
+function exitFocus() {
+  document.body.classList.remove('focus');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+(function initFocusObserver() {
+  const sentinel = document.getElementById('focus-sentinel');
+  if (!sentinel || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (!e.isIntersecting && e.boundingClientRect.top < 0) {
+        enterFocusFromScroll();
+      }
+    });
+  }, { threshold: 0 });
+  io.observe(sentinel);
+})();
 
 // ── Last seen tracker ─────────────────────────────────────────
 async function trackLastSeen() {
@@ -2190,14 +2341,17 @@ async function trackLastSeen() {
 
 // ── Theme toggle ──────────────────────────────────────────────
 function applyTheme(light) {
+  const cbTheme = document.getElementById('cb-theme-btn');
   if (light) {
     document.body.classList.add('light');
     document.getElementById('theme-icon').textContent  = '🌙';
     document.getElementById('theme-label').textContent = 'Dark';
+    if (cbTheme) cbTheme.textContent = '🌙';
   } else {
     document.body.classList.remove('light');
     document.getElementById('theme-icon').textContent  = '☀️';
     document.getElementById('theme-label').textContent = 'Light';
+    if (cbTheme) cbTheme.textContent = '☀️';
   }
   // Re-render dynamic content with new theme
   renderDays();
