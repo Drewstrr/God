@@ -78,6 +78,8 @@
   body.compact .cd{ max-height:0; opacity:0; padding-top:0; padding-bottom:0; border-bottom:none; }
   body.compact .compact-bar{ display:flex; }
   body.compact .nav{ top:52px; } /* sits right under compact bar */
+  /* instant collapse (no animation) for scroll-triggered focus, avoids jump */
+  body.no-anim .hero, body.no-anim .cd{ transition:none !important; }
 
   .hint{ margin:18px 16px 0; background:rgba(14,165,233,.08); border:1px solid rgba(14,165,233,.25); border-radius:12px; padding:12px 14px; font-size:12px; color:var(--t2); line-height:1.55; }
   .hint b{ color:var(--t1); }
@@ -112,6 +114,9 @@
     </div>
   </div>
 
+  <!-- sentinel: când iese din ecran → auto Focus -->
+  <div id="scroll-sentinel" style="height:1px;"></div>
+
   <!-- COMPACT BAR (only in focus mode) -->
   <div class="compact-bar" id="compact-bar">
     <div class="cb-temps">
@@ -139,10 +144,13 @@
   <!-- CONTENT -->
   <div class="content">
     <div class="hint">
-      <b>Cum se testează:</b> apasă <b>„⤢ Mod Focus"</b> din header. Vezi cum header-ul și countdown-ul urcă și dispar, iar sus rămâne doar bara subțire cu vremea, temperatura apei, temă și refresh. Butonul <b>⌂</b> te aduce înapoi la varianta completă.
+      <b>Cum se testează:</b> <b>scrollează în jos</b> — când bannerul iese din ecran, intră <b>automat</b> în modul Focus (header + countdown dispar, sus rămâne bara subțire cu vremea, temperatura apei, temă și refresh). Chiar dacă scrollezi înapoi sus, rămâne în Focus. Doar butonul <b>⌂ Home</b> aduce înapoi varianta completă. (Butonul „⤢ Mod Focus" face același lucru manual.)
     </div>
     <h2>Ziua 1 — Sosire</h2>
-    <p>Conținut demonstrativ. În modul Focus, meniul urcă lipit de bara subțire și ai mai mult spațiu pentru conținut, fără să pierzi vremea și temperatura apei.</p>
+    <p>Conținut demonstrativ. Scrollează în jos ca să vezi focus-ul automat. În modul Focus, meniul urcă lipit de bara subțire și ai mai mult spațiu pentru conținut, fără să pierzi vremea și temperatura apei.</p>
+    <div class="card">📜 Scrollează mai jos ca să treci de banner...</div>
+    <div class="card">📜 ...</div>
+    <div class="card">📜 ...</div>
     <div class="card">🏖️ 10:30 — Prima înot pe plaja Kalamaki</div>
     <div class="card">🍽️ 13:00 — Prânz la Pandesia</div>
     <div class="card">🌅 20:24 — Apus la Cameo Island</div>
@@ -156,10 +164,50 @@
 function setThemeIcons(x){ const a=document.getElementById('theme-btn'), b=document.getElementById('cb-theme'); if(a)a.textContent=x; if(b)b.textContent=x; }
 function toggleTheme(){ const l=document.body.classList.toggle('light'); setThemeIcons(l?'☀️':'🌙'); localStorage.setItem('zaky-theme', l?'light':'dark'); }
 
-// focus mode
-function enterFocus(){ document.body.classList.add('compact'); window.scrollTo({top:0,behavior:'smooth'}); localStorage.setItem('zaky-focus','1'); }
-function exitFocus(){ document.body.classList.remove('compact'); localStorage.removeItem('zaky-focus'); }
-// remember last state
+// ── Focus mode ──
+const _hero = document.getElementById('hero');
+const _cd   = document.getElementById('cd');
+
+// Manual (buton): intră în focus și urcă sus
+function enterFocus(){
+  if(document.body.classList.contains('compact')) return;
+  document.body.classList.add('compact');
+  window.scrollTo({top:0,behavior:'smooth'});
+  localStorage.setItem('zaky-focus','1');
+}
+
+// Automat (la scroll): intră în focus fără să sară pagina
+function enterFocusFromScroll(){
+  if(document.body.classList.contains('compact')) return;
+  // înălțimea ce va fi ascunsă (hero + countdown)
+  const collapseH = _hero.offsetHeight + _cd.offsetHeight;
+  const y = window.scrollY;
+  document.body.classList.add('no-anim','compact');       // colaps instant
+  window.scrollTo(0, Math.max(0, y - collapseH));         // compensează scroll-ul
+  requestAnimationFrame(function(){ document.body.classList.remove('no-anim'); });
+  localStorage.setItem('zaky-focus','1');
+}
+
+// Home: revine la varianta completă
+function exitFocus(){
+  document.body.classList.remove('compact');
+  localStorage.removeItem('zaky-focus');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// Observator: când bannerul iese complet din ecran (scroll în jos) → focus automat
+const _sentinel = document.getElementById('scroll-sentinel');
+const _io = new IntersectionObserver(function(entries){
+  entries.forEach(function(e){
+    // a ieșit pe sus din ecran = am scrollat dincolo de banner
+    if(!e.isIntersecting && e.boundingClientRect.top < 0){
+      enterFocusFromScroll();
+    }
+  });
+}, { threshold:0 });
+_io.observe(_sentinel);
+
+// Ține minte starea între sesiuni
 if(localStorage.getItem('zaky-focus')==='1') document.body.classList.add('compact');
 
 // countdown
