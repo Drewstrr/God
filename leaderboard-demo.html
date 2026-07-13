@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Demo · Leaderboard Crew</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0A0A0A; --bg1:#111; --card:#141414; --card2:#1A1A1A; --bdr:#262626; --bdr2:#2A2A2A; --t1:#F0F0F0; --t2:#A0A0A0; --t3:#666; --sky:#0EA5E9; --orange:#F97316; --gold:#FBBF24; --red:#EF4444; --green:#22C55E; }
+  body.light{ --bg:#F4F4F5; --bg1:#FFF; --card:#FFF; --card2:#F8F8F8; --bdr:#ECECEC; --bdr2:#E4E4E4; --t1:#0A0A0A; --t2:#444; --t3:#888; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--t1); margin:0; min-height:100vh; transition:background .3s,color .3s; }
+  .wrap{ max-width:440px; margin:0 auto; padding-bottom:60px; }
+
+  .top{ background:linear-gradient(135deg,#0A0A0A,#111827 60%,#0A0A0A); padding:22px 20px 18px; text-align:center; position:relative; }
+  .top .kicker{ font-size:10px; font-weight:800; letter-spacing:.22em; text-transform:uppercase; color:var(--gold); }
+  .top h1{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:1.8rem; margin:4px 0 2px; color:#F0F0F0; }
+  .top .tag{ display:inline-block; margin-top:4px; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#888; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:4px 12px; }
+  .theme-btn{ position:absolute; top:16px; right:16px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:#fff; font-size:16px; cursor:pointer; }
+
+  /* podium */
+  .podium{ display:flex; align-items:flex-end; justify-content:center; gap:10px; padding:24px 16px 8px; }
+  .pod{ text-align:center; flex:1; max-width:110px; }
+  .pod .av{ width:56px; height:56px; border-radius:50%; margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; color:#fff; border:3px solid var(--bg); box-shadow:0 4px 14px rgba(0,0,0,.3); }
+  .pod .medal{ font-size:22px; }
+  .pod .nm{ font-size:13px; font-weight:800; margin-top:4px; }
+  .pod .pts{ font-size:11px; font-weight:700; color:var(--gold); }
+  .pod .bar{ border-radius:12px 12px 0 0; margin-top:10px; display:flex; align-items:flex-start; justify-content:center; padding-top:8px; font-size:18px; font-weight:900; color:rgba(255,255,255,.85); }
+  .pod.p1 .bar{ height:80px; background:linear-gradient(180deg,#FBBF24,#D97706); }
+  .pod.p2 .bar{ height:58px; background:linear-gradient(180deg,#9CA3AF,#6B7280); }
+  .pod.p3 .bar{ height:44px; background:linear-gradient(180deg,#D97706,#92400E); }
+
+  .sec-label{ font-size:11px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--t3); margin:26px 20px 12px; }
+
+  /* award cards */
+  .awards{ display:flex; flex-direction:column; gap:10px; padding:0 16px; }
+  .award{ display:flex; align-items:center; gap:13px; background:var(--card); border:1px solid var(--bdr); border-radius:16px; padding:14px 16px; }
+  .award .ic{ width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .award .body{ flex:1; min-width:0; }
+  .award .title{ font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--t3); }
+  .award .winner{ font-size:16px; font-weight:800; margin-top:2px; }
+  .award .desc{ font-size:11px; color:var(--t3); margin-top:1px; }
+
+  /* full ranking */
+  .rank{ display:flex; align-items:center; gap:12px; padding:11px 16px; }
+  .rank + .rank{ border-top:1px solid var(--bdr); }
+  .rank-list{ margin:0 16px; background:var(--card); border:1px solid var(--bdr); border-radius:16px; overflow:hidden; }
+  .rank .pos{ font-size:14px; font-weight:800; color:var(--t3); width:24px; text-align:center; flex-shrink:0; }
+  .rank .av{ width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; color:#fff; flex-shrink:0; }
+  .rank .nm{ font-size:14px; font-weight:700; flex:1; }
+  .rank .meta{ font-size:10px; color:var(--t3); }
+  .rank .score{ font-size:15px; font-weight:900; color:var(--sky); flex-shrink:0; }
+  .rank.me{ background:rgba(14,165,233,.06); }
+
+  .foot{ text-align:center; margin:26px 16px 0; padding-top:20px; border-top:1px solid var(--bdr); font-size:11px; color:var(--t3); line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+    <div class="kicker">🏆 Leaderboard</div>
+    <h1>Clasamentul Crew</h1>
+    <div class="tag">🔒 Demo privat</div>
+  </div>
+
+  <!-- Podium -->
+  <div class="podium" id="podium"></div>
+
+  <!-- Awards -->
+  <div class="sec-label">🎖 Titluri speciale</div>
+  <div class="awards" id="awards"></div>
+
+  <!-- Full ranking -->
+  <div class="sec-label">📊 Clasament complet · scor de implicare</div>
+  <div class="rank-list" id="ranklist"></div>
+
+  <div class="foot">
+    Scorul crește când votezi, postezi poze și reacționezi.<br>
+    Transformă implicarea în competiție 🏆
+  </div>
+</div>
+
+<script>
+(function(){ const s=localStorage.getItem('zaky-theme')||'light'; if(s==='light'){document.body.classList.add('light'); document.getElementById('theme-btn').textContent='☀️';} })();
+function toggleTheme(){ const l=document.body.classList.toggle('light'); document.getElementById('theme-btn').textContent=l?'☀️':'🌙'; localStorage.setItem('zaky-theme', l?'light':'dark'); }
+
+const C = { A:'#0EA5E9', M:'#22C55E', V:'#F97316', D:'#A855F7', G:'#EF4444', E:'#EC4899', R:'#14B8A6', P:'#F59E0B' };
+// sample crew stats
+const CREW = [
+  { nm:'Vlad',   in:'V', votes:14, posts:9, reacts:41, rebel:2, score:0, me:false },
+  { nm:'Andrei', in:'A', votes:15, posts:6, reacts:33, rebel:1, score:0, me:true  },
+  { nm:'Dana',   in:'D', votes:12, posts:11,reacts:28, rebel:0, score:0, me:false },
+  { nm:'Mihai',  in:'M', votes:13, posts:4, reacts:22, rebel:5, score:0, me:false },
+  { nm:'Elena',  in:'E', votes:10, posts:7, reacts:30, rebel:1, score:0, me:false },
+  { nm:'George', in:'G', votes:9,  posts:3, reacts:12, rebel:4, score:0, me:false },
+  { nm:'Radu',   in:'R', votes:7,  posts:2, reacts:8,  rebel:6, score:0, me:false },
+  { nm:'Paula',  in:'P', votes:6,  posts:5, reacts:15, rebel:0, score:0, me:false },
+];
+// score = votes*10 + posts*8 + reacts*2
+CREW.forEach(c => c.score = c.votes*10 + c.posts*8 + c.reacts*2);
+const ranked = [...CREW].sort((a,b)=>b.score-a.score);
+
+// Podium (top 3, order: 2-1-3)
+const podium = document.getElementById('podium');
+const order = [ranked[1], ranked[0], ranked[2]];
+const cls = ['p2','p1','p3']; const medal=['🥈','🥇','🥉'];
+podium.innerHTML = order.map((c,i)=>`
+  <div class="pod ${cls[i]}">
+    <div class="medal">${medal[i]}</div>
+    <div class="av" style="background:${C[c.in]}">${c.in}</div>
+    <div class="nm">${c.nm}</div>
+    <div class="pts">${c.score} pct</div>
+    <div class="bar">${i===1?'1':i===0?'2':'3'}</div>
+  </div>`).join('');
+
+// Awards
+const mostVotes = [...CREW].sort((a,b)=>b.votes-a.votes)[0];
+const mostPosts = [...CREW].sort((a,b)=>b.posts-a.posts)[0];
+const rebel     = [...CREW].sort((a,b)=>b.rebel-a.rebel)[0];
+const mostReact = [...CREW].sort((a,b)=>b.reacts-a.reacts)[0];
+const awards = [
+  { ic:'🗳️', bg:'rgba(14,165,233,.12)', title:'Cel mai activ votant', winner:mostVotes.nm, desc:`${mostVotes.votes} voturi în WarRoom` },
+  { ic:'⚡', bg:'rgba(239,68,68,.12)',  title:'Rebelul grupului',      winner:rebel.nm,     desc:`${rebel.rebel} voturi în minoritate` },
+  { ic:'📸', bg:'rgba(236,72,153,.12)', title:'Fotograful crew-ului',  winner:mostPosts.nm, desc:`${mostPosts.posts} momente postate` },
+  { ic:'❤️', bg:'rgba(34,197,94,.12)',  title:'Sufletul petrecerii',   winner:mostReact.nm, desc:`${mostReact.reacts} reacții date` },
+];
+document.getElementById('awards').innerHTML = awards.map(a=>`
+  <div class="award">
+    <div class="ic" style="background:${a.bg}">${a.ic}</div>
+    <div class="body">
+      <div class="title">${a.title}</div>
+      <div class="winner">${a.winner}</div>
+      <div class="desc">${a.desc}</div>
+    </div>
+  </div>`).join('');
+
+// Full ranking
+document.getElementById('ranklist').innerHTML = ranked.map((c,i)=>`
+  <div class="rank ${c.me?'me':''}">
+    <div class="pos">${i+1}</div>
+    <div class="av" style="background:${C[c.in]}">${c.in}</div>
+    <div class="nm">${c.nm}${c.me?' <span style="font-size:10px;color:var(--sky);font-weight:800">(tu)</span>':''}<div class="meta">${c.votes} voturi · ${c.posts} poze · ${c.reacts} reacții</div></div>
+    <div class="score">${c.score}</div>
+  </div>`).join('');
+</script>
+</body>
+</html>

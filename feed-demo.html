@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="robots" content="noindex, nofollow">
+<title>Demo · Feed Live</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#0A0A0A; --bg1:#111; --card:#141414; --card2:#1A1A1A; --bdr:#262626; --bdr2:#2A2A2A; --t1:#F0F0F0; --t2:#A0A0A0; --t3:#666; --sky:#0EA5E9; --orange:#F97316; --pink:#EC4899; }
+  body.light{ --bg:#F4F4F5; --bg1:#FFF; --card:#FFF; --card2:#F8F8F8; --bdr:#ECECEC; --bdr2:#E4E4E4; --t1:#0A0A0A; --t2:#444; --t3:#888; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{ font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--t1); margin:0; min-height:100vh; transition:background .3s,color .3s; }
+  .wrap{ max-width:440px; margin:0 auto; padding-bottom:80px; }
+
+  .top{ background:linear-gradient(135deg,#0A0A0A,#111827 60%,#0A0A0A); padding:22px 20px 18px; position:sticky; top:0; z-index:20; }
+  .top .kicker{ font-size:10px; font-weight:800; letter-spacing:.22em; text-transform:uppercase; color:var(--pink); }
+  .top h1{ font-family:'Playfair Display',serif; font-style:italic; font-weight:700; font-size:1.8rem; margin:4px 0 2px; color:#F0F0F0; }
+  .top .tag{ display:inline-block; margin-top:4px; font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#888; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:4px 12px; }
+  .theme-btn{ position:absolute; top:16px; right:16px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.12); border:1px solid rgba(255,255,255,.2); color:#fff; font-size:16px; cursor:pointer; }
+
+  /* composer */
+  .composer{ display:flex; align-items:center; gap:12px; margin:14px 16px; background:var(--card); border:1.5px solid var(--bdr2); border-radius:16px; padding:13px 15px; cursor:pointer; }
+  .composer .av{ width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--sky),#0284C7); display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; flex-shrink:0; }
+  .composer .ph{ flex:1; font-size:13.5px; color:var(--t3); }
+  .composer .cam{ font-size:20px; }
+
+  /* post */
+  .post{ background:var(--card); border:1px solid var(--bdr); border-radius:18px; margin:0 16px 14px; overflow:hidden; }
+  .post-head{ display:flex; align-items:center; gap:11px; padding:13px 15px 11px; }
+  .post-head .av{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; flex-shrink:0; font-size:15px; }
+  .post-head .who{ font-size:14px; font-weight:800; }
+  .post-head .when{ font-size:11px; color:var(--t3); margin-top:1px; }
+  .post-head .loc{ margin-left:auto; font-size:11px; font-weight:700; color:var(--sky); background:rgba(14,165,233,.1); border:1px solid rgba(14,165,233,.25); border-radius:20px; padding:4px 10px; white-space:nowrap; }
+  .post-photo{ width:100%; aspect-ratio:4/3; object-fit:cover; display:block; background:var(--card2); }
+  .post-cap{ padding:11px 15px 4px; font-size:14px; line-height:1.45; }
+  .react-bar{ display:flex; gap:8px; padding:10px 13px 13px; flex-wrap:wrap; }
+  .react{ display:flex; align-items:center; gap:5px; padding:6px 11px; border-radius:20px; border:1.5px solid var(--bdr2); background:var(--card2); font-size:14px; font-weight:700; cursor:pointer; transition:all .15s; color:var(--t2); }
+  .react:active{ transform:scale(.92); }
+  .react.on{ border-color:var(--pink); background:rgba(236,72,153,.12); color:var(--pink); }
+  .react .n{ font-size:12px; }
+  .react-names{ font-size:11px; color:var(--t3); padding:0 15px 12px; margin-top:-4px; }
+
+  .foot{ text-align:center; margin:26px 16px 0; padding-top:20px; border-top:1px solid var(--bdr); font-size:11px; color:var(--t3); line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
+    <div class="kicker">📸 Feed Live</div>
+    <h1>Momentele Crew-ului</h1>
+    <div class="tag">🔒 Demo privat</div>
+  </div>
+
+  <div class="composer" onclick="mockPost()">
+    <div class="av">A</div>
+    <div class="ph">Împarte un moment din Zakynthos...</div>
+    <div class="cam">📷</div>
+  </div>
+
+  <div id="feed"></div>
+
+  <div class="foot">
+    Așa ar arăta feed-ul live: fiecare postează poze, ceilalți reacționează instant.<br>
+    Apasă pe reacții ca să testezi 👆
+  </div>
+</div>
+
+<script>
+(function(){ const s=localStorage.getItem('zaky-theme')||'light'; if(s==='light'){document.body.classList.add('light'); document.getElementById('theme-btn').textContent='☀️';} })();
+function toggleTheme(){ const l=document.body.classList.toggle('light'); document.getElementById('theme-btn').textContent=l?'☀️':'🌙'; localStorage.setItem('zaky-theme', l?'light':'dark'); }
+
+const COLORS = { A:'#0EA5E9', M:'#22C55E', V:'#F97316', D:'#A855F7', G:'#EF4444', E:'#EC4899' };
+const POSTS = [
+  { who:'Andrei', in:'A', when:'acum 4 min', loc:'⛵ Navagio', photo:'IMG_0499.webp',
+    cap:'Priveliștea de la Shipwreck e ireală 🤯 merită fiecare treaptă',
+    reacts:{ '🔥':4, '❤️':3, '😮':2 }, names:'Mihai, Vlad, Dana +6' },
+  { who:'Dana', in:'D', when:'acum 22 min', loc:'🐢 Marathonisi', photo:'IMG_0497.webp',
+    cap:'Am văzut o broască țestoasă!! 🐢💚',
+    reacts:{ '❤️':6, '😍':4 }, names:'Andrei, Elena, George +7' },
+  { who:'Mihai', in:'M', when:'acum 1 oră', loc:'🪨 Porto Limnionas', photo:'IMG_0496.webp',
+    cap:'Apa e cristalină aici. Cea mai bună baie de până acum 🌊',
+    reacts:{ '🔥':5, '👏':2 }, names:'Vlad, Dana +5' },
+  { who:'Vlad', in:'V', when:'acum 3 ore', loc:'🌅 Cameo Island', photo:'IMG_0500.webp',
+    cap:'Apus de nota 10. Toată gașca aici seara 🍻',
+    reacts:{ '❤️':8, '🔥':4, '🍻':6 }, names:'Toți au reacționat' },
+];
+
+function render(){
+  document.getElementById('feed').innerHTML = POSTS.map((p,pi) => {
+    const reactBtns = ['❤️','🔥','😂','😮','🍻'].map(em => {
+      const count = p.reacts[em] || 0;
+      const on = p._mine && p._mine[em];
+      return `<button class="react ${on?'on':''}" onclick="react(${pi},'${em}')">${em}${count>0?`<span class="n">${count}</span>`:''}</button>`;
+    }).join('');
+    return `
+      <div class="post">
+        <div class="post-head">
+          <div class="av" style="background:${COLORS[p.in]||'#666'}">${p.in}</div>
+          <div><div class="who">${p.who}</div><div class="when">${p.when}</div></div>
+          <div class="loc">${p.loc}</div>
+        </div>
+        <img class="post-photo" src="${p.photo}" alt="" loading="lazy" onerror="this.style.background='linear-gradient(135deg,#1a2744,#0891B2)';this.removeAttribute('src')">
+        <div class="post-cap">${p.cap}</div>
+        <div class="react-bar">${reactBtns}</div>
+        <div class="react-names">${p.names}</div>
+      </div>`;
+  }).join('');
+}
+function react(pi, em){
+  const p = POSTS[pi];
+  p._mine = p._mine || {};
+  if(p._mine[em]){ p._mine[em]=false; p.reacts[em]=Math.max(0,(p.reacts[em]||1)-1); }
+  else { p._mine[em]=true; p.reacts[em]=(p.reacts[em]||0)+1; }
+  render();
+}
+function mockPost(){ alert('(Demo) Aici ai deschide camera sau galeria ca să postezi un moment. În versiunea reală, poza apare instant în feed pentru toată gașca.'); }
+render();
+</script>
+</body>
+</html>
