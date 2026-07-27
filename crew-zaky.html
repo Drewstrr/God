@@ -675,7 +675,8 @@
             position:sticky; top:0; z-index:40;
         }
         body.focus #compact-bar { display:flex; }
-        body.focus #sticky-nav { top:50px; }
+        /* poziția meniului sub compact-bar se setează din JS (înălțime reală) */
+        body.focus #sticky-nav { top:52px; }
         .cb-chip { font-size:12px; font-weight:800; padding:5px 9px; border-radius:11px; white-space:nowrap; flex-shrink:0; }
         .cb-chip.sea { background:rgba(14,165,233,0.12); color:#38BDF8; border:1px solid rgba(14,165,233,0.3); }
         .cb-strip { display:flex; gap:6px; overflow-x:auto; flex:1; }
@@ -2304,18 +2305,32 @@ async function loadWeatherStrip() {
 loadWeatherStrip();
 
 // ── Focus mode ────────────────────────────────────────────────
+function updateNavOffset() {
+  const bar = document.getElementById('compact-bar');
+  const nav = document.getElementById('sticky-nav');
+  if (!bar || !nav) return;
+  if (document.body.classList.contains('focus')) {
+    // poziționează meniul exact sub bara de vreme (înălțimea ei reală)
+    nav.style.top = bar.offsetHeight + 'px';
+  } else {
+    nav.style.top = ''; // revine la top:0
+  }
+}
 function enterFocusFromScroll() {
   if (document.body.classList.contains('focus')) return;
   const top = document.getElementById('collapsible-top');
   const h = top ? top.offsetHeight : 0;
   const y = window.scrollY;
   document.body.classList.add('focus');
+  updateNavOffset();
   window.scrollTo(0, Math.max(0, y - h)); // compensează, ca să nu sară pagina
 }
 function exitFocus() {
   document.body.classList.remove('focus');
+  updateNavOffset();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+window.addEventListener('resize', updateNavOffset);
 (function initFocusObserver() {
   const sentinel = document.getElementById('focus-sentinel');
   if (!sentinel || !('IntersectionObserver' in window)) return;
