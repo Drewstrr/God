@@ -25,6 +25,7 @@
     let uid = null;
     let pin = '';
     let choice = null;
+    let step = 'pick';
     let pending = null;     // { nonce, voter }
     let flash = null;       // mesajul „Vot înregistrat”
     let lastKey = '';
@@ -39,7 +40,7 @@
       const voter = pending.voter;
       pending = null;
       if (s.ok) {
-        pin = ''; choice = null;
+        pin = ''; choice = null; step = 'pick';
         flash = `Vot înregistrat ✅`;
         render(true);
         setTimeout(() => { flash = null; render(true); }, 2200);
@@ -64,7 +65,7 @@
       const voter = currentVoter();
       const key = JSON.stringify([pub.phase, voter?.id, pub.vote?.stage, pub.vote?.done]);
       if (!force && key === lastKey) return;
-      if (key !== lastKey) { pin = ''; choice = null; }
+      if (key !== lastKey) { pin = ''; choice = null; step = 'pick'; }
       lastKey = key;
 
       if (flash) {
@@ -97,44 +98,76 @@
         .filter(([id]) => pub.alive?.[id])
         .map(([id, p]) => ({ id, name: p.name })))
         .filter((o) => o.id !== voter.id);
+      const choiceName = choice === 'abstain' ? null : options.find((o) => o.id === choice)?.name;
 
+      // Pasul 1: alegi un nume.
+      if (!choice) {
+        app.innerHTML = `
+          <p class="center muted">${v.stage === 'revote' ? 'REVOT' : 'VOT'} · ${v.done + 1} / ${v.total}</p>
+          <p class="center muted" style="margin:0">Este rândul lui</p>
+          <h1 class="center squid-title">${esc(voter.name)}</h1>
+          <p class="center">Pe cine vrei să elimini?</p>
+          <div class="names squid-names">
+            ${options.map((o) => `<button data-v="${o.id}">${esc(o.name)}</button>`).join('')}
+            <button data-v="abstain">🤐 Mă abțin</button>
+          </div>
+          <p class="center error">${esc(error)}</p>`;
+        app.querySelectorAll('[data-v]').forEach((b) => b.addEventListener('click', () => { choice = b.dataset.v; step = 'confirm'; render(true); }));
+        return;
+      }
+
+      // Pasul 2: confirmarea.
+      if (step === 'confirm') {
+        app.innerHTML = `
+          <div class="confirm-vote">
+            <p class="muted">${esc(voter.name)}, ești sigur?</p>
+            ${choiceName ? `<p>Vrei să votezi cu</p><div class="who">${esc(choiceName)}</div>` : '<div class="who">🤐 Te abții</div>'}
+            <div class="row2">
+              <button class="btn ghost" id="back">← Înapoi</button>
+              <button class="btn squid-btn" id="yes">Da, sunt sigur</button>
+            </div>
+          </div>`;
+        app.querySelector('#back').addEventListener('click', () => { choice = null; step = 'pick'; render(true); });
+        app.querySelector('#yes').addEventListener('click', () => { step = 'pin'; pin = ''; render(true); });
+        return;
+      }
+
+      // Pasul 3: fereastra cu PIN-ul; votul pleacă singur la a patra cifră.
       app.innerHTML = `
-        <p class="center muted">${v.stage === 'revote' ? 'REVOT' : 'VOT'} · ${v.done + 1} / ${v.total}</p>
-        <p class="center muted" style="margin:0">Este rândul lui</p>
-        <h1 class="center squid-title">${esc(voter.name)}</h1>
-        <p class="center">1. Alege pe cine elimini</p>
-        <div class="names squid-names">
-          ${options.map((o) => `<button data-v="${o.id}" class="${choice === o.id ? 'chosen' : ''}">${esc(o.name)}</button>`).join('')}
-          <button data-v="abstain" class="${choice === 'abstain' ? 'chosen' : ''}">🤐 Mă abțin</button>
-        </div>
-        <p class="center">2. Confirmă cu PIN-ul tău</p>
-        <div class="pin-dots">${[0, 1, 2, 3].map((i) => `<span class="${i < pin.length ? 'on' : ''}"></span>`).join('')}</div>
-        <p class="center error" id="msg">${esc(error)}</p>
-        <div class="keypad">
-          ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-k="${n}">${n}</button>`).join('')}
-          <button data-k="back">⌫</button><button data-k="0">0</button><button data-k="none" disabled></button>
-        </div>
-        <button class="btn squid-btn" id="cast" style="margin-top:16px" ${choice && pin.length === 4 ? '' : 'disabled'}>Votează</button>`;
-
-      app.querySelectorAll('[data-v]').forEach((b) => b.addEventListener('click', () => { choice = b.dataset.v; render(true); }));
+        <div class="pin-modal">
+          <div class="box">
+            <p class="center muted" style="margin-top:0">${choiceName ? `Vot pentru <b style="color:var(--pink)">${esc(choiceName)}</b>` : '🤐 Abținere'}</p>
+            <h2 class="center">${esc(voter.name)}, scrie-ți PIN-ul</h2>
+            <div class="pin-dots">${[0, 1, 2, 3].map((i) => `<span class="${i < pin.length ? 'on' : ''}"></span>`).join('')}</div>
+            <p class="center error" id="msg">${esc(error)}</p>
+            <div class="keypad">
+              ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-k="${n}">${n}</button>`).join('')}
+              <button data-k="back">⌫</button><button data-k="0">0</button><button data-k="cancel">✕</button>
+            </div>
+          </div>
+        </div>`;
       app.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
         const k = b.dataset.k;
-        if (k === 'back') pin = pin.slice(0, -1);
-        else if (k !== 'none' && pin.length < 4) pin += k;
+        if (k === 'cancel') { choice = null; step = 'pick'; pin = ''; return render(true); }
+        if (k === 'back') { pin = pin.slice(0, -1); return render(true); }
+        if (pin.length >= 4) return;
+        pin += k;
         render(true);
+        if (pin.length === 4) cast(voter);
       }));
-      app.querySelector('#cast').addEventListener('click', async () => {
-        if (!choice || pin.length !== 4) return;
-        pending = { nonce: Math.random().toString(36).slice(2), voter: voter.id };
-        render(true);
-        try {
-          await set(r(`pinRequests/${uid}`), { player: voter.id, pin, mode: 'vote', vote: choice, nonce: pending.nonce });
-        } catch {
-          pending = null;
-          render(true, 'Nu s-a trimis. Verifică internetul.');
-        }
-        setTimeout(() => { if (pending) { pending = null; pin = ''; render(true, 'Motorul nu răspunde. Mai încearcă.'); } }, 12000);
-      });
+    }
+
+    async function cast(voter) {
+      pending = { nonce: Math.random().toString(36).slice(2), voter: voter.id };
+      render(true);
+      try {
+        await set(r(`pinRequests/${uid}`), { player: voter.id, pin, mode: 'vote', vote: choice, nonce: pending.nonce });
+      } catch {
+        pending = null;
+        pin = '';
+        render(true, 'Nu s-a trimis. Verifică internetul.');
+      }
+      setTimeout(() => { if (pending) { pending = null; pin = ''; render(true, 'Motorul nu răspunde. Mai încearcă.'); } }, 12000);
     }
   </script>
 </body>

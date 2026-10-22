@@ -67,6 +67,20 @@
       return `<div class="candle-rows">${rows.map((row) => `<div class="candle-row">${row.join('')}</div>`).join('')}</div>`;
     }
 
+    // Dacă nu încape totul pe proiector, micșorăm lumânările până încape.
+    function fitStage() {
+      stage.style.removeProperty('--cs');
+      if (!stage.querySelector('.candle-rows')) return;
+      let size = Math.min(window.innerWidth * 0.0072, window.innerHeight * 0.0115);
+      const bottom = () => Math.max(...[...stage.querySelectorAll('.candle .name, .big-timer, p, h1')].map((e) => e.getBoundingClientRect().bottom));
+      const limit = window.innerHeight - window.innerHeight * 0.03;
+      for (let i = 0; i < 16 && bottom() > limit; i++) {
+        size *= 0.92;
+        stage.style.setProperty('--cs', `${size.toFixed(2)}px`);
+      }
+    }
+    window.addEventListener('resize', fitStage);
+
     // Din când în când, o adiere face o flacără să tremure mai tare.
     setInterval(() => {
       const lit = [...document.querySelectorAll('.candle-rows .candle:not(.out):not(.waiting)')];
@@ -332,6 +346,7 @@
         return;
       }
       stage.innerHTML = (views[phase] ?? views.lobby)();
+      fitStage();
       if (phase === 'morning') playMorning();
       if (phase === 'reveal') playReveal();
       if (phase === 'end' && previous && previous !== 'end') {
