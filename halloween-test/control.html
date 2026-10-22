@@ -15,6 +15,7 @@
       <div class="card">
         <p id="engine" class="muted">Se verifică motorul…</p>
         <p class="muted">Motorul rulează în pagina <a href="screen" target="_blank">Proiector</a>. Ține-o deschisă pe ecranul proiectorului.</p>
+        <button class="btn small ghost" id="sound">🔊 Sunet proiector</button>
       </div>
       <div class="card">
         <h2 id="phase-title">Jocul</h2>
@@ -29,7 +30,7 @@
   </main>
 
   <script type="module">
-    import { r, onValue, requireEngineLogin, serverNow } from './js/fb.js';
+    import { r, onValue, set, requireEngineLogin, serverNow } from './js/fb.js';
     import { resetPin } from './js/pin-service.js';
     import { sendCommand } from './js/game-host.js';
 
@@ -170,6 +171,13 @@
         await resetPin(b.dataset.reset);
       }));
     }
+
+    const soundBtn = document.getElementById('sound');
+    onValue(r('public/muted'), (snap) => {
+      soundBtn.dataset.muted = snap.val() ? '1' : '';
+      soundBtn.textContent = snap.val() ? '🔇 Sunet proiector: OPRIT (apasă să pornești)' : '🔊 Sunet proiector: PORNIT (apasă să oprești)';
+    });
+    soundBtn.addEventListener('click', () => set(r('public/muted'), !soundBtn.dataset.muted));
 
     onValue(r('public/engine'), (snap) => {
       const el = document.getElementById('engine');

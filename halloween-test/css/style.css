@@ -106,28 +106,160 @@ input[type=password], input[type=text] {
 }
 .keypad button:active { background: var(--line); }
 
-/* Lumânări */
-.candles { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 18px; }
-.candle { text-align: center; }
+/* Lumânări realiste: halou, flacără cu miez albastru, pâlpâire neregulată */
+.candle-rows { display: flex; flex-direction: column; align-items: center; gap: 3vh; }
+.candle-row { display: flex; justify-content: center; gap: 2.4vw; }
+.candle { --s: 8px; position: relative; display: flex; flex-direction: column; align-items: center; width: calc(var(--s) * 10); text-align: center; }
+.screen-wrap .candle { --s: 0.72vw; }
+.candle .light {
+  position: absolute; left: 50%; top: calc(var(--s) * -5.5);
+  width: calc(var(--s) * 18); height: calc(var(--s) * 18); margin-left: calc(var(--s) * -9);
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 176, 80, 0.32) 0%, rgba(255, 140, 40, 0.12) 35%, rgba(255, 120, 30, 0) 68%);
+  animation: glow var(--gd, 2.6s) ease-in-out var(--delay, 0s) infinite;
+}
 .candle .flame {
-  width: 18px; height: 30px; margin: 0 auto;
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  background: radial-gradient(circle at 50% 70%, #fff6c4 0%, var(--candle) 45%, rgba(255, 90, 0, 0) 75%);
-  filter: drop-shadow(0 0 14px rgba(255, 170, 60, 0.9));
-  animation: flicker 1.8s infinite alternate ease-in-out;
+  position: relative; z-index: 1;
+  width: calc(var(--s) * 1.7); height: calc(var(--s) * 4.4);
+  margin-bottom: calc(var(--s) * -0.4);
+  border-radius: 50% 50% 50% 50% / 68% 68% 32% 32%;
+  transform-origin: 50% 92%;
+  background: radial-gradient(ellipse 60% 75% at 50% 78%, #fffef5 0%, #fff3c2 20%, #ffd25e 42%, #ff9a26 64%, rgba(255, 90, 10, 0.55) 80%, rgba(255, 60, 0, 0) 92%);
+  box-shadow: 0 0 calc(var(--s) * 1.2) rgba(255, 190, 90, 0.9), 0 0 calc(var(--s) * 3.5) rgba(255, 130, 30, 0.55), 0 calc(var(--s) * -1) calc(var(--s) * 6) rgba(255, 110, 20, 0.35);
+  filter: blur(0.35px);
+  animation: sway var(--fd, 1.7s) ease-in-out var(--delay, 0s) infinite alternate, flicker var(--fk, 0.9s) steps(1, end) var(--delay, 0s) infinite;
+  transition: transform 1.2s cubic-bezier(.2, .8, .2, 1), filter 1.2s, opacity 0.4s;
 }
-.candle .wax { width: 34px; height: 70px; margin: 2px auto 8px; border-radius: 6px 6px 3px 3px; background: linear-gradient(90deg, #e9dcc8, #fff7ea 45%, #cdbfa9); }
-.candle .name { font-weight: 700; }
-.candle.out .flame { visibility: hidden; }
-.candle.out .wax { filter: grayscale(1) brightness(0.45); }
-.candle.out .name { color: var(--muted); text-decoration: line-through; }
-.candle.waiting .flame { opacity: 0.15; animation: none; }
+.candle .flame-core {
+  position: absolute; left: 50%; bottom: 14%; width: 46%; height: 48%; transform: translateX(-50%);
+  border-radius: 50% 50% 50% 50% / 65% 65% 35% 35%;
+  background: radial-gradient(ellipse at 50% 70%, rgba(255, 255, 245, 0.95), rgba(255, 236, 160, 0.6) 50%, rgba(255, 210, 110, 0) 78%);
+}
+.candle .flame-blue {
+  position: absolute; left: 50%; bottom: 1%; width: 50%; height: 15%; transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 60%, rgba(90, 130, 255, 0.9), rgba(60, 90, 255, 0.35) 55%, rgba(60, 90, 255, 0) 75%);
+}
+.candle .wick { width: calc(var(--s) * 0.28); height: calc(var(--s) * 0.9); background: linear-gradient(#111, #3a2a1e); border-radius: 2px; }
+.candle .wax {
+  position: relative; width: calc(var(--s) * 3.4); height: calc(var(--s) * 8);
+  border-radius: calc(var(--s) * 0.5) calc(var(--s) * 0.5) calc(var(--s) * 0.3) calc(var(--s) * 0.3);
+  background: linear-gradient(90deg, #cbbba3 0%, #f3e8d6 22%, #fffaf0 45%, #eadcc6 75%, #b9a68b 100%);
+  box-shadow: inset 0 calc(var(--s) * 1.2) calc(var(--s) * 1.4) rgba(255, 180, 90, 0.35), 0 0 calc(var(--s) * 2) rgba(255, 150, 60, 0.15);
+}
+.candle .wax::before {
+  content: ''; position: absolute; top: calc(var(--s) * -0.35); left: 0; right: 0; height: calc(var(--s) * 0.8);
+  border-radius: 50%; background: radial-gradient(ellipse, #fff8e6, #e7d6bb 70%);
+}
+.candle .wax::after {
+  content: ''; position: absolute; top: calc(var(--s) * 0.2); left: 18%; width: calc(var(--s) * 0.55); height: calc(var(--s) * 2.4);
+  border-radius: 0 0 999px 999px; background: linear-gradient(90deg, #efe2cc, #fffaf0, #e3d3b8);
+}
+.candle .name { margin-top: calc(var(--s) * 1.2); font-weight: 700; white-space: nowrap; }
+.screen-wrap .candle .name { font-size: 1.6vw; }
+.candle .smoke { position: absolute; top: calc(var(--s) * -3); left: 50%; width: 0; height: 0; pointer-events: none; }
+.candle .smoke i {
+  position: absolute; left: calc(var(--s) * -0.6); bottom: 0; width: calc(var(--s) * 1.2); height: calc(var(--s) * 4);
+  border-radius: 50%; background: radial-gradient(ellipse, rgba(200, 200, 210, 0.45), rgba(200, 200, 210, 0) 70%);
+  filter: blur(calc(var(--s) * 0.35)); opacity: 0;
+}
+.candle.gust .flame { animation-duration: 0.35s, 0.12s; }
 
-@keyframes flicker {
-  0% { transform: scale(1) rotate(-2deg); opacity: 0.92; }
-  50% { transform: scale(1.06, 0.95) rotate(2deg); opacity: 1; }
-  100% { transform: scale(0.96, 1.05) rotate(-1deg); opacity: 0.88; }
+.candle.out .flame, .candle.out .light, .candle.waiting .flame, .candle.waiting .light { opacity: 0; animation: none; }
+.candle.out .wax { filter: grayscale(1) brightness(0.45); box-shadow: none; }
+.candle.out .name { color: var(--muted); text-decoration: line-through; }
+.candle.waiting .wax { filter: brightness(0.55); box-shadow: none; }
+.candle.waiting .name { color: var(--muted); }
+
+@keyframes sway {
+  0% { transform: rotate(-2deg) scale(1, 1) skewX(1deg); }
+  20% { transform: rotate(1.5deg) scale(0.97, 1.06) skewX(-2deg); }
+  45% { transform: rotate(-1deg) scale(1.03, 0.95) skewX(2deg); }
+  70% { transform: rotate(2.2deg) scale(0.98, 1.04) skewX(-1deg); }
+  100% { transform: rotate(-1.2deg) scale(1.01, 0.99) skewX(0.5deg); }
 }
+@keyframes flicker {
+  0% { opacity: 1; } 12% { opacity: 0.93; } 19% { opacity: 1; } 41% { opacity: 0.86; } 44% { opacity: 0.97; }
+  63% { opacity: 0.9; } 68% { opacity: 1; } 86% { opacity: 0.84; } 90% { opacity: 0.98; }
+}
+@keyframes glow {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  23% { opacity: 1; transform: scale(1.05); }
+  37% { opacity: 0.72; transform: scale(0.97); }
+  61% { opacity: 0.95; transform: scale(1.02); }
+  79% { opacity: 0.78; transform: scale(0.98); }
+}
+
+/* Ceremonia morții: lumânarea se aprinde puternic, se stinge, apare numele */
+.ceremony {
+  position: fixed; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 45%, #1a070c 0%, #000 65%);
+  animation: fade-in 0.8s ease-out; transition: opacity 1.2s;
+}
+.ceremony.leaving { opacity: 0; }
+.ceremony .candle { --s: 2.1vw; opacity: 0; transform: translateY(2vh); transition: opacity 1s, transform 1s; }
+.ceremony .candle.appear { opacity: 1; transform: none; }
+.ceremony .candle .flame { transform: scale(0.55); }
+.ceremony .candle.lit .flame { transform: scale(1); }
+.ceremony .candle.flare .flame { transform: scale(2.3, 2.2); filter: brightness(1.5) blur(0.6px); animation-duration: 0.5s, 0.2s; }
+.ceremony .candle.flare .light { transform: scale(1.8); opacity: 1; animation: none; transition: transform 1.2s, opacity 1.2s; }
+.ceremony .candle.dying .flame { animation: dying 0.6s linear forwards; }
+.ceremony .candle.dead .flame { opacity: 0; transform: scale(0.1, 0.05) translateY(40%); transition: transform 0.3s ease-in, opacity 0.35s; animation: none; }
+.ceremony .candle.dead .light { opacity: 0; transition: opacity 0.6s; animation: none; }
+.ceremony .candle.dead .smoke i { animation: smoke 3.4s ease-out forwards; }
+.ceremony .candle.dead .smoke i:nth-child(2) { animation-delay: 0.25s; left: calc(var(--s) * -0.2); }
+.ceremony .candle.dead .smoke i:nth-child(3) { animation-delay: 0.5s; left: calc(var(--s) * -1); }
+.ceremony .candle .name { display: none; }
+.ceremony-name {
+  margin-top: 5vh; font-family: 'Cinzel', Georgia, serif; font-weight: 800; font-size: 6vw; color: #f1d9d9;
+  opacity: 0; letter-spacing: 0.6em; filter: blur(10px);
+  text-shadow: 0 0 30px rgba(179, 18, 46, 0.9), 0 0 60px rgba(179, 18, 46, 0.5);
+  transition: opacity 2.6s ease-out, letter-spacing 3s ease-out, filter 2.6s ease-out;
+}
+.ceremony-name.show { opacity: 1; letter-spacing: 0.18em; filter: blur(0); }
+.ceremony-sub { margin-top: 2vh; font-size: 2vw; color: var(--muted); opacity: 0; transition: opacity 1.5s; }
+.ceremony-sub.show { opacity: 1; }
+
+@keyframes dying {
+  0% { transform: scale(1.6, 1.9) rotate(0); opacity: 1; }
+  20% { transform: scale(1.1, 1.3) rotate(-6deg); opacity: 0.7; }
+  35% { transform: scale(1.3, 1.5) rotate(5deg); opacity: 1; }
+  55% { transform: scale(0.7, 0.8) rotate(-8deg); opacity: 0.5; }
+  70% { transform: scale(0.9, 1) rotate(6deg); opacity: 0.85; }
+  100% { transform: scale(0.45, 0.5) rotate(-3deg); opacity: 0.6; }
+}
+@keyframes smoke {
+  0% { opacity: 0; transform: translateY(0) scale(0.6); }
+  15% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(calc(var(--s) * 1.5), calc(var(--s) * -14)) scale(2.4, 3.2) rotate(18deg); }
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Răul a învins: sângele curge din partea de sus, în spatele textului */
+.blood-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.blood-top {
+  position: absolute; top: 0; left: 0; right: 0; height: 0;
+  background: linear-gradient(180deg, #3d0006 0%, #7a000e 60%, #a0001a 100%);
+  box-shadow: 0 0.6vh 1.2vh rgba(60, 0, 8, 0.7);
+  animation: blood-band 2.5s ease-out forwards;
+}
+.drip {
+  position: absolute; top: 0; width: var(--w); height: 0;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, #5e000b 0%, #9d0016 35%, #c81a33 50%, #9d0016 65%, #5e000b 100%);
+  animation: drip var(--dur) cubic-bezier(0.5, 0, 0.85, 0.55) var(--delay) forwards;
+}
+.drip::after {
+  content: ''; position: absolute; left: 50%; bottom: calc(var(--w) * -0.9);
+  width: calc(var(--w) * 1.8); height: calc(var(--w) * 2); transform: translateX(-50%);
+  border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+  background: radial-gradient(circle at 38% 35%, #e3405a 0%, #a00018 45%, #5e000b 100%);
+}
+@keyframes drip { to { height: var(--len); } }
+@keyframes blood-band { to { height: 3.5vh; } }
+body[data-phase="end"] .screen-wrap { position: relative; z-index: 2; }
+.end.evil h1, .end.evil p { text-shadow: 0 0 6px #000, 0 0 20px #000, 0 0 40px rgba(224, 36, 71, 0.6); }
+.sound-hint { position: fixed; left: 14px; bottom: 10px; font-size: 0.85rem; color: var(--muted); z-index: 40; }
 
 /* Tabel simplu în panou */
 .rows { width: 100%; border-collapse: collapse; }
@@ -139,8 +271,7 @@ input[type=password], input[type=text] {
 body.screen { overflow: hidden; }
 .screen-wrap { min-height: 100vh; padding: 4vh 4vw; display: flex; flex-direction: column; }
 .screen-wrap h1 { font-size: 4.5vw; text-align: center; }
-.screen-wrap .candles { grid-template-columns: repeat(auto-fit, minmax(9vw, 1fr)); margin-top: auto; margin-bottom: auto; }
-.screen-wrap .candle .name { font-size: 1.6vw; }
+.screen-wrap .candle-rows { margin-top: auto; margin-bottom: auto; }
 .status-dot { position: fixed; right: 14px; bottom: 10px; font-size: 0.8rem; color: var(--muted); }
 
 /* Proiector: faze */
