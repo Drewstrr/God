@@ -153,10 +153,17 @@
       onValue(r('public/engine'), (snap) => {
         engineOnline = Boolean(snap.val()?.online);
         if (!me && !pendingNonce && app.querySelector('.names')) showNames();
-      });
+      }, (err) => console.error(err));
       onValue(r('public/players'), (snap) => {
         players = snap.val() ?? {};
+        if (!Object.keys(players).length) {
+          app.innerHTML = '<h1 class="center">Conacul Blackwood</h1><p class="center muted">⏳ Conacul încă nu e deschis. Pagina se actualizează singură când pornește.</p>';
+          return;
+        }
         if (!me && !pendingNonce && !app.querySelector('.keypad')) showNames();
+      }, (err) => {
+        console.error(err);
+        app.innerHTML = '<h1 class="center">Conacul Blackwood</h1><p class="center error">🔒 Conacul e încuiat: baza de date refuză accesul (regulile Firebase nu sunt publicate).</p>';
       });
     }
 
