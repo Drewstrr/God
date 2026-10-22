@@ -46,7 +46,7 @@
         <tr>
           <td><b>${esc(p.name)}</b></td>
           <td>${p.hasPin ? '<span class="pill on">are PIN</span>' : '<span class="pill">fără PIN</span>'}</td>
-          <td style="text-align:right">${p.hasPin ? `<button class="btn small ghost" data-reset="${id}">Resetează PIN</button>` : ''}</td>
+          <td style="text-align:right">${p.hasPin ? `<button class="btn small" data-reset="${id}">🔄 Resetează PIN</button>` : ''}</td>
         </tr>`).join('');
       document.querySelectorAll('[data-reset]').forEach((b) => b.addEventListener('click', async () => {
         const name = players.find(([id]) => id === b.dataset.reset)[1].name;

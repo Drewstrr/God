@@ -32,6 +32,11 @@ export {
   onValue, set, update, remove, push, get, onChildAdded, onChildChanged, onDisconnect, serverTimestamp,
 };
 
+// Ora serverului, ca toate ecranele să arate același cronometru.
+let serverOffset = 0;
+onValue(ref(db, '.info/serverTimeOffset'), (snap) => { serverOffset = snap.val() ?? 0; });
+export const serverNow = () => Date.now() + serverOffset;
+
 // Anunță când conexiunea cu Firebase cade sau revine.
 export const onConnection = (cb) => onValue(ref(db, '.info/connected'), (snap) => cb(Boolean(snap.val())));
 
