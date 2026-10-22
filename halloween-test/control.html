@@ -16,6 +16,7 @@
         <p id="engine" class="muted">Se verifică motorul…</p>
         <p class="muted">Motorul rulează în pagina <a href="screen" target="_blank">Proiector</a>. Ține-o deschisă pe ecranul proiectorului.</p>
         <button class="btn small ghost" id="sound">🔊 Sunet proiector</button>
+        <button class="btn small ghost" id="music">🎵 Muzică</button>
       </div>
       <div class="card">
         <h2 id="phase-title">Jocul</h2>
@@ -100,7 +101,7 @@
             <p>Rezultat: <b>${esc(o.target)}</b>${o.byMayor ? ' (decizia Primarului)' : ''}. Așteaptă să se termine dezvăluirea pe proiector.</p>
             <button class="btn" data-cmd="execute">⚰️ Execută eliminarea</button>`;
           if (o.result === 'revote') return `
-            <p>Egalitate între <b>${(o.candidates ?? []).map(esc).join(' și ')}</b>.</p>
+            <p>Egalitate între <b>${(o.candidates ?? []).map(esc).join(', ').replace(/, ([^,]*)$/, ' și $1')}</b>.</p>
             <button class="btn" data-cmd="revote">⚖️ Pornește revotul</button>`;
           if (o.result === 'mayor-decides') return '<p>🎩 Așteptăm decizia Primarului pe telefonul lui…</p>';
           return `
@@ -178,6 +179,13 @@
       soundBtn.textContent = snap.val() ? '🔇 Sunet proiector: OPRIT (apasă să pornești)' : '🔊 Sunet proiector: PORNIT (apasă să oprești)';
     });
     soundBtn.addEventListener('click', () => set(r('public/muted'), !soundBtn.dataset.muted));
+    const musicBtn = document.getElementById('music');
+    onValue(r('public/music'), (snap) => {
+      const off = snap.val() === false;
+      musicBtn.dataset.off = off ? '1' : '';
+      musicBtn.textContent = off ? '🎵 Muzică: OPRITĂ (apasă să pornești)' : '🎵 Muzică: PORNITĂ (apasă să oprești)';
+    });
+    musicBtn.addEventListener('click', () => set(r('public/music'), Boolean(musicBtn.dataset.off)));
 
     onValue(r('public/engine'), (snap) => {
       const el = document.getElementById('engine');

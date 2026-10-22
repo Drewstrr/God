@@ -275,8 +275,10 @@
           <p class="muted">Conacul a ales.</p>
           <h1 class="squid-title">${esc(pub.doomedName)}</h1>
           <p>Soarta se decide…</p>
-          <p class="squid-count" data-ends="${pub.endsAt ?? ''}"></p>
-          ${offer && !chose ? `<button class="btn squid-btn" id="sacrifice">🩸 Mă sacrific pentru stăpânul meu</button>` : ''}
+          <div class="heartbeat">♥</div>
+          ${offer && !chose ? `
+            <p>Stăpânul tău e pe cale să fie eliminat. Mai ai <b data-ends="${pub.endsAt ?? ''}"></b> să te sacrifici în locul lui.</p>
+            <button class="btn squid-btn" id="sacrifice">🩸 Mă sacrific pentru stăpânul meu</button>` : ''}
           ${offer && chose ? '<p class="squid-pink"><b>🩸 Te-ai sacrificat.</b></p>' : ''}
         </div>`;
       app.querySelector('#sacrifice')?.addEventListener('click', async () => {

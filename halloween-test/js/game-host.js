@@ -164,6 +164,8 @@ async function session() {
   const gossipId = PLAYERS.find((p) => state.roles[p.id] === 'gossip').id;
   const gossip = state.alive[gossipId] ? (await get(r(`playerInput/${gossipId}/gossip`))).val() : null;
   host.gossip = gossip ? String(gossip).slice(0, 140) : null;
+  // O Bârfitoare-robot șoptește și ea ceva, ca să se vadă mesajul pe proiector.
+  if (!host.gossip && state.alive[gossipId] && isBot(gossipId)) host.gossip = botGossip(gossipId);
   host.detectiveDone = false;
   if (gossip) await remove(r(`playerInput/${gossipId}/gossip`));
 
@@ -196,6 +198,21 @@ async function session() {
     setTimeout(() => botAct(p.id, state.round), delay);
   }
   watchNight(endsAt);
+}
+
+function botGossip(self) {
+  const others = PLAYERS.filter((p) => state.alive[p.id] && p.id !== self).map((p) => p.name);
+  const a = shuffle(others)[0] ?? 'cineva';
+  const b = shuffle(others.filter((n) => n !== a))[0] ?? 'altcineva';
+  const lines = [
+    `L-am văzut pe ${a} ascunzând usturoiul.`,
+    `${a} și ${b} au șușotit toată seara.`,
+    `Aveți grijă la ${a}. Nu are reflexie în oglindă.`,
+    `${a} mi-a spus în secret că știe cine e vampirul.`,
+    `${b} a ieșit din cameră exact când s-a stins lumina.`,
+    `Eu aș avea încredere în ${a}. Deocamdată.`,
+  ];
+  return shuffle(lines)[0];
 }
 
 async function botAct(id, round) {

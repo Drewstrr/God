@@ -162,10 +162,13 @@
       render(true);
       try {
         await set(r(`pinRequests/${uid}`), { player: voter.id, pin, mode: 'vote', vote: choice, nonce: pending.nonce });
-      } catch {
+      } catch (e) {
         pending = null;
         pin = '';
-        render(true, 'Nu s-a trimis. Verifică internetul.');
+        const denied = String(e?.code ?? e?.message ?? '').toLowerCase().includes('permission');
+        render(true, denied
+          ? 'Baza de date refuză votul: regulile Firebase nu sunt actualizate (vezi instrucțiunile).'
+          : 'Nu s-a trimis. Verifică internetul.');
       }
       setTimeout(() => { if (pending) { pending = null; pin = ''; render(true, 'Motorul nu răspunde. Mai încearcă.'); } }, 12000);
     }

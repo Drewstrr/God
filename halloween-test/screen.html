@@ -44,13 +44,28 @@
     // Valori „aleatorii” stabile pentru fiecare nume, ca flăcările să nu pâlpâie toate la fel.
     const seeded = (str, n) => { let h = 0; for (const c of str + n) h = (h * 31 + c.charCodeAt(0)) >>> 0; return (h % 1000) / 1000; };
 
-    function candleHtml(name, cls = '', label = name) {
+    // Fiecare lumânare e diferită: înălțime, grosime, culoare, scurgeri de ceară, flacără.
+    const WAX = [
+      ['#f3e8d6', '#fffaf0', '#b9a68b'], ['#e6d3a8', '#f7ecd0', '#a88f5f'], ['#ddd3c4', '#f1ebe2', '#9f9384'],
+      ['#efe0c4', '#fff4dc', '#b49a6c'], ['#8e0f1c', '#c22a35', '#4a050c'], ['#5e0d18', '#8b1a2a', '#2a0308'],
+      ['#2a2526', '#4a4344', '#0e0b0c'], ['#e9dcc0', '#fbf3e1', '#a99572'],
+    ];
+    function candleHtml(name, cls = '', label = name, index = null) {
       const v = (n, lo, hi) => (lo + seeded(name, n) * (hi - lo)).toFixed(2);
-      return `<div class="candle ${cls}" style="--fd:${v(1, 1.2, 2.3)}s;--fk:${v(2, 0.6, 1.4)}s;--gd:${v(3, 2, 3.4)}s;--delay:-${v(4, 0, 2)}s">
+      // Culorile se amestecă după poziție, ca să existe mereu și lumânări roșii sau negre.
+      const wax = WAX[index === null ? Math.floor(seeded(name, 9) * WAX.length) : (index * 5 + 3) % WAX.length];
+      const drips = Array.from({ length: 1 + Math.floor(seeded(name, 10) * 3) }, (_, i) =>
+        `<i style="left:${v(20 + i, 8, 78)}%;--dl:${v(30 + i, 1.2, 4.5)};--dw:${v(40 + i, 0.4, 0.75)}"></i>`).join('');
+      const style = [
+        `--fd:${v(1, 1.2, 2.3)}s`, `--fk:${v(2, 0.6, 1.4)}s`, `--gd:${v(3, 2, 3.4)}s`, `--delay:-${v(4, 0, 2)}s`,
+        `--wh:${v(5, 5.5, 10)}`, `--ww:${v(6, 2.8, 4.2)}`, `--fs:${v(7, 0.85, 1.2)}`, `--tilt:${v(8, -2.5, 2.5)}deg`,
+        `--c1:${wax[0]}`, `--c2:${wax[1]}`, `--c3:${wax[2]}`,
+      ].join(';');
+      return `<div class="candle ${cls}" style="${style}">
         <div class="light"></div>
         <div class="flame"><div class="flame-core"></div><div class="flame-blue"></div></div>
         <div class="smoke"><i></i><i></i><i></i></div>
-        <div class="wick"></div><div class="wax"></div>
+        <div class="wick"></div><div class="wax"><div class="drips">${drips}</div></div><div class="dish"></div>
         <div class="name">${label}</div>
       </div>`;
     }
@@ -58,9 +73,9 @@
     // Două rânduri cât mai egale: 11 -> 5 sus și 6 jos.
     function candles({ lobby = false } = {}) {
       const players = Object.entries(pub.players ?? {});
-      const items = players.map(([id, p]) => {
+      const items = players.map(([id, p], i) => {
         const cls = lobby ? (p.hasPin || p.bot ? '' : 'waiting') : (pub.alive?.[id] === false ? 'out' : '');
-        return candleHtml(p.name, cls, `${esc(p.name)}${lobby && p.bot ? ' 🤖' : ''}`);
+        return candleHtml(p.name, cls, `${esc(p.name)}${lobby && p.bot ? ' 🤖' : ''}`, i);
       });
       const top = Math.floor(items.length / 2);
       const rows = items.length > 6 ? [items.slice(0, top), items.slice(top)] : [items];
@@ -71,15 +86,24 @@
     function fitStage() {
       stage.style.removeProperty('--cs');
       if (!stage.querySelector('.candle-rows')) return;
-      let size = Math.min(window.innerWidth * 0.0072, window.innerHeight * 0.0115);
-      const bottom = () => Math.max(...[...stage.querySelectorAll('.candle .name, .big-timer, p, h1')].map((e) => e.getBoundingClientRect().bottom));
-      const limit = window.innerHeight - window.innerHeight * 0.03;
-      for (let i = 0; i < 16 && bottom() > limit; i++) {
+      stage.style.setProperty('--cs', `${Math.min(window.innerWidth * 0.0085, window.innerHeight * 0.0125).toFixed(2)}px`);
+      let size = Math.min(window.innerWidth * 0.0085, window.innerHeight * 0.0125);
+      const bottom = () => Math.max(...[...stage.querySelectorAll('.candle .name, .candle .wax, .big-timer, p, h1')].map((e) => e.getBoundingClientRect().bottom));
+      // Păstrăm o margine jos: unele televizoare/proiectoare taie marginile imaginii.
+      const limit = window.innerHeight * 0.94;
+      for (let i = 0; i < 20 && bottom() > limit; i++) {
         size *= 0.92;
         stage.style.setProperty('--cs', `${size.toFixed(2)}px`);
       }
     }
     window.addEventListener('resize', fitStage);
+    document.fonts?.ready.then(fitStage);
+    // Verificăm din nou periodic (fonturile sau textele se pot schimba după afișare).
+    setInterval(() => {
+      if (!stage.querySelector('.candle-rows')) return;
+      const last = [...stage.querySelectorAll('.candle .name')].pop();
+      if (last && last.getBoundingClientRect().bottom > window.innerHeight * 0.94) fitStage();
+    }, 1500);
 
     // Din când în când, o adiere face o flacără să tremure mai tare.
     setInterval(() => {
@@ -98,6 +122,7 @@
       box.innerHTML = `${candleHtml(name)}<div class="ceremony-name">${esc(name)}</div><div class="ceremony-sub">${sub}</div>`;
       document.body.appendChild(box);
       const candle = box.querySelector('.candle');
+      sfx.duckMusic(9);
       sfx.death();
       await wait(100); candle.classList.add('appear');
       await wait(500); candle.classList.add('lit');
@@ -108,6 +133,20 @@
       await wait(1800); box.querySelector('.ceremony-sub').classList.add('show');
       await wait(2600); box.classList.add('leaving');
       await wait(1200); box.remove();
+    }
+
+    // Binele a învins: explozie de lumină aurie, raze și scântei care urcă.
+    function triumph() {
+      document.querySelector('.triumph-layer')?.remove();
+      const layer = document.createElement('div');
+      layer.className = 'triumph-layer';
+      let html = '<div class="triumph-rays"></div><div class="triumph-halo"></div><div class="triumph-flash"></div>';
+      for (let i = 0; i < 70; i++) {
+        html += `<div class="spark" style="left:${(Math.random() * 100).toFixed(1)}%;--sz:${(0.4 + Math.random() * 1.2).toFixed(2)}vw;--dur:${(5 + Math.random() * 7).toFixed(1)}s;--delay:${(Math.random() * 6).toFixed(1)}s;--dx:${(Math.random() * 30 - 15).toFixed(1)}vw"></div>`;
+      }
+      layer.innerHTML = html;
+      document.body.prepend(layer);
+      document.body.classList.add('triumph');
     }
 
     // Sângele care curge când răul a învins.
@@ -128,10 +167,18 @@
       return `<div class="big-timer"><div class="muted">${label}</div><div class="clock" data-ends="${endsAt ?? ''}">${endsAt ? fmt(endsAt - serverNow()) : ''}</div></div>`;
     }
 
+    let lastSecond = null;
     function tick() {
       document.querySelectorAll('[data-ends]').forEach((el) => {
         const ends = Number(el.dataset.ends);
-        if (ends) el.textContent = fmt(ends - serverNow());
+        if (!ends) return;
+        const left = ends - serverNow();
+        el.textContent = fmt(left);
+        // Ultimele 10 secunde ticăie; la zero, o bătaie mai gravă.
+        const sec = Math.ceil(left / 1000);
+        if (sec !== lastSecond && sec <= 10 && sec >= 0 && ['night', 'discussion'].includes(pub.phase)) sfx.clockTick(sec === 0);
+        lastSecond = sec;
+        el.classList.toggle('urgent', sec <= 10);
       });
     }
 
@@ -194,7 +241,7 @@
         return `
           <div class="squid-screen">
             <h1 class="squid-title">${v.stage === 'revote' ? 'REVOT' : 'VOTUL'}</h1>
-            ${v.candidates ? `<p class="center lead">Doar între: <b>${v.candidates.map((c) => esc(c.name)).join(' și ')}</b></p>` : ''}
+            ${v.candidates ? `<p class="center lead">Doar între: <b>${v.candidates.map((c) => esc(c.name)).join(', ').replace(/, ([^,]*)$/, ' și $1')}</b></p>` : ''}
             <div class="squid-count">${v.done ?? 0} / ${v.total ?? 0}</div>
             <p class="center lead muted">Votați pe rând, pe iPad, în ordinea asta:</p>
             <div class="vote-order">${order.map((o, i) => `<span class="${i < v.current ? 'done' : i === v.current ? 'now' : ''}">${esc(o.name)}</span>`).join('')}</div>
@@ -209,7 +256,7 @@
             <p class="lead muted">Conacul a ales.</p>
             <h1 class="squid-title">${esc(pub.doomedName)}</h1>
             <p class="lead">Soarta se decide…</p>
-            ${timer('', pub.endsAt)}
+            <div class="heartbeat">♥</div>
           </div>`;
       },
       elimination() {
@@ -271,6 +318,8 @@
       const already = shownMorning === m.round;
       shownMorning = m.round;
       if (!already) {
+        sfx.dawn();
+        await wait(1500);
         for (const d of m.deaths ?? []) await ceremony(d.name, 'a murit în noaptea asta');
       }
       slides.forEach((html, i) => {
@@ -294,36 +343,75 @@
       revealTimers = [];
       const list = document.getElementById('reveal-list');
       const tally = {};
+      let lastHit = null;
       const drawTally = () => {
         const rows = Object.entries(tally).sort((a, b) => b[1] - a[1]);
-        document.getElementById('tally').innerHTML = rows.map(([n, c]) => `<div class="tally-row"><span>${esc(n)}</span><b>${c}</b></div>`).join('');
+        const box = document.getElementById('tally');
+        if (!box) return;
+        box.innerHTML = rows.map(([n, c]) => `<div class="tally-row ${n === lastHit ? 'hit' : ''}"><span>${esc(n)}</span><b>${c}</b></div>`).join('');
       };
-      const step = 2200;
+      const step = 2600;
+      const slash = '<svg class="slash" viewBox="0 0 100 24"><path d="M2 14 C 30 4, 60 22, 86 12"/><polygon class="tip" points="84,4 99,12 84,20"/></svg>';
       rv.items.forEach((it, i) => {
         const show = () => {
-          list.insertAdjacentHTML('beforeend', `<div class="reveal-item">${esc(it.voter)}${it.weight > 1 ? ' 🎩×2' : ''} <span class="arrow">→</span> ${it.target ? `<b>${esc(it.target)}</b>` : '<i class="muted">se abține</i>'}</div>`);
-          if (it.target) tally[it.target] = (tally[it.target] ?? 0) + it.weight;
-          drawTally();
-          if (!instant) sfx.tick();
+          if (!document.getElementById('reveal-list')) return;
+          list.insertAdjacentHTML('beforeend', `<div class="reveal-item"><span class="voter">${esc(it.voter)}${it.weight > 1 ? ' 🎩×2' : ''}</span>${it.target ? `${slash}<span class="target"><b>${esc(it.target)}</b></span>` : '<span class="target"><i class="muted">se abține</i></span>'}`);
+          if (instant) {
+            if (it.target) tally[it.target] = (tally[it.target] ?? 0) + it.weight;
+            lastHit = null;
+            return drawTally();
+          }
+          sfx.voteHit(it.target ? 0.75 : null);
+          // Scorul crește exact când „lovește” votul.
+          revealTimers.push(setTimeout(() => {
+            if (it.target) {
+              tally[it.target] = (tally[it.target] ?? 0) + it.weight;
+              lastHit = it.target;
+              document.body.insertAdjacentHTML('beforeend', '<div class="vote-flash"></div>');
+              setTimeout(() => document.querySelector('.vote-flash')?.remove(), 900);
+              stage.classList.remove('shake'); void stage.offsetWidth; stage.classList.add('shake');
+            }
+            drawTally();
+          }, 800));
         };
         if (instant) show(); else revealTimers.push(setTimeout(show, 1200 + i * step));
       });
-      const showOutcome = () => { document.getElementById('outcome').innerHTML = outcomeHtml(pub.reveal?.outcome ?? rv.outcome); };
-      if (instant) showOutcome(); else revealTimers.push(setTimeout(showOutcome, 1200 + rv.items.length * step + 1200));
+      const showOutcome = () => { const box = document.getElementById('outcome'); if (box) box.innerHTML = outcomeHtml(pub.reveal?.outcome ?? rv.outcome); };
+      if (instant) showOutcome(); else revealTimers.push(setTimeout(() => { showOutcome(); sfx.verdict(); }, 1200 + rv.items.length * step + 1400));
     }
 
     function outcomeHtml(o) {
       if (!o) return '';
       if (o.result === 'eliminate') return `<div class="outcome">${o.byMayor ? '🎩 Primarul a decis: ' : 'Conacul a votat: '}<b class="squid-pink">${esc(o.target)}</b></div>`;
-      if (o.result === 'revote') return `<div class="outcome">⚖️ Egalitate între <b>${o.candidates.map(esc).join(' și ')}</b>. Urmează revotul.</div>`;
+      if (o.result === 'revote') return `<div class="outcome">⚖️ Egalitate între <b>${o.candidates.map(esc).join(', ').replace(/, ([^,]*)$/, ' și $1')}</b>. Urmează revotul.</div>`;
       if (o.result === 'mayor-decides') return `<div class="outcome">⚖️ Tot egalitate. 🎩 <b>Primarul decide</b> pe telefonul lui…</div>`;
       return '<div class="outcome">Nimeni nu este eliminat în această rundă.</div>';
     }
 
     let lastPhase = null;
+    const THEME = {
+      lobby: 'waltz', day: 'waltz', intro: 'organ', night: 'night', morning: 'somber', discussion: 'ticking',
+      vote: 'tension', reveal: 'tension', sacrifice: 'heartbeat', elimination: 'somber',
+    };
+    function playThemeFor(phase) {
+      const theme = phase === 'end' ? (pub.winner === 'good' ? 'glory' : 'doom') : THEME[phase];
+      // La final, muzica pornește după efectul sonor al victoriei.
+      if (phase === 'end') {
+        if (sfx.musicTheme() === theme) return;
+        sfx.playMusic(null);
+        setTimeout(() => { if (lastPhase === 'end') sfx.playMusic(theme); }, 6000);
+      }
+      else sfx.playMusic(theme ?? null);
+    }
+
+    let joinedBefore = null;
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
       const phase = pub.phase ?? 'lobby';
+      // Un clinchet când se aprinde lumânarea unui jucător nou.
+      const joined = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
+      if (phase === 'lobby' && joinedBefore !== null && joined > joinedBefore) sfx.chime();
+      joinedBefore = joined;
       document.body.dataset.phase = phase;
       if (phase === 'morning' && lastPhase === 'morning') return; // nu restartăm animația
       if (phase === 'reveal' && lastPhase === 'reveal') {
@@ -334,8 +422,15 @@
       }
       const previous = lastPhase;
       lastPhase = phase;
+      if (phase !== 'reveal') { revealTimers.forEach(clearTimeout); revealTimers = []; }
       sfx.setMuted(Boolean(pub.muted));
-      if (phase !== 'end') document.querySelector('.blood-layer')?.remove();
+      sfx.setMusic(pub.music !== false);
+      playThemeFor(phase);
+      if (phase !== 'end') {
+        document.querySelector('.blood-layer')?.remove();
+        document.querySelector('.triumph-layer')?.remove();
+        document.body.classList.remove('triumph');
+      }
       if (phase === 'night' && previous && previous !== 'night') sfx.sessionBell();
       if (phase === 'elimination' && previous === 'sacrifice' && pub.elimination) {
         // Ceremonia întâi, apoi rolul.
@@ -350,10 +445,11 @@
       if (phase === 'morning') playMorning();
       if (phase === 'reveal') playReveal();
       if (phase === 'end' && previous && previous !== 'end') {
-        if (pub.winner === 'evil') { bleed(); sfx.boom(0.3); sfx.drone(0.5, 10); }
-        else { sfx.bell(0.2, 262, 5, 0.35); sfx.bell(1.1, 330, 5, 0.3); sfx.bell(2, 392, 6, 0.3); }
+        if (pub.winner === 'evil') { bleed(); sfx.evilWins(); }
+        else { triumph(); sfx.goodWins(); }
       }
       if (phase === 'end' && pub.winner === 'evil' && !document.querySelector('.blood-layer')) bleed();
+      if (phase === 'end' && pub.winner === 'good' && !document.querySelector('.triumph-layer')) triumph();
       clearInterval(ticker);
       ticker = setInterval(tick, 250);
     });
@@ -363,7 +459,11 @@
     hint.className = 'sound-hint';
     document.body.appendChild(hint);
     const showHint = () => { hint.textContent = sfx.ready() ? (sfx.isMuted() ? '🔇 sunet oprit din panou' : '🔊 sunet pornit') : '🔇 click oriunde pentru sunet'; };
-    ['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { sfx.unlock(); setTimeout(showHint, 200); }));
+    ['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, () => {
+      const wasReady = sfx.ready();
+      sfx.unlock();
+      setTimeout(() => { showHint(); if (!wasReady && sfx.ready()) playThemeFor(lastPhase ?? 'lobby'); }, 250);
+    }));
     sfx.unlock();
     setInterval(showHint, 1000);
 
