@@ -17,6 +17,9 @@
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
     import { startHost } from './js/game-host.js';
     import * as sfx from './js/sfx.js';
+    import { candleSVG, animateFlames } from './js/candles.js';
+    import { smokeAt } from './js/smoke.js';
+    import { startBlood, stopBlood } from './js/blood.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const stage = document.getElementById('stage');
@@ -44,31 +47,8 @@
     // Valori „aleatorii” stabile pentru fiecare nume, ca flăcările să nu pâlpâie toate la fel.
     const seeded = (str, n) => { let h = 0; for (const c of str + n) h = (h * 31 + c.charCodeAt(0)) >>> 0; return (h % 1000) / 1000; };
 
-    // Fiecare lumânare e diferită: înălțime, grosime, culoare, scurgeri de ceară, flacără.
-    const WAX = [
-      ['#f3e8d6', '#fffaf0', '#b9a68b'], ['#e6d3a8', '#f7ecd0', '#a88f5f'], ['#ddd3c4', '#f1ebe2', '#9f9384'],
-      ['#efe0c4', '#fff4dc', '#b49a6c'], ['#8e0f1c', '#c22a35', '#4a050c'], ['#5e0d18', '#8b1a2a', '#2a0308'],
-      ['#2a2526', '#4a4344', '#0e0b0c'], ['#e9dcc0', '#fbf3e1', '#a99572'],
-    ];
-    function candleHtml(name, cls = '', label = name, index = null) {
-      const v = (n, lo, hi) => (lo + seeded(name, n) * (hi - lo)).toFixed(2);
-      // Culorile se amestecă după poziție, ca să existe mereu și lumânări roșii sau negre.
-      const wax = WAX[index === null ? Math.floor(seeded(name, 9) * WAX.length) : (index * 5 + 3) % WAX.length];
-      const drips = Array.from({ length: 1 + Math.floor(seeded(name, 10) * 3) }, (_, i) =>
-        `<i style="left:${v(20 + i, 8, 78)}%;--dl:${v(30 + i, 1.2, 4.5)};--dw:${v(40 + i, 0.4, 0.75)}"></i>`).join('');
-      const style = [
-        `--fd:${v(1, 1.2, 2.3)}s`, `--fk:${v(2, 0.6, 1.4)}s`, `--gd:${v(3, 2, 3.4)}s`, `--delay:-${v(4, 0, 2)}s`,
-        `--wh:${v(5, 5.5, 10)}`, `--ww:${v(6, 2.8, 4.2)}`, `--fs:${v(7, 0.85, 1.2)}`, `--tilt:${v(8, -2.5, 2.5)}deg`,
-        `--c1:${wax[0]}`, `--c2:${wax[1]}`, `--c3:${wax[2]}`,
-      ].join(';');
-      return `<div class="candle ${cls}" style="${style}">
-        <div class="light"></div>
-        <div class="flame"><div class="flame-core"></div><div class="flame-blue"></div></div>
-        <div class="smoke"><i></i><i></i><i></i></div>
-        <div class="wick"></div><div class="wax"><div class="drips">${drips}</div></div><div class="dish"></div>
-        <div class="name">${label}</div>
-      </div>`;
-    }
+    animateFlames();
+    const candleHtml = (name, cls, label, index) => candleSVG(name, { cls, label, index });
 
     // Două rânduri cât mai egale: 11 -> 5 sus și 6 jos.
     function candles({ lobby = false } = {}) {
@@ -122,16 +102,20 @@
     async function ceremony(name, sub = '') {
       const box = document.createElement('div');
       box.className = 'ceremony';
-      box.innerHTML = `${candleHtml(name)}<div class="ceremony-name">${esc(name)}</div><div class="ceremony-sub">${sub}</div>`;
+      box.innerHTML = `${candleSVG(name, { label: null })}<div class="ceremony-name">${esc(name)}</div><div class="ceremony-sub">${sub}</div>`;
       document.body.appendChild(box);
       const candle = box.querySelector('.candle');
+      candle.dataset.state = 'small';
       sfx.duckMusic(9);
       sfx.death();
       await wait(100); candle.classList.add('appear');
-      await wait(500); candle.classList.add('lit');
-      await wait(500); candle.classList.add('flare');
-      await wait(1400); candle.classList.add('dying');
-      await wait(600); candle.classList.remove('flare', 'dying'); candle.classList.add('dead');
+      await wait(500); candle.dataset.state = 'normal';
+      await wait(500); candle.dataset.state = 'flare';
+      await wait(1400); candle.dataset.state = 'dying';
+      await wait(600); candle.dataset.state = 'dead';
+      // Fumul pornește din vârful fitilului.
+      const ember = candle.querySelector('.c-ember').getBoundingClientRect();
+      smokeAt(ember.left + ember.width / 2, ember.top, { seconds: 3.2, scale: Math.max(1, innerHeight / 700) });
       await wait(1100); box.querySelector('.ceremony-name').classList.add('show');
       await wait(1800); box.querySelector('.ceremony-sub').classList.add('show');
       await wait(2600); box.classList.add('leaving');
@@ -153,18 +137,7 @@
     }
 
     // Sângele care curge când răul a învins.
-    function bleed() {
-      document.querySelector('.blood-layer')?.remove();
-      const layer = document.createElement('div');
-      layer.className = 'blood-layer';
-      let html = '<div class="blood-top"></div>';
-      for (let i = 0; i < 34; i++) {
-        const w = (0.5 + Math.random() * 1.6).toFixed(2);
-        html += `<div class="drip" style="left:${(i / 34 * 100 + Math.random() * 2.5).toFixed(2)}%;--w:${w}vw;--len:${(10 + Math.random() * 60).toFixed(1)}vh;--dur:${(4 + Math.random() * 9).toFixed(1)}s;--delay:${(0.8 + Math.random() * 3.5).toFixed(1)}s"></div>`;
-      }
-      layer.innerHTML = html;
-      document.body.prepend(layer);
-    }
+    function bleed() { startBlood(); }
 
     function timer(label, endsAt) {
       return `<div class="big-timer"><div class="muted">${label}</div><div class="clock" data-ends="${endsAt ?? ''}">${endsAt ? fmt(endsAt - serverNow()) : ''}</div></div>`;
@@ -430,7 +403,7 @@
       sfx.setMusic(pub.music !== false);
       playThemeFor(phase);
       if (phase !== 'end') {
-        document.querySelector('.blood-layer')?.remove();
+        stopBlood();
         document.querySelector('.triumph-layer')?.remove();
         document.body.classList.remove('triumph');
       }
@@ -451,7 +424,7 @@
         if (pub.winner === 'evil') { bleed(); sfx.evilWins(); }
         else { triumph(); sfx.goodWins(); }
       }
-      if (phase === 'end' && pub.winner === 'evil' && !document.querySelector('.blood-layer')) bleed();
+      if (phase === 'end' && pub.winner === 'evil' && !document.querySelector('.blood-canvas')) bleed();
       if (phase === 'end' && pub.winner === 'good' && !document.querySelector('.triumph-layer')) triumph();
       clearInterval(ticker);
       ticker = setInterval(tick, 250);
