@@ -1,7 +1,7 @@
 // Partea de motor care verifică PIN-urile. Rulează doar pe MacBook, logat ca motor.
 import { PLAYERS } from './engine.js';
 import {
-  r, get, set, update, remove, onChildAdded, onChildChanged, onDisconnect, serverTimestamp, onConnection,
+  r, get, set, update, remove, onChildAdded, onChildChanged, onDisconnect, serverTimestamp, onConnection, APP_VERSION,
 } from './fb.js';
 
 const MAX_FAILS = 5;
@@ -32,6 +32,7 @@ export function announceEngine(onChange = () => {}) {
     if (!connected) return;
     await onDisconnect(engineRef).remove();
     await set(engineRef, { online: true, at: serverTimestamp() });
+    await set(r('public/appVersion'), APP_VERSION);
   });
 }
 

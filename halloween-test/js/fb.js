@@ -5,10 +5,12 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import {
   getDatabase, ref, onValue, set, update, remove, push, get, onChildAdded, onChildChanged,
-  onDisconnect, serverTimestamp,
+  onDisconnect, serverTimestamp, goOffline, goOnline,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
 export const ENV = 'test';
+// Crește la fiecare publicare: telefoanele cu cod vechi se reîncarcă singure.
+export const APP_VERSION = 3;
 export const ENGINE_EMAIL = 'motor@blackwood.ro';
 
 const app = initializeApp({
@@ -36,6 +38,16 @@ export {
 let serverOffset = 0;
 onValue(ref(db, '.info/serverTimeOffset'), (snap) => { serverOffset = snap.val() ?? 0; });
 export const serverNow = () => Date.now() + serverOffset;
+
+// Pe telefoane, după blocarea ecranului legătura poate rămâne moartă; o refacem când revii pe pagină.
+export function reconnectOnWake() {
+  let hiddenAt = 0;
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (Date.now() - hiddenAt > 3000) { goOffline(db); goOnline(db); }
+  });
+  window.addEventListener('online', () => { goOffline(db); goOnline(db); });
+}
 
 // Anunță când conexiunea cu Firebase cade sau revine.
 export const onConnection = (cb) => onValue(ref(db, '.info/connected'), (snap) => cb(Boolean(snap.val())));

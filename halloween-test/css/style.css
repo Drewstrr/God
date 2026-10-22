@@ -182,3 +182,4 @@ body.dark-night .wrap { filter: brightness(0.75); }
 .ctl-actions { display: grid; gap: 10px; }
 .ctl-actions .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .ctl-actions input[type=number] { width: 90px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg2); color: var(--text); font-size: 1rem; }
+.net-warning { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; padding: 10px; text-align: center; background: var(--blood); color: #fff; font-weight: 600; }

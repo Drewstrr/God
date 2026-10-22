@@ -15,8 +15,17 @@
 
   <script type="module">
     import {
-      auth, r, currentUser, signInAnonymously, signOut, onValue, set, serverNow,
+      auth, r, currentUser, signInAnonymously, signOut, onValue, set, serverNow, reconnectOnWake, onConnection, APP_VERSION,
     } from './js/fb.js';
+
+    reconnectOnWake();
+    const net = document.createElement('div');
+    net.className = 'net-warning';
+    net.textContent = '⚠️ Fără legătură… se reconectează';
+    net.hidden = true;
+    document.body.appendChild(net);
+    let everConnected = false;
+    onConnection((on) => { if (on) everConnected = true; net.hidden = on || !everConnected; });
 
     const app = document.getElementById('app');
     const STORE_KEY = 'blackwood-player';
@@ -170,7 +179,7 @@
         <div class="badges">${badges}</div>
         <p class="center">${phaseText}</p>
         <div class="card role-card" id="role">
-          <div class="hidden-role">👆 Ține apăsat aici ca să-ți vezi rolul</div>
+          <div class="hidden-role">👆 Atinge aici ca să-ți vezi rolul</div>
           <div class="shown-role" hidden>
             <div class="emoji">${priv.emoji}</div>
             <h2>${esc(priv.roleName)}</h2>
@@ -196,11 +205,16 @@
         ${!alive ? '<div class="card center muted">👻 Ești fantomă: nu mai vorbești despre joc și nu mai votezi. Noaptea poți lăsa un indiciu de un cuvânt.</div>' : ''}
         <button class="btn ghost" id="logout">Nu sunt eu</button>`;
 
+      // Atingi ca să vezi rolul; se ascunde singur după 8 secunde sau la a doua atingere.
       const role = app.querySelector('#role');
-      const reveal = (on) => { role.querySelector('.hidden-role').hidden = on; role.querySelector('.shown-role').hidden = !on; };
-      role.addEventListener('pointerdown', () => reveal(true));
-      ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => role.addEventListener(ev, () => reveal(false)));
-      role.addEventListener('contextmenu', (e) => e.preventDefault());
+      let hideTimer = null;
+      const reveal = (on) => {
+        role.querySelector('.hidden-role').hidden = on;
+        role.querySelector('.shown-role').hidden = !on;
+        clearTimeout(hideTimer);
+        if (on) hideTimer = setTimeout(() => reveal(false), 8000);
+      };
+      role.addEventListener('click', () => reveal(role.querySelector('.shown-role').hidden));
       app.querySelector('#hide').addEventListener('click', curtain);
       app.querySelector('#logout').addEventListener('click', () => { if (confirm('Te deloghezi de pe acest telefon?')) logout(); });
 
@@ -352,7 +366,12 @@
 
       if (started) return showNames();
       started = true;
-      onValue(r('public'), (snap) => { pub = snap.val() ?? {}; if (me) renderGame(); }, (err) => console.error(err));
+      onValue(r('public'), (snap) => {
+        pub = snap.val() ?? {};
+        // Codul s-a actualizat pe site: ne reîncărcăm (dar nu în mijlocul nopții).
+        if (pub.appVersion > APP_VERSION && pub.phase !== 'night') return location.reload();
+        if (me) renderGame();
+      }, (err) => console.error(err));
       onValue(r('public/engine'), (snap) => {
         engineOnline = Boolean(snap.val()?.online);
         if (!me && !pendingNonce && app.querySelector('.names')) showNames();
