@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0709">
+  <meta name="robots" content="noindex">
+  <title>Conacul Blackwood</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="wrap" id="app">
+    <p class="center muted">Se încarcă conacul…</p>
+  </main>
+
+  <script type="module">
+    import {
+      auth, r, currentUser, signInAnonymously, signOut, onValue, set,
+    } from './js/fb.js';
+
+    const app = document.getElementById('app');
+    const STORE_KEY = 'blackwood-player';
+    let players = {};
+    let engineOnline = false;
+    let me = null;          // id-ul jucătorului logat
+    let uid = null;
+    let pendingNonce = null;
+    let pendingPlayer = null;
+    let stopPrivate = null;
+
+    const remember = (id) => { try { id ? localStorage.setItem(STORE_KEY, id) : localStorage.removeItem(STORE_KEY); } catch {} };
+    const remembered = () => { try { return localStorage.getItem(STORE_KEY); } catch { return null; } };
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // ---------- ecranul 1: alege-ți numele ----------
+    function showNames() {
+      me = null;
+      const list = Object.entries(players);
+      app.innerHTML = `
+        <h1 class="center">Conacul Blackwood</h1>
+        <p class="center muted">Atinge-ți numele</p>
+        ${engineOnline ? '' : '<p class="center error">⏳ Conacul încă nu e deschis. Așteaptă puțin.</p>'}
+        <div class="names">
+          ${list.map(([id, p]) => `<button data-id="${id}">${esc(p.name)}<small>${p.hasPin ? 'are PIN' : 'nou'}</small></button>`).join('')}
+        </div>`;
+      app.querySelectorAll('[data-id]').forEach((b) => b.addEventListener('click', () => showPin(b.dataset.id)));
+    }
+
+    // ---------- ecranul 2: PIN ----------
+    function showPin(id, { confirmFor = null, message = '' } = {}) {
+      const p = players[id];
+      const choosing = !p.hasPin;
+      const heading = confirmFor ? 'Mai scrie o dată PIN-ul' : choosing ? 'Alege-ți un PIN de 4 cifre' : 'Introdu PIN-ul tău';
+      let pin = '';
+      app.innerHTML = `
+        <h1 class="center">${esc(p.name)}</h1>
+        <p class="center">${heading}</p>
+        ${choosing && !confirmFor ? '<p class="center muted">Ține-l minte! Îți trebuie dacă intri de pe alt telefon.</p>' : ''}
+        <div class="pin-dots">${'<span></span>'.repeat(4)}</div>
+        <p class="center error" id="msg">${esc(message)}</p>
+        <div class="keypad">
+          ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-k="${n}">${n}</button>`).join('')}
+          <button data-k="back" aria-label="Șterge">⌫</button><button data-k="0">0</button><button data-k="cancel" aria-label="Înapoi">✕</button>
+        </div>`;
+      const dots = app.querySelectorAll('.pin-dots span');
+      const draw = () => dots.forEach((d, i) => d.classList.toggle('on', i < pin.length));
+      app.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
+        const k = b.dataset.k;
+        if (k === 'cancel') return showNames();
+        if (k === 'back') { pin = pin.slice(0, -1); return draw(); }
+        if (pin.length >= 4) return;
+        pin += k;
+        draw();
+        if (pin.length < 4) return;
+        if (choosing && !confirmFor) return setTimeout(() => showPin(id, { confirmFor: pin }), 150);
+        if (choosing && confirmFor !== pin) return setTimeout(() => showPin(id, { message: 'PIN-urile nu se potrivesc. Mai încearcă.' }), 150);
+        sendPin(id, pin, choosing ? 'set' : 'login');
+      }));
+    }
+
+    async function sendPin(id, pin, mode) {
+      if (!engineOnline) {
+        return showPin(id, { message: 'Conacul încă nu e deschis. Mai încearcă puțin mai târziu.' });
+      }
+      app.innerHTML = '<p class="center muted" style="margin-top:40vh">🕯️ Se verifică…</p>';
+      pendingNonce = Math.random().toString(36).slice(2);
+      pendingPlayer = id;
+      try {
+        await set(r(`pinRequests/${uid}`), { player: id, pin, mode, nonce: pendingNonce });
+      } catch {
+        pendingNonce = null;
+        showPin(id, { message: 'Nu s-a putut trimite. Verifică internetul.' });
+      }
+      setTimeout(() => {
+        if (pendingNonce) { pendingNonce = null; showPin(id, { message: 'Conacul nu răspunde. Mai încearcă.' }); }
+      }, 12000);
+    }
+
+    // ---------- ecranul 3: ești înăuntru ----------
+    function showHome() {
+      const p = players[me];
+      app.innerHTML = `
+        <h1 class="center">Bun venit, ${esc(p?.name ?? me)}</h1>
+        <div class="card center">
+          <p>🕯️ Ești în conac.</p>
+          <p class="muted">Jocul încă n-a început. Rolul tău secret va apărea aici.</p>
+          <p id="private-check" class="muted">Se verifică legătura secretă…</p>
+        </div>
+        <button class="btn ghost" id="logout">Nu sunt eu</button>`;
+      app.querySelector('#logout').addEventListener('click', logout);
+      stopPrivate?.();
+      stopPrivate = onValue(r(`private/${me}`), (snap) => {
+        const el = document.getElementById('private-check');
+        if (el) { el.textContent = snap.exists() ? '🔒 Legătura secretă funcționează.' : '…'; el.className = snap.exists() ? 'ok' : 'muted'; }
+      }, () => {
+        const el = document.getElementById('private-check');
+        if (el) { el.textContent = 'Legătura secretă nu e încă activă.'; el.className = 'error'; }
+      });
+    }
+
+    async function logout() {
+      stopPrivate?.(); stopPrivate = null;
+      remember(null);
+      me = null;
+      // Un cont anonim nou, ca dispozitivul să nu mai fie legat de jucătorul vechi.
+      await signOut(auth);
+      await start();
+    }
+
+    // ---------- pornire ----------
+    let started = false;
+    async function start() {
+      let user = await currentUser();
+      if (!user || !user.isAnonymous) user = (await signInAnonymously(auth)).user;
+      uid = user.uid;
+
+      onValue(r(`pinStatus/${uid}`), (snap) => {
+        const s = snap.val();
+        if (!s) return;
+        if (s.reset) { stopPrivate?.(); stopPrivate = null; remember(null); if (me) { me = null; showNames(); } return; }
+        if (pendingNonce && s.nonce === pendingNonce) {
+          const tried = pendingPlayer;
+          pendingNonce = null;
+          if (s.ok) { me = s.player; remember(me); showHome(); }
+          else showPin(tried, { message: s.error });
+          return;
+        }
+        if (!pendingNonce && s.ok && s.player && !me) { me = s.player; remember(me); showHome(); }
+      });
+
+      if (started) return showNames();
+      started = true;
+      onValue(r('public/engine'), (snap) => {
+        engineOnline = Boolean(snap.val()?.online);
+        if (!me && !pendingNonce && app.querySelector('.names')) showNames();
+      });
+      onValue(r('public/players'), (snap) => {
+        players = snap.val() ?? {};
+        if (!me && !pendingNonce && !app.querySelector('.keypad')) showNames();
+      });
+    }
+
+    start().catch((e) => {
+      console.error(e);
+      app.innerHTML = '<p class="center error">Nu mă pot conecta. Verifică internetul și reîncarcă pagina.</p>';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Blackwood – Panou</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="wrap" style="max-width:760px">
+    <h1>Panoul de comandă</h1>
+    <div id="login"></div>
+    <div id="panel" hidden>
+      <div class="card">
+        <p id="engine" class="muted">Se verifică motorul…</p>
+        <p class="muted">Motorul rulează în pagina <a href="screen" target="_blank">Proiector</a>. Ține-o deschisă pe ecranul proiectorului.</p>
+      </div>
+      <div class="card">
+        <h2>Jucătorii</h2>
+        <p class="muted">„Resetează PIN” îl deloghează pe jucător de pe toate dispozitivele și îl lasă să-și aleagă un PIN nou. Nu vezi niciun secret.</p>
+        <table class="rows"><tbody id="players"></tbody></table>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { r, onValue, requireEngineLogin } from './js/fb.js';
+    import { resetPin } from './js/pin-service.js';
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    await requireEngineLogin(document.getElementById('login'));
+    document.getElementById('panel').hidden = false;
+
+    onValue(r('public/engine'), (snap) => {
+      const el = document.getElementById('engine');
+      const on = Boolean(snap.val()?.online);
+      el.textContent = on ? '⚙️ Motorul e pornit. Jucătorii se pot loga.' : '⚠️ Motorul e oprit. Deschide pagina Proiector.';
+      el.className = on ? 'ok' : 'error';
+    });
+
+    onValue(r('public/players'), (snap) => {
+      const players = Object.entries(snap.val() ?? {});
+      document.getElementById('players').innerHTML = players.map(([id, p]) => `
+        <tr>
+          <td><b>${esc(p.name)}</b></td>
+          <td>${p.hasPin ? '<span class="pill on">are PIN</span>' : '<span class="pill">fără PIN</span>'}</td>
+          <td style="text-align:right">${p.hasPin ? `<button class="btn small ghost" data-reset="${id}">Resetează PIN</button>` : ''}</td>
+        </tr>`).join('');
+      document.querySelectorAll('[data-reset]').forEach((b) => b.addEventListener('click', async () => {
+        const name = players.find(([id]) => id === b.dataset.reset)[1].name;
+        if (!confirm(`Resetezi PIN-ul lui ${name}? Va trebui să-și aleagă unul nou.`)) return;
+        b.disabled = true;
+        await resetPin(b.dataset.reset);
+      }));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{
+  "rules": {
+    ".read": "auth != null && auth.uid === 'wK5TGHF2LVgRtVCx2C4tBvS1zmq1'",
+    ".write": "auth != null && auth.uid === 'wK5TGHF2LVgRtVCx2C4tBvS1zmq1'",
+    "$env": {
+      "public": {
+        ".read": true
+      },
+      "pinRequests": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['player', 'pin', 'mode']) && newData.child('pin').isString() && newData.child('pin').val().matches(/^[0-9]{4}$/) && (newData.child('mode').val() === 'set' || newData.child('mode').val() === 'login')"
+        }
+      },
+      "pinStatus": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid"
+        }
+      },
+      "private": {
+        "$player": {
+          ".read": "auth != null && root.child($env).child('bindings').child($player).child(auth.uid).exists()"
+        }
+      },
+      "actions": {
+        "$round": {
+          "$player": {
+            ".write": "auth != null && root.child($env).child('bindings').child($player).child(auth.uid).exists() && root.child($env).child('public/phase').val() === 'night' && root.child($env).child('public/round').val() + '' === $round"
+          }
+        }
+      },
+      "playerInput": {
+        "$player": {
+          ".write": "auth != null && root.child($env).child('bindings').child($player).child(auth.uid).exists()"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Blackwood – Proiector</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="screen">
+  <div class="wrap" id="login"></div>
+  <div class="screen-wrap" id="stage" hidden>
+    <h1>Conacul Blackwood</h1>
+    <p class="center muted" style="font-size:1.6vw">Intră pe <b style="color:var(--text)" id="join-url"></b> și alege-ți numele</p>
+    <div class="candles" id="candles"></div>
+    <p class="center muted" style="font-size:1.4vw" id="count"></p>
+  </div>
+  <div class="status-dot" id="status">⚙️ motor oprit</div>
+
+  <script type="module">
+    import { r, onValue, requireEngineLogin } from './js/fb.js';
+    import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    document.getElementById('join-url').textContent = `${location.host}${location.pathname.replace(/screen(\.html)?$/, 'play')}`;
+
+    await requireEngineLogin(document.getElementById('login'));
+    document.getElementById('stage').hidden = false;
+
+    await ensurePlayers();
+    announceEngine((connected) => {
+      document.getElementById('status').textContent = connected ? '⚙️ motor pornit' : '⚠️ fără internet';
+    });
+    startPinService();
+
+    onValue(r('public/players'), (snap) => {
+      const players = Object.values(snap.val() ?? {});
+      document.getElementById('candles').innerHTML = players.map((p) => `
+        <div class="candle ${p.hasPin ? '' : 'waiting'}">
+          <div class="flame"></div><div class="wax"></div>
+          <div class="name">${esc(p.name)}</div>
+        </div>`).join('');
+      const joined = players.filter((p) => p.hasPin).length;
+      document.getElementById('count').textContent = `${joined} din ${players.length} au intrat în conac`;
+    });
+
+    // Un click oriunde trece proiectorul pe ecran complet.
+    document.body.addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+    });
+  </script>
+</body>
+</html>

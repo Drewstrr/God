@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;800&display=swap');
+
+:root {
+  --bg: #0b0709;
+  --bg2: #160d12;
+  --card: #1d1218;
+  --line: #3a2430;
+  --text: #f3e9e4;
+  --muted: #a8949a;
+  --blood: #b3122e;
+  --blood-hi: #e02447;
+  --candle: #ffb547;
+  --ok: #3ccf7a;
+  --pink: #ff2a7f;
+  --green: #1fd18a;
+  --radius: 18px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: radial-gradient(ellipse at top, #241019 0%, var(--bg) 60%) fixed, var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, .title { font-family: 'Cinzel', Georgia, serif; letter-spacing: 0.03em; margin: 0 0 0.5em; }
+h1 { font-size: clamp(1.8rem, 6vw, 3.2rem); color: var(--candle); text-shadow: 0 0 24px rgba(255, 140, 40, 0.35); }
+h2 { font-size: 1.5rem; }
+p { line-height: 1.5; }
+a { color: var(--candle); }
+
+.wrap { max-width: 560px; margin: 0 auto; padding: 24px 16px 48px; }
+.center { text-align: center; }
+.muted { color: var(--muted); }
+.error { color: var(--blood-hi); font-weight: 600; }
+.ok { color: var(--ok); font-weight: 600; }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin: 16px 0;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  border: 0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  font: 800 1.2rem 'Inter', sans-serif;
+  color: #fff;
+  background: linear-gradient(180deg, var(--blood-hi), var(--blood));
+  box-shadow: 0 6px 24px rgba(179, 18, 46, 0.35);
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+}
+.btn:disabled { opacity: 0.45; cursor: default; }
+.btn.ghost { background: transparent; border: 1px solid var(--line); box-shadow: none; color: var(--muted); font-weight: 600; font-size: 1rem; }
+.btn.small { display: inline-block; width: auto; padding: 10px 14px; font-size: 0.95rem; }
+
+input[type=password], input[type=text] {
+  width: 100%;
+  margin: 10px 0;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+/* Lista de nume pe telefon */
+.names { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.names button {
+  padding: 18px 10px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font: 700 1.15rem 'Inter', sans-serif;
+  cursor: pointer;
+}
+.names button.chosen { border-color: var(--candle); box-shadow: 0 0 0 2px var(--candle) inset; }
+.names button small { display: block; color: var(--muted); font-weight: 400; font-size: 0.8rem; margin-top: 4px; }
+
+/* Tastatura pentru PIN */
+.pin-dots { display: flex; justify-content: center; gap: 16px; margin: 18px 0; }
+.pin-dots span { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--muted); }
+.pin-dots span.on { background: var(--candle); border-color: var(--candle); }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 320px; margin: 0 auto; }
+.keypad button {
+  aspect-ratio: 1.4;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font: 700 1.6rem 'Inter', sans-serif;
+  cursor: pointer;
+}
+.keypad button:active { background: var(--line); }
+
+/* Lumânări */
+.candles { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 18px; }
+.candle { text-align: center; }
+.candle .flame {
+  width: 18px; height: 30px; margin: 0 auto;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 50% 70%, #fff6c4 0%, var(--candle) 45%, rgba(255, 90, 0, 0) 75%);
+  filter: drop-shadow(0 0 14px rgba(255, 170, 60, 0.9));
+  animation: flicker 1.8s infinite alternate ease-in-out;
+}
+.candle .wax { width: 34px; height: 70px; margin: 2px auto 8px; border-radius: 6px 6px 3px 3px; background: linear-gradient(90deg, #e9dcc8, #fff7ea 45%, #cdbfa9); }
+.candle .name { font-weight: 700; }
+.candle.out .flame { visibility: hidden; }
+.candle.out .wax { filter: grayscale(1) brightness(0.45); }
+.candle.out .name { color: var(--muted); text-decoration: line-through; }
+.candle.waiting .flame { opacity: 0.15; animation: none; }
+
+@keyframes flicker {
+  0% { transform: scale(1) rotate(-2deg); opacity: 0.92; }
+  50% { transform: scale(1.06, 0.95) rotate(2deg); opacity: 1; }
+  100% { transform: scale(0.96, 1.05) rotate(-1deg); opacity: 0.88; }
+}
+
+/* Tabel simplu în panou */
+.rows { width: 100%; border-collapse: collapse; }
+.rows td, .rows th { padding: 10px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; background: var(--bg2); border: 1px solid var(--line); }
+.pill.on { color: var(--ok); border-color: rgba(60, 207, 122, 0.4); }
+
+/* Ecranul proiectorului */
+body.screen { overflow: hidden; }
+.screen-wrap { min-height: 100vh; padding: 4vh 4vw; display: flex; flex-direction: column; }
+.screen-wrap h1 { font-size: 4.5vw; text-align: center; }
+.screen-wrap .candles { grid-template-columns: repeat(auto-fit, minmax(9vw, 1fr)); margin-top: auto; margin-bottom: auto; }
+.screen-wrap .candle .name { font-size: 1.6vw; }
+.status-dot { position: fixed; right: 14px; bottom: 10px; font-size: 0.8rem; color: var(--muted); }

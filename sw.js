@@ -31,6 +31,9 @@ self.addEventListener('fetch', event => {
   // Resurse externe — browser le gestionează normal
   if (url.origin !== self.location.origin) return;
 
+  // Jocul de Halloween are paginile lui — nu le atingem
+  if (url.pathname.startsWith('/halloween')) return;
+
   const isHTML = url.pathname.endsWith('.html') || url.pathname === '/crew-zaky';
 
   if (isHTML) {
