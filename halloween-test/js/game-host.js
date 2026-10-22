@@ -3,8 +3,10 @@
 // Nu afișează nimic: proiectorul și panoul citesc doar /public.
 import {
   PLAYERS, ROLES, newGame, initialKnowledge, resolveNight, detectiveResult, validTargets,
-  nightMode, nightPrompt, nextRound, shuffle,
+  nightMode, nightPrompt, nextRound, shuffle, voteOutcome, applyElimination, applyNoElimination,
+  sacrificeCandidate,
 } from './engine.js';
+import { setVoteHandler } from './pin-service.js';
 import {
   r, get, set, update, remove, push, onValue, onChildAdded, serverNow,
 } from './fb.js';
@@ -49,6 +51,7 @@ async function setPublic(patch) {
 export async function startHost() {
   state = revive((await get(r('secret/state'))).val());
   host = (await get(r('secret/host'))).val() ?? {};
+  if (host.vote) host.vote = { votes: {}, candidates: null, outcome: null, ...host.vote };
   onValue(r('public'), (snap) => { pub = snap.val() ?? {}; });
   pub = (await get(r('public'))).val() ?? {};
   if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { sessions: 4, nightSeconds: 90, discussionSeconds: 300 } });
@@ -61,11 +64,16 @@ export async function startHost() {
 
   // După o reîncărcare a proiectorului în timpul nopții, reluăm noaptea de unde era.
   if (pub.phase === 'night' && state) watchNight();
+  if (pub.phase === 'vote' && state) botVoteSoon();
+  if (pub.phase === 'reveal' && host.vote?.outcome?.result === 'mayor-decides') askMayor();
+  if (pub.phase === 'sacrifice' && host.sacrifice) armSacrifice(pub.endsAt ?? serverNow());
 }
 
 const run = serial(async (cmd) => {
   const handlers = {
-    fillBots, clearBots, start, party, session, endNight, discussion, nextSession, reset, settings,
+    fillBots, clearBots, start, party, session, endNight, discussion, reset, settings,
+    startVote, castVote, skipVoter, botVote, reveal, revote, mayorChoice, execute, finishElimination,
+    continue: continueGame,
   };
   await handlers[cmd?.type]?.(cmd);
 });
@@ -286,12 +294,208 @@ async function discussion() {
   await setPublic({ phase: 'discussion', endsAt: serverNow() + (state.settings.discussionSeconds ?? 300) * 1000 });
 }
 
-// Temporar, până vine votul (etapa 4): trece direct la runda următoare.
-async function nextSession(cmd = {}) {
+// ---------- votul ----------
+
+const aliveIds = () => PLAYERS.filter((p) => state.alive[p.id]).map((p) => p.id);
+const names = (ids) => (ids ?? []).map((id) => ({ id, name: nameOf(id) }));
+
+function publicVote() {
+  const v = host.vote;
+  return {
+    stage: v.stage,
+    order: names(v.order),
+    current: v.idx,
+    done: v.idx,
+    total: v.order.length,
+    candidates: v.candidates ? names(v.candidates) : null,
+  };
+}
+
+async function openVote(stage, candidates = null) {
+  host.vote = { stage, order: shuffle(aliveIds()), idx: 0, votes: {}, candidates, outcome: null };
+  await setPublic({ phase: 'vote', vote: publicVote(), reveal: null, endsAt: null });
+  await save();
+  botVoteSoon();
+}
+
+async function startVote() {
   if (!state || state.winner || !['morning', 'discussion'].includes(pub.phase)) return;
-  if (state.round >= state.settings.sessions) {
-    state.winner = 'evil';
-    await setPublic({ phase: 'end', winner: 'evil', endsAt: null });
+  await openVote('first');
+}
+
+// Votul unui jucător, venit de pe iPad (după verificarea PIN-ului) sau de la un robot.
+async function recordVote(voter, target) {
+  const v = host.vote;
+  if (pub.phase !== 'vote' || !v) return { ok: false, error: 'Votul nu e deschis.' };
+  if (v.order[v.idx] !== voter) return { ok: false, error: `Acum e rândul lui ${nameOf(v.order[v.idx])}.` };
+  const valid = target === 'abstain'
+    || (target !== voter && state.alive[target] && (!v.candidates || v.candidates.includes(target)));
+  if (!valid) return { ok: false, error: 'Vot invalid.' };
+  v.votes[voter] = target;
+  v.idx += 1;
+  await setPublic({ vote: publicVote() });
+  await save();
+  botVoteSoon();
+  return { ok: true, player: voter };
+}
+setVoteHandler((player, vote) => new Promise((resolve) => run({ type: 'castVote', player, vote, resolve })));
+
+async function castVote(cmd) {
+  const res = await recordVote(cmd.player, cmd.vote);
+  cmd.resolve?.(res);
+}
+
+async function skipVoter() {
+  const v = host.vote;
+  if (pub.phase !== 'vote' || !v || v.idx >= v.order.length) return;
+  await recordVote(v.order[v.idx], 'abstain');
+}
+
+function botVoteSoon() {
+  const v = host.vote;
+  if (!v || v.idx >= v.order.length) return;
+  const voter = v.order[v.idx];
+  if (!voter || !isBot(voter)) return;
+  setTimeout(() => run({ type: 'botVote', voter }), 1500);
+}
+
+async function botVote(cmd) {
+  const v = host.vote;
+  if (!v || v.order[v.idx] !== cmd.voter) return;
+  const options = (v.candidates ?? aliveIds()).filter((id) => id !== cmd.voter);
+  const target = Math.random() < 0.1 || !options.length ? 'abstain' : shuffle(options)[0];
+  await recordVote(cmd.voter, target);
+}
+
+async function reveal() {
+  const v = host.vote;
+  if (pub.phase !== 'vote' || !v || v.idx < v.order.length) return;
+  const outcome = voteOutcome(state, v.votes, { candidates: v.candidates, isRevote: v.stage === 'revote' });
+  v.outcome = { result: outcome.result, target: outcome.target ?? null, candidates: outcome.candidates ?? null };
+  await setPublic({ phase: 'reveal', reveal: publicReveal() });
+  await save();
+  if (outcome.result === 'mayor-decides') await askMayor();
+}
+
+function publicReveal() {
+  const v = host.vote;
+  const o = v.outcome;
+  return {
+    stage: v.stage,
+    items: v.order.map((voter) => {
+      const t = v.votes[voter];
+      return { voter: nameOf(voter), target: t && t !== 'abstain' ? nameOf(t) : null, weight: voter === state.mayor ? 2 : 1 };
+    }),
+    outcome: {
+      result: o.result,
+      target: o.target ? nameOf(o.target) : null,
+      candidates: o.candidates ? o.candidates.map(nameOf) : null,
+      byMayor: Boolean(o.byMayor),
+    },
+  };
+}
+
+// Egalitate după revot: decide Primarul pe telefonul lui.
+async function askMayor() {
+  const mayor = state.mayor;
+  await remove(r(`playerInput/${mayor}/mayorChoice`));
+  await set(r(`private/${mayor}/mayorPick`), { round: state.round, candidates: names(host.vote.outcome.candidates) });
+  if (isBot(mayor)) {
+    setTimeout(() => run({ type: 'mayorChoice', choice: shuffle(host.vote.outcome.candidates)[0] }), 3000);
+  } else {
+    stopMayor?.();
+    stopMayor = onValue(r(`playerInput/${mayor}/mayorChoice`), (snap) => {
+      if (snap.val()) run({ type: 'mayorChoice', choice: snap.val() });
+    });
+  }
+}
+let stopMayor = null;
+
+async function mayorChoice(cmd) {
+  const v = host.vote;
+  if (pub.phase !== 'reveal' || v?.outcome?.result !== 'mayor-decides' || !v.outcome.candidates.includes(cmd.choice)) return;
+  stopMayor?.(); stopMayor = null;
+  v.outcome = { result: 'eliminate', target: cmd.choice, candidates: null, byMayor: true };
+  await remove(r(`private/${state.mayor}/mayorPick`));
+  await setPublic({ reveal: publicReveal() });
+  await save();
+}
+
+async function revote() {
+  const o = host.vote?.outcome;
+  if (pub.phase !== 'reveal' || o?.result !== 'revote') return;
+  await openVote('revote', o.candidates);
+}
+
+// Eliminarea: 15 secunde de suspans la FIECARE eliminare, ca să nu se ghicească vampirul.
+async function execute() {
+  const o = host.vote?.outcome;
+  if (pub.phase !== 'reveal' || o?.result !== 'eliminate') return;
+  const servant = sacrificeCandidate(state, o.target);
+  host.sacrifice = { target: o.target, servant, round: state.round };
+  const seconds = state.settings.sacrificeSeconds ?? 15;
+  const endsAt = serverNow() + seconds * 1000;
+  if (servant) {
+    await remove(r(`playerInput/${servant}/sacrifice`));
+    await set(r(`private/${servant}/sacrifice`), { round: state.round, target: nameOf(o.target), endsAt });
+    if (isBot(servant) && Math.random() < 0.5) await set(r(`playerInput/${servant}/sacrifice`), state.round);
+  }
+  await setPublic({ phase: 'sacrifice', endsAt, doomedName: nameOf(o.target) });
+  await save();
+  armSacrifice(endsAt);
+}
+
+let sacrificeTimer = null;
+function armSacrifice(endsAt) {
+  clearTimeout(sacrificeTimer);
+  sacrificeTimer = setTimeout(() => run({ type: 'finishElimination' }), Math.max(0, endsAt - serverNow()) + 300);
+}
+
+async function finishElimination() {
+  if (pub.phase !== 'sacrifice' || !host.sacrifice) return;
+  const { target, servant, round } = host.sacrifice;
+  let sacrifice = false;
+  if (servant) {
+    sacrifice = (await get(r(`playerInput/${servant}/sacrifice`))).val() === round;
+    await remove(r(`private/${servant}/sacrifice`));
+  }
+  const votes = { ...host.vote.votes };
+  const { state: next, report } = applyElimination(state, target, { sacrifice, votes });
+  state = next;
+  const dead = report.eliminated;
+  const testament = (await get(r(`playerInput/${dead}/testament`))).val();
+  const role = ROLES[state.roles[dead]];
+  host.sacrifice = null;
+  await update(r(), {
+    [`private/${dead}/status/alive`]: false,
+    'public/phase': 'elimination',
+    'public/endsAt': null,
+    'public/doomedName': null,
+    'public/alive': state.alive,
+    'public/elimination': {
+      name: nameOf(dead),
+      roleName: role.name,
+      emoji: role.emoji,
+      evil: role.team === 'evil',
+      sacrificed: report.sacrificed,
+      vampire: report.exposedVampire ? nameOf(report.exposedVampire) : null,
+      testament: testament ? String(testament).slice(0, 200) : null,
+    },
+  });
+  await save();
+}
+
+// După eliminare sau după un vot fără eliminare: runda următoare sau finalul.
+async function continueGame(cmd = {}) {
+  if (!state) return;
+  if (pub.phase === 'reveal' && host.vote?.outcome?.result === 'none') {
+    state = applyNoElimination(state, { ...host.vote.votes }).state;
+  } else if (pub.phase !== 'elimination') {
+    return;
+  }
+  host.vote = null;
+  if (state.winner) {
+    await setPublic({ phase: 'end', winner: state.winner, endsAt: null, vote: null, reveal: null, elimination: null });
     return save();
   }
   state = nextRound(state);
@@ -302,6 +506,9 @@ async function nextSession(cmd = {}) {
   patch['public/round'] = state.round;
   patch['public/endsAt'] = null;
   patch['public/morning'] = null;
+  patch['public/vote'] = null;
+  patch['public/reveal'] = null;
+  patch['public/elimination'] = null;
   patch['public/nextSessionAt'] = cmd.minutes ? serverNow() + cmd.minutes * 60000 : null;
   await update(r(), patch);
   await save();
@@ -311,7 +518,9 @@ async function nextSession(cmd = {}) {
 
 async function reset() {
   stopActions?.(); stopActions = null;
+  stopMayor?.(); stopMayor = null;
   clearTimeout(nightTimer);
+  clearTimeout(sacrificeTimer);
   state = null;
   host = {};
   const patch = {
@@ -329,6 +538,10 @@ async function reset() {
     'public/endsAt': null,
     'public/progress': null,
     'public/nextSessionAt': null,
+    'public/vote': null,
+    'public/reveal': null,
+    'public/elimination': null,
+    'public/doomedName': null,
   };
   for (const p of PLAYERS) patch[`private/${p.id}`] = { name: p.name };
   await update(r(), patch);

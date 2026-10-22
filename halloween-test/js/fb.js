@@ -10,7 +10,7 @@ import {
 
 export const ENV = 'test';
 // Crește la fiecare publicare: telefoanele cu cod vechi se reîncarcă singure.
-export const APP_VERSION = 3;
+export const APP_VERSION = 4;
 export const ENGINE_EMAIL = 'motor@blackwood.ro';
 
 const app = initializeApp({

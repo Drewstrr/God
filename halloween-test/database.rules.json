@@ -9,7 +9,7 @@
       "pinRequests": {
         "$uid": {
           ".write": "auth != null && auth.uid === $uid",
-          ".validate": "newData.hasChildren(['player', 'pin', 'mode']) && newData.child('pin').isString() && newData.child('pin').val().matches(/^[0-9]{4}$/) && (newData.child('mode').val() === 'set' || newData.child('mode').val() === 'login')"
+          ".validate": "newData.hasChildren(['player', 'pin', 'mode']) && newData.child('pin').isString() && newData.child('pin').val().matches(/^[0-9]{4}$/) && (newData.child('mode').val() === 'set' || newData.child('mode').val() === 'login' || newData.child('mode').val() === 'vote')"
         }
       },
       "pinStatus": {

@@ -5,6 +5,10 @@ import {
 } from './fb.js';
 
 const MAX_FAILS = 5;
+
+// Votul de pe iPad trece tot pe aici: PIN-ul confirmă cine votează.
+let voteHandler = async () => ({ ok: false, error: 'Votul nu e deschis.' });
+export const setVoteHandler = (fn) => { voteHandler = fn; };
 const LOCK_MS = 60_000;
 
 export async function hashPin(player, pin) {
@@ -57,6 +61,16 @@ async function handleRequest(uid, req) {
 
   const stored = (await get(r(`secret/pins/${player}`))).val();
   const hash = await hashPin(player, pin);
+
+  if (req.mode === 'vote') {
+    if (!stored || stored !== hash) {
+      const count = fails.count + 1;
+      await set(failsRef, count >= MAX_FAILS ? { count: 0, until: Date.now() + LOCK_MS } : { count, until: 0 });
+      return reply({ ok: false, error: stored ? 'PIN greșit.' : 'Jucătorul nu are PIN.' });
+    }
+    await remove(failsRef);
+    return reply(await voteHandler(player, String(req.vote ?? '')));
+  }
 
   if (req.mode === 'set') {
     if (stored) return reply({ ok: false, error: 'Jucătorul are deja un PIN. Introdu-l pe acela.', hasPin: true });

@@ -183,3 +183,30 @@ body.dark-night .wrap { filter: brightness(0.75); }
 .ctl-actions .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .ctl-actions input[type=number] { width: 90px; padding: 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg2); color: var(--text); font-size: 1rem; }
 .net-warning { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; padding: 10px; text-align: center; background: var(--blood); color: #fff; font-weight: 600; }
+
+/* Votul în stil Squid Game: negru, roz, verde */
+body[data-phase="vote"], body[data-phase="reveal"], body[data-phase="sacrifice"], body[data-phase="elimination"], body.squid { background: #000; }
+.squid-screen { width: 100%; }
+.squid-title { font-family: 'Inter', sans-serif; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pink); text-shadow: 0 0 30px rgba(255, 42, 127, 0.5); text-align: center; }
+.screen-wrap .squid-title { font-size: 4.5vw; }
+.squid-count { text-align: center; font: 800 12vw 'Inter', sans-serif; color: var(--green); text-shadow: 0 0 40px rgba(31, 209, 138, 0.45); font-variant-numeric: tabular-nums; }
+.wrap .squid-count { font-size: 4rem; }
+.squid-pink { color: var(--pink); }
+.squid-ok { color: var(--green); text-align: center; }
+.squid-center { text-align: center; margin-top: 18vh; }
+.squid-names button { background: #0a0a0a; border-color: #2a2a2a; }
+.squid-names button.chosen { border-color: var(--pink); box-shadow: 0 0 0 2px var(--pink) inset; }
+.squid-btn { background: var(--pink); box-shadow: 0 6px 24px rgba(255, 42, 127, 0.35); }
+.vote-order { display: flex; flex-wrap: wrap; justify-content: center; gap: 1vw; margin-top: 2vh; }
+.vote-order span { font-size: 1.7vw; padding: 0.6vh 1.2vw; border-radius: 999px; border: 1px solid #333; color: var(--muted); }
+.vote-order span.done { color: var(--green); border-color: rgba(31, 209, 138, 0.5); }
+.vote-order span.now { color: #fff; border-color: var(--pink); box-shadow: 0 0 20px rgba(255, 42, 127, 0.5); }
+.reveal-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 3vw; margin-top: 2vh; }
+.reveal-list { display: flex; flex-direction: column; gap: 0.8vh; }
+.reveal-item { font-size: 1.9vw; animation: rise 0.5s ease-out; }
+.reveal-item .arrow { color: var(--pink); margin: 0 0.6vw; }
+.tally-row { display: flex; justify-content: space-between; font-size: 2.4vw; padding: 1vh 1.5vw; border-bottom: 1px solid #222; }
+.tally-row b { color: var(--green); font-variant-numeric: tabular-nums; }
+.outcome { margin-top: 3vh; text-align: center; font-size: 2.8vw; animation: rise 0.8s ease-out; }
+.role-reveal { display: inline-block; margin-top: 2vh; font-size: 3.4vw; padding: 1.5vh 3vw; border-radius: 20px; border: 2px solid var(--green); color: var(--green); }
+.role-reveal.evil { border-color: var(--pink); color: var(--pink); }

@@ -43,6 +43,7 @@
     const TITLES = {
       lobby: '⏳ Așteptăm jucătorii', intro: '📜 Introducerea', day: '🎉 Petrecere (între ședințe)',
       night: '🌑 Noaptea', morning: '☀️ Dimineața', discussion: '💬 Discuția', end: '🏁 Final',
+      vote: '🗳️ Votul', reveal: '🎭 Dezvăluirea', sacrifice: '⏳ Eliminarea', elimination: '⚰️ Eliminat',
     };
 
     function actionsFor(phase) {
@@ -81,9 +82,36 @@
           <button class="btn" data-cmd="discussion">💬 Pornește discuția</button>`;
         case 'discussion': return `
           <p class="lead" style="font-size:1.3rem">Timp rămas: <span data-ends="${pub.endsAt ?? ''}"></span></p>
-          <p class="muted">🗳️ Votul vine în etapa următoare. Deocamdată treci direct la runda următoare.</p>
+          <button class="btn" data-cmd="startVote">🗳️ Pornește votul</button>`;
+        case 'vote': {
+          const v = pub.vote ?? {};
+          const cur = v.order?.[v.current];
+          const done = (v.done ?? 0) >= (v.total ?? 0);
+          return `
+            <p class="lead" style="font-size:1.3rem">${v.stage === 'revote' ? 'Revot' : 'Vot'}: ${v.done ?? 0} / ${v.total ?? 0}</p>
+            ${cur ? `<p>Acum votează pe iPad: <b>${esc(cur.name)}</b></p>
+              <button class="btn small ghost" data-cmd="skipVoter" data-confirm="Treci peste ${esc(cur.name)}? Votul lui contează ca abținere.">⏭ Sari peste ${esc(cur.name)} (abținere)</button>` : ''}
+            <button class="btn" data-cmd="reveal" ${done ? '' : 'disabled'}>🎭 Dezvăluie voturile</button>`;
+        }
+        case 'reveal': {
+          const o = pub.reveal?.outcome ?? {};
+          if (o.result === 'eliminate') return `
+            <p>Rezultat: <b>${esc(o.target)}</b>${o.byMayor ? ' (decizia Primarului)' : ''}. Așteaptă să se termine dezvăluirea pe proiector.</p>
+            <button class="btn" data-cmd="execute">⚰️ Execută eliminarea</button>`;
+          if (o.result === 'revote') return `
+            <p>Egalitate între <b>${(o.candidates ?? []).map(esc).join(' și ')}</b>.</p>
+            <button class="btn" data-cmd="revote">⚖️ Pornește revotul</button>`;
+          if (o.result === 'mayor-decides') return '<p>🎩 Așteptăm decizia Primarului pe telefonul lui…</p>';
+          return `
+            <p>Nimeni nu e eliminat.</p>
+            <div class="row">Următoarea ședință peste <input type="number" id="next-min" value="45" min="0" max="180"> minute (0 = fără cronometru)</div>
+            <button class="btn" id="next-session">⏭ Continuă</button>`;
+        }
+        case 'sacrifice': return `<p class="lead" style="font-size:1.3rem">⏳ Suspans… <span data-ends="${pub.endsAt ?? ''}"></span></p>`;
+        case 'elimination': return `
+          <p>${esc(pub.elimination?.name)} a fost eliminat.</p>
           <div class="row">Următoarea ședință peste <input type="number" id="next-min" value="45" min="0" max="180"> minute (0 = fără cronometru)</div>
-          <button class="btn" id="next-session">⏭ Runda următoare</button>`;
+          <button class="btn" id="next-session">⏭ Continuă</button>`;
         case 'end': return `
           <p>${pub.winner === 'good' ? '🕯️ A câștigat binele.' : '🩸 A câștigat răul.'}</p>
           <button class="btn" data-cmd="reset">🔄 Joc nou</button>`;
@@ -112,7 +140,7 @@
       }));
       box.querySelector('#next-session')?.addEventListener('click', (e) => {
         e.target.disabled = true;
-        sendCommand('nextSession', { minutes: +document.getElementById('next-min').value || 0 });
+        sendCommand('continue', { minutes: +document.getElementById('next-min').value || 0 });
       });
       renderPlayers();
     }
@@ -155,7 +183,7 @@
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
       const ready = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
-      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings]);
+      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.vote, pub.reveal?.outcome]);
       if (sig !== lastSig) { lastSig = sig; render(); } else renderPlayers();
     });
 

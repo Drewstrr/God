@@ -2,16 +2,140 @@
 <html lang="ro">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
   <meta name="robots" content="noindex">
   <title>Blackwood – Votul</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
-  <main class="wrap center">
-    <h1>Votul</h1>
-    <p class="muted">🕸️ În construcție. Vine într-o etapă următoare.</p>
-    <a class="btn ghost" href="./">Înapoi</a>
+<body class="squid">
+  <main class="wrap" id="app" style="max-width:720px">
+    <p class="center muted">Se pregătește cabina de vot…</p>
   </main>
+
+  <script type="module">
+    import {
+      auth, r, currentUser, signInAnonymously, onValue, set, reconnectOnWake, APP_VERSION,
+    } from './js/fb.js';
+
+    reconnectOnWake();
+    const app = document.getElementById('app');
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    let pub = {};
+    let uid = null;
+    let pin = '';
+    let choice = null;
+    let pending = null;     // { nonce, voter }
+    let flash = null;       // mesajul „Vot înregistrat”
+    let lastKey = '';
+
+    let user = await currentUser();
+    if (!user || !user.isAnonymous) user = (await signInAnonymously(auth)).user;
+    uid = user.uid;
+
+    onValue(r(`pinStatus/${uid}`), (snap) => {
+      const s = snap.val();
+      if (!s || !pending || s.nonce !== pending.nonce) return;
+      const voter = pending.voter;
+      pending = null;
+      if (s.ok) {
+        pin = ''; choice = null;
+        flash = `Vot înregistrat ✅`;
+        render(true);
+        setTimeout(() => { flash = null; render(true); }, 2200);
+      } else {
+        pin = '';
+        render(true, s.error);
+      }
+    });
+
+    onValue(r('public'), (snap) => {
+      pub = snap.val() ?? {};
+      if (pub.appVersion > APP_VERSION && pub.phase !== 'vote') return location.reload();
+      render();
+    });
+
+    function currentVoter() {
+      const v = pub.vote;
+      return pub.phase === 'vote' && v ? v.order?.[v.current] ?? null : null;
+    }
+
+    function render(force = false, error = '') {
+      const voter = currentVoter();
+      const key = JSON.stringify([pub.phase, voter?.id, pub.vote?.stage, pub.vote?.done]);
+      if (!force && key === lastKey) return;
+      if (key !== lastKey) { pin = ''; choice = null; }
+      lastKey = key;
+
+      if (flash) {
+        app.innerHTML = `<div class="squid-center"><h1 class="squid-ok">${flash}</h1><p class="muted">Urmează următorul jucător.</p></div>`;
+        return;
+      }
+      if (pending) {
+        app.innerHTML = '<div class="squid-center"><p class="muted">Se înregistrează…</p></div>';
+        return;
+      }
+      if (pub.phase !== 'vote' || !voter) {
+        const done = pub.phase === 'vote' && pub.vote && pub.vote.done >= pub.vote.total;
+        app.innerHTML = `
+          <div class="squid-center">
+            <h1 class="squid-title">🗳️ Cabina de vot</h1>
+            <p class="muted">${done ? 'Toată lumea a votat. Urmează dezvăluirea pe proiector.' : 'Votul nu e deschis acum.'}</p>
+          </div>
+          <a class="btn ghost" href="play" style="margin-top:30vh">🔋 Telefon descărcat? Intră aici cu PIN-ul tău</a>`;
+        return;
+      }
+
+      const v = pub.vote;
+      const bot = pub.players?.[voter.id]?.bot;
+      if (bot) {
+        app.innerHTML = `<div class="squid-center"><p class="muted">Votează</p><h1 class="squid-title">🤖 ${esc(voter.name)}</h1><p class="squid-count">${v.done} / ${v.total}</p></div>`;
+        return;
+      }
+
+      const options = (v.candidates ?? Object.entries(pub.players ?? {})
+        .filter(([id]) => pub.alive?.[id])
+        .map(([id, p]) => ({ id, name: p.name })))
+        .filter((o) => o.id !== voter.id);
+
+      app.innerHTML = `
+        <p class="center muted">${v.stage === 'revote' ? 'REVOT' : 'VOT'} · ${v.done + 1} / ${v.total}</p>
+        <p class="center muted" style="margin:0">Este rândul lui</p>
+        <h1 class="center squid-title">${esc(voter.name)}</h1>
+        <p class="center">1. Alege pe cine elimini</p>
+        <div class="names squid-names">
+          ${options.map((o) => `<button data-v="${o.id}" class="${choice === o.id ? 'chosen' : ''}">${esc(o.name)}</button>`).join('')}
+          <button data-v="abstain" class="${choice === 'abstain' ? 'chosen' : ''}">🤐 Mă abțin</button>
+        </div>
+        <p class="center">2. Confirmă cu PIN-ul tău</p>
+        <div class="pin-dots">${[0, 1, 2, 3].map((i) => `<span class="${i < pin.length ? 'on' : ''}"></span>`).join('')}</div>
+        <p class="center error" id="msg">${esc(error)}</p>
+        <div class="keypad">
+          ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-k="${n}">${n}</button>`).join('')}
+          <button data-k="back">⌫</button><button data-k="0">0</button><button data-k="none" disabled></button>
+        </div>
+        <button class="btn squid-btn" id="cast" style="margin-top:16px" ${choice && pin.length === 4 ? '' : 'disabled'}>Votează</button>`;
+
+      app.querySelectorAll('[data-v]').forEach((b) => b.addEventListener('click', () => { choice = b.dataset.v; render(true); }));
+      app.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
+        const k = b.dataset.k;
+        if (k === 'back') pin = pin.slice(0, -1);
+        else if (k !== 'none' && pin.length < 4) pin += k;
+        render(true);
+      }));
+      app.querySelector('#cast').addEventListener('click', async () => {
+        if (!choice || pin.length !== 4) return;
+        pending = { nonce: Math.random().toString(36).slice(2), voter: voter.id };
+        render(true);
+        try {
+          await set(r(`pinRequests/${uid}`), { player: voter.id, pin, mode: 'vote', vote: choice, nonce: pending.nonce });
+        } catch {
+          pending = null;
+          render(true, 'Nu s-a trimis. Verifică internetul.');
+        }
+        setTimeout(() => { if (pending) { pending = null; pin = ''; render(true, 'Motorul nu răspunde. Mai încearcă.'); } }, 12000);
+      });
+    }
+  </script>
 </body>
 </html>

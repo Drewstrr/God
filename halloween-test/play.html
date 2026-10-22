@@ -109,6 +109,7 @@
     let pub = {};
     let priv = null;
     let lastSig = '';
+    let lastWakePhase = null;
     let chosen = null;
     const drafts = { testament: null, gossip: null };
     const sent = (round) => { try { return localStorage.getItem(`blackwood-night-${me}-${pub.gameId}-${round}`); } catch { return null; } };
@@ -131,13 +132,20 @@
       if (!me) return;
       const phase = pub.phase ?? 'lobby';
       const night = phase === 'night' && priv?.night?.round === pub.round ? priv.night : null;
-      const sig = JSON.stringify([phase, pub.round, pub.winner, pub.nextSessionAt, priv, Boolean(night)]);
+      const sig = JSON.stringify([phase, pub.round, pub.winner, pub.nextSessionAt, priv, Boolean(night), pub.vote?.current, pub.vote?.stage]);
       if (!force && sig === lastSig) return;
       lastSig = sig;
       // Păstrăm ce scrie jucătorul în câmpuri.
       for (const k of Object.keys(drafts)) { const el = document.getElementById(`f-${k}`); if (el) drafts[k] = el.value; }
       document.body.classList.toggle('dark-night', Boolean(night));
+      // Când începe noaptea sau eliminarea, telefonul se „trezește” singur.
+      if (night || phase === 'sacrifice' || (phase === 'reveal' && priv?.mayorPick)) {
+        document.querySelector('.curtain')?.remove();
+        if (phase !== lastWakePhase) navigator.vibrate?.(300);
+      }
+      lastWakePhase = phase;
       if (night) return renderNight(night);
+      if (phase === 'sacrifice') return renderSacrifice();
       renderMain(phase);
     }
 
@@ -171,13 +179,25 @@
         morning: '☀️ Dimineața: uită-te la proiector.',
         discussion: '💬 Discuția: convinge-i pe ceilalți!',
         end: pub.winner === 'good' ? '🕯️ Binele a învins!' : '🩸 Răul a învins!',
+        vote: pub.vote?.order?.[pub.vote.current]?.id === me
+          ? '<b class="squid-pink" style="font-size:1.3rem">⚡ E rândul tău! Mergi la iPad să votezi.</b>'
+          : alive ? '🗳️ Votul: mergi la iPad când îți vine rândul (vezi ordinea pe proiector).' : '🗳️ Votul. Fantomele nu votează.',
+        reveal: '🎭 Uită-te la proiector: se dezvăluie voturile.',
+        elimination: '⚰️ Uită-te la proiector.',
       }[phase] ?? '';
+      const mayorPick = priv.mayorPick && phase === 'reveal' ? priv.mayorPick : null;
 
       app.innerHTML = `
         <button class="hide-btn" id="hide">🙈 Ascunde</button>
         <h1 class="center">${esc(name)}</h1>
         <div class="badges">${badges}</div>
         <p class="center">${phaseText}</p>
+        ${mayorPick ? `
+          <div class="card center">
+            <h2>🎩 Tu decizi</h2>
+            <p>Egalitate după revot. Pe cine elimină conacul?</p>
+            <div class="names">${mayorPick.candidates.map((c) => `<button data-mayor="${c.id}">${esc(c.name)}</button>`).join('')}</div>
+          </div>` : ''}
         <div class="card role-card" id="role">
           <div class="hidden-role">👆 Atinge aici ca să-ți vezi rolul</div>
           <div class="shown-role" hidden>
@@ -216,6 +236,10 @@
       };
       role.addEventListener('click', () => reveal(role.querySelector('.shown-role').hidden));
       app.querySelector('#hide').addEventListener('click', curtain);
+      app.querySelectorAll('[data-mayor]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm(`Elimini pe ${b.textContent}?`)) return;
+        await set(r(`playerInput/${me}/mayorChoice`), b.dataset.mayor);
+      }));
       app.querySelector('#logout').addEventListener('click', () => { if (confirm('Te deloghezi de pe acest telefon?')) logout(); });
 
       for (const k of Object.keys(drafts)) {
@@ -239,6 +263,27 @@
           btn.disabled = false;
         });
       }
+    }
+
+    // Cele 15 secunde de suspans arată la fel pe toate telefoanele; doar Servitorul are butonul.
+    function renderSacrifice() {
+      const offer = priv?.sacrifice && priv.sacrifice.round === pub.round ? priv.sacrifice : null;
+      let chose = false;
+      try { chose = localStorage.getItem(`blackwood-sacrifice-${me}-${pub.gameId}`) === String(pub.round); } catch {}
+      app.innerHTML = `
+        <div class="squid-center" style="margin-top:20vh">
+          <p class="muted">Conacul a ales.</p>
+          <h1 class="squid-title">${esc(pub.doomedName)}</h1>
+          <p>Soarta se decide…</p>
+          <p class="squid-count" data-ends="${pub.endsAt ?? ''}"></p>
+          ${offer && !chose ? `<button class="btn squid-btn" id="sacrifice">🩸 Mă sacrific pentru stăpânul meu</button>` : ''}
+          ${offer && chose ? '<p class="squid-pink"><b>🩸 Te-ai sacrificat.</b></p>' : ''}
+        </div>`;
+      app.querySelector('#sacrifice')?.addEventListener('click', async () => {
+        await set(r(`playerInput/${me}/sacrifice`), pub.round);
+        try { localStorage.setItem(`blackwood-sacrifice-${me}-${pub.gameId}`, String(pub.round)); } catch {}
+        renderSacrifice();
+      });
     }
 
     function renderNight(night) {

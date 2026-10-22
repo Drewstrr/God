@@ -112,6 +112,49 @@
           ${m.hypnotized ? `<p class="center lead">🤐 <b>${esc(m.hypnotized)}</b> e hipnotizat și nu are voie să vorbească.</p>` : ''}
           ${candles()}`;
       },
+      vote() {
+        const v = pub.vote ?? {};
+        const order = v.order ?? [];
+        return `
+          <div class="squid-screen">
+            <h1 class="squid-title">${v.stage === 'revote' ? 'REVOT' : 'VOTUL'}</h1>
+            ${v.candidates ? `<p class="center lead">Doar între: <b>${v.candidates.map((c) => esc(c.name)).join(' și ')}</b></p>` : ''}
+            <div class="squid-count">${v.done ?? 0} / ${v.total ?? 0}</div>
+            <p class="center lead muted">Votați pe rând, pe iPad, în ordinea asta:</p>
+            <div class="vote-order">${order.map((o, i) => `<span class="${i < v.current ? 'done' : i === v.current ? 'now' : ''}">${esc(o.name)}</span>`).join('')}</div>
+          </div>`;
+      },
+      reveal() {
+        return `<div class="squid-screen"><h1 class="squid-title">DEZVĂLUIREA</h1><div class="reveal-grid"><div id="reveal-list" class="reveal-list"></div><div id="tally" class="tally"></div></div><div id="outcome"></div></div>`;
+      },
+      sacrifice() {
+        return `
+          <div class="squid-screen center" style="margin:auto">
+            <p class="lead muted">Conacul a ales.</p>
+            <h1 class="squid-title">${esc(pub.doomedName)}</h1>
+            <p class="lead">Soarta se decide…</p>
+            ${timer('', pub.endsAt)}
+          </div>`;
+      },
+      elimination() {
+        const e = pub.elimination ?? {};
+        if (e.sacrificed) {
+          return `
+            <div class="squid-screen center" style="margin:auto">
+              <h1 class="squid-title">🩸 Servitorul s-a aruncat în fața stăpânului său!</h1>
+              <p class="lead"><b>${esc(e.name)}</b> moare în locul lui. Rolul: ${e.emoji} <b>${esc(e.roleName)}</b></p>
+              <p class="lead squid-pink">${esc(e.vampire)} rămâne în viață…</p>
+              ${e.testament ? `<div class="testament">„${esc(e.testament)}”</div>` : ''}
+            </div>`;
+        }
+        return `
+          <div class="squid-screen center" style="margin:auto">
+            <p class="lead muted">Eliminat din conac</p>
+            <h1 class="squid-title">${esc(e.name)}</h1>
+            <div class="role-reveal ${e.evil ? 'evil' : ''}">${e.emoji} ${esc(e.roleName)}</div>
+            ${e.testament ? `<div class="testament">„${esc(e.testament)}”</div>` : ''}
+          </div>`;
+      },
       end() {
         const good = pub.winner === 'good';
         return `
@@ -159,15 +202,60 @@
       });
     }
 
+    // Dezvăluirea voturilor, unul câte unul, cu scorul care crește.
+    let revealKey = null;
+    let revealTimers = [];
+    function playReveal() {
+      const rv = pub.reveal;
+      if (!rv) return;
+      const key = `${pub.round}-${rv.stage}`;
+      const instant = revealKey === key;
+      revealKey = key;
+      revealTimers.forEach(clearTimeout);
+      revealTimers = [];
+      const list = document.getElementById('reveal-list');
+      const tally = {};
+      const drawTally = () => {
+        const rows = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+        document.getElementById('tally').innerHTML = rows.map(([n, c]) => `<div class="tally-row"><span>${esc(n)}</span><b>${c}</b></div>`).join('');
+      };
+      const step = 2200;
+      rv.items.forEach((it, i) => {
+        const show = () => {
+          list.insertAdjacentHTML('beforeend', `<div class="reveal-item">${esc(it.voter)}${it.weight > 1 ? ' 🎩×2' : ''} <span class="arrow">→</span> ${it.target ? `<b>${esc(it.target)}</b>` : '<i class="muted">se abține</i>'}</div>`);
+          if (it.target) tally[it.target] = (tally[it.target] ?? 0) + it.weight;
+          drawTally();
+        };
+        if (instant) show(); else revealTimers.push(setTimeout(show, 1200 + i * step));
+      });
+      const showOutcome = () => { document.getElementById('outcome').innerHTML = outcomeHtml(pub.reveal?.outcome ?? rv.outcome); };
+      if (instant) showOutcome(); else revealTimers.push(setTimeout(showOutcome, 1200 + rv.items.length * step + 1200));
+    }
+
+    function outcomeHtml(o) {
+      if (!o) return '';
+      if (o.result === 'eliminate') return `<div class="outcome">${o.byMayor ? '🎩 Primarul a decis: ' : 'Conacul a votat: '}<b class="squid-pink">${esc(o.target)}</b></div>`;
+      if (o.result === 'revote') return `<div class="outcome">⚖️ Egalitate între <b>${o.candidates.map(esc).join(' și ')}</b>. Urmează revotul.</div>`;
+      if (o.result === 'mayor-decides') return `<div class="outcome">⚖️ Tot egalitate. 🎩 <b>Primarul decide</b> pe telefonul lui…</div>`;
+      return '<div class="outcome">Nimeni nu este eliminat în această rundă.</div>';
+    }
+
     let lastPhase = null;
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
       const phase = pub.phase ?? 'lobby';
       document.body.dataset.phase = phase;
       if (phase === 'morning' && lastPhase === 'morning') return; // nu restartăm animația
+      if (phase === 'reveal' && lastPhase === 'reveal') {
+        // Doar rezultatul se poate schimba (decizia Primarului).
+        const box = document.getElementById('outcome');
+        if (box && box.innerHTML) box.innerHTML = outcomeHtml(pub.reveal?.outcome);
+        return;
+      }
       lastPhase = phase;
       stage.innerHTML = (views[phase] ?? views.lobby)();
       if (phase === 'morning') playMorning();
+      if (phase === 'reveal') playReveal();
       clearInterval(ticker);
       ticker = setInterval(tick, 250);
     });
