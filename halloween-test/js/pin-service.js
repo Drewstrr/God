@@ -23,7 +23,8 @@ export async function ensurePlayers() {
   const current = snap.val() ?? {};
   const patch = {};
   for (const p of PLAYERS) {
-    patch[p.id] = { name: p.name, hasPin: Boolean(current[p.id]?.hasPin) };
+    // Păstrăm marcajul de robot: proiectorul se poate reîncărca în mijlocul jocului.
+    patch[p.id] = { name: p.name, hasPin: Boolean(current[p.id]?.hasPin), bot: current[p.id]?.bot ? true : null };
   }
   await set(r('public/players'), patch);
 }

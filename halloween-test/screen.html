@@ -83,16 +83,20 @@
     }
 
     // Dacă nu încape totul pe proiector, micșorăm lumânările până încape.
+    // Totul (titlu, cronometru, lumânări, nume) trebuie să încapă între 3% și 94% din înălțimea ecranului;
+    // unele televizoare taie marginile, de aceea lăsăm loc.
     function fitStage() {
-      stage.style.removeProperty('--cs');
-      if (!stage.querySelector('.candle-rows')) return;
-      stage.style.setProperty('--cs', `${Math.min(window.innerWidth * 0.0085, window.innerHeight * 0.0125).toFixed(2)}px`);
+      const rows = stage.querySelector('.candle-rows');
+      if (!rows) return;
+      const extent = () => {
+        const boxes = [...stage.children, ...stage.querySelectorAll('.candle .name')].map((e) => e.getBoundingClientRect());
+        return [Math.min(...boxes.map((b) => b.top)), Math.max(...boxes.map((b) => b.bottom))];
+      };
+      const fits = () => { const [top, bottom] = extent(); return top >= window.innerHeight * 0.03 && bottom <= window.innerHeight * 0.94; };
       let size = Math.min(window.innerWidth * 0.0085, window.innerHeight * 0.0125);
-      const bottom = () => Math.max(...[...stage.querySelectorAll('.candle .name, .candle .wax, .big-timer, p, h1')].map((e) => e.getBoundingClientRect().bottom));
-      // Păstrăm o margine jos: unele televizoare/proiectoare taie marginile imaginii.
-      const limit = window.innerHeight * 0.94;
-      for (let i = 0; i < 20 && bottom() > limit; i++) {
-        size *= 0.92;
+      stage.style.setProperty('--cs', `${size.toFixed(2)}px`);
+      for (let i = 0; i < 30 && !fits(); i++) {
+        size *= 0.94;
         stage.style.setProperty('--cs', `${size.toFixed(2)}px`);
       }
     }
@@ -100,9 +104,8 @@
     document.fonts?.ready.then(fitStage);
     // Verificăm din nou periodic (fonturile sau textele se pot schimba după afișare).
     setInterval(() => {
-      if (!stage.querySelector('.candle-rows')) return;
-      const last = [...stage.querySelectorAll('.candle .name')].pop();
-      if (last && last.getBoundingClientRect().bottom > window.innerHeight * 0.94) fitStage();
+      const names = stage.querySelectorAll('.candle .name');
+      if (names.length && [...names].pop().getBoundingClientRect().bottom > window.innerHeight * 0.94) fitStage();
     }, 1500);
 
     // Din când în când, o adiere face o flacără să tremure mai tare.

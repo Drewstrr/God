@@ -285,9 +285,9 @@ body[data-phase="end"] .screen-wrap { position: relative; z-index: 2; }
 
 /* Ecranul proiectorului */
 body.screen { overflow: hidden; }
-.screen-wrap { height: 100vh; overflow: hidden; padding: 4vh 5vw 6vh; display: flex; flex-direction: column; align-items: stretch; }
+.screen-wrap { height: 100vh; overflow: hidden; padding: 4vh 5vw 6vh; display: flex; flex-direction: column; align-items: stretch; justify-content: safe center; }
 .screen-wrap h1 { font-size: 4.5vw; text-align: center; }
-.screen-wrap .candle-rows { margin-top: auto; margin-bottom: auto; }
+.screen-wrap .candle-rows { flex: 0 0 auto; margin: 2vh 0; }
 .status-dot { position: fixed; right: 14px; bottom: 10px; font-size: 0.8rem; color: var(--muted); }
 
 /* Proiector: faze */
