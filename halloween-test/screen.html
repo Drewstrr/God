@@ -9,39 +9,167 @@
 </head>
 <body class="screen">
   <div class="wrap" id="login"></div>
-  <div class="screen-wrap" id="stage" hidden>
-    <h1>Conacul Blackwood</h1>
-    <p class="center muted" style="font-size:1.6vw">Intră pe <b style="color:var(--text)" id="join-url"></b> și alege-ți numele</p>
-    <div class="candles" id="candles"></div>
-    <p class="center muted" style="font-size:1.4vw" id="count"></p>
-  </div>
+  <div class="screen-wrap" id="stage" hidden></div>
   <div class="status-dot" id="status">⚙️ motor oprit</div>
 
   <script type="module">
-    import { r, onValue, requireEngineLogin } from './js/fb.js';
+    import { r, onValue, requireEngineLogin, serverNow } from './js/fb.js';
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
+    import { startHost } from './js/game-host.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    document.getElementById('join-url').textContent = `${location.host}${location.pathname.replace(/screen(\.html)?$/, 'play')}`;
+    const stage = document.getElementById('stage');
+    const joinUrl = `${location.host}${location.pathname.replace(/screen(\.html)?$/, 'play')}`;
 
     await requireEngineLogin(document.getElementById('login'));
-    document.getElementById('stage').hidden = false;
+    stage.hidden = false;
 
     await ensurePlayers();
     announceEngine((connected) => {
       document.getElementById('status').textContent = connected ? '⚙️ motor pornit' : '⚠️ fără internet';
     });
     startPinService();
+    await startHost();
 
-    onValue(r('public/players'), (snap) => {
-      const players = Object.values(snap.val() ?? {});
-      document.getElementById('candles').innerHTML = players.map((p) => `
-        <div class="candle ${p.hasPin ? '' : 'waiting'}">
-          <div class="flame"></div><div class="wax"></div>
-          <div class="name">${esc(p.name)}</div>
-        </div>`).join('');
-      const joined = players.filter((p) => p.hasPin).length;
-      document.getElementById('count').textContent = `${joined} din ${players.length} au intrat în conac`;
+    let pub = {};
+    let shownMorning = null;
+    let ticker = null;
+
+    const fmt = (ms) => {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    };
+
+    function candles({ lobby = false } = {}) {
+      const players = Object.entries(pub.players ?? {});
+      return `<div class="candles">${players.map(([id, p]) => {
+        const cls = lobby ? (p.hasPin || p.bot ? '' : 'waiting') : (pub.alive?.[id] === false ? 'out' : '');
+        return `<div class="candle ${cls}"><div class="flame"></div><div class="wax"></div><div class="name">${esc(p.name)}${lobby && p.bot ? ' 🤖' : ''}</div></div>`;
+      }).join('')}</div>`;
+    }
+
+    function timer(label, endsAt) {
+      return `<div class="big-timer"><div class="muted">${label}</div><div class="clock" data-ends="${endsAt ?? ''}">${endsAt ? fmt(endsAt - serverNow()) : ''}</div></div>`;
+    }
+
+    function tick() {
+      document.querySelectorAll('[data-ends]').forEach((el) => {
+        const ends = Number(el.dataset.ends);
+        if (ends) el.textContent = fmt(ends - serverNow());
+      });
+    }
+
+    const views = {
+      lobby() {
+        const players = Object.values(pub.players ?? {});
+        const ready = players.filter((p) => p.hasPin || p.bot).length;
+        return `
+          <h1>Conacul Blackwood</h1>
+          <p class="center muted lead">Intră pe <b style="color:var(--text)">${esc(joinUrl)}</b> și alege-ți numele</p>
+          ${candles({ lobby: true })}
+          <p class="center muted lead">${ready} din ${players.length} au intrat în conac</p>`;
+      },
+      intro() {
+        return `
+          <h1>Conacul Blackwood</h1>
+          <div class="story">
+            <p>În noaptea de Halloween, un <b>vampir</b> s-a trezit printre invitații conacului.</p>
+            <p>Până la miezul nopții trebuie descoperit. Altfel, conacul va fi al lui.</p>
+            <ul>
+              <li>🔔 La fiecare ședință vine <b>noaptea</b>: toată lumea apasă un nume pe telefon.</li>
+              <li>☀️ Dimineața aflăm cine a murit, apoi <b>discutăm</b> și <b>votăm</b>.</li>
+              <li>👻 Morții nu mai vorbesc despre joc și nu mai votează.</li>
+              <li>🤫 Nu-ți arăta telefonul nimănui.</li>
+            </ul>
+          </div>
+          <div class="announce">🎩 Primarul conacului este <b>${esc(pub.mayor?.name)}</b><br><span class="muted">Votul lui contează dublu.</span></div>`;
+      },
+      day() {
+        return `
+          <h1>Conacul Blackwood</h1>
+          <p class="center muted lead">Petrecerea continuă… dar vampirul ascultă.</p>
+          ${candles()}
+          ${pub.nextSessionAt ? timer('Următoarea ședință în', pub.nextSessionAt) : ''}`;
+      },
+      night() {
+        const p = pub.progress ?? { done: 0, total: 0 };
+        return `
+          <div class="night">
+            <h1>🌑 Noaptea</h1>
+            <p class="lead muted">Toată lumea alege pe telefon. În liniște.</p>
+            ${timer('', pub.endsAt)}
+            <p class="lead">${p.done} / ${p.total} au ales</p>
+          </div>`;
+      },
+      morning() {
+        return `<h1>☀️ Dimineața</h1><div class="morning" id="morning"></div>`;
+      },
+      discussion() {
+        const m = pub.morning ?? {};
+        return `
+          <h1>💬 Discuția</h1>
+          ${timer('Timp rămas', pub.endsAt)}
+          ${m.hypnotized ? `<p class="center lead">🤐 <b>${esc(m.hypnotized)}</b> e hipnotizat și nu are voie să vorbească.</p>` : ''}
+          ${candles()}`;
+      },
+      end() {
+        const good = pub.winner === 'good';
+        return `
+          <div class="end ${good ? 'good' : 'evil'}">
+            <h1>${good ? '🕯️ Binele a învins' : '🩸 Răul a învins'}</h1>
+            <p class="lead">${good ? 'Vampirul a fost alungat din conac.' : 'Conacul Blackwood aparține acum vampirului.'}</p>
+          </div>
+          ${candles()}`;
+      },
+    };
+
+    function morningSlides(m) {
+      const slides = [];
+      if (m.deaths?.length) {
+        for (const d of m.deaths) {
+          slides.push(`<div class="slide death">💀 <b>${esc(d.name)}</b> a murit în noaptea asta.${d.testament ? `<div class="testament">„${esc(d.testament)}”</div>` : ''}</div>`);
+        }
+      } else {
+        slides.push('<div class="slide">🌙 Nimeni nu a murit în noaptea asta.</div>');
+      }
+      if (m.saved) slides.push('<div class="slide">🛡️ Cineva a fost salvat în noaptea asta.</div>');
+      if (m.hypnotized) slides.push(`<div class="slide">🤐 <b>${esc(m.hypnotized)}</b> este hipnotizat și nu are voie să vorbească la ședință.</div>`);
+      if (m.gossip) slides.push(`<div class="slide">🗣️ Bârfitoarea șoptește: <i>„${esc(m.gossip)}”</i></div>`);
+      if (m.hints?.length) slides.push(`<div class="slide">👻 Fantomele șoptesc: ${m.hints.map((h) => `<b>${esc(h)}</b>`).join(' · ')}</div>`);
+      if (m.thermometer?.length) {
+        const max = Math.max(...m.thermometer.map((t) => t.votes));
+        slides.push(`<div class="slide"><div>🌡️ Termometrul suspiciunii</div>${m.thermometer.map((t) => `
+          <div class="bar"><span>${esc(t.name)}</span><i style="width:${(t.votes / max) * 100}%"></i><b>${t.votes}</b></div>`).join('')}</div>`);
+      }
+      return slides;
+    }
+
+    function playMorning() {
+      const m = pub.morning;
+      const box = document.getElementById('morning');
+      if (!m || !box) return;
+      const slides = morningSlides(m);
+      const already = shownMorning === m.round;
+      shownMorning = m.round;
+      slides.forEach((html, i) => {
+        setTimeout(() => {
+          if (!document.getElementById('morning')) return;
+          box.insertAdjacentHTML('beforeend', html);
+        }, already ? 0 : 1500 + i * 4500);
+      });
+    }
+
+    let lastPhase = null;
+    onValue(r('public'), (snap) => {
+      pub = snap.val() ?? {};
+      const phase = pub.phase ?? 'lobby';
+      document.body.dataset.phase = phase;
+      if (phase === 'morning' && lastPhase === 'morning') return; // nu restartăm animația
+      lastPhase = phase;
+      stage.innerHTML = (views[phase] ?? views.lobby)();
+      if (phase === 'morning') playMorning();
+      clearInterval(ticker);
+      ticker = setInterval(tick, 250);
     });
 
     // Un click oriunde trece proiectorul pe ecran complet.
