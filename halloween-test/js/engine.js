@@ -155,7 +155,7 @@ export function nightMode(state, id) {
 export function nightPrompt(state, id) {
   const mode = nightMode(state, id);
   if (mode === 'ghost') return 'Lasă un indiciu de un cuvânt';
-  if (mode === 'thermometer') return 'Cine crezi că e vampirul?';
+  if (mode === 'thermometer') return 'Lângă cine stai în noaptea asta?';
   return ROLES[state.roles[id]].prompt;
 }
 
@@ -291,14 +291,15 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     });
   }
 
-  // Termometrul suspiciunii: doar cei vii fără abilitate.
-  const thermo = {};
+  // Pariul nopții: fiecare jucător (și fantomele) pariază pe cine crede că e vampirul.
+  const bets = {};
   for (const p of prev.players) {
-    if (nightMode(prev, p.id) !== 'thermometer') continue;
-    const t = pick(p.id);
-    if (t) thermo[t] = (thermo[t] ?? 0) + 1;
+    const b = actions[p.id]?.bet;
+    if (b && b !== p.id && prev.alive[b]) bets[p.id] = b;
   }
-  const thermometer = Object.entries(thermo)
+  const tally = {};
+  for (const b of Object.values(bets)) tally[b] = (tally[b] ?? 0) + 1;
+  const thermometer = Object.entries(tally)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 3)
     .map(([id, votes]) => ({ id, name: nameOf(state, id), votes }));
@@ -318,6 +319,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     },
     deaths: deaths.map((d) => d.id),
     savedBy,
+    bets,
   });
 
   state.winner = checkWinner(state);
@@ -327,6 +329,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     saved,
     hypnotized: state.hypnotized,
     thermometer,
+    betCount: Object.keys(bets).length,
     hints,
     private: priv,
   };
@@ -413,4 +416,113 @@ export function checkWinner(state) {
   const evil = alive.filter((p) => ROLES[state.roles[p.id]].team === 'evil').length;
   if (evil >= alive.length - evil) return 'evil';
   return null;
+}
+
+// ---------- finalul: reluarea și titlurile ----------
+
+const ACTION_TEXT = {
+  bite: ['vampire', 'a mușcat pe'],
+  hypnosis: ['hypnotist', 'a hipnotizat pe'],
+  protect: ['hunter', 'a protejat pe'],
+  iron: ['ironman', 'a stat de pază lângă'],
+  watch: ['watchman', 'a păzit pe'],
+  photo: ['photographer', 'a fotografiat pe'],
+  check: ['detective', 'a verificat pe'],
+};
+
+// Cronologia completă a jocului, pentru ecranul de final.
+export function buildReplay(state) {
+  const out = [];
+  for (const h of state.history ?? []) {
+    if (h.type === 'night') {
+      const lines = [];
+      for (const [key, [role, verb]] of Object.entries(ACTION_TEXT)) {
+        const actor = findByRole(state, role);
+        const target = h.actions?.[key];
+        if (actor && target) lines.push(`${ROLES[role].emoji} ${nameOf(state, actor)} ${verb} ${nameOf(state, target)}`);
+      }
+      const deaths = (h.deaths ?? []).map((id) => nameOf(state, id));
+      if (h.savedBy) lines.push(h.savedBy === 'hunter' ? '🛡️ Vânătorul a salvat victima' : '💪 Omul de fier a preluat mușcătura');
+      lines.push(deaths.length ? `💀 Au murit: ${deaths.join(', ')}` : '🌙 Nu a murit nimeni');
+      out.push({ title: `🌑 Noaptea ${h.round}`, lines });
+    } else if (h.type === 'vote') {
+      const lines = Object.entries(h.votes ?? {}).map(([v, t]) => `${nameOf(state, v)} → ${t === 'abstain' ? 'se abține' : nameOf(state, t)}`);
+      if (h.sacrificed) lines.push(`🩸 ${nameOf(state, h.eliminated)} s-a sacrificat pentru ${nameOf(state, h.voted)}`);
+      else if (h.eliminated) lines.push(`⚰️ Eliminat: ${nameOf(state, h.eliminated)} (${ROLES[state.roles[h.eliminated]].name})`);
+      else lines.push('Nimeni nu a fost eliminat');
+      out.push({ title: `🗳️ Votul ${h.round}`, lines });
+    }
+  }
+  return out;
+}
+
+const best = (scores) => {
+  const max = Math.max(0, ...Object.values(scores));
+  return max > 0 ? Object.keys(scores).filter((id) => scores[id] === max) : [];
+};
+
+// Titlurile serii, calculate din istoric.
+export function computeTitles(state) {
+  const titles = [];
+  const add = (emoji, title, ids, why) => { if (ids.length) titles.push({ emoji, title, names: ids.map((id) => nameOf(state, id)), why }); };
+  const evil = (id) => ROLES[state.roles[id]]?.team === 'evil';
+  const vampire = findByRole(state, 'vampire');
+
+  // Ghinionistul: primul mort.
+  const firstDeath = (state.history ?? []).map((h) => (h.type === 'night' ? h.deaths?.[0] : h.eliminated)).find(Boolean);
+  if (firstDeath) add('🍀', 'Ghinionistul', [firstDeath], 'primul care a părăsit conacul');
+
+  // Paranoicul și Justițiarul: voturi date nevinovaților / răilor.
+  const innocent = {};
+  const justice = {};
+  for (const h of state.history ?? []) {
+    if (h.type !== 'vote') continue;
+    for (const [v, t] of Object.entries(h.votes ?? {})) {
+      if (!t || t === 'abstain') continue;
+      if (evil(t)) justice[v] = (justice[v] ?? 0) + 1;
+      else innocent[v] = (innocent[v] ?? 0) + 1;
+    }
+  }
+  add('😱', 'Paranoicul', best(innocent), 'cele mai multe voturi date nevinovaților');
+  add('⚖️', 'Justițiarul', best(justice), 'cele mai multe voturi date răilor');
+
+  // Ochiul de vultur: cele mai multe pariuri corecte pe vampir.
+  const eagle = {};
+  for (const h of state.history ?? []) {
+    if (h.type !== 'night') continue;
+    for (const [p, b] of Object.entries(h.bets ?? {})) if (b === vampire) eagle[p] = (eagle[p] ?? 0) + 1;
+  }
+  add('🦅', 'Ochiul de vultur', best(eagle), 'a ghicit vampirul de cele mai multe ori');
+
+  // Actorul: răul care a supraviețuit cel mai mult.
+  const lifetime = {};
+  for (const p of state.players) {
+    if (!evil(p.id)) continue;
+    let died = Infinity;
+    (state.history ?? []).forEach((h, i) => {
+      if ((h.type === 'night' && h.deaths?.includes(p.id)) || (h.type === 'vote' && h.eliminated === p.id)) died = Math.min(died, i);
+    });
+    lifetime[p.id] = died === Infinity ? 1000 : died + 1;
+  }
+  add('🎭', 'Actorul', best(lifetime), 'răul care a rezistat cel mai mult');
+
+  // Eroul: Omul de fier care a preluat o mușcătură sau Vânătorul cu cele mai multe salvări.
+  const iron = findByRole(state, 'ironman');
+  const hunter = findByRole(state, 'hunter');
+  const saves = (state.history ?? []).filter((h) => h.savedBy === 'hunter').length;
+  if (iron && state.iron?.used) add('💪', 'Eroul', [iron], 'a preluat mușcătura vampirului');
+  else if (hunter && saves) add('🗡️', 'Eroul', [hunter], `a salvat ${saves === 1 ? 'o viață' : `${saves} vieți`}`);
+
+  return titles;
+}
+
+// Clasamentul pariurilor: câte nopți a ghicit fiecare vampirul.
+export function betLeaderboard(state) {
+  const vampire = findByRole(state, 'vampire');
+  const score = Object.fromEntries(state.players.map((p) => [p.id, 0]));
+  for (const h of state.history ?? []) {
+    if (h.type !== 'night') continue;
+    for (const [p, b] of Object.entries(h.bets ?? {})) if (b === vampire && p in score) score[p] += 1;
+  }
+  return Object.entries(score).sort((a, b) => b[1] - a[1]).map(([id, n]) => ({ name: nameOf(state, id), correct: n }));
 }

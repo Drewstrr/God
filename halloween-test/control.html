@@ -149,9 +149,20 @@
           <p>${esc(pub.elimination?.name)} a fost eliminat.</p>
           <div class="row">Următoarea ședință peste <input type="number" id="next-min" value="45" min="0" max="180"> minute (0 = fără cronometru)</div>
           <button class="btn" id="next-session">⏭ Continuă</button>`;
-        case 'end': return `
-          <p>${pub.winner === 'good' ? '🕯️ A câștigat binele.' : '🩸 A câștigat răul.'}</p>
-          <button class="btn" data-cmd="reset">🔄 Joc nou</button>`;
+        case 'end': {
+          const st = pub.endStage ?? 'winner';
+          const stepBtn = (stage, label) => `<button class="btn ${st === stage ? '' : 'ghost'}" data-end="${stage}">${label}</button>`;
+          return `
+            <p>${pub.winner === 'good' ? '🕯️ A câștigat binele.' : '🩸 A câștigat răul.'} Arată pe rând:</p>
+            <div class="ctl-actions">
+              ${stepBtn('winner', '🏁 Câștigătorul')}
+              ${stepBtn('roles', '🎭 Dezvăluie toate rolurile')}
+              ${stepBtn('replay', '📜 Reluarea nopților și a voturilor')}
+              ${stepBtn('titles', '🏅 Titlurile serii')}
+            </div>
+            <hr style="border-color:var(--line);margin:14px 0">
+            <button class="btn small ghost" data-cmd="reset" data-confirm="Începi un joc nou? PIN-urile rămân.">🔄 Joc nou</button>`;
+        }
         default: return '';
       }
     }
@@ -181,6 +192,7 @@
         const roles = current.includes(k) ? current.filter((x) => x !== k) : [...current, k];
         sendLineup(pub.lineup?.players ?? {}, roles);
       }));
+      box.querySelectorAll('[data-end]').forEach((b) => b.addEventListener('click', () => sendCommand('endStage', { stage: b.dataset.end })));
       box.querySelector('#recommend')?.addEventListener('click', () => sendLineup(pub.lineup?.players ?? {}, []));
       box.querySelector('#save-settings')?.addEventListener('click', () => sendCommand('settings', {
         settings: {
@@ -249,7 +261,7 @@
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
       const ready = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
-      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.vote, pub.reveal?.outcome, pub.lineup, pub.engineInfo]);
+      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.vote, pub.reveal?.outcome, pub.lineup, pub.engineInfo, pub.endStage]);
       if (sig !== lastSig) { lastSig = sig; render(); } else renderPlayers();
     });
 

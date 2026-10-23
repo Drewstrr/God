@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   PLAYERS, newGame, resolveNight, voteOutcome, applyElimination, applyNoElimination,
   nextRound, sacrificeCandidate, detectiveResult, validTargets, sanitizeHint, checkWinner,
-  ironListSize, nightMode, initialKnowledge,
+  ironListSize, nightMode, initialKnowledge, computeTitles, buildReplay, betLeaderboard,
 } from '../js/engine.js';
 
 // Distribuția din exemplul de partidă (capitolul 12 din specificație).
@@ -159,11 +159,16 @@ test('Fotograful: rolurile fără abilitate n-au vizat pe nimeni', () => {
   assert.match(msg(report, 'gabriela'), /Andrei n-a vizat pe nimeni/);
 });
 
-test('Termometrul numără doar rolurile fără abilitate', () => {
-  const { report } = resolveNight(game(), {
-    andrei: t('marian'), flori: t('nico'), cella: t('marian'), nico: t('luca'), elisa: t('radu'),
+test('Pariul nopții: pariază toată lumea, inclusiv fantomele; pariurile invalide se ignoră', () => {
+  const g = game();
+  g.alive.cella = false;
+  const { state, report } = resolveNight(g, {
+    andrei: { target: 'marian', bet: 'marian' }, elisa: { target: 'nico', bet: 'marian' }, cella: { hint: 'ceață', bet: 'nico' },
+    luca: { target: 'radu', bet: 'luca' }, radu: { target: 'andrei', bet: 'cella' },
   });
-  assert.deepEqual(report.thermometer.map((r) => [r.id, r.votes]), [['marian', 2], ['nico', 1], ['luca', 1]]);
+  assert.deepEqual(report.thermometer.map((r) => [r.id, r.votes]), [['marian', 2], ['nico', 1]]);
+  assert.equal(report.betCount, 3);
+  assert.deepEqual(state.history[0].bets, { andrei: 'marian', elisa: 'marian', cella: 'nico' });
 });
 
 test('indiciile fantomelor blochează numele, și fără diacritice', () => {
@@ -337,3 +342,26 @@ function shuffleLocal(list, rnd) {
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
 }
+
+test('titlurile și reluarea pentru partida exemplu', () => {
+  let g = game();
+  let { state } = resolveNight(g, { marian: t('cella'), elisa: { target: 'marian', bet: 'marian' }, andrei: { target: 'marian', bet: 'marian' }, radu: { target: 'andrei', bet: 'nico' } });
+  ({ state } = applyElimination(state, 'nico', { votes: { andrei: 'nico', elisa: 'marian', luca: 'nico' } }));
+  state = nextRound(state);
+  ({ state } = resolveNight(state, { marian: t('elisa'), radu: t('elisa'), elisa: { target: 'luca', bet: 'marian' } }));
+  ({ state } = applyElimination(state, 'marian', { votes: { andrei: 'marian', elisa: 'marian', luca: 'radu' } }));
+  assert.equal(state.winner, 'good');
+  const titles = Object.fromEntries(computeTitles(state).map((x) => [x.title, x.names]));
+  assert.deepEqual(titles.Ghinionistul, ['Cella']);
+  assert.deepEqual(titles['Ochiul de vultur'], ['Elisa']);
+  assert.deepEqual(titles.Paranoicul, ['Luca']);
+  assert.deepEqual(titles['Justițiarul'], ['Elisa']);
+  assert.deepEqual(titles.Eroul, ['Radu']);
+  assert.ok(titles.Actorul.includes('Flori') && titles.Actorul.includes('Bogdan'));
+  const replay = buildReplay(state);
+  assert.equal(replay.length, 4);
+  assert.ok(replay[0].lines.some((l) => l.includes('Marian a mușcat pe Cella')));
+  assert.ok(replay[2].lines.some((l) => l.includes('Vânătorul a salvat')));
+  assert.ok(replay[3].lines.some((l) => l.includes('Eliminat: Marian (Vampirul)')));
+  assert.equal(betLeaderboard(state)[0].name, 'Elisa');
+});

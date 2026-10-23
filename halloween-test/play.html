@@ -15,7 +15,7 @@
 
   <script type="module">
     import {
-      auth, r, currentUser, signInAnonymously, signOut, onValue, set, serverNow, reconnectOnWake, onConnection, APP_VERSION,
+      auth, r, currentUser, signInAnonymously, signOut, onValue, set, update, serverNow, reconnectOnWake, onConnection, APP_VERSION,
     } from './js/fb.js';
     import { ROLES, ROLE_ABOUT } from './js/engine.js';
     import { heartSVG } from './js/heart.js';
@@ -135,7 +135,7 @@
       if (!me) return;
       const phase = pub.phase ?? 'lobby';
       const night = phase === 'night' && priv?.night?.round === pub.round ? priv.night : null;
-      const sig = JSON.stringify([phase, pub.round, pub.winner, pub.nextSessionAt, priv, Boolean(night), pub.vote?.current, pub.vote?.stage, pub.rolesInGame]);
+      const sig = JSON.stringify([phase, pub.round, pub.winner, pub.nextSessionAt, priv, Boolean(night), pub.vote?.current, pub.vote?.stage, pub.rolesInGame, pub.endStage]);
       if (!force && sig === lastSig) return;
       lastSig = sig;
       guideOpen = document.querySelector('details.guide')?.open ?? guideOpen;
@@ -237,6 +237,7 @@
             <textarea id="f-testament" maxlength="200" placeholder="Ultimele tale cuvinte…"></textarea>
             <button class="btn small" id="save-testament">Salvează</button> <span id="testament-ok" class="ok"></span>
           </div>` : ''}
+        ${finalCards(phase)}
         ${rolesGuide()}
         ${!alive ? '<div class="card center muted">👻 Ești fantomă: nu mai vorbești despre joc și nu mai votezi. Noaptea poți lăsa un indiciu de un cuvânt.</div>' : ''}
         <button class="btn ghost" id="logout">Nu sunt eu</button>`;
@@ -304,6 +305,18 @@
       });
     }
 
+    // La final, după ce proiectorul dezvăluie rolurile, le vede și telefonul; apoi titlurile.
+    function finalCards(phase) {
+      const f = pub.final;
+      const st = pub.endStage ?? 'winner';
+      if (phase !== 'end' || !f || st === 'winner') return '';
+      const roles = `<div class="card"><h3>🎭 Cine ce a fost</h3>${(f.roles ?? []).map((x) => `<p>${x.emoji} <b>${esc(x.name)}</b> — ${esc(x.roleName)}${x.alive ? '' : ' 💀'}</p>`).join('')}</div>`;
+      const titles = st === 'titles' && f.titles?.length
+        ? `<div class="card"><h3>🏅 Titlurile serii</h3>${f.titles.map((t) => `<p>${t.emoji} <b>${esc(t.title)}</b>: ${t.names.map(esc).join(', ')}</p>`).join('')}</div>`
+        : '';
+      return roles + titles;
+    }
+
     // Fișa „Personajele din joc”: ce face fiecare personaj (fără să spună cine e).
     function rolesGuide() {
       const keys = pub.rolesInGame ? Object.values(pub.rolesInGame) : [];
@@ -319,22 +332,58 @@
         </details>`;
     }
 
+    // Noaptea are doi pași pentru toată lumea, ca ecranele să arate la fel:
+    // 1) acțiunea (abilitatea, „Lângă cine stai” sau indiciul fantomei); 2) Pariul nopții.
     function renderNight(night) {
       const round = night.round;
-      const already = sent(round);
+      const step = sent(round);
       const detective = Object.values(priv.inbox ?? {}).find((m) => m.round === round && m.kind === 'detective');
+      const detectiveCard = detective ? `<div class="card center"><h2>${esc(detective.text)}</h2></div>` : '';
       const timer = `<p class="center muted">⏳ <b data-ends="${pub.endsAt ?? ''}"></b></p>`;
+      const fail = (btn) => { if (btn) btn.disabled = false; const m = document.getElementById('msg'); if (m) m.textContent = 'Nu s-a trimis. Noaptea s-a încheiat sau nu ai internet.'; };
 
-      if (already) {
+      if (step === 'done') {
         app.innerHTML = `
-          <h2 class="center" style="margin-top:20vh">🌑 Noaptea ${round}</h2>
-          <p class="center">✓ Alegerea ta a fost trimisă.</p>
-          ${detective ? `<div class="card center"><h2>${esc(detective.text)}</h2></div>` : ''}
+          <h2 class="center" style="margin-top:18vh">🌑 Noaptea ${round}</h2>
+          <p class="center">✓ Gata. Alegerile tale au fost trimise.</p>
+          ${detectiveCard}
           <p class="center muted">Lasă telefonul jos și așteaptă dimineața.</p>
           ${timer}`;
         return;
       }
 
+      // Pasul 2: Pariul nopții.
+      if (step) {
+        chosen = null;
+        app.innerHTML = `
+          <h2 class="center">🌑 Noaptea ${round}</h2>
+          ${timer}
+          ${detectiveCard}
+          <p class="center" style="font-size:1.25rem"><b>🎲 Pariul nopții: cine crezi că e vampirul?</b></p>
+          <p class="center muted" style="margin-top:-6px">Secret. La final, cine ghicește cel mai des primește un titlu.</p>
+          <div class="targets">${(night.bets ?? []).map((t) => `<button data-t="${t.id}">${esc(t.name)}</button>`).join('')}</div>
+          <p class="center error" id="msg"></p>
+          <button class="btn" id="confirm" disabled>Pariază</button>
+          <button class="btn ghost" id="skip" style="margin-top:10px">Nu știu</button>`;
+        const finish = async (bet, btn) => {
+          if (btn) btn.disabled = true;
+          try {
+            await update(r(`actions/${round}/${me}`), { bet, done: true });
+            markSent(round, 'done');
+            renderGame(true);
+          } catch { fail(btn); }
+        };
+        app.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => {
+          chosen = b.dataset.t;
+          app.querySelectorAll('[data-t]').forEach((x) => x.classList.toggle('chosen', x === b));
+          document.getElementById('confirm').disabled = false;
+        }));
+        app.querySelector('#confirm').addEventListener('click', (e) => chosen && finish(chosen, e.target));
+        app.querySelector('#skip').addEventListener('click', (e) => finish(null, e.target));
+        return;
+      }
+
+      // Pasul 1 pentru fantome: indiciul de un cuvânt.
       if (night.mode === 'ghost') {
         app.innerHTML = `
           <h2 class="center">🌑 Noaptea ${round}</h2>
@@ -344,22 +393,26 @@
           <p class="center error" id="msg"></p>
           <button class="btn" id="send">Trimite indiciul</button>
           <button class="btn ghost" id="skip" style="margin-top:10px">Fără indiciu</button>`;
-        const send = async (hint) => {
+        const send = async (hint, btn) => {
           const playerNames = Object.values(players).map((p) => p.name.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase());
           const n = hint.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
           if (hint && (/\s/.test(hint) || playerNames.some((x) => n.includes(x)))) {
             document.getElementById('msg').textContent = 'Un singur cuvânt și fără numele jucătorilor.';
             return;
           }
-          await set(r(`actions/${round}/${me}`), { hint, at: Date.now() });
-          markSent(round, '1');
-          renderGame(true);
+          btn.disabled = true;
+          try {
+            await set(r(`actions/${round}/${me}`), { hint, at: Date.now() });
+            markSent(round, 'step1');
+            renderGame(true);
+          } catch { fail(btn); }
         };
-        app.querySelector('#send').addEventListener('click', () => send(document.getElementById('hint').value.trim()));
-        app.querySelector('#skip').addEventListener('click', () => send(''));
+        app.querySelector('#send').addEventListener('click', (e) => send(document.getElementById('hint').value.trim(), e.target));
+        app.querySelector('#skip').addEventListener('click', (e) => send('', e.target));
         return;
       }
 
+      // Pasul 1 pentru cei vii: abilitatea sau „Lângă cine stai în noaptea asta?”.
       chosen = null;
       app.innerHTML = `
         <h2 class="center">🌑 Noaptea ${round}</h2>
@@ -383,12 +436,9 @@
         e.target.disabled = true;
         try {
           await set(r(`actions/${round}/${me}`), { target: chosen, at: Date.now() });
-          markSent(round, chosen);
+          markSent(round, 'step1');
           renderGame(true);
-        } catch {
-          e.target.disabled = false;
-          document.getElementById('msg').textContent = 'Nu s-a trimis. Noaptea s-a încheiat sau nu ai internet.';
-        }
+        } catch { fail(e.target); }
       });
     }
 

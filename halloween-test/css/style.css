@@ -447,3 +447,29 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
   42% { transform: scale(1.12); filter: drop-shadow(0 0 35px rgba(255, 30, 60, 0.9)); }
   70%, 100% { transform: scale(1); filter: drop-shadow(0 0 22px rgba(220, 20, 50, 0.75)); }
 }
+
+/* Finalul */
+.end.small { margin-top: 0; }
+.end.small h1 { font-size: 3.2vw; margin-bottom: 1vh; }
+.final-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(14vw, 1fr)); gap: 1.6vw; margin-top: 2vh; position: relative; z-index: 2; }
+.role-tile { position: relative; text-align: center; padding: 2vh 1vw; border-radius: 16px; background: rgba(20, 10, 14, 0.85); border: 2px solid rgba(255, 181, 71, 0.55); opacity: 0; animation: flip-in 0.8s ease-out forwards; }
+.role-tile.evil { border-color: var(--blood-hi); box-shadow: 0 0 24px rgba(224, 36, 71, 0.45); }
+.role-tile .emoji { font-size: 3.4vw; }
+.role-tile .who { font-weight: 800; font-size: 1.8vw; margin-top: 0.5vh; }
+.role-tile .what { font-size: 1.3vw; color: var(--muted); }
+.role-tile.evil .what { color: var(--blood-hi); }
+.role-tile.dead { filter: saturate(0.5); }
+.role-tile .rip { position: absolute; top: 0.6vh; right: 0.8vw; font-size: 1.4vw; }
+@keyframes flip-in { from { opacity: 0; transform: rotateY(90deg) scale(0.8); } to { opacity: 1; transform: none; } }
+.replay-box { flex: 1; min-height: 0; overflow: hidden; position: relative; z-index: 2; margin-top: 1vh; }
+.replay { columns: 3; column-gap: 2.4vw; }
+.replay-block { break-inside: avoid; background: rgba(20, 10, 14, 0.85); border: 1px solid var(--line); border-radius: 14px; padding: 1.2vh 1.2vw; margin-bottom: 1.6vh; }
+.replay-block h3 { margin: 0 0 0.6vh; color: var(--candle); font-size: 1.5vw; }
+.replay-block p { margin: 0.3vh 0; font-size: 1.15vw; line-height: 1.35; }
+.titles { display: grid; grid-template-columns: repeat(auto-fit, minmax(22vw, 1fr)); gap: 2vw; margin-top: 2vh; position: relative; z-index: 2; }
+.title-card { text-align: center; padding: 2.4vh 1.5vw; border-radius: 18px; background: rgba(20, 10, 14, 0.88); border: 2px solid var(--candle); box-shadow: 0 0 30px rgba(255, 181, 71, 0.25); opacity: 0; animation: rise 1s ease-out forwards; }
+.title-card .emoji { font-size: 4vw; }
+.title-card .t { font-family: 'Cinzel', Georgia, serif; font-weight: 800; font-size: 2.2vw; color: var(--candle); }
+.title-card .n { font-size: 2vw; font-weight: 800; margin-top: 0.6vh; }
+.title-card .why { color: var(--muted); font-size: 1.2vw; margin-top: 0.4vh; }
+.bets-line { position: relative; z-index: 2; margin-top: 2vh; }

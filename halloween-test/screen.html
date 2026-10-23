@@ -131,6 +131,28 @@
       await wait(1200); box.remove();
     }
 
+    // Efectele pașilor de final: un sunet la fiecare rol sau titlu, reluarea derulată încet.
+    function endStageEffects(stage) {
+      const f = pub.final ?? {};
+      if (stage === 'roles') (f.roles ?? []).forEach((x, i) => setTimeout(() => (x.evil ? sfx.voteHit(0) : sfx.tick()), 400 + i * 600));
+      if (stage === 'titles') (f.titles ?? []).forEach((_, i) => setTimeout(() => sfx.bell(0, 330, 3, 0.3), 500 + i * 2200));
+      if (stage === 'replay') {
+        const box = document.getElementById('replay');
+        if (!box) return;
+        const parent = box.parentElement;
+        let y = 0;
+        const scroll = () => {
+          if (!document.body.contains(box)) return;
+          const max = box.scrollHeight - parent.clientHeight;
+          if (max <= 0) return;
+          y = Math.min(max, y + 0.6);
+          box.style.transform = `translateY(${-y}px)`;
+          if (y < max) requestAnimationFrame(scroll);
+        };
+        setTimeout(() => requestAnimationFrame(scroll), 3000);
+      }
+    }
+
     // Bătăile inimii: sunet și imagine în același timp, tot mai repede.
     function heartbeatLoop() {
       let gap = 1100;
@@ -278,12 +300,35 @@
       },
       end() {
         const good = pub.winner === 'good';
-        return `
-          <div class="end ${good ? 'good' : 'evil'}">
+        const f = pub.final ?? {};
+        const stage = pub.endStage ?? 'winner';
+        const head = `<div class="end ${good ? 'good' : 'evil'} ${stage === 'winner' ? '' : 'small'}">
             <h1>${good ? '🕯️ Binele a învins' : '🩸 Răul a învins'}</h1>
-            <p class="lead">${good ? 'Vampirul a fost alungat din conac.' : 'Conacul Blackwood aparține acum vampirului.'}</p>
-          </div>
-          ${candles()}`;
+            ${stage === 'winner' ? `<p class="lead">${good ? 'Vampirul a fost alungat din conac.' : 'Conacul Blackwood aparține acum vampirului.'}</p>` : ''}
+          </div>`;
+        if (stage === 'roles') {
+          return `${head}<div class="final-roles">${(f.roles ?? []).map((x, i) => `
+            <div class="role-tile ${x.evil ? 'evil' : ''} ${x.alive ? '' : 'dead'}" style="animation-delay:${0.4 + i * 0.6}s">
+              <div class="emoji">${x.emoji}</div><div class="who">${esc(x.name)}</div><div class="what">${esc(x.roleName)}</div>
+              ${x.alive ? '' : '<div class="rip">💀</div>'}
+            </div>`).join('')}</div>`;
+        }
+        if (stage === 'replay') {
+          return `${head}<div class="replay-box"><div class="replay" id="replay">${(f.replay ?? []).map((b) => `
+            <div class="replay-block"><h3>${esc(b.title)}</h3>${b.lines.map((l) => `<p>${esc(l)}</p>`).join('')}</div>`).join('')}</div></div>`;
+        }
+        if (stage === 'titles') {
+          const bets = (f.bets ?? []).filter((b) => b.correct > 0).slice(0, 3);
+          return `${head}<div class="titles">${(f.titles ?? []).map((t, i) => `
+            <div class="title-card" style="animation-delay:${0.5 + i * 2.2}s">
+              <div class="emoji">${t.emoji}</div>
+              <div class="t">${esc(t.title)}</div>
+              <div class="n">${t.names.map(esc).join(', ')}</div>
+              <div class="why">${esc(t.why)}</div>
+            </div>`).join('')}</div>
+            ${bets.length ? `<p class="center lead bets-line">🎲 Cele mai bune pariuri: ${bets.map((b) => `<b>${esc(b.name)}</b> (${b.correct})`).join(' · ')}</p>` : ''}`;
+        }
+        return `${head}${candles()}`;
       },
     };
 
@@ -302,7 +347,7 @@
       if (m.hints?.length) slides.push(`<div class="slide">👻 Fantomele șoptesc: ${m.hints.map((h) => `<b>${esc(h)}</b>`).join(' · ')}</div>`);
       if (m.thermometer?.length) {
         const max = Math.max(...m.thermometer.map((t) => t.votes));
-        slides.push(`<div class="slide"><div>🌡️ Termometrul suspiciunii</div>${m.thermometer.map((t) => `
+        slides.push(`<div class="slide"><div>🌡️ Ce crede conacul <span class="muted">(${m.betCount ?? ''} pariuri)</span></div>${m.thermometer.map((t) => `
           <div class="bar"><span>${esc(t.name)}</span><i style="width:${(t.votes / max) * 100}%"></i><b>${t.votes}</b></div>`).join('')}</div>`);
       }
       return slides;
@@ -387,6 +432,7 @@
     }
 
     let lastPhase = null;
+    let lastEndStage = null;
     const THEME = {
       lobby: 'waltz', day: 'waltz', intro: 'organ', night: 'night', morning: 'somber', discussion: 'ticking',
       vote: 'tension', reveal: 'tension', sacrifice: null, elimination: 'somber',
@@ -412,6 +458,9 @@
       joinedBefore = joined;
       document.body.dataset.phase = phase;
       if (phase === 'morning' && lastPhase === 'morning') return; // nu restartăm animația
+      if (phase === 'end' && lastPhase === 'end' && pub.endStage === lastEndStage) return; // finalul nu se redesenează degeaba
+      const stageChanged = phase === 'end' && pub.endStage !== lastEndStage;
+      lastEndStage = pub.endStage;
       if (phase === 'reveal' && lastPhase === 'reveal') {
         // Doar rezultatul se poate schimba (decizia Primarului).
         const box = document.getElementById('outcome');
@@ -441,6 +490,7 @@
       stage.innerHTML = (views[phase] ?? views.lobby)();
       fitStage();
       if (phase === 'sacrifice' && previous !== 'sacrifice') heartbeatLoop();
+      if (phase === 'end' && stageChanged && previous === 'end') endStageEffects(pub.endStage);
       if (phase === 'morning') playMorning();
       if (phase === 'reveal') playReveal();
       if (phase === 'end' && previous && previous !== 'end') {

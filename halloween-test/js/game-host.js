@@ -4,7 +4,7 @@
 import {
   PLAYERS, ROLES, newGame, initialKnowledge, resolveNight, detectiveResult, validTargets,
   nightMode, nightPrompt, nextRound, shuffle, voteOutcome, applyElimination, applyNoElimination,
-  sacrificeCandidate, recommendedRoles, ROLE_PRIORITY, MIN_PLAYERS,
+  sacrificeCandidate, recommendedRoles, ROLE_PRIORITY, MIN_PLAYERS, buildReplay, computeTitles, betLeaderboard,
 } from './engine.js';
 import { setVoteHandler, setEngineActive } from './pin-service.js';
 import {
@@ -97,7 +97,7 @@ const run = serial(async (cmd) => {
   const handlers = {
     fillBots, clearBots, start, party, session, endNight, discussion, reset, settings, lineup,
     startVote, castVote, skipVoter, botVote, reveal, revote, mayorChoice, execute, finishElimination,
-    continue: continueGame,
+    continue: continueGame, endStage,
   };
   await handlers[cmd?.type]?.(cmd);
 });
@@ -223,6 +223,7 @@ async function session() {
       mode,
       prompt: nightPrompt(state, p.id),
       targets: mode === 'ghost' ? null : alive.filter((t) => t.id !== p.id).map((t) => ({ id: t.id, name: t.name })),
+      bets: alive.filter((t) => t.id !== p.id).map((t) => ({ id: t.id, name: t.name })),
       allowed: mode === 'ghost' ? null : Object.fromEntries(validTargets(state, p.id).map((id) => [id, true])),
     };
   }
@@ -263,13 +264,14 @@ function botGossip(self) {
 async function botAct(id, round) {
   if (pub.phase !== 'night' || state.round !== round) return;
   const mode = nightMode(state, id);
+  const bet = shuffle(aliveIds().filter((x) => x !== id))[0] ?? null;
   if (mode === 'ghost') {
     const hint = Math.random() < 0.5 ? shuffle(BOT_HINTS)[0] : '';
-    return set(r(`actions/${round}/${id}`), { hint, at: Date.now() });
+    return set(r(`actions/${round}/${id}`), { hint, bet, done: true, at: Date.now() });
   }
   const targets = validTargets(state, id);
-  if (!targets.length) return;
-  return set(r(`actions/${round}/${id}`), { target: shuffle(targets)[0], at: Date.now() });
+  const target = shuffle(targets)[0] ?? null;
+  return set(r(`actions/${round}/${id}`), { target, bet, done: true, at: Date.now() });
 }
 
 function watchNight(endsAt = pub.endsAt) {
@@ -290,7 +292,7 @@ function watchNight(endsAt = pub.endsAt) {
       await set(r('secret/host'), host);
     }
 
-    const done = GP().filter((p) => actions[p.id]).length;
+    const done = GP().filter((p) => actions[p.id]?.done).length;
     await setPublic({ progress: { done, total: GP().length } });
     if (done >= GP().length) setTimeout(() => run({ type: 'endNight', round }), 2500);
   }));
@@ -306,7 +308,7 @@ async function endNight(cmd = {}) {
 
   const round = state.round;
   const raw = (await get(r(`actions/${round}`))).val() ?? {};
-  const actions = Object.fromEntries(Object.entries(raw).map(([id, a]) => [id, { target: a.target ?? null, hint: a.hint ?? null }]));
+  const actions = Object.fromEntries(Object.entries(raw).map(([id, a]) => [id, { target: a.target ?? null, hint: a.hint ?? null, bet: a.bet ?? null }]));
   const { state: next, report } = resolveNight(state, actions);
   state = next;
 
@@ -327,6 +329,7 @@ async function endNight(cmd = {}) {
   }
 
   patch['public/phase'] = state.winner ? 'end' : 'morning';
+  if (state.winner) Object.assign(patch, finalPatch());
   patch['public/alive'] = state.alive;
   patch['public/endsAt'] = null;
   patch['public/progress'] = null;
@@ -343,6 +346,7 @@ async function endNight(cmd = {}) {
     gossip: host.gossip ?? null,
     hints: report.hints,
     thermometer: report.thermometer.map((t) => ({ name: t.name, votes: t.votes })),
+    betCount: report.betCount,
   };
   host.gossip = null;
   await update(r(), patch);
@@ -557,7 +561,7 @@ async function continueGame(cmd = {}) {
   }
   host.vote = null;
   if (state.winner) {
-    await setPublic({ phase: 'end', winner: state.winner, endsAt: null, vote: null, reveal: null, elimination: null });
+    await update(r(), { 'public/phase': 'end', 'public/winner': state.winner, 'public/endsAt': null, 'public/vote': null, 'public/reveal': null, 'public/elimination': null, ...finalPatch() });
     return save();
   }
   state = nextRound(state);
@@ -574,6 +578,29 @@ async function continueGame(cmd = {}) {
   patch['public/nextSessionAt'] = cmd.minutes ? serverNow() + cmd.minutes * 60000 : null;
   await update(r(), patch);
   await save();
+}
+
+// ---------- finalul ----------
+
+// Tot ce se dezvăluie la final: rolurile, cronologia, titlurile, pariurile.
+function finalPatch() {
+  return {
+    'public/endStage': 'winner',
+    'public/final': {
+      roles: GP().map((p) => {
+        const role = ROLES[state.roles[p.id]];
+        return { name: p.name, roleName: role.name, emoji: role.emoji, evil: role.team === 'evil', alive: Boolean(state.alive[p.id]) };
+      }),
+      replay: buildReplay(state),
+      titles: computeTitles(state),
+      bets: betLeaderboard(state),
+    },
+  };
+}
+
+async function endStage(cmd) {
+  if (pub.phase !== 'end' || !['winner', 'roles', 'replay', 'titles'].includes(cmd.stage)) return;
+  await setPublic({ endStage: cmd.stage });
 }
 
 // ---------- joc nou ----------
@@ -605,6 +632,8 @@ async function reset() {
     'public/elimination': null,
     'public/doomedName': null,
     'public/rolesInGame': null,
+    'public/final': null,
+    'public/endStage': null,
   };
   for (const p of PLAYERS) patch[`private/${p.id}`] = { name: p.name };
   await update(r(), patch);
