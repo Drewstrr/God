@@ -18,6 +18,7 @@
       auth, r, currentUser, signInAnonymously, signOut, onValue, set, serverNow, reconnectOnWake, onConnection, APP_VERSION,
     } from './js/fb.js';
     import { ROLES, ROLE_ABOUT } from './js/engine.js';
+    import { heartSVG } from './js/heart.js';
 
     reconnectOnWake();
     const net = document.createElement('div');
@@ -290,7 +291,7 @@
           <p class="muted">Conacul a ales.</p>
           <h1 class="squid-title">${esc(pub.doomedName)}</h1>
           <p>Soarta se decide…</p>
-          <div class="heartbeat">♥</div>
+          <div class="heart-wrap">${heartSVG.replace('class="heart"', 'class="heart auto"')}</div>
           ${offer && !chose ? `
             <p>Stăpânul tău e pe cale să fie eliminat. Mai ai <b data-ends="${pub.endsAt ?? ''}"></b> să te sacrifici în locul lui.</p>
             <button class="btn squid-btn" id="sacrifice">🩸 Mă sacrific pentru stăpânul meu</button>` : ''}

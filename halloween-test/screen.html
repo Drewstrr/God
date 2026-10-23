@@ -20,6 +20,7 @@
     import { candleSVG, animateFlames } from './js/candles.js';
     import { smokeAt } from './js/smoke.js';
     import { startBlood, stopBlood } from './js/blood.js';
+    import { heartSVG, beat } from './js/heart.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const stage = document.getElementById('stage');
@@ -128,6 +129,19 @@
       await wait(1800); box.querySelector('.ceremony-sub').classList.add('show');
       await wait(2600); box.classList.add('leaving');
       await wait(1200); box.remove();
+    }
+
+    // Bătăile inimii: sunet și imagine în același timp, tot mai repede.
+    function heartbeatLoop() {
+      let gap = 1100;
+      const tickBeat = () => {
+        if (lastPhase !== 'sacrifice') return;
+        sfx.heartbeat(0, 1);
+        beat(stage.querySelector('.heart'));
+        gap = Math.max(480, gap * 0.95);
+        setTimeout(tickBeat, gap);
+      };
+      setTimeout(tickBeat, 400);
     }
 
     // Binele a învins: explozie de lumină aurie, raze și scântei care urcă.
@@ -240,7 +254,7 @@
             <p class="lead muted">Conacul a ales.</p>
             <h1 class="squid-title">${esc(pub.doomedName)}</h1>
             <p class="lead">Soarta se decide…</p>
-            <div class="heartbeat">♥</div>
+            <div class="heart-wrap">${heartSVG}</div>
           </div>`;
       },
       elimination() {
@@ -375,7 +389,7 @@
     let lastPhase = null;
     const THEME = {
       lobby: 'waltz', day: 'waltz', intro: 'organ', night: 'night', morning: 'somber', discussion: 'ticking',
-      vote: 'tension', reveal: 'tension', sacrifice: 'heartbeat', elimination: 'somber',
+      vote: 'tension', reveal: 'tension', sacrifice: null, elimination: 'somber',
     };
     function playThemeFor(phase) {
       const theme = phase === 'end' ? (pub.winner === 'good' ? 'glory' : 'doom') : THEME[phase];
@@ -426,6 +440,7 @@
       }
       stage.innerHTML = (views[phase] ?? views.lobby)();
       fitStage();
+      if (phase === 'sacrifice' && previous !== 'sacrifice') heartbeatLoop();
       if (phase === 'morning') playMorning();
       if (phase === 'reveal') playReveal();
       if (phase === 'end' && previous && previous !== 'end') {

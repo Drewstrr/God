@@ -433,3 +433,17 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 .guide-role { border-top: 1px solid var(--line); padding-top: 10px; margin-top: 10px; }
 .guide-role p { margin: 4px 0 0; color: var(--text); font-size: 0.95rem; }
 .guide-role.evil b { color: var(--blood-hi); }
+
+/* Inima care bate */
+.heart-wrap { display: flex; justify-content: center; margin: 2vh 0; }
+.heart { width: 9rem; height: auto; overflow: visible; filter: drop-shadow(0 0 22px rgba(220, 20, 50, 0.75)); transform-origin: 50% 55%; }
+.screen-wrap .heart { width: 22vh; }
+.heart.beat { animation: lubdub 0.6s cubic-bezier(.3, 1.6, .5, 1); }
+.heart.auto { animation: lubdub 1s ease-in-out infinite; }
+@keyframes lubdub {
+  0% { transform: scale(1); filter: drop-shadow(0 0 22px rgba(220, 20, 50, 0.75)); }
+  14% { transform: scale(1.2); filter: drop-shadow(0 0 45px rgba(255, 30, 60, 1)); }
+  28% { transform: scale(0.97); }
+  42% { transform: scale(1.12); filter: drop-shadow(0 0 35px rgba(255, 30, 60, 0.9)); }
+  70%, 100% { transform: scale(1); filter: drop-shadow(0 0 22px rgba(220, 20, 50, 0.75)); }
+}

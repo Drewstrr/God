@@ -175,18 +175,26 @@ export function verdict() {
   bell(0.05, 82, 5, 0.4);
 }
 
-// O bătaie de inimă (lub-dub).
+// O bătaie de inimă (lub-dub): o lovitură grea, joasă, cu un mic „clic” de valvă.
 export function heartbeat(delay = 0, volume = 0.9) {
   if (!ready()) return;
-  [[0, 60], [0.22, 50]].forEach(([dt, freq]) => {
+  [[0, 1], [0.24, 0.7]].forEach(([dt, amp]) => {
     const t = ctx.currentTime + delay + dt;
     const o = ctx.createOscillator();
     o.type = 'sine';
-    o.frequency.setValueAtTime(freq * 1.6, t);
-    o.frequency.exponentialRampToValueAtTime(freq, t + 0.08);
-    o.connect(envGain(t, 0.01, volume * (dt ? 0.7 : 1), 0.22));
+    o.frequency.setValueAtTime(95, t);
+    o.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+    o.connect(envGain(t, 0.008, volume * amp, 0.28));
     o.start(t);
-    o.stop(t + 0.35);
+    o.stop(t + 0.4);
+    const n = ctx.createBufferSource();
+    n.buffer = noiseBuffer(0.12);
+    const f = ctx.createBiquadFilter();
+    f.type = 'lowpass';
+    f.frequency.value = 260;
+    n.connect(f).connect(envGain(t, 0.004, volume * amp * 0.6, 0.09));
+    n.start(t);
+    n.stop(t + 0.12);
   });
 }
 
@@ -262,10 +270,108 @@ export function evilLaugh(delay = 0) {
   }
 }
 
+// O cioară: 2–4 croncănituri aspre. distance: 0 = foarte aproape, 1 = departe. pan: -1 stânga … 1 dreapta.
+export function crow(delay = 0, { distance = 0.3, pan = 0 } = {}) {
+  if (!ready()) return;
+  const out = ctx.createGain();
+  out.gain.value = 0.55 * (1 - distance * 0.8);
+  const panner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 6000 - distance * 4800;
+  // Ecoul de departe.
+  const echo = ctx.createDelay(1);
+  echo.delayTime.value = 0.22 + distance * 0.15;
+  const fb = ctx.createGain();
+  fb.gain.value = 0.15 + distance * 0.3;
+  out.connect(lp);
+  lp.connect(echo).connect(fb).connect(echo);
+  const dest = panner ?? master;
+  if (panner) { panner.pan.value = pan; panner.connect(master); }
+  lp.connect(dest);
+  echo.connect(dest);
+
+  const shaper = ctx.createWaveShaper();
+  const curve = new Float32Array(1024);
+  for (let i = 0; i < 1024; i++) { const x = (i / 512) - 1; curve[i] = Math.tanh(x * 6); }
+  shaper.curve = curve;
+  const formants = [[1050, 5, 1], [2100, 6, 0.6], [3300, 7, 0.25]].map(([f, q, g]) => {
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = f * (0.95 + Math.random() * 0.1);
+    bp.Q.value = q;
+    const gg = ctx.createGain();
+    gg.gain.value = g;
+    shaper.connect(bp).connect(gg).connect(out);
+    return bp;
+  });
+  void formants;
+
+  const caws = 2 + Math.floor(Math.random() * 3);
+  const base = 380 + Math.random() * 160;
+  for (let i = 0; i < caws; i++) {
+    const t = ctx.currentTime + delay + i * (0.38 + Math.random() * 0.12);
+    const len = 0.26 + Math.random() * 0.14;
+    const o = ctx.createOscillator();
+    o.type = 'sawtooth';
+    const f0 = base * (1 - i * 0.04);
+    o.frequency.setValueAtTime(f0 * 1.12, t);
+    o.frequency.linearRampToValueAtTime(f0, t + 0.05);
+    o.frequency.exponentialRampToValueAtTime(f0 * 0.82, t + len);
+    const n = ctx.createBufferSource();
+    n.buffer = noiseBuffer(0.5);
+    const ng = ctx.createGain();
+    ng.gain.value = 0.35;
+    const env = ctx.createGain();
+    env.gain.setValueAtTime(0.0001, t);
+    env.gain.exponentialRampToValueAtTime(0.9, t + 0.025);
+    env.gain.setValueAtTime(0.8, t + len * 0.6);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(env);
+    n.connect(ng).connect(env);
+    env.connect(shaper);
+    o.start(t); o.stop(t + len + 0.05);
+    n.start(t); n.stop(t + len + 0.05);
+  }
+}
+
+// Un stol de ciori, unele aproape, altele departe, timp de câteva secunde.
+export function crows(delay = 0, seconds = 14) {
+  for (let i = 0; i < 9; i++) {
+    const far = Math.random() < 0.6;
+    crow(delay + Math.random() * seconds, { distance: far ? 0.65 + Math.random() * 0.3 : Math.random() * 0.25, pan: Math.random() * 2 - 1 });
+  }
+}
+
+// O lovitură cinematică: bubuit, apoi un acord grav, disonant, care crește.
+export function doomHit(delay = 0) {
+  if (!ready()) return;
+  boom(delay);
+  boom(delay + 0.05);
+  const t = ctx.currentTime + delay;
+  const f = ctx.createBiquadFilter();
+  f.type = 'lowpass';
+  f.frequency.setValueAtTime(180, t);
+  f.frequency.exponentialRampToValueAtTime(1400, t + 3);
+  f.connect(envGain(t, 1.8, 0.45, 6));
+  [36.7, 38.9, 55, 73.4, 77.8].forEach((freq) => {
+    ['sawtooth', 'square'].forEach((type, k) => {
+      const o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.value = freq * (k ? 1.004 : 1);
+      o.connect(f);
+      o.start(t);
+      o.stop(t + 8.5);
+    });
+  });
+  bell(delay + 0.1, 55, 9, 0.5);
+}
+
 export function evilWins() {
-  boom(0.3);
-  drone(0.5, 12);
-  evilLaugh(2.2);
+  doomHit(0.2);
+  drone(1.5, 14);
+  crows(1.2, 16);
+  evilLaugh(4.5);
 }
 
 export function goodWins() {
@@ -471,6 +577,8 @@ const THEMES = {
     const chords = [[45, 48, 52], [44, 48, 51], [41, 45, 48], [40, 44, 47]];
     const fn = (t, i) => {
       chords[i % 4].forEach((n) => note(out, t, midi(n + 12), { type: 'sawtooth', attack: 1.5, peak: 0.03, decay: 4, filter: 700, detune: 9 }));
+      // Din când în când, ciori în depărtare.
+      if (Math.random() < 0.6) crow(Math.max(0, t - ctx.currentTime) + Math.random() * 4, { distance: 0.6 + Math.random() * 0.35, pan: Math.random() * 2 - 1 });
       return 5;
     };
     fn.stop = stop;
