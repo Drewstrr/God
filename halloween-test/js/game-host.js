@@ -4,7 +4,7 @@
 import {
   PLAYERS, ROLES, newGame, initialKnowledge, resolveNight, detectiveResult, validTargets,
   nightMode, nightPrompt, nextRound, shuffle, voteOutcome, applyElimination, applyNoElimination,
-  sacrificeCandidate, recommendedRoles, ROLE_PRIORITY, MIN_PLAYERS, buildReplay, computeTitles, betLeaderboard,
+  sacrificeCandidate, recommendedRoles, ROLE_PRIORITY, MIN_PLAYERS, buildReplay, computeTitles, betLeaderboard, checkWinner,
 } from './engine.js';
 import { setVoteHandler, setEngineActive } from './pin-service.js';
 import {
@@ -97,7 +97,8 @@ const run = serial(async (cmd) => {
   const handlers = {
     fillBots, clearBots, start, party, session, endNight, discussion, reset, settings, lineup,
     startVote, castVote, skipVoter, botVote, reveal, revote, mayorChoice, execute, finishElimination,
-    continue: continueGame, endStage,
+    continue: continueGame, endStage, leave,
+    adminRevive, adminKill, adminCancelAction, adminRestartNight, adminRestartVote,
   };
   await handlers[cmd?.type]?.(cmd);
 });
@@ -202,13 +203,14 @@ async function lineup(cmd) {
 
 // ---------- noaptea ----------
 
-async function session() {
-  if (!state || state.winner || !['day', 'intro'].includes(pub.phase)) return;
+async function session(cmd = {}) {
+  if (!state || state.winner) return;
+  if (!(cmd.restart ? pub.phase === 'night' : ['day', 'intro'].includes(pub.phase))) return;
 
-  // Mesajul Bârfitoarei se fixează la începutul nopții.
+  // Mesajul Bârfitoarei se fixează la începutul nopții (la repornire îl păstrăm pe cel deja fixat).
   const gossipId = byRole('gossip');
   const gossip = gossipId && state.alive[gossipId] ? (await get(r(`playerInput/${gossipId}/gossip`))).val() : null;
-  host.gossip = gossip ? String(gossip).slice(0, 140) : null;
+  host.gossip = gossip ? String(gossip).slice(0, 140) : cmd.restart ? host.gossip : null;
   // O Bârfitoare-robot șoptește și ea ceva, ca să se vadă mesajul pe proiector.
   if (!host.gossip && gossipId && state.alive[gossipId] && isBot(gossipId)) host.gossip = botGossip(gossipId);
   host.detectiveDone = false;
@@ -230,6 +232,7 @@ async function session() {
   const nightSeconds = state.settings.nightSeconds ?? 90;
   patch['public/phase'] = 'night';
   patch['public/round'] = state.round;
+  patch['public/nightSeq'] = (pub.nightSeq ?? 0) + 1;
   const endsAt = serverNow() + nightSeconds * 1000;
   patch['public/endsAt'] = endsAt;
   patch['public/progress'] = { done: 0, total: GP().length };
@@ -288,7 +291,7 @@ function watchNight(endsAt = pub.endsAt) {
     if (!host.detectiveDone && det && state.alive[det] && check && validTargets(state, det).includes(check)) {
       host.detectiveDone = true;
       const res = detectiveResult(state, check);
-      await inbox(det, round, res.text, 'detective');
+      await set(r(`private/${det}/inbox/det${round}`), { round, text: res.text, kind: 'detective' });
       await set(r('secret/host'), host);
     }
 
@@ -603,6 +606,55 @@ async function endStage(cmd) {
   await setPublic({ endStage: cmd.stage });
 }
 
+// ---------- urgențe ----------
+
+// Schimbă cine trăiește și anunță toate ecranele; verifică dacă s-a terminat jocul.
+async function setAliveAndCheck(id, alive, extra = {}) {
+  if (!state || !(id in state.alive)) return;
+  state.alive[id] = alive;
+  state.winner = alive ? null : checkWinner(state);
+  const patch = {
+    [`private/${id}/status/alive`]: alive,
+    'public/alive': state.alive,
+    ...extra,
+  };
+  if (state.winner) Object.assign(patch, { 'public/phase': 'end', 'public/winner': state.winner, 'public/endsAt': null }, finalPatch());
+  await update(r(), patch);
+  await save();
+}
+
+// Din panoul de comandă: cine pleacă de la petrecere devine fantomă, iar rolul i se dezvăluie.
+async function leave(cmd) {
+  if (!state || !state.alive[cmd.id] || pub.phase === 'end') return;
+  const role = ROLES[state.roles[cmd.id]];
+  state.history.push({ type: 'left', round: state.round, id: cmd.id });
+  await setAliveAndCheck(cmd.id, false, { 'public/notice': { text: `🚪 ${nameOf(cmd.id)} a părăsit conacul. Era ${role.emoji} ${role.name}.`, at: serverNow() } });
+}
+
+// Din panoul de urgență.
+async function adminRevive(cmd) { await setAliveAndCheck(cmd.id, true); }
+async function adminKill(cmd) { if (state?.alive[cmd.id]) await setAliveAndCheck(cmd.id, false); }
+
+async function adminCancelAction(cmd) {
+  if (pub.phase !== 'night' || !state) return;
+  await remove(r(`actions/${state.round}/${cmd.id}`));
+}
+
+async function adminRestartNight() {
+  if (pub.phase !== 'night' || !state) return;
+  stopActions?.(); stopActions = null;
+  clearTimeout(nightTimer);
+  await remove(r(`actions/${state.round}`));
+  for (const p of GP()) await remove(r(`private/${p.id}/inbox/det${state.round}`));
+  await session({ restart: true });
+}
+
+async function adminRestartVote() {
+  if (!state || !['vote', 'reveal'].includes(pub.phase)) return;
+  stopMayor?.(); stopMayor = null;
+  await openVote('first');
+}
+
 // ---------- joc nou ----------
 
 async function reset() {
@@ -634,6 +686,8 @@ async function reset() {
     'public/rolesInGame': null,
     'public/final': null,
     'public/endStage': null,
+    'public/nightSeq': null,
+    'public/notice': null,
   };
   for (const p of PLAYERS) patch[`private/${p.id}`] = { name: p.name };
   await update(r(), patch);

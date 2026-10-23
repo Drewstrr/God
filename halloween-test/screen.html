@@ -448,10 +448,27 @@
       else sfx.playMusic(theme ?? null);
     }
 
+    // Anunțuri scurte peste orice ecran (de exemplu cineva a părăsit conacul).
+    let lastNotice = null;
+    function showNotice(n) {
+      if (!n || n.at === lastNotice) return;
+      const fresh = lastNotice !== null;
+      lastNotice = n.at;
+      if (!fresh && serverNow() - n.at > 15000) return;
+      const el = document.createElement('div');
+      el.className = 'notice';
+      el.textContent = n.text;
+      document.body.appendChild(el);
+      sfx.bell(0, 147, 4, 0.4);
+      setTimeout(() => el.classList.add('leaving'), 7000);
+      setTimeout(() => el.remove(), 8200);
+    }
+
     let joinedBefore = null;
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
       const phase = pub.phase ?? 'lobby';
+      showNotice(pub.notice);
       // Un clinchet când se aprinde lumânarea unui jucător nou.
       const joined = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
       if (phase === 'lobby' && joinedBefore !== null && joined > joinedBefore) sfx.chime();

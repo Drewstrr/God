@@ -224,9 +224,18 @@
           <tr>
             <td><b>${esc(p.name)}</b>${!lobby && p.bot ? ' 🤖' : ''}</td>
             <td>${state}</td>
-            <td style="text-align:right">${p.hasPin ? `<button class="btn small" data-reset="${id}">🔄 Resetează PIN</button>` : ''}</td>
+            <td style="text-align:right">
+              ${!lobby && pub.phase !== 'end' && pub.alive?.[id] ? `<button class="btn small ghost" data-leave="${id}">🚪 Pleacă</button>` : ''}
+              ${p.hasPin ? `<button class="btn small" data-reset="${id}">🔄 Resetează PIN</button>` : ''}
+            </td>
           </tr>`;
       }).join('');
+      document.querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', () => {
+        const name = pub.players[b.dataset.leave].name;
+        if (!confirm(`${name} părăsește conacul? Devine fantomă și rolul i se dezvăluie pe proiector.`)) return;
+        b.disabled = true;
+        sendCommand('leave', { id: b.dataset.leave });
+      }));
       document.querySelectorAll('[data-reset]').forEach((b) => b.addEventListener('click', async () => {
         const name = pub.players[b.dataset.reset].name;
         if (!confirm(`Resetezi PIN-ul lui ${name}? Va trebui să-și aleagă unul nou.`)) return;

@@ -473,3 +473,5 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 .title-card .n { font-size: 2vw; font-weight: 800; margin-top: 0.6vh; }
 .title-card .why { color: var(--muted); font-size: 1.2vw; margin-top: 0.4vh; }
 .bets-line { position: relative; z-index: 2; margin-top: 2vh; }
+.notice { position: fixed; left: 50%; top: 8vh; transform: translateX(-50%); z-index: 60; padding: 2vh 3vw; border-radius: 18px; background: rgba(20, 8, 12, 0.95); border: 2px solid var(--blood-hi); font-size: 2.2vw; font-weight: 700; box-shadow: 0 0 40px rgba(224, 36, 71, 0.5); animation: rise 0.6s ease-out; transition: opacity 1s; }
+.notice.leaving { opacity: 0; }

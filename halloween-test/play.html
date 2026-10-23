@@ -115,8 +115,8 @@
     let guideOpen = false;
     let chosen = null;
     const drafts = { testament: null, gossip: null };
-    const sent = (round) => { try { return localStorage.getItem(`blackwood-night-${me}-${pub.gameId}-${round}`); } catch { return null; } };
-    const markSent = (round, v) => { try { localStorage.setItem(`blackwood-night-${me}-${pub.gameId}-${round}`, v); } catch {} };
+    const sent = (round) => { try { return localStorage.getItem(`blackwood-night-${me}-${pub.gameId}-${round}-${pub.nightSeq ?? 0}`); } catch { return null; } };
+    const markSent = (round, v) => { try { localStorage.setItem(`blackwood-night-${me}-${pub.gameId}-${round}-${pub.nightSeq ?? 0}`, v); } catch {} };
     const fmt = (ms) => { const t = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
 
     function showHome() {
@@ -135,7 +135,7 @@
       if (!me) return;
       const phase = pub.phase ?? 'lobby';
       const night = phase === 'night' && priv?.night?.round === pub.round ? priv.night : null;
-      const sig = JSON.stringify([phase, pub.round, pub.winner, pub.nextSessionAt, priv, Boolean(night), pub.vote?.current, pub.vote?.stage, pub.rolesInGame, pub.endStage]);
+      const sig = JSON.stringify([phase, pub.round, pub.winner, pub.nextSessionAt, priv, Boolean(night), pub.nightSeq, pub.vote?.current, pub.vote?.stage, pub.rolesInGame, pub.endStage]);
       if (!force && sig === lastSig) return;
       lastSig = sig;
       guideOpen = document.querySelector('details.guide')?.open ?? guideOpen;
