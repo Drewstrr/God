@@ -1,7 +1,7 @@
 {
   "rules": {
-    ".read": "auth != null && auth.uid === 'wK5TGHF2LVgRtVCx2C4tBvS1zmq1'",
-    ".write": "auth != null && auth.uid === 'wK5TGHF2LVgRtVCx2C4tBvS1zmq1'",
+    ".read": "auth != null && auth.uid === 'mcH4jTkHmTeHrFfF4ZstVugnb9f1'",
+    ".write": "auth != null && auth.uid === 'mcH4jTkHmTeHrFfF4ZstVugnb9f1'",
     "$env": {
       "public": {
         ".read": true
