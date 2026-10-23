@@ -66,6 +66,26 @@ export const ROLES = {
 
 export const ROLE_KEYS = Object.keys(ROLES);
 
+// Ce face fiecare personaj, spus pentru ceilalți jucători (fișa „Personajele din joc”).
+export const ROLE_ABOUT = {
+  vampire: 'Noaptea mușcă pe cineva. Nu-și cunoaște aliații. Hipnoza nu are efect asupra lui. Răul câștigă dacă rezistă până la final.',
+  servant: 'Știe de la început cine e vampirul. Pentru Detectiv pare nevinovat. O singură dată se poate sacrifica la vot în locul vampirului.',
+  hypnotist: 'Noaptea alege pe cineva care nu are voie să vorbească la ședință. Dacă alege vampirul, hipnoza eșuează și află cine e. Pentru Detectiv pare nevinovat.',
+  detective: 'Noaptea verifică o persoană și află pe loc dacă e vampir. Atenție: Vârcolacul pare vampir, Servitorul și Hipnotizatorul par nevinovați.',
+  hunter: 'Noaptea protejează pe cineva de mușcătură. Nu se poate proteja singur și nici aceeași persoană de două ori la rând.',
+  mayor: 'Rol public. Votul lui contează dublu, iar la egalitate după revot decide el.',
+  gossip: 'Între ședințe scrie un mesaj anonim care apare pe proiector dimineața. Poate spune adevărul sau poate minți.',
+  watchman: 'Noaptea păzește pe cineva. Dacă vampirul îl atacă, Paznicul află cine e vampirul, dar nu-l poate salva.',
+  photographer: 'Noaptea fotografiază pe cineva și află dimineața pe cine a vizat acea persoană cu abilitatea ei.',
+  ironman: 'Noaptea păzește pe cineva. Dacă vampirul îl mușcă (sau îl mușcă pe el), preia mușcătura, primește o listă care îl conține pe vampir și moare noaptea următoare.',
+  werewolf: 'E de partea binelui, dar pentru Detectiv pare vampir. Știe asta și trebuie să se apere.',
+};
+
+// Ordinea în care intră personajele când sunt mai puțini jucători.
+export const ROLE_PRIORITY = ['vampire', 'detective', 'hunter', 'mayor', 'servant', 'watchman', 'hypnotist', 'photographer', 'ironman', 'gossip', 'werewolf'];
+export const MIN_PLAYERS = 4;
+export const recommendedRoles = (n) => ROLE_PRIORITY.slice(0, Math.max(0, Math.min(n, ROLE_PRIORITY.length)));
+
 export const DEFAULT_SETTINGS = { sessions: 4, nightSeconds: 90, discussionSeconds: 300, sacrificeSeconds: 15 };
 
 // ---------- utilitare ----------
@@ -90,9 +110,13 @@ const isAlive = (state, id) => Boolean(id && state.alive[id]);
 
 // ---------- începutul jocului ----------
 
-export function newGame(players = PLAYERS, settings = {}, rng = Math.random) {
-  if (players.length !== ROLE_KEYS.length) throw new Error(`Jocul are nevoie de exact ${ROLE_KEYS.length} jucători.`);
-  const keys = shuffle(ROLE_KEYS, rng);
+// roleKeys: personajele din joc; trebuie să fie câte unul pentru fiecare jucător și să includă vampirul.
+export function newGame(players = PLAYERS, settings = {}, rng = Math.random, roleKeys = recommendedRoles(players.length)) {
+  if (players.length < MIN_PLAYERS) throw new Error(`Jocul are nevoie de cel puțin ${MIN_PLAYERS} jucători.`);
+  if (roleKeys.length !== players.length) throw new Error('Trebuie să fie câte un personaj pentru fiecare jucător.');
+  if (!roleKeys.includes('vampire')) throw new Error('Vampirul trebuie să fie în joc.');
+  if (new Set(roleKeys).size !== roleKeys.length || roleKeys.some((k) => !ROLES[k])) throw new Error('Personaje invalide.');
+  const keys = shuffle(roleKeys, rng);
   const roles = Object.fromEntries(players.map((p, i) => [p.id, keys[i]]));
   return {
     players,
@@ -100,7 +124,7 @@ export function newGame(players = PLAYERS, settings = {}, rng = Math.random) {
     alive: Object.fromEntries(players.map((p) => [p.id, true])),
     settings: { ...DEFAULT_SETTINGS, ...settings },
     round: 1,
-    mayor: players.find((p) => roles[p.id] === 'mayor').id,
+    mayor: players.find((p) => roles[p.id] === 'mayor')?.id ?? null,
     iron: { used: false, doomed: false },
     sacrificeUsed: false,
     lastTargets: { hunter: null, hypnotist: null },

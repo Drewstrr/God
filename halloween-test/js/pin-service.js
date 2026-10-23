@@ -9,6 +9,9 @@ const MAX_FAILS = 5;
 // Votul de pe iPad trece tot pe aici: PIN-ul confirmă cine votează.
 let voteHandler = async () => ({ ok: false, error: 'Votul nu e deschis.' });
 export const setVoteHandler = (fn) => { voteHandler = fn; };
+// Doar motorul activ răspunde (vezi game-host: un singur proiector lucrează).
+let isActive = () => true;
+export const setEngineActive = (fn) => { isActive = fn; };
 const LOCK_MS = 60_000;
 
 export async function hashPin(player, pin) {
@@ -94,7 +97,7 @@ async function handleRequest(uid, req) {
 
 // Ascultă cererile de logare de pe telefoane și le răspunde.
 export function startPinService() {
-  const handle = (snap) => handleRequest(snap.key, snap.val()).catch((e) => console.error('PIN', e));
+  const handle = (snap) => { if (isActive()) handleRequest(snap.key, snap.val()).catch((e) => console.error('PIN', e)); };
   const stops = [onChildAdded(r('pinRequests'), handle), onChildChanged(r('pinRequests'), handle)];
   return () => stops.forEach((stop) => stop());
 }

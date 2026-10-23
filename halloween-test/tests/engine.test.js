@@ -280,3 +280,60 @@ test('simulare aleatorie: 2000 de partide fără erori și mereu cu un câștig�
     assert.ok(['good', 'evil'].includes(g.winner), `partida ${n} n-a avut câștigător`);
   }
 });
+
+test('joc cu mai puțini jucători și personajele recomandate', () => {
+  const five = PLAYERS.slice(0, 5);
+  const g = newGame(five);
+  assert.deepEqual(Object.values(g.roles).sort(), ['detective', 'hunter', 'mayor', 'servant', 'vampire']);
+  assert.equal(Object.keys(g.alive).length, 5);
+});
+
+test('joc fără Primar: egalitatea după revot nu elimină pe nimeni', () => {
+  const four = PLAYERS.slice(0, 4);
+  const g = newGame(four, {}, Math.random, ['vampire', 'detective', 'hunter', 'werewolf']);
+  assert.equal(g.mayor, null);
+  const [a, b, c, d] = four.map((p) => p.id);
+  const v = voteOutcome(g, { [a]: c, [b]: d }, { candidates: [c, d], isRevote: true });
+  assert.equal(v.result, 'none');
+});
+
+test('newGame refuză configurații greșite', () => {
+  assert.throws(() => newGame(PLAYERS.slice(0, 3)));
+  assert.throws(() => newGame(PLAYERS.slice(0, 5), {}, Math.random, ['detective', 'hunter', 'mayor', 'servant', 'watchman']));
+  assert.throws(() => newGame(PLAYERS.slice(0, 5), {}, Math.random, ['vampire', 'hunter']));
+});
+
+test('simulare aleatorie cu 4–11 jucători și personaje la întâmplare', () => {
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const pickFrom = (list) => list[Math.floor(rnd() * list.length)];
+  const others = ['servant', 'hypnotist', 'detective', 'hunter', 'mayor', 'gossip', 'watchman', 'photographer', 'ironman', 'werewolf'];
+  for (let n = 0; n < 1500; n++) {
+    const size = 4 + Math.floor(rnd() * 8);
+    const roles = ['vampire', ...shuffleLocal(others, rnd).slice(0, size - 1)];
+    let g = newGame(PLAYERS.slice(0, size), {}, rnd, roles);
+    for (let guard = 0; !g.winner && guard < 10; guard++) {
+      const actions = {};
+      for (const p of g.players) {
+        if (!g.alive[p.id]) actions[p.id] = { hint: 'ceață' };
+        else { const t = validTargets(g, p.id); if (t.length && rnd() < 0.9) actions[p.id] = { target: pickFrom(t) }; }
+      }
+      let { state } = resolveNight(g, actions, rnd);
+      if (!state.winner) {
+        const alive = state.players.filter((p) => state.alive[p.id]).map((p) => p.id);
+        const votes = Object.fromEntries(alive.map((id) => [id, rnd() < 0.1 ? 'abstain' : pickFrom(alive)]));
+        let v = voteOutcome(state, votes);
+        if (v.result === 'revote') v = voteOutcome(state, votes, { candidates: v.candidates, isRevote: true, mayorChoice: v.candidates[0] });
+        state = v.result === 'eliminate' ? applyElimination(state, v.target, { sacrifice: rnd() < 0.5, votes }).state : applyNoElimination(state, votes).state;
+      }
+      g = state.winner ? state : nextRound(state);
+    }
+    assert.ok(['good', 'evil'].includes(g.winner));
+  }
+});
+
+function shuffleLocal(list, rnd) {
+  const a = [...list];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}

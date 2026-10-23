@@ -4,9 +4,9 @@
 import {
   PLAYERS, ROLES, newGame, initialKnowledge, resolveNight, detectiveResult, validTargets,
   nightMode, nightPrompt, nextRound, shuffle, voteOutcome, applyElimination, applyNoElimination,
-  sacrificeCandidate,
+  sacrificeCandidate, recommendedRoles, ROLE_PRIORITY, MIN_PLAYERS,
 } from './engine.js';
-import { setVoteHandler } from './pin-service.js';
+import { setVoteHandler, setEngineActive } from './pin-service.js';
 import {
   r, get, set, update, remove, push, onValue, onChildAdded, serverNow,
 } from './fb.js';
@@ -21,6 +21,15 @@ let stopActions = null;
 let busy = Promise.resolve();
 
 const nameOf = (id) => PLAYERS.find((p) => p.id === id)?.name ?? id;
+// Jucătorii din partida curentă (pot fi mai puțini decât toți invitații).
+const GP = () => state?.players ?? PLAYERS;
+const byRole = (role) => GP().find((p) => state.roles[p.id] === role)?.id ?? null;
+
+// Un singur motor are voie să lucreze. Ultimul proiector deschis preia controlul;
+// celelalte rămân doar ecrane, ca să nu calculeze două motoare în paralel.
+const ENGINE_ID = Math.random().toString(36).slice(2, 10);
+let active = true;
+setEngineActive(() => active);
 const serial = (fn) => (...args) => (busy = busy.then(() => fn(...args)).catch((e) => console.error('motor', e)));
 
 // Firebase nu păstrează null-urile și transformă listele; refacem forma așteptată.
@@ -36,6 +45,7 @@ function revive(s) {
 }
 
 async function save() {
+  if (!active) return;
   await set(r('secret/state'), state);
   await set(r('secret/host'), host);
 }
@@ -48,7 +58,19 @@ async function setPublic(patch) {
 
 // ---------- pornire ----------
 
-export async function startHost() {
+export async function startHost({ onPassive = () => {} } = {}) {
+  await set(r('secret/engineOwner'), ENGINE_ID);
+  await set(r('public/engineInfo'), { id: ENGINE_ID, device: navigator.userAgent.match(/\(([^)]+)\)/)?.[1] ?? 'necunoscut', since: serverNow() });
+  onValue(r('secret/engineOwner'), (snap) => {
+    if (snap.val() && snap.val() !== ENGINE_ID && active) {
+      active = false;
+      clearTimeout(nightTimer);
+      clearTimeout(sacrificeTimer);
+      stopActions?.();
+      stopMayor?.();
+      onPassive();
+    }
+  });
   state = revive((await get(r('secret/state'))).val());
   host = (await get(r('secret/host'))).val() ?? {};
   if (host.vote) host.vote = { votes: {}, candidates: null, outcome: null, ...host.vote };
@@ -57,6 +79,7 @@ export async function startHost() {
   if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { sessions: 4, nightSeconds: 90, discussionSeconds: 300 } });
 
   onChildAdded(r('commands'), (snap) => {
+    if (!active) return;
     const cmd = snap.val();
     remove(r(`commands/${snap.key}`));
     run(cmd);
@@ -70,8 +93,9 @@ export async function startHost() {
 }
 
 const run = serial(async (cmd) => {
+  if (!active) return;
   const handlers = {
-    fillBots, clearBots, start, party, session, endNight, discussion, reset, settings,
+    fillBots, clearBots, start, party, session, endNight, discussion, reset, settings, lineup,
     startVote, castVote, skipVoter, botVote, reveal, revote, mayorChoice, execute, finishElimination,
     continue: continueGame,
   };
@@ -83,7 +107,7 @@ const run = serial(async (cmd) => {
 async function fillBots() {
   const players = pub.players ?? {};
   const patch = {};
-  for (const [id, p] of Object.entries(players)) if (!p.hasPin) patch[`players/${id}/bot`] = true;
+  for (const [id, p] of Object.entries(players)) if (!p.hasPin && inLineup(id)) patch[`players/${id}/bot`] = true;
   await update(r('public'), patch);
 }
 
@@ -100,15 +124,18 @@ const isBot = (id) => Boolean(pub.players?.[id]?.bot);
 
 async function start() {
   if (pub.phase !== 'lobby') return;
-  const missing = Object.values(pub.players ?? {}).filter((p) => !p.hasPin && !p.bot);
-  if (missing.length) return;
+  const chosen = PLAYERS.filter((p) => inLineup(p.id));
+  const missing = chosen.filter((p) => !pub.players?.[p.id]?.hasPin && !pub.players?.[p.id]?.bot);
+  if (missing.length || chosen.length < MIN_PLAYERS) return;
+  const roles = lineupRoles(chosen.length);
 
-  state = newGame(PLAYERS, pub.settings ?? {});
+  state = newGame(chosen, pub.settings ?? {}, Math.random, roles);
   host = {};
   const knowledge = initialKnowledge(state);
 
   const patch = {};
-  for (const p of PLAYERS) {
+  for (const p of PLAYERS) if (!inLineup(p.id)) patch[`private/${p.id}`] = { name: p.name, sitOut: true };
+  for (const p of chosen) {
     const role = ROLES[state.roles[p.id]];
     patch[`private/${p.id}`] = {
       name: p.name,
@@ -126,7 +153,8 @@ async function start() {
   patch['public/phase'] = 'intro';
   patch['public/gameId'] = Date.now().toString(36);
   patch['public/round'] = 1;
-  patch['public/mayor'] = { id: state.mayor, name: nameOf(state.mayor) };
+  patch['public/mayor'] = state.mayor ? { id: state.mayor, name: nameOf(state.mayor) } : null;
+  patch['public/rolesInGame'] = ROLE_PRIORITY.filter((k) => roles.includes(k));
   patch['public/alive'] = state.alive;
   patch['public/morning'] = null;
   patch['public/winner'] = null;
@@ -155,23 +183,40 @@ async function settings(cmd) {
 
 const clamp = (v, lo, hi, def) => (Number.isFinite(+v) ? Math.min(hi, Math.max(lo, Math.round(+v))) : def);
 
+// Cine joacă și cu ce personaje (ales din panou, înainte de start).
+const inLineup = (id) => pub.lineup?.players?.[id] !== false;
+function lineupRoles(n) {
+  const chosen = Object.values(pub.lineup?.roles ?? {}).filter((k) => ROLES[k]);
+  return chosen.length === n && chosen.includes('vampire') ? chosen : recommendedRoles(n);
+}
+
+async function lineup(cmd) {
+  if (pub.phase !== 'lobby') return;
+  const players = Object.fromEntries(PLAYERS.map((p) => [p.id, cmd.players?.[p.id] !== false]));
+  const roles = (cmd.roles ?? []).filter((k) => ROLES[k]);
+  const patch = { lineup: { players, roles: roles.length ? roles : null } };
+  // Cine nu joacă nu poate fi nici robot.
+  for (const p of PLAYERS) if (!players[p.id]) patch[`players/${p.id}/bot`] = null;
+  await update(r('public'), patch);
+}
+
 // ---------- noaptea ----------
 
 async function session() {
   if (!state || state.winner || !['day', 'intro'].includes(pub.phase)) return;
 
   // Mesajul Bârfitoarei se fixează la începutul nopții.
-  const gossipId = PLAYERS.find((p) => state.roles[p.id] === 'gossip').id;
-  const gossip = state.alive[gossipId] ? (await get(r(`playerInput/${gossipId}/gossip`))).val() : null;
+  const gossipId = byRole('gossip');
+  const gossip = gossipId && state.alive[gossipId] ? (await get(r(`playerInput/${gossipId}/gossip`))).val() : null;
   host.gossip = gossip ? String(gossip).slice(0, 140) : null;
   // O Bârfitoare-robot șoptește și ea ceva, ca să se vadă mesajul pe proiector.
-  if (!host.gossip && state.alive[gossipId] && isBot(gossipId)) host.gossip = botGossip(gossipId);
+  if (!host.gossip && gossipId && state.alive[gossipId] && isBot(gossipId)) host.gossip = botGossip(gossipId);
   host.detectiveDone = false;
   if (gossip) await remove(r(`playerInput/${gossipId}/gossip`));
 
-  const alive = PLAYERS.filter((p) => state.alive[p.id]);
+  const alive = GP().filter((p) => state.alive[p.id]);
   const patch = {};
-  for (const p of PLAYERS) {
+  for (const p of GP()) {
     const mode = nightMode(state, p.id);
     patch[`private/${p.id}/night`] = {
       round: state.round,
@@ -186,14 +231,14 @@ async function session() {
   patch['public/round'] = state.round;
   const endsAt = serverNow() + nightSeconds * 1000;
   patch['public/endsAt'] = endsAt;
-  patch['public/progress'] = { done: 0, total: PLAYERS.length };
+  patch['public/progress'] = { done: 0, total: GP().length };
   patch['public/morning'] = null;
   patch['public/nextSessionAt'] = null;
   await update(r(), patch);
   await save();
 
   // Roboții aleg după câteva secunde.
-  for (const p of PLAYERS.filter((x) => isBot(x.id))) {
+  for (const p of GP().filter((x) => isBot(x.id))) {
     const delay = 3000 + Math.random() * Math.min(20000, nightSeconds * 400);
     setTimeout(() => botAct(p.id, state.round), delay);
   }
@@ -201,7 +246,7 @@ async function session() {
 }
 
 function botGossip(self) {
-  const others = PLAYERS.filter((p) => state.alive[p.id] && p.id !== self).map((p) => p.name);
+  const others = GP().filter((p) => state.alive[p.id] && p.id !== self).map((p) => p.name);
   const a = shuffle(others)[0] ?? 'cineva';
   const b = shuffle(others.filter((n) => n !== a))[0] ?? 'altcineva';
   const lines = [
@@ -236,18 +281,18 @@ function watchNight(endsAt = pub.endsAt) {
     const actions = snap.val() ?? {};
 
     // Detectivul primește rezultatul pe loc, o singură dată pe noapte.
-    const det = PLAYERS.find((p) => state.roles[p.id] === 'detective').id;
-    const check = actions[det]?.target;
-    if (!host.detectiveDone && state.alive[det] && check && validTargets(state, det).includes(check)) {
+    const det = byRole('detective');
+    const check = det && actions[det]?.target;
+    if (!host.detectiveDone && det && state.alive[det] && check && validTargets(state, det).includes(check)) {
       host.detectiveDone = true;
       const res = detectiveResult(state, check);
       await inbox(det, round, res.text, 'detective');
       await set(r('secret/host'), host);
     }
 
-    const done = PLAYERS.filter((p) => actions[p.id]).length;
-    await setPublic({ progress: { done, total: PLAYERS.length } });
-    if (done >= PLAYERS.length) setTimeout(() => run({ type: 'endNight', round }), 2500);
+    const done = GP().filter((p) => actions[p.id]).length;
+    await setPublic({ progress: { done, total: GP().length } });
+    if (done >= GP().length) setTimeout(() => run({ type: 'endNight', round }), 2500);
   }));
   const left = Math.max(0, (endsAt ?? serverNow()) - serverNow());
   nightTimer = setTimeout(() => run({ type: 'endNight', round }), left + 500);
@@ -267,7 +312,7 @@ async function endNight(cmd = {}) {
 
   const testaments = (await get(r('playerInput'))).val() ?? {};
   const patch = {};
-  for (const p of PLAYERS) {
+  for (const p of GP()) {
     patch[`private/${p.id}/night`] = null;
     patch[`private/${p.id}/status`] = {
       alive: state.alive[p.id],
@@ -313,7 +358,7 @@ async function discussion() {
 
 // ---------- votul ----------
 
-const aliveIds = () => PLAYERS.filter((p) => state.alive[p.id]).map((p) => p.id);
+const aliveIds = () => GP().filter((p) => state.alive[p.id]).map((p) => p.id);
 const names = (ids) => (ids ?? []).map((id) => ({ id, name: nameOf(id) }));
 
 function publicVote() {
@@ -518,7 +563,7 @@ async function continueGame(cmd = {}) {
   state = nextRound(state);
   state.hypnotized = null;
   const patch = {};
-  for (const p of PLAYERS) patch[`private/${p.id}/status/hypnotized`] = false;
+  for (const p of GP()) patch[`private/${p.id}/status/hypnotized`] = false;
   patch['public/phase'] = 'day';
   patch['public/round'] = state.round;
   patch['public/endsAt'] = null;
@@ -559,6 +604,7 @@ async function reset() {
     'public/reveal': null,
     'public/elimination': null,
     'public/doomedName': null,
+    'public/rolesInGame': null,
   };
   for (const p of PLAYERS) patch[`private/${p.id}`] = { name: p.name };
   await update(r(), patch);

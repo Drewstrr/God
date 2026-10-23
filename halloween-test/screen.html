@@ -33,7 +33,14 @@
       document.getElementById('status').textContent = connected ? '⚙️ motor pornit' : '⚠️ fără internet';
     });
     startPinService();
-    await startHost();
+    await startHost({
+      onPassive: () => {
+        const bar = document.createElement('div');
+        bar.className = 'passive-bar';
+        bar.textContent = '⚠️ Proiectorul a fost deschis în altă parte. Motorul lucrează acolo; aici doar se afișează. Reîncarcă pagina ca să preiei motorul aici.';
+        document.body.appendChild(bar);
+      },
+    });
 
     let pub = {};
     let shownMorning = null;
@@ -52,7 +59,8 @@
 
     // Două rânduri cât mai egale: 11 -> 5 sus și 6 jos.
     function candles({ lobby = false } = {}) {
-      const players = Object.entries(pub.players ?? {});
+      // În lobby: doar cei care joacă; în joc: cei din partidă.
+      const players = Object.entries(pub.players ?? {}).filter(([id]) => (lobby ? pub.lineup?.players?.[id] !== false : id in (pub.alive ?? {})));
       const items = players.map(([id, p], i) => {
         const cls = lobby ? (p.hasPin || p.bot ? '' : 'waiting') : (pub.alive?.[id] === false ? 'out' : '');
         return candleHtml(p.name, cls, `${esc(p.name)}${lobby && p.bot ? ' 🤖' : ''}`, i);
@@ -160,7 +168,7 @@
 
     const views = {
       lobby() {
-        const players = Object.values(pub.players ?? {});
+        const players = Object.entries(pub.players ?? {}).filter(([id]) => pub.lineup?.players?.[id] !== false).map(([, p]) => p);
         const ready = players.filter((p) => p.hasPin || p.bot).length;
         return `
           <h1>Conacul Blackwood</h1>
@@ -181,7 +189,7 @@
               <li>🤫 Nu-ți arăta telefonul nimănui.</li>
             </ul>
           </div>
-          <div class="announce">🎩 Primarul conacului este <b>${esc(pub.mayor?.name)}</b><br><span class="muted">Votul lui contează dublu.</span></div>`;
+          ${pub.mayor ? `<div class="announce">🎩 Primarul conacului este <b>${esc(pub.mayor.name)}</b><br><span class="muted">Votul lui contează dublu.</span></div>` : ''}`;
       },
       day() {
         return `

@@ -34,6 +34,7 @@
     import { r, onValue, set, requireEngineLogin, serverNow } from './js/fb.js';
     import { resetPin } from './js/pin-service.js';
     import { sendCommand } from './js/game-host.js';
+    import { ROLES, ROLE_PRIORITY, recommendedRoles, MIN_PLAYERS } from './js/engine.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
@@ -48,8 +49,41 @@
       vote: '🗳️ Votul', reveal: '🎭 Dezvăluirea', sacrifice: '⏳ Eliminarea', elimination: '⚰️ Eliminat',
     };
 
+    const inLineup = (id) => pub.lineup?.players?.[id] !== false;
+    const chosenRoles = () => Object.values(pub.lineup?.roles ?? {});
+
+    // Cine joacă și cu ce personaje: se alege înainte de start.
+    function lineupHtml() {
+      const all = Object.entries(pub.players ?? {});
+      const n = all.filter(([id]) => inLineup(id)).length;
+      const roles = chosenRoles();
+      const using = roles.length ? roles : recommendedRoles(n);
+      const ok = n >= MIN_PLAYERS && using.length === n && using.includes('vampire');
+      return `
+        <div class="lineup">
+          <h3>👥 Cine joacă (${n})</h3>
+          <div class="chips">${all.map(([id, p]) => `<button class="chip ${inLineup(id) ? 'on' : ''}" data-play="${id}">${esc(p.name)}</button>`).join('')}</div>
+          <h3>🎭 Personajele din joc (${using.length} din ${n} necesare)</h3>
+          <p class="muted">${roles.length ? 'Alese de tine.' : 'Se folosesc cele recomandate pentru acest număr de jucători.'} Apasă pe un personaj ca să-l scoți sau să-l adaugi.</p>
+          <div class="chips">${ROLE_PRIORITY.map((k) => `<button class="chip ${using.includes(k) ? 'on' : ''} ${ROLES[k].team === 'evil' ? 'evil' : ''}" data-role="${k}" ${k === 'vampire' ? 'disabled' : ''}>${ROLES[k].emoji} ${ROLES[k].name}</button>`).join('')}</div>
+          <button class="btn small ghost" id="recommend">✨ Folosește personajele recomandate pentru ${n} jucători</button>
+          ${n < MIN_PLAYERS ? `<p class="error">Sunt necesari cel puțin ${MIN_PLAYERS} jucători.</p>` : using.length !== n ? `<p class="error">Alege exact ${n} personaje (acum sunt ${using.length}).</p>` : ''}
+        </div>`;
+    }
+
+    function lineupReady() {
+      const n = Object.keys(pub.players ?? {}).filter(inLineup).length;
+      const roles = chosenRoles();
+      const using = roles.length ? roles : recommendedRoles(n);
+      return n >= MIN_PLAYERS && using.length === n;
+    }
+
+    function sendLineup(players, roles) {
+      sendCommand('lineup', { players, roles });
+    }
+
     function actionsFor(phase) {
-      const players = Object.values(pub.players ?? {});
+      const players = Object.entries(pub.players ?? {}).filter(([id]) => inLineup(id)).map(([, p]) => p);
       const ready = players.filter((p) => p.hasPin || p.bot).length;
       const s = pub.settings ?? {};
       const round = pub.round ?? 1;
@@ -67,7 +101,8 @@
             Discuție (sec) <input type="number" id="s-disc" value="${s.discussionSeconds ?? 300}" min="30" max="1800">
             <button class="btn small ghost" id="save-settings">Salvează</button>
           </div>
-          <button class="btn" data-cmd="start" ${ready < players.length ? 'disabled' : ''}>▶️ Pornește jocul</button>`;
+          ${lineupHtml()}
+          <button class="btn" data-cmd="start" ${ready < players.length || !lineupReady() ? 'disabled' : ''}>▶️ Pornește jocul</button>`;
         case 'intro': return `
           <p class="muted">Proiectorul arată povestea, regulile și Primarul. Fiecare își vede rolul pe telefon.</p>
           <button class="btn" data-cmd="party">🎉 Începe petrecerea</button>
@@ -133,6 +168,20 @@
         b.disabled = true;
         await sendCommand(b.dataset.cmd);
       }));
+      box.querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => {
+        const players = Object.fromEntries(Object.keys(pub.players ?? {}).map((id) => [id, inLineup(id)]));
+        players[b.dataset.play] = !players[b.dataset.play];
+        // Lista de personaje se resetează la cea recomandată când se schimbă numărul de jucători.
+        sendLineup(players, []);
+      }));
+      box.querySelectorAll('[data-role]').forEach((b) => b.addEventListener('click', () => {
+        const n = Object.keys(pub.players ?? {}).filter(inLineup).length;
+        const current = chosenRoles().length ? chosenRoles() : recommendedRoles(n);
+        const k = b.dataset.role;
+        const roles = current.includes(k) ? current.filter((x) => x !== k) : [...current, k];
+        sendLineup(pub.lineup?.players ?? {}, roles);
+      }));
+      box.querySelector('#recommend')?.addEventListener('click', () => sendLineup(pub.lineup?.players ?? {}, []));
       box.querySelector('#save-settings')?.addEventListener('click', () => sendCommand('settings', {
         settings: {
           sessions: +document.getElementById('s-sessions').value,
@@ -157,6 +206,7 @@
         const alive = pub.alive?.[id] !== false;
         const state = lobby
           ? (p.hasPin ? '<span class="pill on">are PIN</span>' : p.bot ? '<span class="pill">🤖 robot</span>' : '<span class="pill">fără PIN</span>')
+          : !(id in (pub.alive ?? {})) ? '<span class="pill">nu joacă</span>'
           : (alive ? '<span class="pill on">în viață</span>' : '<span class="pill">👻 fantomă</span>');
         return `
           <tr>
@@ -190,7 +240,7 @@
     onValue(r('public/engine'), (snap) => {
       const el = document.getElementById('engine');
       const on = Boolean(snap.val()?.online);
-      el.textContent = on ? '⚙️ Motorul e pornit.' : '⚠️ Motorul e oprit. Deschide pagina Proiector.';
+      el.textContent = on ? `⚙️ Motorul e pornit${pub.engineInfo ? ` (pe ${pub.engineInfo.device})` : ''}. Ține Proiectorul deschis într-un SINGUR loc.` : '⚠️ Motorul e oprit. Deschide pagina Proiector.';
       el.className = on ? 'ok' : 'error';
     });
 
@@ -199,7 +249,7 @@
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
       const ready = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
-      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.vote, pub.reveal?.outcome]);
+      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.vote, pub.reveal?.outcome, pub.lineup, pub.engineInfo]);
       if (sig !== lastSig) { lastSig = sig; render(); } else renderPlayers();
     });
 
