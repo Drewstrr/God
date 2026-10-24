@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Balul Contelui – Proiector</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/vendor/qrcode.js"></script>
+</head>
+<body class="screen">
+  <div class="wrap" id="login"></div>
+  <div class="screen-wrap" id="stage" hidden></div>
+  <div class="status-dot" id="status">⚙️ motor oprit</div>
+
+  <script type="module">
+    import { r, onValue, requireEngineLogin, serverNow, showUpdateBanner } from './js/fb.js';
+    showUpdateBanner();
+    import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
+    import { startHost } from './js/game-host.js';
+    import * as sfx from './js/sfx.js';
+    import { YOUTUBE_MUSIC } from './js/music.js';
+    import { candleSVG, animateFlames } from './js/candles.js';
+    import { smokeAt } from './js/smoke.js';
+    import { startBlood, stopBlood } from './js/blood.js';
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const stage = document.getElementById('stage');
+    const joinUrl = `${location.host}${location.pathname.replace(/screen(\.html)?$/, 'play')}`;
+    // Codul QR cu adresa paginii pentru telefoane.
+    const qrSvg = (() => {
+      try {
+        const qr = window.qrcode(0, 'M');
+        qr.addData(`${location.protocol}//${joinUrl}`);
+        qr.make();
+        return qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+      } catch { return ''; }
+    })();
+
+    await requireEngineLogin(document.getElementById('login'));
+    document.getElementById('login').hidden = true;
+    stage.hidden = false;
+
+    await ensurePlayers();
+    announceEngine((connected) => {
+      document.getElementById('status').textContent = connected ? '⚙️ motor pornit' : '⚠️ fără internet';
+    });
+    startPinService();
+    await startHost({
+      onPassive: () => {
+        const bar = document.createElement('div');
+        bar.className = 'passive-bar';
+        bar.textContent = '⚠️ Proiectorul a fost deschis în altă parte. Motorul lucrează acolo; aici doar se afișează. Reîncarcă pagina ca să preiei motorul aici.';
+        document.body.appendChild(bar);
+      },
+    });
+
+    let pub = {};
+    let shownMorning = null;
+    let ticker = null;
+
+    const fmt = (ms) => {
+      const s = Math.max(0, Math.ceil(ms / 1000));
+      return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+    };
+
+    // Valori „aleatorii” stabile pentru fiecare nume, ca flăcările să nu pâlpâie toate la fel.
+    const seeded = (str, n) => { let h = 0; for (const c of str + n) h = (h * 31 + c.charCodeAt(0)) >>> 0; return (h % 1000) / 1000; };
+
+    animateFlames();
+    const candleHtml = (name, cls, label, index) => candleSVG(name, { cls, label, index });
+
+    // Două rânduri cât mai egale: 11 -> 5 sus și 6 jos.
+    function candles({ lobby = false } = {}) {
+      // În lobby: doar cei care joacă; în joc: cei din partidă.
+      const players = Object.entries(pub.players ?? {}).filter(([id]) => (lobby ? pub.lineup?.players?.[id] !== false : id in (pub.alive ?? {})));
+      const items = players.map(([id, p], i) => {
+        const cls = lobby ? (p.hasPin || p.bot ? '' : 'waiting') : (pub.alive?.[id] === false ? 'out' : '');
+        return candleHtml(p.name, cls, `${esc(p.name)}${lobby && p.bot ? ' <span class="bot">🤖</span>' : ''}`, i);
+      });
+      const top = Math.floor(items.length / 2);
+      const rows = items.length > 6 ? [items.slice(0, top), items.slice(top)] : [items];
+      return `<div class="candle-rows">${rows.map((row) => `<div class="candle-row">${row.join('')}</div>`).join('')}</div>`;
+    }
+
+    // Dacă nu încape totul pe proiector, micșorăm lumânările până încape.
+    // Totul (titlu, cronometru, lumânări, nume) trebuie să încapă între 3% și 94% din înălțimea ecranului;
+    // unele televizoare taie marginile, de aceea lăsăm loc.
+    // Lumânările se așază pe unul sau două rânduri, cum ies mai mari, și se micșorează doar cât să încapă.
+    // Totul trebuie să rămână între 3% și 94% din înălțime (unele televizoare taie marginile).
+    // Reluarea nopților trebuie să încapă toată pe ecran: alegem numărul de coloane
+    // și micșorăm textul până când nu mai iese nimic în afară.
+    function fitReplay() {
+      const box = stage.querySelector('.replay-box');
+      const list = box?.querySelector('.replay');
+      if (!list) return;
+      const blocks = list.children.length;
+      // Cutia se oprește la 94% din înălțimea ecranului (unele televizoare taie marginile).
+      box.style.height = `${Math.max(100, window.innerHeight * 0.94 - box.getBoundingClientRect().top)}px`;
+      let best = null;
+      for (const cols of [3, 4, 5]) {
+        if (cols > Math.max(3, blocks)) break;
+        list.style.columnCount = cols;
+        let lo = 0.4, hi = 1.6;
+        for (let i = 0; i < 12; i++) {
+          const mid = (lo + hi) / 2;
+          list.style.setProperty('--rs', mid);
+          if (list.scrollHeight <= box.clientHeight && list.scrollWidth <= box.clientWidth + 2) lo = mid; else hi = mid;
+        }
+        if (!best || lo > best.scale) best = { cols, scale: lo };
+      }
+      list.style.columnCount = best.cols;
+      list.style.setProperty('--rs', best.scale);
+    }
+    window.addEventListener('resize', fitReplay);
+
+    function fitStage() {
+      const holder = stage.querySelector('.candle-rows');
+      if (!holder) return;
+      const candles = [...holder.querySelectorAll('.candle')];
+      const arrange = (rowCount) => {
+        const per = Math.ceil(candles.length / rowCount);
+        const firstRow = rowCount === 2 ? Math.floor(candles.length / 2) : candles.length;
+        holder.innerHTML = '';
+        const sizes = rowCount === 2 ? [firstRow, candles.length - firstRow] : [per];
+        let i = 0;
+        for (const n of sizes) {
+          const row = document.createElement('div');
+          row.className = 'candle-row';
+          candles.slice(i, i + n).forEach((c) => row.appendChild(c));
+          i += n;
+          holder.appendChild(row);
+        }
+      };
+      const fits = () => {
+        const boxes = [...stage.children, ...stage.querySelectorAll('.candle .name')].map((e) => e.getBoundingClientRect());
+        const top = Math.min(...boxes.map((x) => x.top));
+        const bottom = Math.max(...boxes.map((x) => x.bottom));
+        const wide = [...holder.querySelectorAll('.candle-row')].every((row) => row.scrollWidth <= stage.clientWidth * 0.98);
+        return top >= innerHeight * 0.03 && bottom <= innerHeight * 0.94 && wide;
+      };
+      const best = (rowCount) => {
+        arrange(rowCount);
+        let size = Math.min(innerWidth * 0.014, innerHeight * 0.02);
+        stage.style.setProperty('--cs', `${size.toFixed(2)}px`);
+        for (let i = 0; i < 40 && !fits(); i++) {
+          size *= 0.95;
+          stage.style.setProperty('--cs', `${size.toFixed(2)}px`);
+        }
+        return size;
+      };
+      const two = candles.length > 6 ? best(2) : 0;
+      const one = best(1);
+      if (two > one) best(2);
+    }
+    window.addEventListener('resize', fitStage);
+    document.fonts?.ready.then(fitStage);
+    // Verificăm din nou periodic (fonturile sau textele se pot schimba după afișare).
+    setInterval(() => {
+      const names = stage.querySelectorAll('.candle .name');
+      if (names.length && [...names].pop().getBoundingClientRect().bottom > window.innerHeight * 0.94) fitStage();
+    }, 1500);
+
+    // Din când în când, o adiere face o flacără să tremure mai tare.
+    setInterval(() => {
+      const lit = [...document.querySelectorAll('.candle-rows .candle:not(.out):not(.waiting)')];
+      const c = lit[Math.floor(Math.random() * lit.length)];
+      if (!c) return;
+      c.classList.add('gust');
+      setTimeout(() => c.classList.remove('gust'), 450 + Math.random() * 500);
+    }, 1400);
+
+    // Ceremonia morții: lumânarea apare, se aprinde puternic, se stinge, apoi apare încet numele.
+    const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+    async function ceremony(name, sub = '') {
+      const box = document.createElement('div');
+      box.className = 'ceremony';
+      box.innerHTML = `${candleSVG(name, { label: null, short: true })}<div class="ceremony-name">${esc(name)}</div><div class="ceremony-sub">${sub}</div>`;
+      document.body.appendChild(box);
+      const candle = box.querySelector('.candle');
+      candle.dataset.state = 'small';
+      sfx.duckMusic(9);
+      sfx.death();
+      await wait(100); candle.classList.add('appear');
+      await wait(500); candle.dataset.state = 'normal';
+      await wait(500); candle.dataset.state = 'flare';
+      await wait(1400); candle.dataset.state = 'dying';
+      await wait(600); candle.dataset.state = 'dead';
+      // Fumul pornește din vârful fitilului.
+      const ember = candle.querySelector('.c-ember').getBoundingClientRect();
+      smokeAt(ember.left + ember.width / 2, ember.top, { seconds: 3.2, scale: Math.max(1, innerHeight / 700) });
+      await wait(1100); box.querySelector('.ceremony-name').classList.add('show');
+      await wait(1800); box.querySelector('.ceremony-sub').classList.add('show');
+      await wait(2600); box.classList.add('leaving');
+      await wait(1200); box.remove();
+    }
+
+    // Efectele pașilor de final: un sunet la fiecare rol sau titlu.
+    function endStageEffects(stage) {
+      const f = pub.final ?? {};
+      if (stage === 'roles') (f.roles ?? []).forEach((x, i) => setTimeout(() => (x.evil ? sfx.voteHit(0) : sfx.tick()), 400 + i * 600));
+      if (stage === 'titles') (f.titles ?? []).forEach((_, i) => setTimeout(() => sfx.bell(0, 330, 3, 0.3), 500 + i * 2200));
+    }
+
+    // Binele a învins: explozie de lumină aurie, raze și scântei care urcă.
+    function triumph() {
+      document.querySelector('.triumph-layer')?.remove();
+      const layer = document.createElement('div');
+      layer.className = 'triumph-layer';
+      let html = '<div class="triumph-rays"></div><div class="triumph-halo"></div><div class="triumph-flash"></div>';
+      for (let i = 0; i < 70; i++) {
+        html += `<div class="spark" style="left:${(Math.random() * 100).toFixed(1)}%;--sz:${(0.4 + Math.random() * 1.2).toFixed(2)}vw;--dur:${(5 + Math.random() * 7).toFixed(1)}s;--delay:${(Math.random() * 6).toFixed(1)}s;--dx:${(Math.random() * 30 - 15).toFixed(1)}vw"></div>`;
+      }
+      layer.innerHTML = html;
+      document.body.prepend(layer);
+      document.body.classList.add('triumph');
+    }
+
+    // Sângele care curge când răul a învins.
+    function bleed() { startBlood(); }
+
+    // Titlu gotic de sânge, cu picături care se scurg (poziții stabile pentru același text).
+    function bt(text, emoji = '', { gold = false } = {}) {
+      // Valori pseudo-aleatorii bine amestecate, stabile pentru același text.
+      const rnd = (k) => {
+        let h = 2166136261 ^ Math.imul(k + 1, 2654435761);
+        for (const c of text) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+        h = Math.imul(h ^ (h >>> 15), 2246822507);
+        h = Math.imul(h ^ (h >>> 13), 3266489909);
+        return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+      };
+      // Picăturile sunt împrăștiate pe tot cuvântul: câte una în fiecare „felie”, la o poziție la întâmplare.
+      const n = gold ? 0 : Math.max(3, Math.min(7, Math.round(text.length / 2.2)));
+      const drips = Array.from({ length: n }, (_, i) => {
+        const left = ((i + 0.15 + rnd(i * 5) * 0.7) / n) * 100;
+        const w = 0.05 + rnd(i * 5 + 1) * 0.09;
+        const len = 0.15 + rnd(i * 5 + 2) ** 1.6 * 0.95;
+        const dur = 2.5 + rnd(i * 5 + 3) * 4;
+        const delay = 0.2 + rnd(i * 5 + 4) * 3;
+        return `<i class="bt-drip" style="left:${left.toFixed(1)}%;--w:${w.toFixed(3)}em;--len:${len.toFixed(2)}em;--d:${dur.toFixed(1)}s;--delay:${delay.toFixed(1)}s"></i>`;
+      }).join('');
+      return `${emoji ? `<span class="emo">${emoji}</span> ` : ''}<span class="blood-text ${gold ? 'gold' : ''}">${esc(text)}${drips}</span>`;
+    }
+
+    function timer(label, endsAt) {
+      return `<div class="big-timer"><div class="muted">${label}</div><div class="clock" data-ends="${endsAt ?? ''}">${endsAt ? fmt(endsAt - serverNow()) : ''}</div></div>`;
+    }
+
+    let lastSecond = null;
+    function tick() {
+      document.querySelectorAll('[data-ends]').forEach((el) => {
+        const ends = Number(el.dataset.ends);
+        if (!ends) return;
+        const left = ends - serverNow();
+        el.textContent = fmt(left);
+        // Ultimele 10 secunde ticăie; la zero, o bătaie mai gravă.
+        const sec = Math.ceil(left / 1000);
+        if (sec !== lastSecond && sec <= 10 && sec >= 0 && ['night', 'day'].includes(pub.phase)) sfx.clockTick(sec === 0);
+        lastSecond = sec;
+        el.classList.toggle('urgent', sec <= 10);
+      });
+    }
+
+    // Povestea din lobby: rândurile apar pe rând, ca subtitrarea unui film, cât timp intră oaspeții.
+    const NUMBERS = ['', 'unul', 'doi', 'trei', 'patru', 'cinci', 'șase', 'șapte', 'opt', 'nouă', 'zece', 'unsprezece', 'doisprezece'];
+    const storyLines = (n) => [
+      ['Ați ajuns toți în aceeași seară, fiecare cu scrisoarea lui.', 'Nimeni nu știe cine a mai fost invitat.'],
+      ['Masa era pusă. Vinul din pahare — încă cald.', 'Scaunul gazdei, gol.'],
+      ['Când a intrat ultimul oaspete, ușile grele s-au închis în urma lui.', 'Și nu s-au mai deschis.'],
+      [`În oglinda din sala mare sunteți ${NUMBERS[n] ?? n}.`, 'Dar unul dintre voi… nu are reflexie.'],
+      ['🕯️ Pentru fiecare suflet care își spune numele,', 'se aprinde o lumânare.'],
+    ];
+    let storyIdx = 0;
+    const lobbyCount = () => Object.keys(pub.players ?? {}).filter((id) => pub.lineup?.players?.[id] !== false).length;
+    const storyHtml = () => storyLines(lobbyCount())[storyIdx].map((l) => `<span>${esc(l)}</span>`).join('');
+    setInterval(() => {
+      const el = document.getElementById('lobby-story');
+      if (!el) return;
+      el.classList.add('fade');
+      setTimeout(() => {
+        storyIdx = (storyIdx + 1) % storyLines(0).length;
+        const now = document.getElementById('lobby-story');
+        if (!now) return;
+        now.innerHTML = storyHtml();
+        now.classList.remove('fade');
+      }, 1400);
+    }, 8000);
+
+    const TYPE_LABEL = { townsfolk: ['Sătean', 'Săteni'], outsider: ['Străin', 'Străini'], minion: ['Slujitor', 'Slujitori'], demon: ['Conte', 'Conte'] };
+    const countsLine = () => {
+      const c = pub.counts ?? {};
+      return Object.keys(TYPE_LABEL).filter((t) => c[t]).map((t) => `<b>${c[t]}</b> ${TYPE_LABEL[t][c[t] === 1 ? 0 : 1]}`).join(' · ');
+    };
+
+    // Lumânările din timpul jocului: morții au flacăra stinsă; 🗳️ = fantomă care mai are votul; ⚖️ = cel de pe butuc.
+    function townCandles() {
+      const seats = pub.seats ?? Object.keys(pub.alive ?? {});
+      const block = pub.day?.block?.id;
+      const items = seats.map((id, i) => {
+        const p = pub.players?.[id] ?? { name: id };
+        const dead = pub.alive?.[id] === false;
+        const marks = [dead && pub.ghostVote?.[id] ? '<span class="mk" title="vot de fantomă">🗳️</span>' : '', id === block ? '<span class="mk block">⚖️</span>' : ''].join('');
+        return candleHtml(p.name, `${dead ? 'out' : ''} ${id === block ? 'on-block' : ''}`, `${esc(p.name)}${marks}`, i);
+      });
+      const top = Math.floor(items.length / 2);
+      const rows = items.length > 6 ? [items.slice(0, top), items.slice(top)] : [items];
+      return `<div class="candle-rows">${rows.map((row) => `<div class="candle-row">${row.join('')}</div>`).join('')}</div>`;
+    }
+
+    const views = {
+      lobby() {
+        const players = Object.entries(pub.players ?? {}).filter(([id]) => pub.lineup?.players?.[id] !== false).map(([, p]) => p);
+        const ready = players.filter((p) => p.hasPin || p.bot).length;
+        return `
+          <h1>${bt('Balul Contelui')}</h1>
+          <p class="lobby-story" id="lobby-story">${storyHtml()}</p>
+          ${candles({ lobby: true })}
+          <div class="join join-low">
+            <div class="qr">${qrSvg}</div>
+            <div class="join-text">
+              <div class="join-title">📱 Intră la bal</div>
+              <ol>
+                <li>Scanează codul cu camera telefonului</li>
+                <li>Atinge-ți numele</li>
+                <li>Alege-ți un PIN de 4 cifre</li>
+              </ol>
+              <div class="muted">sau scrie: <b style="color:var(--text)">${esc(joinUrl)}</b></div>
+              <div class="join-count">${ready} din ${players.length} au intrat</div>
+            </div>
+          </div>`;
+      },
+      intro() {
+        return `
+          <h1>${bt('Balul Contelui')}</h1>
+          <div class="story">
+            <p><b>Contele Dracula</b> s-a ascuns printre voi, ajutat de Slujitorii lui. Fiecare are un rol secret, dar nu toate rolurile de pe listă sunt în joc.</p>
+            <p class="center">În joc: ${countsLine()}</p>
+            <ul>
+              <li>🌑 <b>Noaptea</b> toată lumea apasă pe telefon: unii își folosesc abilitatea, toți fac un pariu.</li>
+              <li>☀️ <b>Ziua</b> discutați, faceți alianțe, mințiți. Oricine poate <b>nominaliza</b> pe cineva de pe telefon (o dată pe zi).</li>
+              <li>✋ <b>Votul e public</b>: votați toți odată, pe telefon. E nevoie de cel puțin jumătate din cei vii.</li>
+              <li>⚖️ La sfârșitul zilei, cel mai votat e <b>executat</b>. Rolul lui rămâne secret.</li>
+              <li>👻 Morții pot vorbi în continuare, dar mai au <b>un singur vot</b> pentru tot jocul.</li>
+              <li>🏆 Binele câștigă când moare Contele. Răul câștigă când rămân doar doi în viață.</li>
+            </ul>
+          </div>`;
+      },
+      night() {
+        const p = pub.progress ?? { done: 0, total: 0 };
+        return `
+          <div class="night">
+            <h1>${bt(`Noaptea ${pub.round ?? ''}`, '🌑')}</h1>
+            <p class="lead muted">Toată lumea alege pe telefon. În liniște.</p>
+            ${timer('', pub.endsAt)}
+            <p class="lead">${p.done} / ${p.total} au ales</p>
+          </div>`;
+      },
+      morning() {
+        return `<h1>${bt('Dimineața', '☀️')}</h1><div class="morning" id="morning"></div>`;
+      },
+      day() {
+        const d = pub.day ?? {};
+        const block = d.block;
+        const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)`
+          : block ? `⚖️ Egalitate la ${block.votes} voturi: nimeni pe butuc` : '⚖️ Nimeni pe butuc deocamdată';
+        return `
+          <h1>${bt(`Ziua ${d.day ?? ''}`, '☀️')}</h1>
+          <p class="center lead day-status">${blockLine} · pentru execuție trebuie minim <b>${d.threshold ?? '?'}</b> voturi</p>
+          ${townCandles()}
+          <div class="noms">${(d.nominations ?? []).map((n) => `<span class="${n.result}">${esc(n.byName)} → <b>${esc(n.targetName)}</b> ${n.count}/${n.threshold}</span>`).join('')}</div>
+          <div id="nomination"></div>`;
+      },
+      execution() {
+        const e = pub.execution ?? {};
+        if (!e.name) return `<div class="center" style="margin:auto"><h1>${bt('Nimeni nu a fost executat', '🌙')}</h1><p class="lead muted">Se lasă noaptea…</p></div>`;
+        return `
+          <div class="squid-screen center" style="margin:auto">
+            <p class="lead muted">Executat din ordinul castelului</p>
+            <h1>${bt(e.name)}</h1>
+            ${e.saint ? '<p class="lead squid-pink">😇 Era Sfântul! Sângele lui nevinovat blestemă castelul.</p>' : '<p class="lead muted">Rolul lui rămâne secret până la final.</p>'}
+          </div>`;
+      },
+      end() {
+        const good = pub.winner === 'good';
+        const f = pub.final ?? {};
+        const stage = pub.endStage ?? 'winner';
+        const head = `<div class="end ${good ? 'good' : 'evil'} ${stage === 'winner' ? '' : 'small'}">
+            <h1>${good ? bt('Binele a învins', '🕯️', { gold: true }) : bt('Răul a învins', '🩸')}</h1>
+            ${stage === 'winner' ? `<p class="lead">${good ? 'Contele a fost nimicit.' : pub.execution?.saint ? 'Sfântul a fost executat. Castelul Bran aparține acum Contelui.' : 'Castelul Bran aparține acum Contelui.'}</p>` : ''}
+          </div>`;
+        if (stage === 'roles') {
+          return `${head}<div class="final-roles">${(f.roles ?? []).map((x, i) => `
+            <div class="role-tile ${x.evil ? 'evil' : ''} ${x.alive ? '' : 'dead'}" style="animation-delay:${0.4 + i * 0.6}s">
+              <div class="emoji">${x.emoji}</div><div class="who">${esc(x.name)}</div><div class="what">${esc(x.roleName)}${x.drunkAs ? `<br><small>(credea că e ${esc(x.drunkAs)})</small>` : ''}</div>
+              ${x.alive ? '' : '<div class="rip">💀</div>'}
+            </div>`).join('')}</div>`;
+        }
+        if (stage === 'replay') {
+          return `${head}<div class="replay-box"><div class="replay" id="replay">${(f.replay ?? []).map((b) => `
+            <div class="replay-block"><h3>${esc(b.title)}</h3>${b.lines.map((l) => `<p>${esc(l)}</p>`).join('')}</div>`).join('')}</div></div>`;
+        }
+        if (stage === 'titles') {
+          const bets = (f.bets ?? []).filter((b) => b.correct > 0).slice(0, 3);
+          return `${head}<div class="titles">${(f.titles ?? []).map((t, i) => `
+            <div class="title-card" style="animation-delay:${0.5 + i * 2.2}s">
+              <div class="emoji">${t.emoji}</div>
+              <div class="t">${esc(t.title)}</div>
+              <div class="n">${t.names.map(esc).join(', ')}</div>
+              <div class="why">${esc(t.why)}</div>
+            </div>`).join('')}</div>
+            ${bets.length ? `<p class="center lead bets-line">🎲 Cele mai bune pariuri: ${bets.map((b) => `<b>${esc(b.name)}</b> (${b.correct})`).join(' · ')}</p>` : ''}`;
+        }
+        return `${head}${townCandles()}`;
+      },
+    };
+
+    async function playMorning() {
+      const m = pub.morning;
+      const box = document.getElementById('morning');
+      if (!m || !box) return;
+      const already = shownMorning === m.night;
+      shownMorning = m.night;
+      if (!already) {
+        sfx.dawn();
+        await wait(1500);
+        for (const d of m.deaths ?? []) await ceremony(d.name, 'a murit în noaptea asta');
+      }
+      const slides = m.deaths?.length
+        ? m.deaths.map((d) => `<div class="slide death">💀 <b>${esc(d.name)}</b> a murit în noaptea asta.</div>`)
+        : ['<div class="slide">🌙 Nimeni nu a murit în noaptea asta.</div>'];
+      slides.forEach((html, i) => setTimeout(() => document.getElementById('morning')?.insertAdjacentHTML('beforeend', html), already ? 0 : 600 + i * 1500));
+    }
+
+    // Nominalizarea curentă: acuzatorul și acuzatul, apărarea, votul pe telefoane, apoi dezvăluirea pe rând.
+    let nomKey = null;
+    let revealTimers = [];
+    function drawNomination() {
+      const box = document.getElementById('nomination');
+      const c = pub.day?.current;
+      if (!box) return;
+      if (!c) { box.innerHTML = ''; nomKey = null; return; }
+      const key = `${c.key}-${c.stage}`;
+      if (key === nomKey) {
+        const v = box.querySelector('.voted');
+        if (v && c.stage === 'voting') v.textContent = `${c.voted ?? 0} au votat`;
+        return;
+      }
+      const fresh = true;
+      nomKey = key;
+      revealTimers.forEach(clearTimeout); revealTimers = [];
+      const head = `<div class="nom-head"><b>${esc(c.byName)}</b> îl nominalizează pe <b class="squid-pink">${esc(c.targetName)}</b></div>`;
+      if (c.stage === 'defense') {
+        box.innerHTML = `<div class="nom-box">${head}<p class="lead">🗣️ Acuzare și apărare</p>${timer('', c.endsAt)}</div>`;
+        if (fresh) sfx.bell(0, 196, 3, 0.4);
+      } else if (c.stage === 'voting') {
+        box.innerHTML = `<div class="nom-box">${head}<p class="lead">✋ <b>Votați acum pe telefon!</b></p>${timer('', c.endsAt)}<p class="lead voted">${c.voted ?? 0} au votat</p></div>`;
+        if (fresh) sfx.sessionBell();
+      } else if (c.stage === 'reveal') {
+        const rv = c.reveal ?? { items: [] };
+        box.innerHTML = `<div class="nom-box">${head}<div class="vote-chips">${rv.items.map((it) => `<span class="chip-v ${it.dead ? 'dead' : ''}" data-v="${it.id}">${esc(it.name)}${it.dead ? ' 👻' : ''}</span>`).join('')}</div>
+          <div class="vote-count"><b id="vc">0</b> / ${rv.threshold} necesare</div><div class="nom-result" id="nom-result"></div></div>`;
+        let count = 0;
+        rv.items.forEach((it, i) => revealTimers.push(setTimeout(() => {
+          const chip = box.querySelector(`[data-v="${it.id}"]`);
+          if (!chip) return;
+          chip.classList.add(it.yes ? 'yes' : it.canVote ? 'no' : 'none');
+          if (it.yes) { count += 1; box.querySelector('#vc').textContent = count; sfx.voteHit(0.6); }
+          else sfx.tick();
+        }, 900 + i * 600)));
+        const resultText = { block: `⚖️ <b>${esc(c.targetName)}</b> ajunge pe butuc!`, tie: '⚖️ Egalitate: nimeni nu rămâne pe butuc.', failed: 'Nu sunt destule voturi.' }[rv.result];
+        revealTimers.push(setTimeout(() => {
+          const res = box.querySelector('#nom-result');
+          if (res) res.innerHTML = resultText;
+          sfx.verdict();
+        }, 1300 + rv.items.length * 600));
+      }
+      fitStage();
+    }
+
+    // Țărușul lui Van Helsing: anunț dramatic peste orice ecran.
+    let lastSlay = null;
+    function showSlay(sl) {
+      if (!sl || sl.at === lastSlay) return;
+      const fresh = lastSlay !== null || serverNow() - sl.at < 15000;
+      lastSlay = sl.at;
+      if (!fresh) return;
+      const el = document.createElement('div');
+      el.className = 'slay-overlay';
+      el.innerHTML = `<div><div class="slay-a">🗡️ <b>${esc(sl.byName)}</b> înfige țărușul în <b>${esc(sl.targetName)}</b>…</div><div class="slay-b"></div></div>`;
+      document.body.appendChild(el);
+      sfx.duckMusic(8);
+      sfx.whoosh(0);
+      setTimeout(() => {
+        el.querySelector('.slay-b').innerHTML = sl.hit ? `💀 <b>${esc(sl.targetName)}</b> se prăbușește!` : '…nimic nu se întâmplă.';
+        if (sl.hit) sfx.death(); else sfx.bell(0, 110, 3, 0.4);
+      }, 3000);
+      setTimeout(() => el.classList.add('leaving'), 7500);
+      setTimeout(() => el.remove(), 8700);
+    }
+
+    let lastPhase = null;
+    let lastEndStage = null;
+    let dayKey = null;
+    const THEME = { lobby: 'waltz', intro: 'organ', night: 'night', morning: 'somber', day: 'ticking', execution: 'somber' };
+    function playThemeFor(phase) {
+      const generated = phase === 'end' ? (pub.winner === 'good' ? 'glory' : 'doom') : THEME[phase];
+      // Fazele cu melodie de pe YouTube (js/music.js); muzica generată rămâne rezervă.
+      const youtube = YOUTUBE_MUSIC[phase];
+      const theme = youtube ? `yt-${youtube.id}-${youtube.start}` : generated;
+      const options = youtube ? { youtube, fallback: generated } : {};
+      // La final, muzica pornește după efectul sonor al victoriei.
+      if (phase === 'end') {
+        if (sfx.musicTheme() === theme) return;
+        sfx.playMusic(null);
+        setTimeout(() => { if (lastPhase === 'end') sfx.playMusic(theme, options); }, 6000);
+      }
+      else sfx.playMusic(theme ?? null, options);
+    }
+
+    // Anunțuri scurte peste orice ecran (de exemplu cineva a părăsit castelul).
+    let lastNotice = null;
+    function showNotice(n) {
+      if (!n || n.at === lastNotice) return;
+      const fresh = lastNotice !== null;
+      lastNotice = n.at;
+      if (!fresh && serverNow() - n.at > 15000) return;
+      const el = document.createElement('div');
+      el.className = 'notice';
+      el.textContent = n.text;
+      document.body.appendChild(el);
+      sfx.bell(0, 147, 4, 0.4);
+      setTimeout(() => el.classList.add('leaving'), 7000);
+      setTimeout(() => el.remove(), 8200);
+    }
+
+    let joinedBefore = null;
+    onValue(r('public'), (snap) => {
+      pub = snap.val() ?? {};
+      const phase = pub.phase ?? 'lobby';
+      showNotice(pub.notice);
+      showSlay(pub.slay);
+      const joined = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
+      if (phase === 'lobby' && joinedBefore !== null && joined > joinedBefore) sfx.chime();
+      joinedBefore = joined;
+      document.body.dataset.phase = phase;
+      sfx.setMuted(Boolean(pub.muted));
+      sfx.setMusic(pub.music !== false);
+      sfx.setVolume((pub.volume ?? 100) / 100);
+      sfx.setMusicVolume((pub.musicVolume ?? 100) / 100);
+      if (phase === 'morning' && lastPhase === 'morning') return; // nu restartăm animația
+      if (phase === 'end' && lastPhase === 'end' && pub.endStage === lastEndStage) return;
+      // Ziua: redesenăm doar când se schimbă ceva important; altfel actualizăm nominalizarea curentă.
+      if (phase === 'day' && lastPhase === 'day') {
+        const d = pub.day ?? {};
+        const key = JSON.stringify([pub.alive, pub.ghostVote, d.block, d.nominations?.length]);
+        if (key === dayKey) return drawNomination();
+        dayKey = key;
+        stage.innerHTML = views.day();
+        nomKey = null;
+        fitStage();
+        return drawNomination();
+      }
+      const stageChanged = phase === 'end' && pub.endStage !== lastEndStage;
+      lastEndStage = pub.endStage;
+      const previous = lastPhase;
+      lastPhase = phase;
+      if (phase !== 'day') { revealTimers.forEach(clearTimeout); revealTimers = []; nomKey = null; }
+      playThemeFor(phase);
+      if (phase !== 'end') {
+        stopBlood();
+        document.querySelector('.triumph-layer')?.remove();
+        document.body.classList.remove('triumph');
+      }
+      if (phase === 'night' && previous && previous !== 'night') sfx.sessionBell();
+      if (phase === 'execution' && previous === 'day' && pub.execution?.name) {
+        // Ceremonia întâi, apoi textul.
+        stage.innerHTML = '';
+        ceremony(pub.execution.name, 'a fost executat').then(() => { if (lastPhase === 'execution') stage.innerHTML = views.execution(); });
+        return;
+      }
+      stage.innerHTML = (views[phase] ?? views.lobby)();
+      if (phase === 'day') { dayKey = JSON.stringify([pub.alive, pub.ghostVote, pub.day?.block, pub.day?.nominations?.length]); drawNomination(); }
+      fitStage();
+      if (phase === 'end') [0, 400, 1500].forEach((ms) => setTimeout(fitReplay, ms));
+      if (phase === 'end' && stageChanged && previous === 'end') endStageEffects(pub.endStage);
+      if (phase === 'morning') playMorning();
+      if (phase === 'end' && previous && previous !== 'end') {
+        if (pub.winner === 'evil') { bleed(); sfx.evilWins(); }
+        else { triumph(); sfx.goodWins(); }
+      }
+      if (phase === 'end' && pub.winner === 'evil' && !document.querySelector('.blood-canvas')) bleed();
+      if (phase === 'end' && pub.winner === 'good' && !document.querySelector('.triumph-layer')) triumph();
+      clearInterval(ticker);
+      ticker = setInterval(tick, 250);
+    });
+
+    // Sunetul pornește doar după un click sau o tastă (regula browserelor).
+    // Cât timp e oprit, în colț stă un buton mare; orice click, atingere sau tastă îl pornește.
+    const hint = document.createElement('button');
+    hint.type = 'button';
+    hint.className = 'sound-hint';
+    document.body.appendChild(hint);
+    let wasReady = false;
+    const showHint = () => {
+      const on = sfx.ready();
+      hint.classList.toggle('off', !on);
+      hint.textContent = !on ? '🔇 Apasă aici (sau orice tastă) pentru sunet'
+        : sfx.isMuted() ? '🔇 sunet oprit din panou' : '🔊 sunet pornit';
+      if (on && !wasReady) {
+        playThemeFor(lastPhase ?? 'lobby');
+        if (!sfx.isMuted()) sfx.chime();
+      }
+      wasReady = on;
+    };
+    const wake = () => { sfx.unlock(); sfx.resumeMusic(); setTimeout(showHint, 150); setTimeout(showHint, 600); };
+    ['pointerdown', 'pointerup', 'click', 'touchend', 'keydown'].forEach((ev) => document.addEventListener(ev, wake, true));
+    sfx.onSoundState(showHint);
+    sfx.unlock();
+    showHint();
+    setInterval(showHint, 1000);
+
+    // Un click oriunde trece proiectorul pe ecran complet.
+    document.body.addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
+    });
+  </script>
+</body>
+</html>

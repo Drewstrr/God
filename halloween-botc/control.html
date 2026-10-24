@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Balul Contelui – Panou</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/vendor/qrcode.js"></script>
+</head>
+<body>
+  <main class="wrap" style="max-width:760px">
+    <h1>Panoul de comandă</h1>
+    <button class="btn small ghost" id="links-btn">🔗 Linkuri</button>
+    <div class="card links" id="links" hidden></div>
+    <div id="login"></div>
+    <div id="panel" hidden>
+      <div class="card">
+        <p id="engine" class="muted">Se verifică motorul…</p>
+        <p class="muted">Motorul rulează în pagina <a href="screen" target="_blank">Proiector</a>. Ține-o deschisă pe ecranul proiectorului.</p>
+        <button class="btn small ghost" id="sound">🔊 Sunet proiector</button>
+        <button class="btn small ghost" id="music">🎵 Muzică</button>
+        <label class="vol">🔊 Volum general <input type="range" id="volume" min="0" max="100" step="5"> <b id="volume-val"></b></label>
+        <label class="vol">🎵 Volum muzică <input type="range" id="music-volume" min="0" max="100" step="5"> <b id="music-volume-val"></b></label>
+      </div>
+      <div class="card">
+        <h2 id="phase-title">Jocul</h2>
+        <div class="ctl-actions" id="actions"></div>
+      </div>
+      <div class="card">
+        <h2>Jucătorii</h2>
+        <p class="muted" id="players-help"></p>
+        <table class="rows"><tbody id="players"></tbody></table>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { r, onValue, set, requireEngineLogin, serverNow, showUpdateBanner } from './js/fb.js';
+    showUpdateBanner();
+    import { resetPin } from './js/pin-service.js';
+    import { sendCommand } from './js/game-host.js';
+    import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION } from './js/engine.js';
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
+    // Toate paginile jocului, cu link de deschis, copiat sau scanat (QR).
+    const base = location.href.replace(/[^/]*([?#].*)?$/, '');
+    const LINKS = [
+      ['📽️', 'Proiector + motor', 'screen', 'Pe MacBook, pe ecranul proiectorului. Deschis într-un singur loc.'],
+      ['📱', 'Telefon (jucători)', 'play', 'Pentru invitați: aleg numele și PIN-ul. E și codul QR din lobby.'],
+      ['🎛️', 'Panoul de comandă', 'control', 'Pagina asta. Nu arată niciun secret.'],
+      ['🚨', 'Panoul de urgență', 'admin', 'Parolă separată. Arată secretele: doar în caz de forță majoră.'],
+    ];
+    const linksBox = document.getElementById('links');
+    linksBox.innerHTML = `<h2>🔗 Linkurile jocului</h2>${LINKS.map(([icon, name, path, help]) => `
+      <div class="link-row">
+        <div class="link-text"><b>${icon} ${name}</b><br><a href="${base + path}" target="_blank">${base + path}</a><br><span class="muted">${help}</span></div>
+        <div class="link-actions">
+          <button class="btn small ghost" data-copy="${base + path}">📋 Copiază</button>
+          <button class="btn small ghost" data-qr="${base + path}">▦ QR</button>
+        </div>
+      </div>`).join('')}<div class="link-qr" id="link-qr" hidden></div>`;
+    document.getElementById('links-btn').addEventListener('click', () => { linksBox.hidden = !linksBox.hidden; });
+    linksBox.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '✓ Copiat'; } catch { prompt('Copiază linkul:', b.dataset.copy); }
+      setTimeout(() => { b.textContent = '📋 Copiază'; }, 1500);
+    }));
+    linksBox.querySelectorAll('[data-qr]').forEach((b) => b.addEventListener('click', () => {
+      const box = document.getElementById('link-qr');
+      const qr = window.qrcode(0, 'M');
+      qr.addData(b.dataset.qr);
+      qr.make();
+      box.innerHTML = `<div class="qr">${qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true })}</div><p class="muted">${b.dataset.qr}<br>Scanează cu camera telefonului sau a iPad-ului.</p><button class="btn small ghost" id="qr-close">Închide</button>`;
+      box.hidden = false;
+      box.querySelector('#qr-close').addEventListener('click', () => { box.hidden = true; });
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }));
+
+    await requireEngineLogin(document.getElementById('login'));
+    document.getElementById('panel').hidden = false;
+
+    let pub = {};
+    const TITLES = {
+      lobby: '⏳ Așteptăm jucătorii', intro: '📜 Introducerea', night: '🌑 Noaptea', morning: '☀️ Dimineața',
+      day: '☀️ Ziua', execution: '⚰️ Execuția', end: '🏁 Final',
+    };
+
+    const inLineup = (id) => pub.lineup?.players?.[id] !== false;
+
+    // Cine joacă: se alege înainte de start. Personajele le împarte aplicația, după numărul de jucători.
+    function lineupHtml() {
+      const all = Object.entries(pub.players ?? {});
+      const n = all.filter(([id]) => inLineup(id)).length;
+      const d = DISTRIBUTION[n];
+      return `
+        <div class="lineup">
+          <h3>👥 Cine joacă (${n})</h3>
+          <div class="chips">${all.map(([id, p]) => `<button class="chip ${inLineup(id) ? 'on' : ''}" data-play="${id}">${esc(p.name)}</button>`).join('')}</div>
+          ${d ? `<p class="muted">Aplicația va împărți: ${d[0]} Săteni, ${d[1]} Străini, ${d[2]} Slujitori, 1 Conte.</p>`
+            : `<p class="error">Jocul merge cu ${MIN_PLAYERS}–${MAX_PLAYERS} jucători.</p>`}
+        </div>`;
+    }
+    const lineupReady = () => Boolean(DISTRIBUTION[Object.keys(pub.players ?? {}).filter(inLineup).length]);
+
+    function actionsFor(phase) {
+      const players = Object.entries(pub.players ?? {}).filter(([id]) => inLineup(id)).map(([, p]) => p);
+      const ready = players.filter((p) => p.hasPin || p.bot).length;
+      const s = pub.settings ?? {};
+      const d = pub.day ?? {};
+      const c = d.current;
+      switch (phase) {
+        case 'lobby': return `
+          <p>${ready} din ${players.length} jucători gata (cu PIN sau robot).</p>
+          <div class="row">
+            <button class="btn small" data-cmd="fillBots">🤖 Completează cu roboți</button>
+            <button class="btn small ghost" data-cmd="clearBots">Scoate roboții</button>
+          </div>
+          <div class="row">
+            Noapte (sec) <input type="number" id="s-night" value="${s.nightSeconds ?? 90}" min="20" max="600">
+            Apărare (sec) <input type="number" id="s-def" value="${s.defenseSeconds ?? 60}" min="10" max="600">
+            Vot (sec) <input type="number" id="s-vote" value="${s.voteSeconds ?? 20}" min="8" max="120">
+            <button class="btn small ghost" id="save-settings">Salvează</button>
+          </div>
+          ${lineupHtml()}
+          <button class="btn" data-cmd="start" ${ready < players.length || !lineupReady() ? 'disabled' : ''}>▶️ Pornește jocul</button>`;
+        case 'intro': return `
+          <p class="muted">Proiectorul arată regulile. Fiecare își citește rolul pe telefon.</p>
+          <button class="btn" data-cmd="firstNight">🌑 Începe prima noapte</button>`;
+        case 'night': return `
+          <p class="lead" style="font-size:1.3rem">${pub.progress?.done ?? 0} / ${pub.progress?.total ?? 0} au ales · <span data-ends="${pub.endsAt ?? ''}"></span></p>
+          <p class="muted">Noaptea se încheie singură când aleg toți sau expiră timpul.</p>
+          <button class="btn ghost" data-cmd="endNight" data-confirm="Închei noaptea acum? Cine n-a ales pierde acțiunea.">⏹ Încheie noaptea acum</button>`;
+        case 'morning': return `
+          <p class="muted">Proiectorul anunță morții nopții.</p>
+          <button class="btn" data-cmd="beginDay">☀️ Începe ziua</button>`;
+        case 'day': {
+          const block = d.block;
+          const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)` : block ? `⚖️ Egalitate la ${block.votes}: nimeni pe butuc` : '⚖️ Nimeni pe butuc';
+          let now = '<p class="muted">Jucătorii nominalizează de pe telefon. Tu doar închei ziua când s-au lămurit.</p>';
+          if (c?.stage === 'defense') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: apărare <span data-ends="${c.endsAt ?? ''}"></span></p>
+            <button class="btn small" data-cmd="startVoting">✋ Pornește votul acum</button>
+            <button class="btn small ghost" data-cmd="cancelNomination" data-confirm="Anulezi nominalizarea? Nu consumă dreptul nimănui.">✕ Anulează nominalizarea</button>`;
+          if (c?.stage === 'voting') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: se votează · ${c.voted ?? 0} au votat · <span data-ends="${c.endsAt ?? ''}"></span></p>
+            <button class="btn small ghost" data-cmd="cancelNomination" data-confirm="Anulezi votul în curs?">✕ Anulează</button>`;
+          if (c?.stage === 'reveal') now = `<p>Se dezvăluie voturile pentru <b>${esc(c.targetName)}</b>…</p>`;
+          return `
+            <p>Ziua ${d.day ?? ''} · ${blockLine} · minim ${d.threshold ?? '?'} voturi</p>
+            ${(d.nominations ?? []).length ? `<p class="muted">Azi: ${(d.nominations ?? []).map((n) => `${esc(n.byName)} → ${esc(n.targetName)} (${n.count})`).join(' · ')}</p>` : ''}
+            ${now}
+            <button class="btn" data-cmd="endDayCmd" ${c && c.stage !== 'reveal' ? 'disabled' : ''} data-confirm="${block?.id ? `Închei ziua? ${esc(block.name)} va fi executat.` : 'Închei ziua fără execuție?'}">🌙 Încheie ziua${block?.id ? ` (execută pe ${esc(block.name)})` : ''}</button>`;
+        }
+        case 'execution': return `
+          <p>${pub.execution?.name ? `${esc(pub.execution.name)} a fost executat.` : 'Nimeni nu a fost executat.'}</p>
+          <button class="btn" data-cmd="toNight">${pub.winner ? '🏁 Arată finalul' : '🌑 Începe noaptea'}</button>`;
+        case 'end': {
+          const st = pub.endStage ?? 'winner';
+          const stepBtn = (stage, label) => `<button class="btn ${st === stage ? '' : 'ghost'}" data-end="${stage}">${label}</button>`;
+          return `
+            <p>${pub.winner === 'good' ? '🕯️ A câștigat binele.' : '🩸 A câștigat răul.'} Arată pe rând:</p>
+            <div class="ctl-actions">
+              ${stepBtn('winner', '🏁 Câștigătorul')}
+              ${stepBtn('roles', '🎭 Dezvăluie toate rolurile')}
+              ${stepBtn('replay', '📜 Reluarea nopților și a zilelor')}
+              ${stepBtn('titles', '🏅 Titlurile serii')}
+            </div>
+            <hr style="border-color:var(--line);margin:14px 0">
+            <button class="btn small ghost" data-cmd="reset" data-confirm="Începi un joc nou? PIN-urile rămân.">🔄 Joc nou</button>`;
+        }
+        default: return '';
+      }
+    }
+
+    function render() {
+      const phase = pub.phase ?? 'lobby';
+      document.getElementById('phase-title').textContent = TITLES[phase] ?? 'Jocul';
+      const box = document.getElementById('actions');
+      box.innerHTML = actionsFor(phase) + (phase !== 'lobby' && phase !== 'end'
+        ? '<hr style="border-color:var(--line);margin:14px 0"><button class="btn small ghost" data-cmd="reset" data-confirm="Oprești jocul și începi de la zero? PIN-urile rămân.">🔄 Oprește și începe un joc nou</button>'
+        : '');
+      box.querySelectorAll('[data-cmd]').forEach((b) => b.addEventListener('click', async () => {
+        if (b.dataset.confirm && !confirm(b.dataset.confirm)) return;
+        b.disabled = true;
+        await sendCommand(b.dataset.cmd);
+      }));
+      box.querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => {
+        const players = Object.fromEntries(Object.keys(pub.players ?? {}).map((id) => [id, inLineup(id)]));
+        players[b.dataset.play] = !players[b.dataset.play];
+        sendCommand('lineup', { players });
+      }));
+      box.querySelectorAll('[data-end]').forEach((b) => b.addEventListener('click', () => sendCommand('endStage', { stage: b.dataset.end })));
+      box.querySelector('#save-settings')?.addEventListener('click', () => sendCommand('settings', {
+        settings: {
+          nightSeconds: +document.getElementById('s-night').value,
+          defenseSeconds: +document.getElementById('s-def').value,
+          voteSeconds: +document.getElementById('s-vote').value,
+        },
+      }));
+      renderPlayers();
+    }
+
+    function renderPlayers() {
+      const players = Object.entries(pub.players ?? {});
+      const lobby = (pub.phase ?? 'lobby') === 'lobby';
+      document.getElementById('players-help').textContent = lobby
+        ? '„Resetează PIN” îl deloghează pe jucător de pe toate dispozitivele și îl lasă să-și aleagă un PIN nou. Nu vezi niciun secret.'
+        : 'Lista publică: cine trăiește și cine a murit.';
+      document.getElementById('players').innerHTML = players.map(([id, p]) => {
+        const alive = pub.alive?.[id] !== false;
+        const state = lobby
+          ? (p.hasPin ? '<span class="pill on">are PIN</span>' : p.bot ? '<span class="pill">🤖 robot</span>' : '<span class="pill">fără PIN</span>')
+          : !(id in (pub.alive ?? {})) ? '<span class="pill">nu joacă</span>'
+          : (alive ? '<span class="pill on">în viață</span>' : '<span class="pill">👻 fantomă</span>');
+        return `
+          <tr>
+            <td><b>${esc(p.name)}</b>${!lobby && p.bot ? ' 🤖' : ''}</td>
+            <td>${state}</td>
+            <td style="text-align:right">
+              ${!lobby && pub.phase !== 'end' && pub.alive?.[id] ? `<button class="btn small ghost" data-leave="${id}">🚪 Pleacă</button>` : ''}
+              ${p.hasPin ? `<button class="btn small" data-reset="${id}">🔄 Resetează PIN</button>` : ''}
+            </td>
+          </tr>`;
+      }).join('');
+      document.querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', () => {
+        const name = pub.players[b.dataset.leave].name;
+        if (!confirm(`${name} părăsește castelul? Devine fantomă fără vot (rolul rămâne secret).`)) return;
+        b.disabled = true;
+        sendCommand('leave', { id: b.dataset.leave });
+      }));
+      document.querySelectorAll('[data-reset]').forEach((b) => b.addEventListener('click', async () => {
+        const name = pub.players[b.dataset.reset].name;
+        if (!confirm(`Resetezi PIN-ul lui ${name}? Va trebui să-și aleagă unul nou.`)) return;
+        b.disabled = true;
+        await resetPin(b.dataset.reset);
+      }));
+    }
+
+    const soundBtn = document.getElementById('sound');
+    onValue(r('public/muted'), (snap) => {
+      soundBtn.dataset.muted = snap.val() ? '1' : '';
+      soundBtn.textContent = snap.val() ? '🔇 Sunet proiector: OPRIT (apasă să pornești)' : '🔊 Sunet proiector: PORNIT (apasă să oprești)';
+    });
+    soundBtn.addEventListener('click', () => set(r('public/muted'), !soundBtn.dataset.muted));
+    const musicBtn = document.getElementById('music');
+    onValue(r('public/music'), (snap) => {
+      const off = snap.val() === false;
+      musicBtn.dataset.off = off ? '1' : '';
+      musicBtn.textContent = off ? '🎵 Muzică: OPRITĂ (apasă să pornești)' : '🎵 Muzică: PORNITĂ (apasă să oprești)';
+    });
+    musicBtn.addEventListener('click', () => set(r('public/music'), Boolean(musicBtn.dataset.off)));
+
+    // Glisoarele de volum: proiectorul se schimbă pe loc, cât tragi de ele.
+    for (const [id, key] of [['volume', 'volume'], ['music-volume', 'musicVolume']]) {
+      const input = document.getElementById(id);
+      const label = document.getElementById(`${id}-val`);
+      let dragging = false;
+      let pending = null;
+      onValue(r(`public/${key}`), (snap) => {
+        if (dragging) return;
+        input.value = snap.val() ?? 100;
+        label.textContent = `${input.value}%`;
+      });
+      input.addEventListener('input', () => {
+        dragging = true;
+        label.textContent = `${input.value}%`;
+        clearTimeout(pending);
+        pending = setTimeout(() => set(r(`public/${key}`), Number(input.value)), 120);
+      });
+      input.addEventListener('change', () => { dragging = false; set(r(`public/${key}`), Number(input.value)); });
+    }
+
+    onValue(r('public/engine'), (snap) => {
+      const el = document.getElementById('engine');
+      const on = Boolean(snap.val()?.online);
+      el.textContent = on ? `⚙️ Motorul e pornit${pub.engineInfo ? ` (pe ${pub.engineInfo.device})` : ''}. Ține Proiectorul deschis într-un SINGUR loc.` : '⚠️ Motorul e oprit. Deschide pagina Proiector.';
+      el.className = on ? 'ok' : 'error';
+    });
+
+    // Redesenăm butoanele doar când se schimbă ceva relevant, ca să nu pierdem ce scrii în câmpuri.
+    let lastSig = '';
+    onValue(r('public'), (snap) => {
+      pub = snap.val() ?? {};
+      const ready = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
+      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.day, pub.execution, pub.alive, pub.lineup, pub.engineInfo, pub.endStage]);
+      if (sig !== lastSig) { lastSig = sig; render(); } else renderPlayers();
+    });
+
+    setInterval(() => {
+      document.querySelectorAll('[data-ends]').forEach((el) => { if (+el.dataset.ends) el.textContent = fmt(+el.dataset.ends - serverNow()); });
+    }, 250);
+  </script>
+</body>
+</html>

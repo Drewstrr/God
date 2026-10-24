@@ -1,0 +1,503 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0709">
+  <meta name="robots" content="noindex">
+  <title>Balul Contelui</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main class="wrap" id="app">
+    <p class="center muted">Se deschid porțile castelului…</p>
+  </main>
+
+  <script type="module">
+    import {
+      auth, r, currentUser, signInAnonymously, signOut, onValue, set, update, serverNow, reconnectOnWake, onConnection, APP_VERSION, reloadForVersion,
+    } from './js/fb.js';
+    import { ROLES } from './js/engine.js';
+
+    reconnectOnWake();
+    const net = document.createElement('div');
+    net.className = 'net-warning';
+    net.textContent = '⚠️ Fără legătură… se reconectează';
+    net.hidden = true;
+    document.body.appendChild(net);
+    let everConnected = false;
+    onConnection((on) => { if (on) everConnected = true; net.hidden = on || !everConnected; });
+
+    const app = document.getElementById('app');
+    const STORE_KEY = 'botc-player';
+    let players = {};
+    let engineOnline = false;
+    let me = null;          // id-ul jucătorului logat
+    let uid = null;
+    let pendingNonce = null;
+    let pendingPlayer = null;
+    let stopPrivate = null;
+
+    const remember = (id) => { try { id ? localStorage.setItem(STORE_KEY, id) : localStorage.removeItem(STORE_KEY); } catch {} };
+    const remembered = () => { try { return localStorage.getItem(STORE_KEY); } catch { return null; } };
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // ---------- ecranul 1: alege-ți numele ----------
+    function showNames() {
+      me = null;
+      const list = Object.entries(players);
+      app.innerHTML = `
+        <h1 class="center"><span class="blood-text">Balul Contelui</span></h1>
+        <p class="center muted">Atinge-ți numele</p>
+        ${engineOnline ? '' : '<p class="center error">⏳ Porțile castelului încă sunt închise. Așteaptă puțin.</p>'}
+        <div class="names">
+          ${list.map(([id, p]) => `<button data-id="${id}">${esc(p.name)}<small>${p.hasPin ? 'are PIN' : 'nou'}</small></button>`).join('')}
+        </div>`;
+      app.querySelectorAll('[data-id]').forEach((b) => b.addEventListener('click', () => showPin(b.dataset.id)));
+    }
+
+    // ---------- ecranul 2: PIN ----------
+    function showPin(id, { confirmFor = null, message = '' } = {}) {
+      const p = players[id];
+      const choosing = !p.hasPin;
+      const heading = confirmFor ? 'Mai scrie o dată PIN-ul' : choosing ? 'Alege-ți un PIN de 4 cifre' : 'Introdu PIN-ul tău';
+      let pin = '';
+      app.innerHTML = `
+        <h1 class="center">${esc(p.name)}</h1>
+        <p class="center">${heading}</p>
+        ${choosing && !confirmFor ? '<p class="center muted">Ține-l minte! Îți trebuie dacă intri de pe alt telefon.</p>' : ''}
+        <div class="pin-dots">${'<span></span>'.repeat(4)}</div>
+        <p class="center error" id="msg">${esc(message)}</p>
+        <div class="keypad">
+          ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `<button data-k="${n}">${n}</button>`).join('')}
+          <button data-k="back" aria-label="Șterge">⌫</button><button data-k="0">0</button><button data-k="cancel" aria-label="Înapoi">✕</button>
+        </div>`;
+      const dots = app.querySelectorAll('.pin-dots span');
+      const draw = () => dots.forEach((d, i) => d.classList.toggle('on', i < pin.length));
+      app.querySelectorAll('[data-k]').forEach((b) => b.addEventListener('click', () => {
+        const k = b.dataset.k;
+        if (k === 'cancel') return showNames();
+        if (k === 'back') { pin = pin.slice(0, -1); return draw(); }
+        if (pin.length >= 4) return;
+        pin += k;
+        draw();
+        if (pin.length < 4) return;
+        if (choosing && !confirmFor) return setTimeout(() => showPin(id, { confirmFor: pin }), 150);
+        if (choosing && confirmFor !== pin) return setTimeout(() => showPin(id, { message: 'PIN-urile nu se potrivesc. Mai încearcă.' }), 150);
+        sendPin(id, pin, choosing ? 'set' : 'login');
+      }));
+    }
+
+    async function sendPin(id, pin, mode) {
+      if (!engineOnline) {
+        return showPin(id, { message: 'Porțile castelului încă sunt închise. Mai încearcă puțin mai târziu.' });
+      }
+      app.innerHTML = '<p class="center muted" style="margin-top:40vh">🕯️ Se verifică…</p>';
+      pendingNonce = Math.random().toString(36).slice(2);
+      pendingPlayer = id;
+      try {
+        await set(r(`pinRequests/${uid}`), { player: id, pin, mode, nonce: pendingNonce });
+      } catch {
+        pendingNonce = null;
+        showPin(id, { message: 'Nu s-a putut trimite. Verifică internetul.' });
+      }
+      setTimeout(() => {
+        if (pendingNonce) { pendingNonce = null; showPin(id, { message: 'Castelul nu răspunde. Mai încearcă.' }); }
+      }, 12000);
+    }
+
+    // ---------- ecranul 3: jocul ----------
+    let pub = {};
+    let priv = null;
+    let lastSig = '';
+    let lastWake = null;
+    let guideOpen = false;
+    let chosen = [];
+    let panel = null;   // ce listă e deschisă ziua: 'nominate' | 'slay' | null
+    const TYPE_LABEL = { townsfolk: 'Sătean', outsider: 'Străin', minion: 'Slujitor', demon: 'Conte' };
+    const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(`botc-${k}`); localStorage.setItem(`botc-${k}`, v); } catch { return null; } return null; };
+    const sentKey = (night) => `night-${me}-${pub.gameId}-${night}-${pub.nightSeq ?? 0}`;
+    const fmt = (ms) => { const t = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
+    const playerName = (id) => players[id]?.name ?? id;
+
+    function showHome() {
+      stopPrivate?.();
+      priv = null;
+      lastSig = '';
+      renderGame(true);
+      stopPrivate = onValue(r(`private/${me}`), (snap) => { priv = snap.val(); renderGame(); }, () => {
+        priv = null;
+        app.innerHTML = '<p class="center error">Legătura secretă nu e activă. Apasă „Nu sunt eu” și loghează-te din nou.</p><button class="btn ghost" id="logout">Nu sunt eu</button>';
+        app.querySelector('#logout').addEventListener('click', logout);
+      });
+    }
+
+    const alive = () => priv?.status?.alive !== false;
+    const canVoteNow = () => alive() || priv?.status?.ghostVote;
+
+    function renderGame(force = false) {
+      if (!me) return;
+      const phase = pub.phase ?? 'lobby';
+      const night = phase === 'night' && priv?.night?.night === pub.round ? priv.night : null;
+      const cur = pub.day?.current;
+      const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.endStage, Boolean(pub.script), panel]);
+      if (!force && sig === lastSig) return;
+      lastSig = sig;
+      guideOpen = document.querySelector('details.guide')?.open ?? guideOpen;
+      document.body.classList.toggle('dark-night', Boolean(night));
+      // Telefonul se „trezește” singur noaptea, la vot și când Corbierul are de ales.
+      const wake = night ? `n${pub.round}` : cur?.stage === 'voting' ? `v${cur.key}` : priv?.raven ? 'raven' : null;
+      if (wake) {
+        document.querySelector('.curtain')?.remove();
+        if (wake !== lastWake) navigator.vibrate?.(300);
+      }
+      lastWake = wake;
+      if (night) return renderNight(night);
+      renderMain(phase);
+      const guide = document.querySelector('details.guide');
+      if (guide) guide.open = guideOpen;
+    }
+
+    // Votul public: DA / NU. Fantomele mai au un singur vot pentru tot jocul.
+    function voteCard() {
+      const c = pub.day?.current;
+      if (pub.phase !== 'day' || c?.stage !== 'voting') return '';
+      if (!canVoteNow()) return `<div class="card center"><h2>✋ Se votează</h2><p class="muted">Ți-ai folosit votul de fantomă.</p></div>`;
+      const mine = store(`vote-${pub.gameId}-${c.key}`);
+      if (mine) return `<div class="card center vote-card"><h2>✋ Ai votat: ${mine === 'yes' ? 'DA' : 'NU'}</h2><p class="muted">Poți schimba până se termină timpul.</p>
+        <div class="row2"><button class="btn ${mine === 'yes' ? '' : 'ghost'}" data-vote="yes">DA</button><button class="btn ${mine === 'no' ? '' : 'ghost'}" data-vote="no">NU</button></div></div>`;
+      return `<div class="card center vote-card">
+          <h2>✋ Votezi execuția lui ${esc(c.targetName)}?</h2>
+          ${alive() ? '' : '<p class="error">👻 E votul tău de fantomă: dacă votezi DA, nu mai poți vota niciodată.</p>'}
+          <p class="muted">Rămân <b data-ends="${c.endsAt ?? ''}"></b> · votul se vede pe proiector</p>
+          <div class="row2"><button class="btn squid-btn" data-vote="yes">✋ DA</button><button class="btn ghost" data-vote="no">NU</button></div>
+        </div>`;
+    }
+
+    // Nominalizarea și țărușul (ziua).
+    function dayActions() {
+      const d = pub.day ?? {};
+      if (pub.phase !== 'day' || !alive()) return '';
+      const busy = Boolean(d.current);
+      const nominatedToday = (d.nominators ?? []).includes(me);
+      const others = Object.keys(players).filter((id) => id in (pub.alive ?? {}));
+      let html = '';
+      if (panel === 'nominate') {
+        const free = others.filter((id) => !(d.nominated ?? []).includes(id));
+        html += `<div class="card"><h3>☝️ Pe cine nominalizezi?</h3><p class="muted">Poți nominaliza o singură dată pe zi. Fiecare poate fi nominalizat o dată pe zi.</p>
+          <div class="targets">${free.map((id) => `<button data-nom="${id}">${esc(playerName(id))}${pub.alive?.[id] === false ? ' 👻' : ''}</button>`).join('')}</div>
+          <button class="btn ghost" data-panel="">Renunță</button></div>`;
+      } else if (panel === 'slay') {
+        html += `<div class="card"><h3>🗡️ În cine înfigi țărușul?</h3><p class="muted">Se anunță pe proiector, în fața tuturor. Ai voie o singură dată în tot jocul.</p>
+          <div class="targets">${others.filter((id) => id !== me && pub.alive?.[id] !== false).map((id) => `<button data-slay="${id}">${esc(playerName(id))}</button>`).join('')}</div>
+          <button class="btn ghost" data-panel="">Renunță</button></div>`;
+      } else {
+        html += `<div class="card day-actions">
+          ${nominatedToday ? '<p class="muted center">☝️ Ai nominalizat deja azi.</p>'
+            : busy ? '<p class="muted center">⏳ O nominalizare e în curs. Așteaptă să se termine.</p>'
+            : '<button class="btn" data-panel="nominate">☝️ Nominalizează pe cineva</button>'}
+          ${priv?.slayUsed ? '' : '<button class="btn ghost small" data-panel="slay" style="margin-top:10px">🗡️ Țărușul lui Van Helsing</button>'}
+        </div>`;
+      }
+      return html;
+    }
+
+    // Corbierul ucis noaptea alege pe cineva.
+    function ravenCard() {
+      const rv = priv?.raven;
+      if (!rv) return '';
+      return `<div class="card center"><h2>🪶 Corbii tăi zboară o ultimă dată</h2><p>Alege un jucător și îi vei afla rolul.</p>
+        <div class="targets">${(rv.targets ?? []).map((t) => `<button data-raven="${t.id}">${esc(t.name)}</button>`).join('')}</div></div>`;
+    }
+
+    function renderMain(phase) {
+      const name = priv?.name ?? players[me]?.name ?? me;
+      if (priv?.sitOut && phase !== 'lobby') {
+        app.innerHTML = `
+          <h1 class="center">${esc(name)}</h1>
+          <div class="card center"><p>🍷 Nu joci în această partidă.</p><p class="muted">Bucură-te de spectacol pe proiector!</p></div>
+          ${scriptGuide()}
+          <button class="btn ghost" id="logout">Nu sunt eu</button>`;
+        app.querySelector('#logout').addEventListener('click', logout);
+        return;
+      }
+      if (!priv?.role || phase === 'lobby') {
+        app.innerHTML = `
+          <h1 class="center">Bun venit, ${esc(name)}</h1>
+          <div class="card center">
+            <p>🕯️ Ești la bal.</p>
+            <p class="muted">Jocul încă n-a început. Rolul tău secret va apărea aici.</p>
+          </div>
+          <button class="btn ghost" id="logout">Nu sunt eu</button>`;
+        app.querySelector('#logout').addEventListener('click', logout);
+        return;
+      }
+      const st = priv.status ?? {};
+      const badges = [
+        alive() ? '<span class="pill on">în viață</span>' : '<span class="pill">👻 fantomă</span>',
+        !alive() ? (st.ghostVote ? '<span class="pill">🗳️ mai ai votul de fantomă</span>' : '<span class="pill">fără vot</span>') : '',
+      ].join('');
+      const msgs = Object.values(priv.inbox ?? {}).sort((a, b) => (b.night ?? 0) - (a.night ?? 0));
+      const lastNight = msgs[0]?.night;
+      const phaseText = {
+        intro: 'Jocul a început. Uită-te la proiector și citește-ți rolul.',
+        night: 'Noaptea… uită-te pe ecran.',
+        morning: '☀️ Dimineața: uită-te la proiector.',
+        day: pub.day?.current ? `⚖️ ${esc(pub.day.current.byName)} îl nominalizează pe <b>${esc(pub.day.current.targetName)}</b>.` : '☀️ Ziua: discutați, nominalizați, votați.',
+        execution: '⚰️ Uită-te la proiector.',
+        end: pub.winner === 'good' ? '🕯️ Binele a învins!' : '🩸 Răul a învins!',
+      }[phase] ?? '';
+
+      app.innerHTML = `
+        <button class="hide-btn" id="hide">🙈 Ascunde</button>
+        <h1 class="center">${esc(name)}</h1>
+        <div class="badges">${badges}</div>
+        <p class="center">${phaseText}</p>
+        ${voteCard()}
+        ${ravenCard()}
+        ${dayActions()}
+        <div class="card role-card" id="role">
+          <div class="hidden-role">👆 Atinge aici ca să-ți vezi rolul</div>
+          <div class="shown-role" hidden>
+            <div class="emoji">${priv.emoji}</div>
+            <h2>${esc(priv.roleName)}</h2>
+            <p class="muted">${TYPE_LABEL[priv.type] ?? ''} · ${priv.team === 'evil' ? '🩸 Tabăra răului' : '🕯️ Tabăra binelui'}</p>
+            <p>${esc(priv.card)}</p>
+          </div>
+        </div>
+        ${msgs.length ? `<div class="card inbox"><h3>📜 Ce știi</h3>${msgs.map((m) => `<p class="${m.night === lastNight && m.night > 0 ? 'new' : ''}" style="white-space:pre-line">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(m.text)}</p>`).join('')}</div>` : ''}
+        ${finalCards(phase)}
+        ${scriptGuide()}
+        ${!alive() ? '<div class="card center muted">👻 Ești fantomă: poți vorbi în continuare, dar nu mai ai abilitate și ai un singur vot pentru tot restul jocului.</div>' : ''}
+        <button class="btn ghost" id="logout">Nu sunt eu</button>`;
+
+      const role = app.querySelector('#role');
+      let hideTimer = null;
+      const reveal = (on) => {
+        role.querySelector('.hidden-role').hidden = on;
+        role.querySelector('.shown-role').hidden = !on;
+        clearTimeout(hideTimer);
+        if (on) hideTimer = setTimeout(() => reveal(false), 8000);
+      };
+      role.addEventListener('click', () => reveal(role.querySelector('.shown-role').hidden));
+      app.querySelector('#hide').addEventListener('click', curtain);
+      app.querySelector('#logout').addEventListener('click', () => { if (confirm('Te deloghezi de pe acest telefon?')) logout(); });
+      app.querySelectorAll('[data-panel]').forEach((b) => b.addEventListener('click', () => { panel = b.dataset.panel || null; renderGame(true); }));
+      app.querySelectorAll('[data-vote]').forEach((b) => b.addEventListener('click', async () => {
+        const c = pub.day?.current;
+        if (!c) return;
+        const yes = b.dataset.vote === 'yes';
+        if (yes && !alive() && !confirm('Îți folosești votul de fantomă? Nu vei mai putea vota niciodată.')) return;
+        b.disabled = true;
+        try {
+          await set(r(`playerInput/${me}/vote`), { key: c.key, yes, at: Date.now() });
+          store(`vote-${pub.gameId}-${c.key}`, yes ? 'yes' : 'no');
+        } catch { alert('Votul nu s-a trimis. Verifică internetul.'); }
+        renderGame(true);
+      }));
+      app.querySelectorAll('[data-nom]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm(`Îl nominalizezi pe ${b.textContent.replace(' 👻', '')}? Se anunță pe proiector.`)) return;
+        try { await set(r(`playerInput/${me}/nominate`), { target: b.dataset.nom, day: pub.day?.day, at: Date.now() }); } catch { alert('Nu s-a trimis.'); }
+        panel = null;
+        renderGame(true);
+      }));
+      app.querySelectorAll('[data-slay]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm(`Înfigi țărușul în ${b.textContent}? Se vede pe proiector și nu mai poți încerca niciodată.`)) return;
+        try { await set(r(`playerInput/${me}/slay`), { target: b.dataset.slay, at: Date.now() }); } catch { alert('Nu s-a trimis.'); }
+        panel = null;
+        renderGame(true);
+      }));
+      app.querySelectorAll('[data-raven]').forEach((b) => b.addEventListener('click', async () => {
+        if (!confirm(`Afli rolul lui ${b.textContent}?`)) return;
+        try { await set(r(`playerInput/${me}/raven`), { target: b.dataset.raven, night: priv.raven.night, at: Date.now() }); } catch { alert('Nu s-a trimis.'); }
+      }));
+    }
+
+    // La final, după ce proiectorul dezvăluie rolurile, le vede și telefonul; apoi titlurile.
+    function finalCards(phase) {
+      const f = pub.final;
+      const st = pub.endStage ?? 'winner';
+      if (phase !== 'end' || !f || st === 'winner') return '';
+      const roles = `<div class="card"><h3>🎭 Cine ce a fost</h3>${(f.roles ?? []).map((x) => `<p>${x.emoji} <b>${esc(x.name)}</b> — ${esc(x.roleName)}${x.drunkAs ? ` (credea că e ${esc(x.drunkAs)})` : ''}${x.alive ? '' : ' 💀'}</p>`).join('')}</div>`;
+      const titles = st === 'titles' && f.titles?.length
+        ? `<div class="card"><h3>🏅 Titlurile serii</h3>${f.titles.map((t) => `<p>${t.emoji} <b>${esc(t.title)}</b>: ${t.names.map(esc).join(', ')}</p>`).join('')}</div>`
+        : '';
+      return roles + titles;
+    }
+
+    // Lista personajelor POSIBILE: nu toate sunt în joc (unele lipsesc mereu, de aici vin minciunile).
+    function scriptGuide() {
+      const sc = pub.script;
+      if (!sc) return '';
+      const c = pub.counts ?? {};
+      const order = [['demon', '🧛 Contele'], ['minion', '🦇 Slujitorii'], ['townsfolk', '🕯️ Sătenii'], ['outsider', '🍷 Străinii']];
+      return `
+        <details class="card guide">
+          <summary>📖 Personajele posibile</summary>
+          <p class="muted">În joc sunt: ${c.townsfolk ?? 0} Săteni, ${c.outsider ?? 0} Străini, ${c.minion ?? 0} Slujitori și 1 Conte. Restul personajelor de pe listă <b>nu</b> sunt în joc, dar oricine poate pretinde că le are.</p>
+          ${order.map(([t, title]) => {
+            const list = Object.values(sc[t] ?? {});
+            const evil = t === 'demon' || t === 'minion';
+            return `<div class="guide-team ${evil ? 'evil' : 'good'}"><h3>${title}${t !== 'demon' ? ` (${c[t] ?? 0} în joc din ${list.length})` : ''}</h3>${list.map((k) => `
+              <div class="guide-role ${evil ? 'evil' : 'good'}"><b>${ROLES[k].emoji} ${esc(ROLES[k].name)}</b><p>${esc(ROLES[k].card)}</p></div>`).join('')}</div>`;
+          }).join('')}
+        </details>`;
+    }
+
+    // Noaptea: 1) abilitatea (dacă ai una de ales), 2) pariul nopții — pentru toată lumea, ca ecranele să arate la fel.
+    function renderNight(night) {
+      const n = night.night;
+      const step = store(sentKey(n));
+      const timer = `<p class="center muted">⏳ <b data-ends="${pub.endsAt ?? ''}"></b></p>`;
+      const fail = (btn) => { if (btn) btn.disabled = false; const m = document.getElementById('msg'); if (m) m.textContent = 'Nu s-a trimis. Noaptea s-a încheiat sau nu ai internet.'; };
+
+      if (step === 'done') {
+        app.innerHTML = `
+          <h2 class="center" style="margin-top:18vh">🌑 Noaptea ${n}</h2>
+          <p class="center">✓ Gata. Alegerile tale au fost trimise.</p>
+          ${night.info ? '<p class="center muted">Informația ta vine dimineața, aici pe telefon.</p>' : ''}
+          <p class="center muted">Lasă telefonul jos și așteaptă dimineața.</p>
+          ${timer}`;
+        return;
+      }
+
+      if (step || !night.pick) {
+        chosen = [];
+        app.innerHTML = `
+          <h2 class="center">🌑 Noaptea ${n}</h2>
+          ${timer}
+          ${night.ghost ? '<p class="center muted">👻 Ești fantomă: nu mai ai abilitate, dar poți paria.</p>' : ''}
+          <p class="center" style="font-size:1.25rem"><b>🎲 Pariul nopții: cine crezi că e Contele?</b></p>
+          <p class="center muted" style="margin-top:-6px">Secret. La final, cine ghicește cel mai des primește un titlu.</p>
+          <div class="targets">${(night.bets ?? []).map((t) => `<button data-t="${t.id}">${esc(t.name)}</button>`).join('')}</div>
+          <p class="center error" id="msg"></p>
+          <button class="btn" id="confirm" disabled>Pariază</button>
+          <button class="btn ghost" id="skip" style="margin-top:10px">Nu știu</button>`;
+        const finish = async (bet, btn) => {
+          if (btn) btn.disabled = true;
+          try {
+            await update(r(`actions/${n}/${me}`), { bet, done: true, at: Date.now() });
+            store(sentKey(n), 'done');
+            renderGame(true);
+          } catch { fail(btn); }
+        };
+        app.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => {
+          chosen = [b.dataset.t];
+          app.querySelectorAll('[data-t]').forEach((x) => x.classList.toggle('chosen', x === b));
+          document.getElementById('confirm').disabled = false;
+        }));
+        app.querySelector('#confirm').addEventListener('click', (e) => chosen.length && finish(chosen[0], e.target));
+        app.querySelector('#skip').addEventListener('click', (e) => finish(null, e.target));
+        return;
+      }
+
+      // Pasul 1: abilitatea (1 sau 2 jucători).
+      chosen = [];
+      app.innerHTML = `
+        <h2 class="center">🌑 Noaptea ${n}</h2>
+        ${timer}
+        <p class="center" style="font-size:1.25rem"><b>${esc(night.prompt)}</b></p>
+        ${night.pick > 1 ? `<p class="center muted">Alege ${night.pick} jucători.</p>` : ''}
+        <div class="targets">${(night.targets ?? []).map((t) => `<button data-t="${t.id}">${esc(t.name)}${pub.alive?.[t.id] === false ? ' 👻' : ''}</button>`).join('')}</div>
+        <p class="center error" id="msg"></p>
+        <button class="btn" id="confirm" disabled>Confirmă</button>`;
+      app.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => {
+        const id = b.dataset.t;
+        if (chosen.includes(id)) chosen = chosen.filter((x) => x !== id);
+        else chosen = [...chosen, id].slice(-night.pick);
+        app.querySelectorAll('[data-t]').forEach((x) => x.classList.toggle('chosen', chosen.includes(x.dataset.t)));
+        document.getElementById('confirm').disabled = chosen.length !== night.pick;
+      }));
+      app.querySelector('#confirm').addEventListener('click', async (e) => {
+        if (chosen.length !== night.pick) return;
+        e.target.disabled = true;
+        try {
+          await set(r(`actions/${n}/${me}`), { targets: chosen, at: Date.now() });
+          store(sentKey(n), 'step1');
+          renderGame(true);
+        } catch { fail(e.target); }
+      });
+    }
+
+    // Ecranul se întunecă singur după 40 de secunde fără atingere.
+    let idle = null;
+    function curtain() {
+      if (document.querySelector('.curtain')) return;
+      const c = document.createElement('div');
+      c.className = 'curtain';
+      c.textContent = 'Atinge ecranul';
+      c.addEventListener('click', () => c.remove());
+      document.body.appendChild(c);
+    }
+    const resetIdle = () => {
+      clearTimeout(idle);
+      idle = setTimeout(() => { if (me && !['night', 'lobby'].includes(pub.phase) && pub.day?.current?.stage !== 'voting') curtain(); }, 40000);
+    };
+    ['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, resetIdle));
+    resetIdle();
+    setInterval(() => {
+      document.querySelectorAll('[data-ends]').forEach((el) => { if (+el.dataset.ends) el.textContent = fmt(+el.dataset.ends - serverNow()); });
+    }, 500);
+
+    async function logout() {
+      stopPrivate?.(); stopPrivate = null;
+      remember(null);
+      me = null;
+      // Un cont anonim nou, ca dispozitivul să nu mai fie legat de jucătorul vechi.
+      await signOut(auth);
+      await start();
+    }
+
+    // ---------- pornire ----------
+    let started = false;
+    async function start() {
+      let user = await currentUser();
+      if (!user || !user.isAnonymous) user = (await signInAnonymously(auth)).user;
+      uid = user.uid;
+
+      onValue(r(`pinStatus/${uid}`), (snap) => {
+        const s = snap.val();
+        if (!s) return;
+        if (s.reset) { stopPrivate?.(); stopPrivate = null; remember(null); if (me) { me = null; showNames(); } return; }
+        if (pendingNonce && s.nonce === pendingNonce) {
+          const tried = pendingPlayer;
+          pendingNonce = null;
+          if (s.ok) { me = s.player; remember(me); showHome(); }
+          else showPin(tried, { message: s.error });
+          return;
+        }
+        if (!pendingNonce && s.ok && s.player && !me) { me = s.player; remember(me); showHome(); }
+      });
+
+      if (started) return showNames();
+      started = true;
+      onValue(r('public'), (snap) => {
+        pub = snap.val() ?? {};
+        // Codul s-a actualizat pe site: ne reîncărcăm (dar nu în mijlocul nopții).
+        if (pub.appVersion > APP_VERSION && pub.phase !== 'night' && reloadForVersion(pub.appVersion)) return;
+        if (me) renderGame();
+      }, (err) => console.error(err));
+      onValue(r('public/engine'), (snap) => {
+        engineOnline = Boolean(snap.val()?.online);
+        if (!me && !pendingNonce && app.querySelector('.names')) showNames();
+      }, (err) => console.error(err));
+      onValue(r('public/players'), (snap) => {
+        players = snap.val() ?? {};
+        if (!Object.keys(players).length) {
+          app.innerHTML = '<h1 class="center"><span class="blood-text">Balul Contelui</span></h1><p class="center muted">⏳ Porțile castelului încă sunt închise. Pagina se actualizează singură când se deschid.</p>';
+          return;
+        }
+        if (!me && !pendingNonce && !app.querySelector('.keypad')) showNames();
+      }, (err) => {
+        console.error(err);
+        app.innerHTML = '<h1 class="center"><span class="blood-text">Balul Contelui</span></h1><p class="center error">🔒 Castelul e încuiat: baza de date refuză accesul (regulile Firebase nu sunt publicate).</p>';
+      });
+    }
+
+    start().catch((e) => {
+      console.error(e);
+      app.innerHTML = '<p class="center error">Nu mă pot conecta. Verifică internetul și reîncarcă pagina.</p>';
+    });
+  </script>
+</body>
+</html>
