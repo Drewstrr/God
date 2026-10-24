@@ -18,7 +18,7 @@
     showUpdateBanner();
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
     import { startHost } from './js/game-host.js';
-    import { gen } from './js/engine.js';
+    import { gen, inLineup } from './js/engine.js';
     import * as sfx from './js/sfx.js';
     import { YOUTUBE_MUSIC } from './js/music.js';
     import { candleSVG, animateFlames } from './js/candles.js';
@@ -74,7 +74,7 @@
     // Două rânduri cât mai egale: 11 -> 5 sus și 6 jos.
     function candles({ lobby = false } = {}) {
       // În lobby: doar cei care joacă; în joc: cei din partidă.
-      const players = Object.entries(pub.players ?? {}).filter(([id]) => (lobby ? pub.lineup?.players?.[id] !== false : id in (pub.alive ?? {})));
+      const players = Object.entries(pub.players ?? {}).filter(([id]) => (lobby ? inLineup(pub.lineup, id) : id in (pub.alive ?? {})));
       const items = players.map(([id, p], i) => {
         const cls = lobby ? (p.hasPin || p.bot ? '' : 'waiting') : (pub.alive?.[id] === false ? 'out' : '');
         return candleHtml(p.name, cls, `${esc(p.name)}${lobby && p.bot ? ' <span class="bot">🤖</span>' : ''}`, i);
@@ -275,7 +275,7 @@
       ['🕯️ Pentru fiecare suflet care își spune numele,', 'se aprinde o lumânare.'],
     ];
     let storyIdx = 0;
-    const lobbyCount = () => Object.keys(pub.players ?? {}).filter((id) => pub.lineup?.players?.[id] !== false).length;
+    const lobbyCount = () => Object.keys(pub.players ?? {}).filter((id) => inLineup(pub.lineup, id)).length;
     const storyHtml = () => storyLines(lobbyCount())[storyIdx].map((l) => `<span>${esc(l)}</span>`).join('');
     setInterval(() => {
       const el = document.getElementById('lobby-story');
@@ -313,7 +313,7 @@
 
     const views = {
       lobby() {
-        const players = Object.entries(pub.players ?? {}).filter(([id]) => pub.lineup?.players?.[id] !== false).map(([, p]) => p);
+        const players = Object.entries(pub.players ?? {}).filter(([id]) => inLineup(pub.lineup, id)).map(([, p]) => p);
         const ready = players.filter((p) => p.hasPin || p.bot).length;
         return `
           <h1>${bt('Balul Contelui')}</h1>
@@ -322,7 +322,7 @@
           <div class="join join-low">
             <div class="qr">${qrSvg}</div>
             <div class="join-text">
-              <div class="join-title">📱 Intră la bal</div>
+              <div class="join-title">🕯️ Intră la bal</div>
               <ol>
                 <li>Scanează codul cu camera telefonului</li>
                 <li>Atinge-ți numele</li>
@@ -342,7 +342,7 @@
             <ul>
               <li>🌑 <b>Noaptea</b> toată lumea apasă pe telefon: unii își folosesc abilitatea, toți fac un pariu.</li>
               <li>☀️ <b>Ziua</b> discutați, faceți alianțe, mințiți. Oricine poate <b>nominaliza</b> pe cineva de pe telefon (o dată pe zi).</li>
-              <li>✋ <b>Votul e public</b>: votați toți odată, pe telefon. E nevoie de cel puțin jumătate din cei vii.</li>
+              <li>✠ <b>Votul e public</b>: votați toți odată, pe telefon. E nevoie de cel puțin jumătate din cei vii.</li>
               <li>⚖️ La sfârșitul zilei, cel mai votat e <b>executat</b>. Rolul lui rămâne secret.</li>
               <li>👻 Morții pot vorbi în continuare, dar mai au <b>un singur vot</b> pentru tot jocul.</li>
               <li>🏆 Binele câștigă când moare Contele. Răul câștigă când rămân doar doi în viață.</li>
@@ -367,7 +367,7 @@
         if (d.free) return `
           <h1>${bt('Balul continuă', '🎭')}</h1>
           <p class="center lead muted">Vorbiți în șoaptă, faceți alianțe… sau mințiți. Nominalizările se deschid la adunare.</p>
-          ${timer('🔔 Adunarea în', d.free)}
+          ${timer('☩ Adunarea în', d.free)}
           ${townCandles()}`;
         const block = d.block;
         const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)`
@@ -379,10 +379,10 @@
           ${townCandles()}
           <div class="noms">${(d.nominations ?? []).map((n) => `<span class="${n.result}">${esc(n.byName)} → <b>${esc(n.targetName)}</b> ${n.count}/${n.threshold}</span>`).join('')}</div>
           ${!d.current && !(d.nominations ?? []).length ? `<div class="accuse-call">
-            <div class="ac-title">☝️ E momentul acuzațiilor!</div>
-            <div>Pe cine bănuiți? Oricine poate <b>nominaliza</b> pe cineva din telefon: <b>„☝️ Nominalizează”</b>.</div>
+            <div class="ac-title">⚖︎ E momentul acuzațiilor!</div>
+            <div>Pe cine bănuiți? Oricine poate <b>nominaliza</b> pe cineva din telefon: <b>„⚖︎ Nominalizează”</b>.</div>
             <div class="muted">Fiecare poate nominaliza o singură dată pe zi. Urmează apărarea și votul.</div>
-          </div>` : !d.current ? '<p class="center lead accuse-more">☝️ Mai bănuiți pe cineva? Nominalizați din telefon. Când ați terminat, ziua se încheie.</p>' : ''}
+          </div>` : !d.current ? '<p class="center lead accuse-more">⚖︎ Mai bănuiți pe cineva? Nominalizați din telefon. Când ați terminat, ziua se încheie.</p>' : ''}
           <div id="nomination"></div>`;
       },
       execution() {
@@ -470,7 +470,7 @@
         box.innerHTML = `<div class="nom-box">${head}<p class="lead">🗣️ Acuzare și apărare</p>${timer('', c.endsAt)}</div>`;
         if (fresh) sfx.bell(0, 196, 3, 0.4);
       } else if (c.stage === 'voting') {
-        box.innerHTML = `<div class="nom-box">${head}<p class="lead">✋ <b>Votați acum pe telefon!</b></p>${timer('', c.endsAt)}<p class="lead voted">${c.voted ?? 0} au votat</p></div>`;
+        box.innerHTML = `<div class="nom-box">${head}<p class="lead">✠ <b>Votați acum pe telefon!</b></p>${timer('', c.endsAt)}<p class="lead voted">${c.voted ?? 0} au votat</p></div>`;
         if (fresh) sfx.sessionBell();
       } else if (c.stage === 'reveal') {
         const rv = c.reveal ?? { items: [] };
@@ -558,7 +558,7 @@
         el = document.createElement('div');
         el.id = 'pause-overlay';
         el.className = 'pause-overlay';
-        el.innerHTML = '<div><div class="p-icon">⏸</div><div class="p-title">Pauză</div><div class="muted">Jocul s-a oprit puțin. Cronometrele așteaptă.</div></div>';
+        el.innerHTML = '<div><div class="p-icon">⌛</div><div class="p-title">Pauză</div><div class="muted">Jocul s-a oprit puțin. Cronometrele așteaptă.</div></div>';
         document.body.appendChild(el);
         sfx.bell(0, 147, 3, 0.35);
       } else if (!pub.paused && el) {

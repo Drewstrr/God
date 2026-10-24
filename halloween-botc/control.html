@@ -40,7 +40,7 @@
     showUpdateBanner();
     import { resetPin } from './js/pin-service.js';
     import { sendCommand } from './js/game-host.js';
-    import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION, gen } from './js/engine.js';
+    import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION, gen, inLineup as inLineupFor } from './js/engine.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
@@ -49,7 +49,7 @@
     const base = location.href.replace(/[^/]*([?#].*)?$/, '');
     const LINKS = [
       ['📽️', 'Proiector + motor', 'screen', 'Pe MacBook, pe ecranul proiectorului. Deschis într-un singur loc.'],
-      ['📱', 'Telefon (jucători)', 'play', 'Pentru invitați: aleg numele și PIN-ul. E și codul QR din lobby.'],
+      ['🕯️', 'Telefon (jucători)', 'play', 'Pentru invitați: aleg numele și PIN-ul. E și codul QR din lobby.'],
       ['🎛️', 'Panoul de comandă', 'control', 'Pagina asta. Nu arată niciun secret.'],
       ['🚨', 'Panoul de urgență', 'admin', 'Parolă separată. Arată secretele: doar în caz de forță majoră.'],
     ];
@@ -87,7 +87,7 @@
       day: '☀️ Ziua', execution: '⚰️ Execuția', end: '🏁 Final',
     };
 
-    const inLineup = (id) => pub.lineup?.players?.[id] !== false;
+    const inLineup = (id) => inLineupFor(pub.lineup, id);
 
     // Cine joacă: se alege înainte de start. Personajele le împarte aplicația, după numărul de jucători.
     function lineupHtml() {
@@ -142,14 +142,14 @@
             <p class="lead" style="font-size:1.3rem">🎭 Timp liber · adunarea în <span data-ends="${d.free}"></span></p>
             <p class="muted">Nominalizările se deschid la adunare. Când expiră timpul, proiectorul cheamă pe toată lumea.</p>
             <div class="row">
-              <button class="btn" data-cmd="openGathering">🔔 Deschide adunarea acum</button>
+              <button class="btn" data-cmd="openGathering">☩ Deschide adunarea acum</button>
               <button class="btn small ghost" id="plus5">+5 minute</button>
             </div>`;
           const block = d.block;
           const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)` : block ? `⚖️ Egalitate la ${block.votes}: nimeni pe butuc` : '⚖️ Nimeni pe butuc';
           let now = '<p class="muted">Jucătorii nominalizează de pe telefon. Tu doar închei ziua când s-au lămurit.</p>';
           if (c?.stage === 'defense') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: apărare <span data-ends="${c.endsAt ?? ''}"></span></p>
-            <button class="btn small" data-cmd="startVoting">✋ Pornește votul acum</button>
+            <button class="btn small" data-cmd="startVoting">✠ Pornește votul acum</button>
             <button class="btn small ghost" data-cmd="cancelNomination" data-confirm="Anulezi nominalizarea? Nu consumă dreptul nimănui.">✕ Anulează nominalizarea</button>`;
           if (c?.stage === 'voting') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: se votează · ${c.voted ?? 0} au votat · <span data-ends="${c.endsAt ?? ''}"></span></p>
             <button class="btn small ghost" data-cmd="cancelNomination" data-confirm="Anulezi votul în curs?">✕ Anulează</button>`;
@@ -186,8 +186,8 @@
       document.getElementById('phase-title').textContent = TITLES[phase] ?? 'Jocul';
       const box = document.getElementById('actions');
       const pauseHtml = phase === 'lobby' || phase === 'end' ? ''
-        : pub.paused ? '<div class="pause-bar">⏸ <b>Pauză</b> · toate cronometrele stau pe loc. <button class="btn small pulse" data-cmd="resume">▶️ Continuă jocul</button></div>'
-        : '<div style="text-align:right;margin-bottom:8px"><button class="btn small ghost" data-cmd="pause">⏸ Pauză (cineva a ieșit)</button></div>';
+        : pub.paused ? '<div class="pause-bar">⌛ <b>Pauză</b> · toate cronometrele stau pe loc. <button class="btn small pulse" data-cmd="resume">▶️ Continuă jocul</button></div>'
+        : '<div style="text-align:right;margin-bottom:8px"><button class="btn small ghost" data-cmd="pause">⌛ Pauză (cineva a ieșit)</button></div>';
       box.innerHTML = pauseHtml + actionsFor(phase) + (phase !== 'lobby' && phase !== 'end'
         ? '<hr style="border-color:var(--line);margin:14px 0"><button class="btn small ghost" data-cmd="reset" data-confirm="Oprești jocul și începi de la zero? PIN-urile rămân.">🔄 Oprește și începe un joc nou</button>'
         : '');

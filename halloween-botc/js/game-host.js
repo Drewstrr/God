@@ -4,7 +4,7 @@
 import {
   PLAYERS, ROLES, TYPES, DISTRIBUTION, MIN_PLAYERS, MAX_PLAYERS, ROLE_KEYS, newGame, initialKnowledge, resolveNight, resolveRaven,
   startDay, nominate, nominationError, tallyNomination, endDay, slay, nextNight, nightAction, validTargets,
-  believedRole, voteThreshold, checkWinner, shuffle, buildReplay, computeTitles, betLeaderboard, teamOf, grimoire,
+  believedRole, voteThreshold, inLineup as inLineupFor, checkWinner, shuffle, buildReplay, computeTitles, betLeaderboard, teamOf, grimoire,
 } from './engine.js';
 import { setVoteHandler, setEngineActive } from './pin-service.js';
 import {
@@ -60,7 +60,7 @@ async function save() {
 
 const setPublic = (patch) => update(r('public'), patch);
 const isBot = (id) => Boolean(pub.players?.[id]?.bot);
-const inLineup = (id) => pub.lineup?.players?.[id] !== false;
+const inLineup = (id) => inLineupFor(pub.lineup, id);
 // Testamentul scris pe telefon (apare pe proiector când moare jucătorul).
 const testamentOf = async (id) => String((await get(r(`playerInput/${id}/testament`))).val() ?? '').trim().slice(0, 200) || null;
 

@@ -164,15 +164,15 @@
     function voteCard() {
       const c = pub.day?.current;
       if (pub.phase !== 'day' || c?.stage !== 'voting') return '';
-      if (!canVoteNow()) return `<div class="card center"><h2>✋ Se votează</h2><p class="muted">Ți-ai folosit votul de fantomă.</p></div>`;
+      if (!canVoteNow()) return `<div class="card center"><h2>✠ Se votează</h2><p class="muted">Ți-ai folosit votul de fantomă.</p></div>`;
       const mine = store(`vote-${pub.gameId}-${c.key}`);
-      if (mine) return `<div class="card center vote-card"><h2>✋ Ai votat: ${mine === 'yes' ? 'DA' : 'NU'}</h2><p class="muted">Poți schimba până se termină timpul.</p>
+      if (mine) return `<div class="card center vote-card"><h2>✠ Ai votat: ${mine === 'yes' ? 'DA' : 'NU'}</h2><p class="muted">Poți schimba până se termină timpul.</p>
         <div class="row2"><button class="btn ${mine === 'yes' ? '' : 'ghost'}" data-vote="yes">DA</button><button class="btn ${mine === 'no' ? '' : 'ghost'}" data-vote="no">NU</button></div></div>`;
       return `<div class="card center vote-card">
-          <h2>✋ Votezi ca ${esc(c.targetName)} să fie ${gen(c.target, 'executat', 'executată')}?</h2>
+          <h2>✠ Votezi ca ${esc(c.targetName)} să fie ${gen(c.target, 'executat', 'executată')}?</h2>
           ${alive() ? '' : '<p class="error">👻 E votul tău de fantomă: dacă votezi DA, nu mai poți vota niciodată.</p>'}
           <p class="muted">Rămân <b data-ends="${c.endsAt ?? ''}"></b> · votul se vede pe proiector</p>
-          <div class="row2"><button class="btn ghost" data-vote="yes">✋ DA</button><button class="btn ghost" data-vote="no">NU</button></div>
+          <div class="row2"><button class="btn ghost" data-vote="yes">✠ DA</button><button class="btn ghost" data-vote="no">NU</button></div>
         </div>`;
     }
 
@@ -188,7 +188,7 @@
       let html = '';
       if (panel === 'nominate') {
         const free = others.filter((id) => !(d.nominated ?? []).includes(id) && pub.alive?.[id] !== false);
-        html += `<div class="card"><h3>☝️ Pe cine nominalizezi?</h3><p class="muted">Poți nominaliza o singură dată pe zi. Fiecare poate fi nominalizat o dată pe zi.</p>
+        html += `<div class="card"><h3>⚖︎ Pe cine nominalizezi?</h3><p class="muted">Poți nominaliza o singură dată pe zi. Fiecare poate fi nominalizat o dată pe zi.</p>
           <div class="targets">${free.map((id) => `<button data-nom="${id}">${esc(playerName(id))}</button>`).join('')}</div>
           <button class="btn ghost" data-panel="">Renunță</button></div>`;
       } else if (panel === 'slay') {
@@ -197,10 +197,10 @@
           <button class="btn ghost" data-panel="">Renunță</button></div>`;
       } else {
         html += `<div class="card day-actions">
-          ${nominatedToday ? '<p class="muted center">☝️ Ai nominalizat deja azi.</p>'
+          ${nominatedToday ? '<p class="muted center">⚖︎ Ai nominalizat deja azi.</p>'
             : busy ? '<p class="muted center">⏳ O nominalizare e în curs. Așteaptă să se termine.</p>'
-            : `<p class="center"><b>☝️ Bănuiești pe cineva?</b><br><span class="muted">Acuză-l în fața tuturor: urmează apărarea și votul.</span></p>
-               <button class="btn" data-panel="nominate">☝️ Nominalizează pe cineva</button>`}
+            : `<p class="center"><b>⚖︎ Bănuiești pe cineva?</b><br><span class="muted">Acuză-l în fața tuturor: urmează apărarea și votul.</span></p>
+               <button class="btn" data-panel="nominate">⚖︎ Nominalizează pe cineva</button>`}
           ${priv?.slayUsed ? '' : '<button class="btn ghost small" data-panel="slay" style="margin-top:10px">🗡️ Țărușul lui Van Helsing</button>'}
         </div>`;
       }
@@ -248,14 +248,14 @@
         intro: 'Jocul a început. Uită-te la proiector și citește-ți rolul.',
         night: 'Noaptea… uită-te pe ecran.',
         morning: '☀️ Dimineața: uită-te la proiector.',
-        day: pub.day?.free ? '🎭 Balul continuă. Vorbiți în șoaptă!' : pub.day?.current ? `⚖️ ${esc(pub.day.current.byName)} ${gen(pub.day.current.target, 'îl', 'o')} nominalizează pe <b>${esc(pub.day.current.targetName)}</b>.` : '🔔 Adunarea: veniți la proiector! E momentul acuzațiilor.',
+        day: pub.day?.free ? '🎭 Balul continuă. Vorbiți în șoaptă!' : pub.day?.current ? `⚖️ ${esc(pub.day.current.byName)} ${gen(pub.day.current.target, 'îl', 'o')} nominalizează pe <b>${esc(pub.day.current.targetName)}</b>.` : '☩ Adunarea: veniți la proiector! E momentul acuzațiilor.',
         execution: '⚰️ Uită-te la proiector.',
         end: pub.winner === 'good' ? '🕯️ Binele a învins!' : '🩸 Răul a învins!',
       }[phase] ?? '';
 
       app.innerHTML = `
-        <button class="hide-btn" id="hide">🙈 Ascunde</button>
-        ${pub.paused ? '<div class="card center pause-bar">⏸ <b>Pauză.</b> Jocul așteaptă să se întoarcă toată lumea.</div>' : ''}
+        <button class="hide-btn" id="hide">☾ Ascunde</button>
+        ${pub.paused ? '<div class="card center pause-bar">⌛ <b>Pauză.</b> Jocul așteaptă să se întoarcă toată lumea.</div>' : ''}
         <h1 class="center">${esc(name)}</h1>
         <div class="badges">${badges}</div>
         <p class="center">${phaseText}</p>
@@ -263,7 +263,7 @@
         ${ravenCard()}
         ${dayActions()}
         <div class="card role-card" id="role">
-          <div class="hidden-role">👆 Atinge aici ca să-ți vezi rolul</div>
+          <div class="hidden-role">✦ Atinge aici ca să-ți vezi rolul ✦</div>
           <div class="shown-role" hidden>
             <div class="emoji">${priv.emoji}</div>
             <h2>${esc(priv.roleName)}</h2>
@@ -279,9 +279,9 @@
             <textarea id="f-testament" maxlength="200" placeholder="Ultimele tale cuvinte…"></textarea>
             <button class="btn small" id="save-testament">Salvează</button> <span id="testament-ok" class="ok"></span>
           </div>` : ''}
+        ${!alive() ? '<div class="card center muted">👻 Ești fantomă: poți vorbi în continuare, dar nu mai ai abilitate și ai un singur vot pentru tot restul jocului.</div>' : ''}
         ${finalCards(phase)}
         ${scriptGuide()}
-        ${!alive() ? '<div class="card center muted">👻 Ești fantomă: poți vorbi în continuare, dar nu mai ai abilitate și ai un singur vot pentru tot restul jocului.</div>' : ''}
         <button class="btn ghost" id="logout">Nu sunt eu</button>`;
 
       const role = app.querySelector('#role');

@@ -270,3 +270,14 @@ test('reluarea spune când atacul Contelui a fost oprit (Preot / Haiduc)', () =>
   ({ state } = resolveNight(g2, { radu: { targets: ['andrei'] } }));
   assert.ok(buildReplay(state)[0].lines.some((l) => /Haiducul nu poate fi ucis/.test(l)));
 });
+
+test('12 jucători: 7 Săteni, 2 Străini, 2 Slujitori, Contele; paravanele tot bune și lipsă din joc', () => {
+  for (let k = 0; k < 100; k++) {
+    const g = newGame(P(12));
+    const types = Object.values(g.roles).map((r) => ROLES[r].type);
+    const count = (t) => types.filter((x) => x === t).length;
+    assert.deepEqual([count('townsfolk'), count('outsider'), count('minion'), count('demon')], [7, 2, 2, 1]);
+    assert.equal(g.bluffs.length, 3);
+    for (const b of g.bluffs) assert.ok(!Object.values(g.roles).includes(b));
+  }
+});

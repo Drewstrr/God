@@ -6,7 +6,7 @@ export const GAME_TITLE = 'Balul Contelui';
 
 export const PLAYERS = [
   'Andrei', 'Flori', 'Luca', 'Nico', 'Bogdan', 'Gabriela',
-  'Marian', 'Elisa', 'Robi', 'Cella', 'Radu',
+  'Marian', 'Elisa', 'Robi', 'Cella', 'Radu', 'Invitat',
 ].map((name) => ({ id: normalize(name), name }));
 
 // Fetele din grup: textele folosesc forma de feminin („o nominalizează pe Flori”, „executată”).
@@ -29,15 +29,15 @@ export const ROLES = {
   // Săteni
   washer: {
     name: 'Spălătoreasa', emoji: '🧺', type: 'townsfolk', night1: { info: true },
-    card: 'În prima noapte afli doi jucători și un rol de Sătean: unul dintre cei doi are acel rol.',
+    card: 'În prima noapte afli că unul din doi jucători are un anumit rol de Sătean. Ex.: „Ana sau Dan e Preotul”. Așa poți dovedi cine spune adevărul.',
   },
   librarian: {
     name: 'Arhivarul', emoji: '📚', type: 'townsfolk', night1: { info: true },
-    card: 'În prima noapte afli doi jucători și un rol de Străin: unul dintre cei doi are acel rol (sau afli că nu e niciun Străin în joc).',
+    card: 'În prima noapte afli că unul din doi jucători are un anumit rol de Străin. Ex.: „Ana sau Dan e Bețivul” (sau afli că nu e niciun Străin în joc).',
   },
   investigator: {
     name: 'Sfetnicul', emoji: '📯', type: 'townsfolk', night1: { info: true },
-    card: 'În prima noapte afli doi jucători și un rol de Slujitor: unul dintre cei doi are acel rol.',
+    card: 'În prima noapte afli că unul din doi jucători e un Slujitor al Contelui. Ex.: „Ana sau Dan e Vrăjitoarea”: unul din ei sigur e rău.',
   },
   fortune: {
     name: 'Ghicitoarea', emoji: '🔮', type: 'townsfolk',
@@ -116,6 +116,8 @@ export const DISTRIBUTION = {
   10: [7, 0, 2, 1], 11: [7, 1, 2, 1], 12: [7, 2, 2, 1], 13: [9, 0, 3, 1], 14: [9, 1, 3, 1], 15: [9, 2, 3, 1],
 };
 export const MIN_PLAYERS = 5;
+// Al 12-lea loc („Invitat”) e scos din joc până îl bifezi în panou; ceilalți intră implicit.
+export const inLineup = (lineup, id) => lineup?.players?.[id] ?? (id !== 'invitat');
 export const MAX_PLAYERS = 15;
 
 // Ordinea în care se rezolvă noaptea (cine acționează înaintea cui).
