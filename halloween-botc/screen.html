@@ -19,6 +19,7 @@
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
     import { startHost } from './js/game-host.js';
     import { gen, inLineup } from './js/engine.js';
+    import { splatter } from './js/splatter.js';
     import * as sfx from './js/sfx.js';
     import { YOUTUBE_MUSIC } from './js/music.js';
     import { candleSVG, animateFlames } from './js/candles.js';
@@ -439,7 +440,8 @@
       if (!already) {
         sfx.dawn();
         await wait(1500);
-        for (const d of m.deaths ?? []) await ceremony(d.name, 'a murit în noaptea asta');
+        // Contele a ucis: sângele împroșcă ecranul (de fiecare dată altă variantă), apoi ceremonia lumânării.
+        for (const d of m.deaths ?? []) { splatter(null, { hold: 9 }); await ceremony(d.name, 'a murit în noaptea asta'); }
       }
       const slides = m.deaths?.length
         ? m.deaths.map((d) => `<div class="slide death">💀 <b>${esc(d.name)}</b> a murit în noaptea asta.${d.testament ? `<div class="testament">„${esc(d.testament)}”</div>` : ''}</div>`)
@@ -509,7 +511,7 @@
       sfx.whoosh(0);
       setTimeout(() => {
         el.querySelector('.slay-b').innerHTML = sl.hit ? `💀 <b>${esc(sl.targetName)}</b> se prăbușește!${sl.testament ? `<div class="testament">„${esc(sl.testament)}”</div>` : ''}` : '…nimic nu se întâmplă.';
-        if (sl.hit) sfx.death(); else sfx.bell(0, 110, 3, 0.4);
+        if (sl.hit) { sfx.death(); splatter('slash', { zIndex: 96 }); } else sfx.bell(0, 110, 3, 0.4);
       }, 3000);
       setTimeout(() => el.classList.add('leaving'), 7500);
       setTimeout(() => el.remove(), 8700);

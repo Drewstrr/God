@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Balul Contelui – Variante de sânge</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { min-height: 100vh; }
+    .demo { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4vh; text-align: center; }
+    .demo h1 { font-size: 5vw; }
+    .bar { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 90; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  </style>
+</head>
+<body class="screen">
+  <div class="demo">
+    <p class="lead muted">Dimineața a venit…</p>
+    <h1><span class="blood-text">Cella</span></h1>
+    <p class="lead">a murit în noaptea asta.</p>
+  </div>
+  <div class="bar" id="bar"></div>
+  <script type="module">
+    import { splatter, VARIANTS } from './js/splatter.js';
+    const bar = document.getElementById('bar');
+    for (const [k, name] of [...Object.entries(VARIANTS), ['', '🎲 La întâmplare']]) {
+      const b = document.createElement('button');
+      b.className = 'btn small';
+      b.textContent = name;
+      b.addEventListener('click', () => { document.querySelectorAll('.splatter').forEach((c) => c.remove()); splatter(k || null); });
+      bar.appendChild(b);
+    }
+  </script>
+</body>
+</html>
