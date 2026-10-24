@@ -321,14 +321,21 @@
     function rolesGuide() {
       const keys = pub.rolesInGame ? Object.values(pub.rolesInGame) : [];
       if (!keys.length) return '';
+      // Întâi tabăra răului, apoi tabăra binelui.
+      const group = (team, title) => {
+        const list = keys.filter((k) => ROLES[k].team === team);
+        if (!list.length) return '';
+        return `<div class="guide-team ${team}"><h3>${title} (${list.length})</h3>${list.map((k) => `
+          <div class="guide-role ${team}">
+            <b>${ROLES[k].emoji} ${esc(ROLES[k].name)}</b>
+            <p>${esc(ROLE_ABOUT[k])}</p>
+          </div>`).join('')}</div>`;
+      };
       return `
         <details class="card guide">
           <summary>📖 Personajele din joc (${keys.length})</summary>
-          ${keys.map((k) => `
-            <div class="guide-role ${ROLES[k].team === 'evil' ? 'evil' : ''}">
-              <b>${ROLES[k].emoji} ${esc(ROLES[k].name)}</b> <span class="muted">· ${ROLES[k].team === 'evil' ? 'tabăra răului' : 'tabăra binelui'}</span>
-              <p>${esc(ROLE_ABOUT[k])}</p>
-            </div>`).join('')}
+          ${group('evil', '🩸 Tabăra răului')}
+          ${group('good', '🕯️ Tabăra binelui')}
         </details>`;
     }
 

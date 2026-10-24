@@ -590,14 +590,6 @@
     sfx.unlock();
     setInterval(showHint, 1000);
 
-    // QR mic în colț pe ecranele liniștite, pentru cine intră mai târziu sau are telefonul descărcat.
-    const corner = document.createElement('div');
-    corner.className = 'corner-qr';
-    corner.innerHTML = `<div class="qr">${qrSvg}</div><div>📱 Intră sau<br>reconectează-te</div>`;
-    corner.hidden = true;
-    document.body.appendChild(corner);
-    setInterval(() => { corner.hidden = !['intro', 'day', 'discussion'].includes(pub.phase) || !qrSvg; }, 500);
-
     // Un click oriunde trece proiectorul pe ecran complet.
     document.body.addEventListener('click', () => {
       if (!document.fullscreenElement) document.documentElement.requestFullscreen?.().catch(() => {});
