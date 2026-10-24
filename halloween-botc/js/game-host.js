@@ -81,7 +81,7 @@ export async function startHost({ onPassive = () => {} } = {}) {
   host.seen ??= {};
   onValue(r('public'), (snap) => { pub = snap.val() ?? {}; });
   pub = (await get(r('public'))).val() ?? {};
-  if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { nightSeconds: 90, defenseSeconds: 60, voteSeconds: 20 } });
+  if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { nightSeconds: 90, defenseSeconds: 60, voteSeconds: 20, freeMinutes: 22 } });
 
   onChildAdded(r('commands'), (snap) => {
     if (!active) return;
@@ -101,7 +101,7 @@ const run = serial(async (cmd) => {
   if (!active) return;
   const handlers = {
     fillBots, clearBots, start, firstNight, endNight, beginDay, startVoting, cancelNomination, endDayCmd,
-    toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick,
+    toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree,
     adminRevive, adminKill, adminRestartNight,
   };
   await handlers[cmd?.type]?.(cmd);
@@ -141,6 +141,7 @@ async function settings(cmd) {
       nightSeconds: clamp(s.nightSeconds, 20, 600, 90),
       defenseSeconds: clamp(s.defenseSeconds, 10, 600, 60),
       voteSeconds: clamp(s.voteSeconds, 8, 120, 20),
+      freeMinutes: clamp(s.freeMinutes, 0, 120, 22),
     },
   });
 }
@@ -342,6 +343,10 @@ function publicDay(extra = {}) {
     nominated: Object.keys(t?.nominees ?? {}),
     nominators: Object.keys(t?.nominators ?? {}),
     current: host.current ? publicCurrent() : null,
+    // Timpul liber (petrecerea): cât rulează, nominalizările sunt închise.
+    free: host.free?.endsAt ?? null,
+    // Ieri nu a fost executat nimeni: proiectorul le amintește, ca jocul să nu se lungească.
+    noExecYesterday: state.night > 1 && [...state.history].reverse().find((h) => h.type === 'day')?.executed === null,
     ...extra,
   };
 }
@@ -354,16 +359,45 @@ function publicCurrent() {
   return base;
 }
 
-async function beginDay() {
+// Ziua începe cu timp liber (petrecerea), apoi vine adunarea cu nominalizări și voturi.
+async function beginDay(cmd = {}) {
   if (!state || pub.phase !== 'morning') return;
   state = startDay(state);
   host.current = null;
+  const minutes = clamp(cmd.minutes ?? state.settings.freeMinutes, 0, 120, 22);
+  host.free = minutes ? { endsAt: serverNow() + minutes * 60000 } : null;
   await update(r(), { 'public/phase': 'day', 'public/day': publicDay(), 'public/endsAt': null, 'public/slay': null });
   await save();
+  if (host.free) armFree();
   startBotDay();
 }
 
+let freeTimer = null;
+function armFree() {
+  clearTimeout(freeTimer);
+  freeTimer = setTimeout(() => run({ type: 'openGathering', auto: true }), Math.max(0, host.free.endsAt - serverNow()) + 300);
+}
+
+// Se termină timpul liber: toată lumea vine la proiector.
+async function openGathering(cmd = {}) {
+  if (pub.phase !== 'day' || !host.free) return;
+  if (cmd.auto && host.free.endsAt > serverNow() + 1000) return armFree();  // timpul a fost prelungit între timp
+  clearTimeout(freeTimer);
+  host.free = null;
+  await setPublic({ day: publicDay() });
+  await save();
+}
+
+async function extendFree(cmd = {}) {
+  if (pub.phase !== 'day' || !host.free) return;
+  host.free.endsAt += clamp(cmd.minutes, 1, 60, 5) * 60000;
+  await setPublic({ day: publicDay() });
+  await save();
+  armFree();
+}
+
 function resumeDay() {
+  if (host.free) armFree();
   if (!host.current) return startBotDay();
   const c = host.current;
   if (c.stage === 'defense') armDay(c.endsAt, 'startVoting');
@@ -385,11 +419,11 @@ function startBotDay() {
 }
 
 async function botDayTick() {
-  if (pub.phase !== 'day' || !state?.today || host.current) return;
+  if (pub.phase !== 'day' || !state?.today || host.current || host.free) return;
   if (state.today.nominations.length >= 3 || Math.random() < 0.5) return;
   const bots = shuffle(aliveIds().filter((id) => isBot(id) && !state.today.nominators[id]));
   const by = bots[0];
-  const target = shuffle(GP().map((p) => p.id).filter((id) => !state.today.nominees[id] && id !== by))[0];
+  const target = shuffle(aliveIds().filter((id) => !state.today.nominees[id] && id !== by))[0];
   if (by && target) await set(r(`playerInput/${by}/nominate`), { target, day: state.today.day, at: Date.now() });
 }
 
@@ -422,7 +456,7 @@ async function onRaven(id, v) {
 }
 
 async function onNominate(by, v) {
-  if (pub.phase !== 'day' || !state.today || host.current) return;
+  if (pub.phase !== 'day' || !state.today || host.current || host.free) return;
   if (v.day !== state.today.day) return;
   if (nominationError(state, by, v.target)) return;
   state = nominate(state, by, v.target);
@@ -511,7 +545,7 @@ async function cancelNomination() {
 }
 
 async function onSlay(by, v) {
-  if (pub.phase !== 'day' || !state.today || state.slayerUsed[by] || !state.alive[by]) return;
+  if (pub.phase !== 'day' || !state.today || host.free || state.slayerUsed[by] || !state.alive[by]) return;
   if (!state.players.some((p) => p.id === v.target)) return;
   const { state: next, report } = slay(state, by, v.target);
   state = next;
@@ -546,7 +580,7 @@ async function tellNewDemon(id, patch) {
 }
 
 async function endDayCmd() {
-  if (!state || pub.phase !== 'day' || !state.today) return;
+  if (!state || pub.phase !== 'day' || !state.today || host.free) return;
   if (host.current && host.current.stage !== 'reveal') return;
   clearTimeout(dayTimer); clearInterval(botDayTimer);
   host.current = null;
@@ -637,7 +671,7 @@ export const grimoireLines = () => (state ? grimoire(state) : []);
 
 async function reset() {
   stopActions?.(); stopActions = null;
-  clearTimeout(nightTimer); clearTimeout(dayTimer); clearInterval(botDayTimer);
+  clearTimeout(nightTimer); clearTimeout(dayTimer); clearInterval(botDayTimer); clearTimeout(freeTimer);
   state = null;
   host = { seen: {} };
   const patch = {

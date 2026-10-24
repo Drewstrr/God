@@ -140,13 +140,14 @@
       const phase = pub.phase ?? 'lobby';
       const night = phase === 'night' && priv?.night?.night === pub.round ? priv.night : null;
       const cur = pub.day?.current;
-      const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.endStage, Boolean(pub.script), panel]);
+      const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.day?.free, pub.endStage, Boolean(pub.script), panel]);
       if (!force && sig === lastSig) return;
       lastSig = sig;
       guideOpen = document.querySelector('details.guide')?.open ?? guideOpen;
       document.body.classList.toggle('dark-night', Boolean(night));
       // Telefonul se „trezește” singur noaptea, la vot și când Corbierul are de ales.
-      const wake = night ? `n${pub.round}` : cur?.stage === 'voting' ? `v${cur.key}` : priv?.raven ? 'raven' : null;
+      const gathering = pub.phase === 'day' && !pub.day?.free ? `g${pub.day?.day}` : null;
+      const wake = night ? `n${pub.round}` : cur?.stage === 'voting' ? `v${cur.key}` : priv?.raven ? 'raven' : gathering;
       if (wake) {
         document.querySelector('.curtain')?.remove();
         if (wake !== lastWake) navigator.vibrate?.(300);
@@ -178,14 +179,15 @@
     function dayActions() {
       const d = pub.day ?? {};
       if (pub.phase !== 'day' || !alive()) return '';
+      if (d.free) return `<div class="card center"><p>🎭 <b>Timp liber.</b> Adunarea în <b data-ends="${d.free}"></b>.</p><p class="muted">Nominalizările și țărușul se deschid la adunare. Până atunci: vorbește, ascultă, minte.</p></div>`;
       const busy = Boolean(d.current);
       const nominatedToday = (d.nominators ?? []).includes(me);
       const others = Object.keys(players).filter((id) => id in (pub.alive ?? {}));
       let html = '';
       if (panel === 'nominate') {
-        const free = others.filter((id) => !(d.nominated ?? []).includes(id));
+        const free = others.filter((id) => !(d.nominated ?? []).includes(id) && pub.alive?.[id] !== false);
         html += `<div class="card"><h3>☝️ Pe cine nominalizezi?</h3><p class="muted">Poți nominaliza o singură dată pe zi. Fiecare poate fi nominalizat o dată pe zi.</p>
-          <div class="targets">${free.map((id) => `<button data-nom="${id}">${esc(playerName(id))}${pub.alive?.[id] === false ? ' 👻' : ''}</button>`).join('')}</div>
+          <div class="targets">${free.map((id) => `<button data-nom="${id}">${esc(playerName(id))}</button>`).join('')}</div>
           <button class="btn ghost" data-panel="">Renunță</button></div>`;
       } else if (panel === 'slay') {
         html += `<div class="card"><h3>🗡️ În cine înfigi țărușul?</h3><p class="muted">Se anunță pe proiector, în fața tuturor. Ai voie o singură dată în tot jocul.</p>
@@ -243,7 +245,7 @@
         intro: 'Jocul a început. Uită-te la proiector și citește-ți rolul.',
         night: 'Noaptea… uită-te pe ecran.',
         morning: '☀️ Dimineața: uită-te la proiector.',
-        day: pub.day?.current ? `⚖️ ${esc(pub.day.current.byName)} îl nominalizează pe <b>${esc(pub.day.current.targetName)}</b>.` : '☀️ Ziua: discutați, nominalizați, votați.',
+        day: pub.day?.free ? '🎭 Balul continuă. Vorbiți în șoaptă!' : pub.day?.current ? `⚖️ ${esc(pub.day.current.byName)} îl nominalizează pe <b>${esc(pub.day.current.targetName)}</b>.` : '🔔 Adunarea: veniți la proiector! Nominalizați și votați.',
         execution: '⚰️ Uită-te la proiector.',
         end: pub.winner === 'good' ? '🕯️ Binele a învins!' : '🩸 Răul a învins!',
       }[phase] ?? '';

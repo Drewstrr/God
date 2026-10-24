@@ -255,3 +255,9 @@ test('partidă la întâmplare: se termină mereu cu un câștigător, fără er
     computeTitles(g);
   }
 });
+
+test('fantomele nu pot fi nominalizate', () => {
+  let g = startDay(fixed(ROLES11));
+  g.alive.robi = false;
+  assert.ok(nominationError(g, 'andrei', 'robi'));
+});

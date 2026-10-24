@@ -121,6 +121,7 @@
             Noapte (sec) <input type="number" id="s-night" value="${s.nightSeconds ?? 90}" min="20" max="600">
             Apărare (sec) <input type="number" id="s-def" value="${s.defenseSeconds ?? 60}" min="10" max="600">
             Vot (sec) <input type="number" id="s-vote" value="${s.voteSeconds ?? 20}" min="8" max="120">
+            Timp liber (min) <input type="number" id="s-free" value="${s.freeMinutes ?? 22}" min="0" max="120">
             <button class="btn small ghost" id="save-settings">Salvează</button>
           </div>
           ${lineupHtml()}
@@ -133,9 +134,17 @@
           <p class="muted">Noaptea se încheie singură când aleg toți sau expiră timpul.</p>
           <button class="btn ghost" data-cmd="endNight" data-confirm="Închei noaptea acum? Cine n-a ales pierde acțiunea.">⏹ Încheie noaptea acum</button>`;
         case 'morning': return `
-          <p class="muted">Proiectorul anunță morții nopții.</p>
-          <button class="btn" data-cmd="beginDay">☀️ Începe ziua</button>`;
+          <p class="muted">Proiectorul anunță morții nopții. Apoi urmează timpul liber (petrecerea) și adunarea.</p>
+          <div class="row">Timp liber <input type="number" id="free-min" value="${s.freeMinutes ?? 22}" min="0" max="120"> minute (0 = adunarea imediat)</div>
+          <button class="btn" id="begin-day">☀️ Începe ziua</button>`;
         case 'day': {
+          if (d.free) return `
+            <p class="lead" style="font-size:1.3rem">🎭 Timp liber · adunarea în <span data-ends="${d.free}"></span></p>
+            <p class="muted">Nominalizările se deschid la adunare. Când expiră timpul, proiectorul cheamă pe toată lumea.</p>
+            <div class="row">
+              <button class="btn" data-cmd="openGathering">🔔 Deschide adunarea acum</button>
+              <button class="btn small ghost" id="plus5">+5 minute</button>
+            </div>`;
           const block = d.block;
           const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)` : block ? `⚖️ Egalitate la ${block.votes}: nimeni pe butuc` : '⚖️ Nimeni pe butuc';
           let now = '<p class="muted">Jucătorii nominalizează de pe telefon. Tu doar închei ziua când s-au lămurit.</p>';
@@ -189,12 +198,18 @@
         players[b.dataset.play] = !players[b.dataset.play];
         sendCommand('lineup', { players });
       }));
+      box.querySelector('#begin-day')?.addEventListener('click', (e) => {
+        e.target.disabled = true;
+        sendCommand('beginDay', { minutes: +document.getElementById('free-min').value || 0 });
+      });
+      box.querySelector('#plus5')?.addEventListener('click', () => sendCommand('extendFree', { minutes: 5 }));
       box.querySelectorAll('[data-end]').forEach((b) => b.addEventListener('click', () => sendCommand('endStage', { stage: b.dataset.end })));
       box.querySelector('#save-settings')?.addEventListener('click', () => sendCommand('settings', {
         settings: {
           nightSeconds: +document.getElementById('s-night').value,
           defenseSeconds: +document.getElementById('s-def').value,
           voteSeconds: +document.getElementById('s-vote').value,
+          freeMinutes: +document.getElementById('s-free').value,
         },
       }));
       renderPlayers();

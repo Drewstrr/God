@@ -360,12 +360,18 @@
       },
       day() {
         const d = pub.day ?? {};
+        if (d.free) return `
+          <h1>${bt('Balul continuă', '🎭')}</h1>
+          <p class="center lead muted">Vorbiți în șoaptă, faceți alianțe… sau mințiți. Nominalizările se deschid la adunare.</p>
+          ${timer('🔔 Adunarea în', d.free)}
+          ${townCandles()}`;
         const block = d.block;
         const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)`
           : block ? `⚖️ Egalitate la ${block.votes} voturi: nimeni pe butuc` : '⚖️ Nimeni pe butuc deocamdată';
         return `
           <h1>${bt(`Ziua ${d.day ?? ''}`, '☀️')}</h1>
           <p class="center lead day-status">${blockLine} · pentru execuție trebuie minim <b>${d.threshold ?? '?'}</b> voturi</p>
+          ${d.noExecYesterday ? '<p class="center muted">⚠️ Ieri nu a fost executat nimeni. Contele se bucură.</p>' : ''}
           ${townCandles()}
           <div class="noms">${(d.nominations ?? []).map((n) => `<span class="${n.result}">${esc(n.byName)} → <b>${esc(n.targetName)}</b> ${n.count}/${n.threshold}</span>`).join('')}</div>
           <div id="nomination"></div>`;
@@ -501,8 +507,10 @@
     let lastPhase = null;
     let lastEndStage = null;
     let dayKey = null;
-    const THEME = { lobby: 'waltz', intro: 'organ', night: 'night', morning: 'somber', day: 'ticking', execution: 'somber' };
+    const THEME = { lobby: 'waltz', intro: 'organ', night: 'night', morning: 'somber', free: 'waltz', day: 'ticking', execution: 'somber' };
     function playThemeFor(phase) {
+      // Timpul liber e petrecere: are muzica lui (melodia balului), adunarea are melodia dezbaterii.
+      if (phase === 'day' && pub.day?.free) phase = 'free';
       const generated = phase === 'end' ? (pub.winner === 'good' ? 'glory' : 'doom') : THEME[phase];
       // Fazele cu melodie de pe YouTube (js/music.js); muzica generată rămâne rezervă.
       const youtube = YOUTUBE_MUSIC[phase];
@@ -552,8 +560,10 @@
       // Ziua: redesenăm doar când se schimbă ceva important; altfel actualizăm nominalizarea curentă.
       if (phase === 'day' && lastPhase === 'day') {
         const d = pub.day ?? {};
-        const key = JSON.stringify([pub.alive, pub.ghostVote, d.block, d.nominations?.length]);
+        const key = JSON.stringify([pub.alive, pub.ghostVote, d.block, d.nominations?.length, d.free]);
         if (key === dayKey) return drawNomination();
+        // S-a terminat timpul liber: clopotul adunării.
+        if (!d.free && JSON.parse(dayKey ?? '[]')[4]) { sfx.sessionBell(); playThemeFor('day'); }
         dayKey = key;
         stage.innerHTML = views.day();
         nomKey = null;
@@ -579,7 +589,7 @@
         return;
       }
       stage.innerHTML = (views[phase] ?? views.lobby)();
-      if (phase === 'day') { dayKey = JSON.stringify([pub.alive, pub.ghostVote, pub.day?.block, pub.day?.nominations?.length]); drawNomination(); }
+      if (phase === 'day') { dayKey = JSON.stringify([pub.alive, pub.ghostVote, pub.day?.block, pub.day?.nominations?.length, pub.day?.free]); drawNomination(); }
       fitStage();
       if (phase === 'end') [0, 400, 1500].forEach((ms) => setTimeout(fitReplay, ms));
       if (phase === 'end' && stageChanged && previous === 'end') endStageEffects(pub.endStage);

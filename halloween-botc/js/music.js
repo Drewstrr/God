@@ -7,6 +7,7 @@ const debateSong = { id: 'pHJUQo6-2yE', start: 3 * 60 + 7 };
 
 export const YOUTUBE_MUSIC = {
   lobby: ballSong,   // cât intră oaspeții
-  day: debateSong,         // ziua: discuții, nominalizări, voturi
+  free: ballSong,          // timpul liber dintre adunări (petrecerea)
+  day: debateSong,         // adunarea: nominalizări, voturi
   end: ballSong,     // finalul: câștigătorii, rolurile, reluarea, titlurile
 };
