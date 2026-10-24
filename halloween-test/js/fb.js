@@ -10,7 +10,7 @@ import {
 
 export const ENV = 'test';
 // Crește la fiecare publicare: telefoanele cu cod vechi se reîncarcă singure.
-export const APP_VERSION = 29;
+export const APP_VERSION = 30;
 export const ENGINE_EMAIL = 'motor@blackwood.ro';
 
 // Paginile jucătorilor (telefon, iPad) au logarea lor, separată de cea a motorului:
@@ -91,5 +91,60 @@ export async function requireEngineLogin(mount) {
         err.hidden = false;
       }
     });
+  });
+}
+
+// ---------- versiuni noi ----------
+// GitHub Pages ține fișierele în cache câteva minute, așa că un simplu refresh poate aduce codul vechi.
+// Înainte de reîncărcare cerem din nou de la server toate fișierele jocului (cache: 'reload'),
+// ca pagina să pornească sigur cu versiunea nouă.
+const ASSETS = [
+  'index.html', 'screen.html', 'control.html', 'play.html', 'vote.html', 'admin.html', 'css/style.css',
+  'js/fb.js', 'js/engine.js', 'js/game-host.js', 'js/pin-service.js', 'js/sfx.js', 'js/music.js',
+  'js/candles.js', 'js/smoke.js', 'js/blood.js', 'js/heart.js', 'js/vendor/qrcode.js', 'audio/list.json',
+];
+export async function refreshAndReload() {
+  const base = new URL('../', import.meta.url);
+  const urls = [location.href, ...ASSETS.map((f) => new URL(f, base).href)];
+  await Promise.all(urls.map((u) => fetch(u, { cache: 'reload' }).catch(() => {})));
+  location.reload();
+}
+
+// Reîncărcare automată (telefoane, iPad): cel mult o dată pe minut pentru aceeași versiune, ca să nu intre în buclă.
+export function reloadForVersion(version) {
+  const key = `blackwood-reload-${version}`;
+  try {
+    const last = Number(sessionStorage.getItem(key) ?? 0);
+    if (Date.now() - last < 60000) return false;
+    sessionStorage.setItem(key, String(Date.now()));
+  } catch {}
+  refreshAndReload();
+  return true;
+}
+
+// Verifică la fiecare minut dacă pe server e o versiune mai nouă decât cea încărcată.
+export function watchForUpdates(onNew) {
+  const check = async () => {
+    try {
+      const text = await (await fetch(new URL('./fb.js', import.meta.url), { cache: 'no-store' })).text();
+      const v = Number(text.match(/APP_VERSION = (\d+)/)?.[1]);
+      if (v > APP_VERSION) onNew(v);
+    } catch {}
+  };
+  setTimeout(check, 5000);
+  setInterval(check, 60000);
+}
+
+// Banda „Versiune nouă” pentru paginile MacBook-ului (proiector, panou, urgență): nu se reîncarcă singure
+// în mijlocul jocului; apeși tu când vrei.
+export function showUpdateBanner() {
+  watchForUpdates(() => {
+    if (document.getElementById('update-banner')) return;
+    const b = document.createElement('button');
+    b.id = 'update-banner';
+    b.className = 'update-banner';
+    b.textContent = '✨ Versiune nouă a jocului: apasă aici ca să o încarci';
+    b.addEventListener('click', () => { b.textContent = 'Se încarcă…'; refreshAndReload(); });
+    document.body.appendChild(b);
   });
 }

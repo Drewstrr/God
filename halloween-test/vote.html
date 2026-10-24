@@ -15,7 +15,7 @@
 
   <script type="module">
     import {
-      auth, r, currentUser, signInAnonymously, onValue, set, reconnectOnWake, APP_VERSION,
+      auth, r, currentUser, signInAnonymously, onValue, set, reconnectOnWake, APP_VERSION, reloadForVersion,
     } from './js/fb.js';
 
     reconnectOnWake();
@@ -52,7 +52,7 @@
 
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
-      if (pub.appVersion > APP_VERSION && pub.phase !== 'vote') return location.reload();
+      if (pub.appVersion > APP_VERSION && pub.phase !== 'vote' && reloadForVersion(pub.appVersion)) return;
       render();
     });
 

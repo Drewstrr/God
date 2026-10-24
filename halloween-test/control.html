@@ -36,7 +36,8 @@
   </main>
 
   <script type="module">
-    import { r, onValue, set, requireEngineLogin, serverNow } from './js/fb.js';
+    import { r, onValue, set, requireEngineLogin, serverNow, showUpdateBanner } from './js/fb.js';
+    showUpdateBanner();
     import { resetPin } from './js/pin-service.js';
     import { sendCommand } from './js/game-host.js';
     import { ROLES, ROLE_PRIORITY, recommendedRoles, MIN_PLAYERS } from './js/engine.js';

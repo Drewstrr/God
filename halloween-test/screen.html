@@ -14,7 +14,8 @@
   <div class="status-dot" id="status">⚙️ motor oprit</div>
 
   <script type="module">
-    import { r, onValue, requireEngineLogin, serverNow } from './js/fb.js';
+    import { r, onValue, requireEngineLogin, serverNow, showUpdateBanner } from './js/fb.js';
+    showUpdateBanner();
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
     import { startHost } from './js/game-host.js';
     import * as sfx from './js/sfx.js';

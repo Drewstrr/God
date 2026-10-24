@@ -643,13 +643,14 @@ let ytPlayer = null;
 let ytDuck = 1;
 function loadYouTube() {
   ytApi ??= new Promise((resolve, reject) => {
+    if (window.YT?.Player) return resolve(window.YT);
     window.onYouTubeIframeAPIReady = () => resolve(window.YT);
     const s = document.createElement('script');
     s.src = 'https://www.youtube.com/iframe_api';
-    s.onerror = () => reject(new Error('YouTube indisponibil'));
+    s.onerror = () => { s.remove(); reject(new Error('YouTube indisponibil')); };
     document.head.appendChild(s);
-    setTimeout(() => reject(new Error('YouTube nu răspunde')), 12000);
-  });
+    setTimeout(() => reject(new Error('YouTube nu răspunde')), 20000);
+  }).catch((e) => { ytApi = null; throw e; });  // la eșec, data viitoare încercăm din nou
   return ytApi;
 }
 function youtubePlayer(YT) {
@@ -659,80 +660,103 @@ function youtubePlayer(YT) {
   box.innerHTML = '<div id="yt-music"></div>';
   document.body.appendChild(box);
   ytPlayer = new Promise((resolve, reject) => {
+    let ready = false;
     const p = new YT.Player('yt-music', {
       width: 200, height: 200,
-      playerVars: { controls: 0, disablekb: 1, playsinline: 1, rel: 0 },
+      playerVars: { controls: 0, disablekb: 1, playsinline: 1, rel: 0, autoplay: 1 },
       events: {
-        onReady: () => resolve(p),
-        onError: (e) => { p.failed?.(e.data); reject(new Error(`YouTube eroare ${e.data}`)); },
+        onReady: () => { ready = true; resolve(p); },
+        onError: (e) => { if (ready) p.failed?.(e.data); else reject(new Error(`YouTube eroare ${e.data}`)); },
         onStateChange: (e) => p.stateChanged?.(e.data),
       },
     });
-  });
+    setTimeout(() => { if (!ready) reject(new Error('Playerul YouTube nu pornește')); }, 20000);
+  }).catch((e) => { box.remove(); ytPlayer = null; throw e; });
   return ytPlayer;
 }
 const ytTarget = () => (muted ? 0 : Math.round(YT_VOLUME * ytDuck * volume * musicVolume));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Melodia de pe YouTube. Cât timp nu se aude (YouTube încă se încarcă, reclamă, internet căzut, browserul a blocat
+// pornirea), cântă muzica generată a jocului; YouTube se reîncearcă singur și preia când merge.
 async function playYouTube(mine, song, fallback) {
-  try {
-    const YT = await loadYouTube();
-    const p = await youtubePlayer(YT);
-    if (current !== mine) return;
-    let vol = 0;
+  let filler = null;
+  const fill = (on) => {
+    if (on && !filler && fallback && current === mine) filler = startSynth(fallback);
+    if (!on && filler) { filler(); filler = null; }
+  };
+  let loop = null;
+  mine.stop = () => { clearInterval(loop); fill(false); };
+
+  let YT = null;
+  let p = null;
+  for (let attempt = 0; current === mine && !p; attempt++) {
+    try {
+      YT = await loadYouTube();
+      p = await youtubePlayer(YT);
+    } catch {
+      fill(true);
+      await sleep(attempt < 3 ? 8000 : 20000);
+    }
+  }
+  if (current !== mine) return;
+
+  let vol = 0;
+  const load = () => {
     p.setVolume(0);
     p.loadVideoById({ videoId: song.id, startSeconds: song.start, ...(song.end ? { endSeconds: song.end } : {}), suggestedQuality: 'small' });
-    // Bucla: când ajunge la final, o ia din nou de la minutul ales.
-    p.stateChanged = (state) => { if (current === mine && state === YT.PlayerState.ENDED) { p.seekTo(song.start, true); p.playVideo(); } };
-    p.failed = () => { if (current === mine) fallbackTo(mine, fallback); };
-    // Reclamele: YouTube nu le anunță, dar se recunosc după faptul că melodia noastră nu înaintează
-    // (sau timpul e înainte de minutul ales). Atunci punem YouTube pe mut și cântă muzica jocului.
-    let lastT = -1;
-    let movedAt = 0;
-    let stalledSince = performance.now();
-    let filler = null;
-    const loop = setInterval(() => {
-      if (current !== mine) return;
-      const now = performance.now();
-      const t = p.getCurrentTime?.() ?? 0;
-      if (song.end && t >= song.end - 0.4) p.seekTo(song.start, true);
-      if (t > lastT + 0.05 && lastT >= 0) movedAt = now;
-      lastT = t;
-      const inSong = t >= song.start - 1 && (!song.end || t <= song.end + 1);
-      const playing = p.getPlayerState?.() === YT.PlayerState.PLAYING && inSong && now - movedAt < 900;
-      if (playing) {
-        stalledSince = now;
-        if (filler) { filler(); filler = null; }
-        if (p.isMuted?.()) p.unMute();
-        vol = vol < ytTarget() ? Math.min(ytTarget(), vol + 6) : ytTarget();  // intră încet, apoi urmează volumul cerut
-      } else {
-        vol = 0;  // reclamă sau încărcare: fără sunet de la YouTube
-        if (!p.isMuted?.()) p.mute();
-        if (!filler && fallback && now - stalledSince > 1500) filler = startSynth(fallback);
+  };
+  load();
+  // Bucla: când ajunge la final, o ia din nou de la minutul ales.
+  p.stateChanged = (state) => { if (current === mine && state === YT.PlayerState.ENDED) { p.seekTo(song.start, true); p.playVideo(); } };
+  let failedAt = 0;
+  p.failed = () => { failedAt = performance.now(); };
+
+  // Reclamele: YouTube nu le anunță, dar se recunosc după faptul că melodia noastră nu înaintează
+  // (sau timpul e înainte de minutul ales). Atunci punem YouTube pe mut și cântă muzica jocului.
+  let lastT = -1;
+  let movedAt = 0;
+  let stalledSince = performance.now();
+  let nudgedAt = 0;
+  loop = setInterval(() => {
+    if (current !== mine) return;
+    const now = performance.now();
+    const t = p.getCurrentTime?.() ?? 0;
+    const state = p.getPlayerState?.();
+    if (song.end && t >= song.end - 0.4) p.seekTo(song.start, true);
+    if (t > lastT + 0.05 && lastT >= 0) movedAt = now;
+    lastT = t;
+    const inSong = t >= song.start - 1 && (!song.end || t <= song.end + 1);
+    const playing = state === YT.PlayerState.PLAYING && inSong && now - movedAt < 900;
+    if (playing) {
+      stalledSince = now;
+      fill(false);
+      if (p.isMuted?.()) p.unMute();
+      vol = vol < ytTarget() ? Math.min(ytTarget(), vol + 6) : ytTarget();  // intră încet, apoi urmează volumul cerut
+    } else {
+      vol = 0;  // reclamă sau încărcare: fără sunet de la YouTube
+      if (!p.isMuted?.()) p.mute();
+      if (now - stalledSince > 1500) fill(true);
+      // Oprită de tot (pornire blocată, eroare, pauză): o împingem din nou la câteva secunde.
+      if (state !== YT.PlayerState.PLAYING && state !== YT.PlayerState.BUFFERING && now - stalledSince > 4000 && now - nudgedAt > 5000) {
+        nudgedAt = now;
+        if (failedAt && now - failedAt > 15000) { failedAt = 0; load(); } else p.playVideo();
       }
-      p.setVolume(vol);
-    }, 250);
-    mine.filler = () => { if (filler) { filler(); filler = null; } };
-    mine.resume = () => { if (p.getPlayerState?.() !== YT.PlayerState.PLAYING) p.playVideo(); };
-    mine.stop = () => {
-      clearInterval(loop);
-      mine.filler();
-      let v = p.getVolume?.() ?? 0;
-      const fade = setInterval(() => {
-        v = Math.max(0, v - 5);
-        if (current?.youtube) { clearInterval(fade); return; }  // a pornit altă melodie YouTube, nu o oprim
-        p.setVolume(v);
-        if (!v) { clearInterval(fade); p.pauseVideo(); }
-      }, 80);
-    };
-  } catch {
-    fallbackTo(mine, fallback);
-  }
-}
-function fallbackTo(mine, theme) {
-  if (current !== mine || !theme) return;
-  mine.stop?.();
-  current = null;
-  playMusic(theme);
+    }
+    p.setVolume(vol);
+  }, 250);
+  mine.resume = () => { if (p.getPlayerState?.() !== YT.PlayerState.PLAYING) p.playVideo(); };
+  mine.stop = () => {
+    clearInterval(loop);
+    fill(false);
+    let v = p.getVolume?.() ?? 0;
+    const fade = setInterval(() => {
+      v = Math.max(0, v - 5);
+      if (current?.youtube) { clearInterval(fade); return; }  // a pornit altă melodie YouTube, nu o oprim
+      p.setVolume(v);
+      if (!v) { clearInterval(fade); p.pauseVideo(); }
+    }, 80);
+  };
 }
 // Apelat la fiecare click pe proiector: dacă browserul a blocat pornirea melodiei, o pornim acum.
 export const resumeMusic = () => current?.resume?.();

@@ -15,7 +15,7 @@
 
   <script type="module">
     import {
-      auth, r, currentUser, signInAnonymously, signOut, onValue, set, update, serverNow, reconnectOnWake, onConnection, APP_VERSION,
+      auth, r, currentUser, signInAnonymously, signOut, onValue, set, update, serverNow, reconnectOnWake, onConnection, APP_VERSION, reloadForVersion,
     } from './js/fb.js';
     import { ROLES, ROLE_ABOUT } from './js/engine.js';
     import { heartSVG } from './js/heart.js';
@@ -504,7 +504,7 @@
       onValue(r('public'), (snap) => {
         pub = snap.val() ?? {};
         // Codul s-a actualizat pe site: ne reîncărcăm (dar nu în mijlocul nopții).
-        if (pub.appVersion > APP_VERSION && pub.phase !== 'night') return location.reload();
+        if (pub.appVersion > APP_VERSION && pub.phase !== 'night' && reloadForVersion(pub.appVersion)) return;
         if (me) renderGame();
       }, (err) => console.error(err));
       onValue(r('public/engine'), (snap) => {
