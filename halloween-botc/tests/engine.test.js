@@ -261,3 +261,12 @@ test('fantomele nu pot fi nominalizate', () => {
   g.alive.robi = false;
   assert.ok(nominationError(g, 'andrei', 'robi'));
 });
+
+test('reluarea spune când atacul Contelui a fost oprit (Preot / Haiduc)', () => {
+  const g = nextNight(fixed(ROLES11));
+  let { state } = resolveNight(g, { radu: { targets: ['andrei'] }, luca: { targets: ['andrei'] } });
+  assert.ok(buildReplay(state)[0].lines.some((l) => /atacat pe Andrei — salvat de binecuvântarea Preotului/.test(l)));
+  const g2 = nextNight(fixed({ ...ROLES11, andrei: 'soldier' }));
+  ({ state } = resolveNight(g2, { radu: { targets: ['andrei'] } }));
+  assert.ok(buildReplay(state)[0].lines.some((l) => /Haiducul nu poate fi ucis/.test(l)));
+});

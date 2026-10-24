@@ -307,6 +307,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
 
   // 3. Contele mușcă (nu în prima noapte).
   let attack = null;
+  let attackResult = null;   // ce s-a întâmplat cu atacul (pentru reluarea de la final)
   const demon = demonId(prev);
   if (night > 1 && demon && prev.alive[demon]) {
     const t = pick(demon)?.[0];
@@ -317,8 +318,10 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
         const others = alivePlayers(state).map((p) => p.id).filter((id) => id !== t && id !== demon);
         victim = others.length ? pickOne(others, rng) : t;
       }
-      const safe = victim === protectedId || (state.roles[victim] === 'soldier' && functioning(state, victim));
-      if (!safe) kill(victim, 'bite');
+      const blessed = victim === protectedId;
+      const soldier = state.roles[victim] === 'soldier' && functioning(state, victim);
+      if (!blessed && !soldier) kill(victim, 'bite');
+      attackResult = { victim, saved: blessed ? 'monk' : soldier ? 'soldier' : null, bounced: victim !== t };
     }
   }
 
@@ -369,7 +372,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
 
   state.history.push({
     type: 'night', night,
-    poisoned: state.poisoned, protected: protectedId, attack,
+    poisoned: state.poisoned, protected: protectedId, attack, attackResult,
     fortune: Object.fromEntries(holders('fortune').map((id) => [id, pick(id)])),
     deaths: deaths.map((d) => d.id), bets,
   });
@@ -520,7 +523,14 @@ export function buildReplay(state) {
       const lines = [];
       if (h.poisoned) lines.push(`🧙‍♀️ Vrăjitoarea l-a otrăvit pe ${nameOf(state, h.poisoned)}`);
       if (h.protected) lines.push(`✝️ Preotul l-a binecuvântat pe ${nameOf(state, h.protected)}`);
-      if (h.attack) lines.push(`🧛 Contele l-a atacat pe ${nameOf(state, h.attack)}`);
+      if (h.attack) {
+        const res = h.attackResult ?? {};
+        let line = `🧛 Contele l-a atacat pe ${nameOf(state, h.attack)}`;
+        if (res.bounced) line += `, dar Primarul a scăpat: în locul lui a fost atacat ${nameOf(state, res.victim)}`;
+        if (res.saved === 'monk') line += ` — salvat de binecuvântarea Preotului`;
+        else if (res.saved === 'soldier') line += ` — Haiducul nu poate fi ucis`;
+        lines.push(line);
+      }
       for (const [, pair] of Object.entries(h.fortune ?? {})) if (pair) lines.push(`🔮 Ghicitoarea i-a cercetat pe ${pair.map((id) => nameOf(state, id)).join(' și ')}`);
       lines.push(h.deaths.length ? `💀 Au murit: ${h.deaths.map((id) => nameOf(state, id)).join(', ')}` : '🌙 Nu a murit nimeni');
       out.push({ title: `🌑 Noaptea ${h.night}`, lines });

@@ -114,6 +114,7 @@
     let guideOpen = false;
     let chosen = [];
     let panel = null;   // ce listă e deschisă ziua: 'nominate' | 'slay' | null
+    let draftTestament = null;
     const TYPE_LABEL = { townsfolk: 'Sătean', outsider: 'Străin', minion: 'Slujitor', demon: 'Conte' };
     const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(`botc-${k}`); localStorage.setItem(`botc-${k}`, v); } catch { return null; } return null; };
     const sentKey = (night) => `night-${me}-${pub.gameId}-${night}-${pub.nightSeq ?? 0}`;
@@ -268,6 +269,13 @@
           </div>
         </div>
         ${msgs.length ? `<div class="card inbox"><h3>📜 Ce știi</h3>${msgs.map((m) => `<p class="${m.night === lastNight && m.night > 0 ? 'new' : ''}" style="white-space:pre-line">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(m.text)}</p>`).join('')}</div>` : ''}
+        ${alive() && phase !== 'end' ? `
+          <div class="card">
+            <h3>✍️ Testamentul tău</h3>
+            <p class="muted">Apare pe proiector dacă mori. Poți scrie ce rol pretinzi, pe cine bănuiești… sau o minciună.</p>
+            <textarea id="f-testament" maxlength="200" placeholder="Ultimele tale cuvinte…"></textarea>
+            <button class="btn small" id="save-testament">Salvează</button> <span id="testament-ok" class="ok"></span>
+          </div>` : ''}
         ${finalCards(phase)}
         ${scriptGuide()}
         ${!alive() ? '<div class="card center muted">👻 Ești fantomă: poți vorbi în continuare, dar nu mai ai abilitate și ai un singur vot pentru tot restul jocului.</div>' : ''}
@@ -284,6 +292,23 @@
       role.addEventListener('click', () => reveal(role.querySelector('.shown-role').hidden));
       app.querySelector('#hide').addEventListener('click', curtain);
       app.querySelector('#logout').addEventListener('click', () => { if (confirm('Te deloghezi de pe acest telefon?')) logout(); });
+      // Testamentul: păstrăm ce scrie jucătorul între redesenări.
+      const tEl = document.getElementById('f-testament');
+      if (tEl) {
+        tEl.value = draftTestament ?? store(`testament-${pub.gameId}-${me}`) ?? '';
+        tEl.addEventListener('input', () => { draftTestament = tEl.value; });
+        document.getElementById('save-testament').addEventListener('click', async (e) => {
+          const text = tEl.value.trim();
+          e.target.disabled = true;
+          try {
+            await set(r(`playerInput/${me}/testament`), text);
+            store(`testament-${pub.gameId}-${me}`, text);
+            draftTestament = null;
+            document.getElementById('testament-ok').textContent = '✓ Salvat';
+          } catch { document.getElementById('testament-ok').textContent = 'Nu s-a salvat. Mai încearcă.'; }
+          e.target.disabled = false;
+        });
+      }
       app.querySelectorAll('[data-panel]').forEach((b) => b.addEventListener('click', () => { panel = b.dataset.panel || null; renderGame(true); }));
       app.querySelectorAll('[data-vote]').forEach((b) => b.addEventListener('click', async () => {
         const c = pub.day?.current;

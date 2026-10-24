@@ -61,6 +61,9 @@ async function save() {
 const setPublic = (patch) => update(r('public'), patch);
 const isBot = (id) => Boolean(pub.players?.[id]?.bot);
 const inLineup = (id) => pub.lineup?.players?.[id] !== false;
+// Testamentul scris pe telefon (apare pe proiector când moare jucătorul).
+const testamentOf = async (id) => String((await get(r(`playerInput/${id}/testament`))).val() ?? '').trim().slice(0, 200) || null;
+
 const clamp = (v, lo, hi, def) => (Number.isFinite(+v) ? Math.min(hi, Math.max(lo, Math.round(+v))) : def);
 
 // ---------- pornire ----------
@@ -316,7 +319,7 @@ async function endNight(cmd = {}) {
     'public/endsAt': null,
     'public/progress': null,
     'public/winner': state.winner,
-    'public/morning': { night, deaths: report.deaths.map((d) => ({ id: d.id, name: nameOf(d.id) })) },
+    'public/morning': { night, deaths: await Promise.all(report.deaths.map(async (d) => ({ id: d.id, name: nameOf(d.id), testament: await testamentOf(d.id) }))) },
   });
   if (state.winner) Object.assign(patch, finalPatch());
   await update(r(), patch);
@@ -550,7 +553,7 @@ async function onSlay(by, v) {
   const { state: next, report } = slay(state, by, v.target);
   state = next;
   const patch = {
-    'public/slay': { byName: nameOf(by), targetName: nameOf(v.target), hit: report.hit, at: serverNow() },
+    'public/slay': { byName: nameOf(by), targetName: nameOf(v.target), hit: report.hit, at: serverNow(), testament: report.hit ? await testamentOf(v.target) : null },
     'public/alive': state.alive,
     'public/ghostVote': state.ghostVote,
     [`private/${by}/slayUsed`]: true,
@@ -594,6 +597,7 @@ async function endDayCmd() {
     'public/day': null,
     'public/execution': {
       name: report.executed ? nameOf(report.executed) : null,
+      testament: report.executed ? await testamentOf(report.executed) : null,
       saint: report.saint,
       mayorWin: report.mayorWin,
     },

@@ -384,6 +384,7 @@
             <p class="lead muted">Executat din ordinul castelului</p>
             <h1>${bt(e.name)}</h1>
             ${e.saint ? '<p class="lead squid-pink">😇 Era Sfântul! Sângele lui nevinovat blestemă castelul.</p>' : '<p class="lead muted">Rolul lui rămâne secret până la final.</p>'}
+            ${e.testament ? `<div class="testament">„${esc(e.testament)}”</div>` : ''}
           </div>`;
       },
       end() {
@@ -432,7 +433,7 @@
         for (const d of m.deaths ?? []) await ceremony(d.name, 'a murit în noaptea asta');
       }
       const slides = m.deaths?.length
-        ? m.deaths.map((d) => `<div class="slide death">💀 <b>${esc(d.name)}</b> a murit în noaptea asta.</div>`)
+        ? m.deaths.map((d) => `<div class="slide death">💀 <b>${esc(d.name)}</b> a murit în noaptea asta.${d.testament ? `<div class="testament">„${esc(d.testament)}”</div>` : ''}</div>`)
         : ['<div class="slide">🌙 Nimeni nu a murit în noaptea asta.</div>'];
       slides.forEach((html, i) => setTimeout(() => document.getElementById('morning')?.insertAdjacentHTML('beforeend', html), already ? 0 : 600 + i * 1500));
     }
@@ -497,7 +498,7 @@
       sfx.duckMusic(8);
       sfx.whoosh(0);
       setTimeout(() => {
-        el.querySelector('.slay-b').innerHTML = sl.hit ? `💀 <b>${esc(sl.targetName)}</b> se prăbușește!` : '…nimic nu se întâmplă.';
+        el.querySelector('.slay-b').innerHTML = sl.hit ? `💀 <b>${esc(sl.targetName)}</b> se prăbușește!${sl.testament ? `<div class="testament">„${esc(sl.testament)}”</div>` : ''}` : '…nimic nu se întâmplă.';
         if (sl.hit) sfx.death(); else sfx.bell(0, 110, 3, 0.4);
       }, 3000);
       setTimeout(() => el.classList.add('leaving'), 7500);
