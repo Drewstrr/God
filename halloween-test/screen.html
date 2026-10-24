@@ -18,6 +18,7 @@
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
     import { startHost } from './js/game-host.js';
     import * as sfx from './js/sfx.js';
+    import { YOUTUBE_MUSIC } from './js/music.js';
     import { candleSVG, animateFlames } from './js/candles.js';
     import { smokeAt } from './js/smoke.js';
     import { startBlood, stopBlood } from './js/blood.js';
@@ -546,14 +547,18 @@
       vote: 'tension', reveal: 'tension', sacrifice: null, elimination: 'somber',
     };
     function playThemeFor(phase) {
-      const theme = phase === 'end' ? (pub.winner === 'good' ? 'glory' : 'doom') : THEME[phase];
+      const generated = phase === 'end' ? (pub.winner === 'good' ? 'glory' : 'doom') : THEME[phase];
+      // Fazele cu melodie de pe YouTube (js/music.js); muzica generată rămâne rezervă.
+      const youtube = YOUTUBE_MUSIC[phase];
+      const theme = youtube ? `yt-${phase}` : generated;
+      const options = youtube ? { youtube, fallback: generated } : {};
       // La final, muzica pornește după efectul sonor al victoriei.
       if (phase === 'end') {
         if (sfx.musicTheme() === theme) return;
         sfx.playMusic(null);
-        setTimeout(() => { if (lastPhase === 'end') sfx.playMusic(theme); }, 6000);
+        setTimeout(() => { if (lastPhase === 'end') sfx.playMusic(theme, options); }, 6000);
       }
-      else sfx.playMusic(theme ?? null);
+      else sfx.playMusic(theme ?? null, options);
     }
 
     // Anunțuri scurte peste orice ecran (de exemplu cineva a părăsit castelul).
@@ -648,7 +653,7 @@
       }
       wasReady = on;
     };
-    const wake = () => { sfx.unlock(); setTimeout(showHint, 150); setTimeout(showHint, 600); };
+    const wake = () => { sfx.unlock(); sfx.resumeMusic(); setTimeout(showHint, 150); setTimeout(showHint, 600); };
     ['pointerdown', 'pointerup', 'click', 'touchend', 'keydown'].forEach((ev) => document.addEventListener(ev, wake, true));
     sfx.onSoundState(showHint);
     sfx.unlock();

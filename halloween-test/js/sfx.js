@@ -626,13 +626,95 @@ async function hasFile(theme) {
   return fileCache[theme];
 }
 
-export async function playMusic(theme) {
+// ---------- melodii de pe YouTube (playerul oficial, ascuns) ----------
+const YT_VOLUME = 60;
+let ytApi = null;
+let ytPlayer = null;
+let ytDuck = 1;
+function loadYouTube() {
+  ytApi ??= new Promise((resolve, reject) => {
+    window.onYouTubeIframeAPIReady = () => resolve(window.YT);
+    const s = document.createElement('script');
+    s.src = 'https://www.youtube.com/iframe_api';
+    s.onerror = () => reject(new Error('YouTube indisponibil'));
+    document.head.appendChild(s);
+    setTimeout(() => reject(new Error('YouTube nu răspunde')), 12000);
+  });
+  return ytApi;
+}
+function youtubePlayer(YT) {
+  if (ytPlayer) return ytPlayer;
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;right:0;bottom:0;width:200px;height:200px;opacity:0.01;pointer-events:none;z-index:-1;overflow:hidden';
+  box.innerHTML = '<div id="yt-music"></div>';
+  document.body.appendChild(box);
+  ytPlayer = new Promise((resolve, reject) => {
+    const p = new YT.Player('yt-music', {
+      width: 200, height: 200,
+      playerVars: { controls: 0, disablekb: 1, playsinline: 1, rel: 0 },
+      events: {
+        onReady: () => resolve(p),
+        onError: (e) => { p.failed?.(e.data); reject(new Error(`YouTube eroare ${e.data}`)); },
+        onStateChange: (e) => p.stateChanged?.(e.data),
+      },
+    });
+  });
+  return ytPlayer;
+}
+const ytTarget = () => (muted ? 0 : Math.round(YT_VOLUME * ytDuck));
+
+async function playYouTube(mine, song, fallback) {
+  try {
+    const YT = await loadYouTube();
+    const p = await youtubePlayer(YT);
+    if (current !== mine) return;
+    let vol = 0;
+    p.setVolume(0);
+    p.loadVideoById({ videoId: song.id, startSeconds: song.start, endSeconds: song.end, suggestedQuality: 'small' });
+    // Bucla: când ajunge la final, o ia din nou de la minutul ales.
+    p.stateChanged = (state) => { if (current === mine && state === YT.PlayerState.ENDED) { p.seekTo(song.start, true); p.playVideo(); } };
+    p.failed = () => { if (current === mine) fallbackTo(mine, fallback); };
+    const loop = setInterval(() => {
+      if (current !== mine) return;
+      const t = p.getCurrentTime?.() ?? 0;
+      if (t >= song.end - 0.4) p.seekTo(song.start, true);
+      vol = vol < ytTarget() ? Math.min(ytTarget(), vol + 6) : ytTarget();  // intră încet, apoi urmează volumul cerut
+      p.setVolume(vol);
+    }, 250);
+    mine.resume = () => { if (p.getPlayerState?.() !== YT.PlayerState.PLAYING) p.playVideo(); };
+    mine.stop = () => {
+      clearInterval(loop);
+      let v = p.getVolume?.() ?? 0;
+      const fade = setInterval(() => {
+        v = Math.max(0, v - 5);
+        if (current?.youtube) { clearInterval(fade); return; }  // a pornit altă melodie YouTube, nu o oprim
+        p.setVolume(v);
+        if (!v) { clearInterval(fade); p.pauseVideo(); }
+      }, 80);
+    };
+  } catch {
+    fallbackTo(mine, fallback);
+  }
+}
+function fallbackTo(mine, theme) {
+  if (current !== mine || !theme) return;
+  mine.stop?.();
+  current = null;
+  playMusic(theme);
+}
+// Apelat la fiecare click pe proiector: dacă browserul a blocat pornirea melodiei, o pornim acum.
+export const resumeMusic = () => current?.resume?.();
+
+// options.youtube: { id, start, end } cântă de pe YouTube; options.fallback: tema generată dacă YouTube nu merge.
+export async function playMusic(theme, options = {}) {
   if (current?.theme === theme) return;
   const old = current;
-  current = theme ? { theme, stop: () => {} } : null;
+  current = theme ? { theme, stop: () => {}, youtube: Boolean(options.youtube) } : null;
   old?.stop();
   if (!theme || !musicOn || !ready()) { if (current) current = null; return; }
   const mine = current;
+
+  if (options.youtube) return playYouTube(mine, options.youtube, options.fallback);
 
   if (await hasFile(theme)) {
     if (current !== mine) return;
@@ -671,6 +753,8 @@ export async function playMusic(theme) {
 
 // Muzica scade cât timp rulează un efect important (ceremonia morții).
 export function duckMusic(seconds = 8) {
+  ytDuck = 0.2;
+  setTimeout(() => { ytDuck = 1; }, seconds * 1000);
   if (!musicBus) return;
   const t = ctx.currentTime;
   musicBus.gain.cancelScheduledValues(t);
