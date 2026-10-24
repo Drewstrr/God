@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b0709">
   <meta name="robots" content="noindex">
-  <title>Conacul Blackwood</title>
+  <title>Balul Contelui</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <main class="wrap" id="app">
-    <p class="center muted">Se încarcă conacul…</p>
+    <p class="center muted">Se deschid porțile castelului…</p>
   </main>
 
   <script type="module">
@@ -48,9 +48,9 @@
       me = null;
       const list = Object.entries(players);
       app.innerHTML = `
-        <h1 class="center"><span class="blood-text">Conacul Blackwood</span></h1>
+        <h1 class="center"><span class="blood-text">Balul Contelui</span></h1>
         <p class="center muted">Atinge-ți numele</p>
-        ${engineOnline ? '' : '<p class="center error">⏳ Conacul încă nu e deschis. Așteaptă puțin.</p>'}
+        ${engineOnline ? '' : '<p class="center error">⏳ Porțile castelului încă sunt închise. Așteaptă puțin.</p>'}
         <div class="names">
           ${list.map(([id, p]) => `<button data-id="${id}">${esc(p.name)}<small>${p.hasPin ? 'are PIN' : 'nou'}</small></button>`).join('')}
         </div>`;
@@ -91,7 +91,7 @@
 
     async function sendPin(id, pin, mode) {
       if (!engineOnline) {
-        return showPin(id, { message: 'Conacul încă nu e deschis. Mai încearcă puțin mai târziu.' });
+        return showPin(id, { message: 'Porțile castelului încă sunt închise. Mai încearcă puțin mai târziu.' });
       }
       app.innerHTML = '<p class="center muted" style="margin-top:40vh">🕯️ Se verifică…</p>';
       pendingNonce = Math.random().toString(36).slice(2);
@@ -103,7 +103,7 @@
         showPin(id, { message: 'Nu s-a putut trimite. Verifică internetul.' });
       }
       setTimeout(() => {
-        if (pendingNonce) { pendingNonce = null; showPin(id, { message: 'Conacul nu răspunde. Mai încearcă.' }); }
+        if (pendingNonce) { pendingNonce = null; showPin(id, { message: 'Castelul nu răspunde. Mai încearcă.' }); }
       }, 12000);
     }
 
@@ -170,7 +170,7 @@
         app.innerHTML = `
           <h1 class="center">Bun venit, ${esc(name)}</h1>
           <div class="card center">
-            <p>🕯️ Ești în conac.</p>
+            <p>🕯️ Ești la bal.</p>
             <p class="muted">Jocul încă n-a început. Rolul tău secret va apărea aici.</p>
           </div>
           <button class="btn ghost" id="logout">Nu sunt eu</button>`;
@@ -181,15 +181,15 @@
       const alive = st.alive !== false;
       const badges = [
         alive ? '<span class="pill on">în viață</span>' : '<span class="pill">👻 fantomă</span>',
-        st.hypnotized && phase !== 'end' ? '<span class="pill" style="color:var(--blood-hi)">🤐 hipnotizat: nu vorbești la ședință</span>' : '',
-        st.doomed && phase !== 'end' ? '<span class="pill" style="color:var(--blood-hi)">💪 mușcat: mori noaptea viitoare</span>' : '',
+        st.hypnotized && phase !== 'end' ? '<span class="pill" style="color:var(--blood-hi)">🤐 blestemat: nu vorbești la ședință</span>' : '',
+        st.doomed && phase !== 'end' ? '<span class="pill" style="color:var(--blood-hi)">⚔️ mușcat: mori noaptea viitoare</span>' : '',
       ].join('');
       const msgs = Object.values(priv.inbox ?? {}).sort((a, b) => b.round - a.round);
       const lastRound = msgs[0]?.round;
       const canGossip = alive && priv.role === 'gossip' && ['intro', 'day', 'morning', 'discussion'].includes(phase);
       const phaseText = {
         intro: 'Jocul a început. Uită-te la proiector.',
-        day: pub.nextSessionAt ? `Următoarea ședință în <b data-ends="${pub.nextSessionAt}"></b>` : 'Petrecerea continuă până la următoarea ședință.',
+        day: pub.nextSessionAt ? `Următoarea ședință în <b data-ends="${pub.nextSessionAt}"></b>` : 'Balul continuă până la următoarea ședință.',
         night: 'Noaptea… uită-te pe ecran.',
         morning: '☀️ Dimineața: uită-te la proiector.',
         discussion: '💬 Discuția: convinge-i pe ceilalți!',
@@ -209,8 +209,8 @@
         <p class="center">${phaseText}</p>
         ${mayorPick ? `
           <div class="card center">
-            <h2>🎩 Tu decizi</h2>
-            <p>Egalitate după revot. Pe cine elimină conacul?</p>
+            <h2>🗝️ Tu decizi</h2>
+            <p>Egalitate după revot. Pe cine alungă castelul?</p>
             <div class="names">${mayorPick.candidates.map((c) => `<button data-mayor="${c.id}">${esc(c.name)}</button>`).join('')}</div>
           </div>` : ''}
         <div class="card role-card" id="role">
@@ -282,14 +282,14 @@
       }
     }
 
-    // Cele 15 secunde de suspans arată la fel pe toate telefoanele; doar Servitorul are butonul.
+    // Cele 15 secunde de suspans arată la fel pe toate telefoanele; doar Vizitiul are butonul.
     function renderSacrifice() {
       const offer = priv?.sacrifice && priv.sacrifice.round === pub.round ? priv.sacrifice : null;
       let chose = false;
       try { chose = localStorage.getItem(`blackwood-sacrifice-${me}-${pub.gameId}`) === String(pub.round); } catch {}
       app.innerHTML = `
         <div class="squid-center" style="margin-top:20vh">
-          <p class="muted">Conacul a ales.</p>
+          <p class="muted">Castelul a ales.</p>
           <h1 class="squid-title">${esc(pub.doomedName)}</h1>
           <p>Soarta se decide…</p>
           <div class="heart-wrap">${heartSVG.replace('class="heart"', 'class="heart auto"')}</div>
@@ -366,7 +366,7 @@
           <h2 class="center">🌑 Noaptea ${round}</h2>
           ${timer}
           ${detectiveCard}
-          <p class="center" style="font-size:1.25rem"><b>🎲 Pariul nopții: cine crezi că e vampirul?</b></p>
+          <p class="center" style="font-size:1.25rem"><b>🎲 Pariul nopții: cine crezi că e Contele?</b></p>
           <p class="center muted" style="margin-top:-6px">Secret. La final, cine ghicește cel mai des primește un titlu.</p>
           <div class="targets">${(night.bets ?? []).map((t) => `<button data-t="${t.id}">${esc(t.name)}</button>`).join('')}</div>
           <p class="center error" id="msg"></p>
@@ -514,13 +514,13 @@
       onValue(r('public/players'), (snap) => {
         players = snap.val() ?? {};
         if (!Object.keys(players).length) {
-          app.innerHTML = '<h1 class="center"><span class="blood-text">Conacul Blackwood</span></h1><p class="center muted">⏳ Conacul încă nu e deschis. Pagina se actualizează singură când pornește.</p>';
+          app.innerHTML = '<h1 class="center"><span class="blood-text">Balul Contelui</span></h1><p class="center muted">⏳ Porțile castelului încă sunt închise. Pagina se actualizează singură când se deschid.</p>';
           return;
         }
         if (!me && !pendingNonce && !app.querySelector('.keypad')) showNames();
       }, (err) => {
         console.error(err);
-        app.innerHTML = '<h1 class="center"><span class="blood-text">Conacul Blackwood</span></h1><p class="center error">🔒 Conacul e încuiat: baza de date refuză accesul (regulile Firebase nu sunt publicate).</p>';
+        app.innerHTML = '<h1 class="center"><span class="blood-text">Balul Contelui</span></h1><p class="center error">🔒 Castelul e încuiat: baza de date refuză accesul (regulile Firebase nu sunt publicate).</p>';
       });
     }
 

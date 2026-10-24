@@ -1,4 +1,4 @@
-// Motorul jocului Conacul Blackwood – logică pură, fără Firebase și fără DOM.
+// Motorul jocului Balul Contelui – logică pură, fără Firebase și fără DOM.
 // Toate funcțiile primesc starea și întorc o stare nouă; nimic nu e modificat pe loc.
 
 export const PLAYERS = [
@@ -8,59 +8,59 @@ export const PLAYERS = [
 
 export const ROLES = {
   vampire: {
-    name: 'Vampirul', emoji: '🧛', team: 'evil', ability: true,
+    name: 'Contele Dracula', emoji: '🧛', team: 'evil', ability: true,
     prompt: 'Pe cine muști?',
-    card: 'Noaptea alegi o victimă. Nu știi cine sunt aliații tăi. Hipnoza nu are efect asupra ta. Supraviețuiește până la miezul nopții.',
+    card: 'Ești stăpânul castelului. Noaptea alegi o victimă. Nu știi cine sunt aliații tăi. Blestemele nu te ating. Supraviețuiește până la miezul nopții.',
   },
   servant: {
-    name: 'Servitorul', emoji: '🦇', team: 'evil', ability: false,
-    prompt: 'Cine crezi că e vampirul?',
-    card: 'Știi cine e vampirul, el nu te știe pe tine. Pentru Detectiv apari „nu e vampir”. O singură dată te poți sacrifica în locul lui la vot.',
+    name: 'Vizitiul Contelui', emoji: '🐴', team: 'evil', ability: false,
+    prompt: 'Cine crezi că e Contele?',
+    card: 'Știi cine e Contele, el nu te știe pe tine. Pentru Van Helsing apari „nu e Contele”. O singură dată te poți sacrifica în locul lui la vot.',
   },
   hypnotist: {
-    name: 'Hipnotizatorul', emoji: '😵', team: 'evil', ability: true,
-    prompt: 'Pe cine hipnotizezi?',
-    card: 'Noaptea alegi pe cineva care nu are voie să vorbească la ședință. Dacă alegi vampirul, hipnoza eșuează și afli cine e. Nu poți alege aceeași persoană de două ori la rând.',
+    name: 'Vrăjitoarea satului', emoji: '🧙‍♀️', team: 'evil', ability: true,
+    prompt: 'Pe cine blestemi?',
+    card: 'Noaptea arunci un blestem: persoana aleasă rămâne fără grai la ședință. Dacă alegi Contele, blestemul eșuează și afli cine e. Nu poți alege aceeași persoană de două ori la rând.',
   },
   detective: {
-    name: 'Detectivul', emoji: '🔍', team: 'good', ability: true,
-    prompt: 'Pe cine verifici?',
-    card: 'Noaptea verifici o persoană și afli pe loc dacă e vampir. Atenție: unii mint fără să vrea.',
+    name: 'Van Helsing', emoji: '🔍', team: 'good', ability: true,
+    prompt: 'Pe cine cercetezi?',
+    card: 'Ești vânătorul de vampiri. Noaptea cercetezi o persoană și afli pe loc dacă e Contele. Atenție: unii par altceva decât sunt.',
   },
   hunter: {
-    name: 'Vânătorul', emoji: '🗡️', team: 'good', ability: true,
-    prompt: 'Pe cine protejezi?',
-    card: 'Noaptea protejezi pe cineva de mușcătură. Nu te poți proteja singur și nici aceeași persoană de două ori la rând.',
+    name: 'Preotul satului', emoji: '✝️', team: 'good', ability: true,
+    prompt: 'Pe cine binecuvântezi?',
+    card: 'Noaptea binecuvântezi pe cineva cu apă sfințită și îl aperi de mușcătură. Nu te poți apăra singur și nici aceeași persoană de două ori la rând.',
   },
   mayor: {
-    name: 'Primarul', emoji: '🎩', team: 'good', ability: false,
-    prompt: 'Cine crezi că e vampirul?',
-    card: 'Rolul tău e public. Votul tău contează dublu, iar la egalitate după revot decizi tu.',
+    name: 'Pârcălabul', emoji: '🗝️', team: 'good', ability: false,
+    prompt: 'Cine crezi că e Contele?',
+    card: 'Ești cârmuitorul castelului și ții cheile lui. Rolul tău e public. Votul tău contează dublu, iar la egalitate după revot decizi tu.',
   },
   gossip: {
     name: 'Bârfitoarea', emoji: '🗣️', team: 'good', ability: false,
-    prompt: 'Cine crezi că e vampirul?',
+    prompt: 'Cine crezi că e Contele?',
     card: 'Între ședințe scrii un mesaj de maximum 140 de caractere, care apare anonim pe proiector dimineața. Adevăr sau minciună, tu alegi.',
   },
   watchman: {
-    name: 'Paznicul de noapte', emoji: '🔦', team: 'good', ability: true,
+    name: 'Străjerul de la poartă', emoji: '🏰', team: 'good', ability: true,
     prompt: 'Pe cine păzești?',
-    card: 'Noaptea păzești pe cineva. Dacă vampirul îl atacă, afli cine e vampirul. Nu poți salva pe nimeni.',
+    card: 'Noaptea păzești pe cineva. Dacă Contele îl atacă, afli cine e Contele. Nu poți salva pe nimeni.',
   },
   photographer: {
-    name: 'Fotograful', emoji: '📸', team: 'good', ability: true,
-    prompt: 'Pe cine fotografiezi?',
-    card: 'Noaptea fotografiezi pe cineva. Dimineața afli pe cine a vizat acea persoană cu abilitatea ei.',
+    name: 'Cronicarul', emoji: '📜', team: 'good', ability: true,
+    prompt: 'Pe cine urmărești?',
+    card: 'Scrii cronica castelului. Noaptea urmărești pe cineva și afli pe cine a vizat acea persoană cu abilitatea ei.',
   },
   ironman: {
-    name: 'Omul de fier', emoji: '💪', team: 'good', ability: true,
+    name: 'Haiducul', emoji: '⚔️', team: 'good', ability: true,
     prompt: 'Lângă cine stai de pază?',
-    card: 'Noaptea păzești pe cineva. Dacă vampirul îl mușcă (sau te mușcă pe tine), preiei tu mușcătura, primești o listă care îl conține pe vampir și mori noaptea următoare.',
+    card: 'Noaptea păzești pe cineva. Dacă Contele îl mușcă (sau te mușcă pe tine), preiei tu mușcătura, primești o listă care îl conține pe Conte și mori noaptea următoare.',
   },
   werewolf: {
     name: 'Vârcolacul blând', emoji: '🐺', team: 'good', ability: false,
-    prompt: 'Cine crezi că e vampirul?',
-    card: 'Ești de partea binelui, dar pentru Detectiv apari „e vampir”. Pregătește-ți apărarea.',
+    prompt: 'Cine crezi că e Contele?',
+    card: 'Ești de partea binelui, dar pentru Van Helsing apari „e Contele”. Pregătește-ți apărarea.',
   },
 };
 
@@ -68,17 +68,17 @@ export const ROLE_KEYS = Object.keys(ROLES);
 
 // Ce face fiecare personaj, spus pentru ceilalți jucători (fișa „Personajele din joc”).
 export const ROLE_ABOUT = {
-  vampire: 'Noaptea mușcă pe cineva. Nu-și cunoaște aliații. Hipnoza nu are efect asupra lui. Răul câștigă dacă rezistă până la final.',
-  servant: 'Știe de la început cine e vampirul. Pentru Detectiv pare nevinovat. O singură dată se poate sacrifica la vot în locul vampirului.',
-  hypnotist: 'Noaptea alege pe cineva care nu are voie să vorbească la ședință. Dacă alege vampirul, hipnoza eșuează și află cine e. Pentru Detectiv pare nevinovat.',
-  detective: 'Noaptea verifică o persoană și află pe loc dacă e vampir. Atenție: Vârcolacul pare vampir, Servitorul și Hipnotizatorul par nevinovați.',
-  hunter: 'Noaptea protejează pe cineva de mușcătură. Nu se poate proteja singur și nici aceeași persoană de două ori la rând.',
+  vampire: 'Noaptea mușcă pe cineva. Nu-și cunoaște aliații. Blestemele nu-l ating. Răul câștigă dacă rezistă până la final.',
+  servant: 'Știe de la început cine e Contele. Pentru Van Helsing pare nevinovat. O singură dată se poate sacrifica la vot în locul Contelui.',
+  hypnotist: 'Noaptea blestemă pe cineva, care rămâne fără grai la ședință. Dacă alege Contele, blestemul eșuează și află cine e. Pentru Van Helsing pare nevinovată.',
+  detective: 'Noaptea cercetează o persoană și află pe loc dacă e Contele. Atenție: Vârcolacul pare Contele, Vizitiul și Vrăjitoarea par nevinovați.',
+  hunter: 'Noaptea binecuvântează pe cineva și îl apără de mușcătură. Nu se poate apăra singur și nici aceeași persoană de două ori la rând.',
   mayor: 'Rol public. Votul lui contează dublu, iar la egalitate după revot decide el.',
   gossip: 'Între ședințe scrie un mesaj anonim care apare pe proiector dimineața. Poate spune adevărul sau poate minți.',
-  watchman: 'Noaptea păzește pe cineva. Dacă vampirul îl atacă, Paznicul află cine e vampirul, dar nu-l poate salva.',
-  photographer: 'Noaptea fotografiază pe cineva și află dimineața pe cine a vizat acea persoană cu abilitatea ei.',
-  ironman: 'Noaptea păzește pe cineva. Dacă vampirul îl mușcă (sau îl mușcă pe el), preia mușcătura, primește o listă care îl conține pe vampir și moare noaptea următoare.',
-  werewolf: 'E de partea binelui, dar pentru Detectiv pare vampir. Știe asta și trebuie să se apere.',
+  watchman: 'Noaptea păzește pe cineva. Dacă Contele îl atacă, Străjerul află cine e Contele, dar nu-l poate salva.',
+  photographer: 'Noaptea urmărește pe cineva și află pe cine a vizat acea persoană cu abilitatea ei.',
+  ironman: 'Noaptea păzește pe cineva. Dacă Contele îl mușcă (sau îl mușcă pe el), preia mușcătura, primește o listă care îl conține pe Conte și moare noaptea următoare.',
+  werewolf: 'E de partea binelui, dar pentru Van Helsing pare Contele. Știe asta și trebuie să se apere.',
 };
 
 // Ordinea în care intră personajele când sunt mai puțini jucători.
@@ -114,7 +114,7 @@ const isAlive = (state, id) => Boolean(id && state.alive[id]);
 export function newGame(players = PLAYERS, settings = {}, rng = Math.random, roleKeys = recommendedRoles(players.length)) {
   if (players.length < MIN_PLAYERS) throw new Error(`Jocul are nevoie de cel puțin ${MIN_PLAYERS} jucători.`);
   if (roleKeys.length !== players.length) throw new Error('Trebuie să fie câte un personaj pentru fiecare jucător.');
-  if (!roleKeys.includes('vampire')) throw new Error('Vampirul trebuie să fie în joc.');
+  if (!roleKeys.includes('vampire')) throw new Error('Contele trebuie să fie în joc.');
   if (new Set(roleKeys).size !== roleKeys.length || roleKeys.some((k) => !ROLES[k])) throw new Error('Personaje invalide.');
   const keys = shuffle(roleKeys, rng);
   const roles = Object.fromEntries(players.map((p, i) => [p.id, keys[i]]));
@@ -138,7 +138,7 @@ export function newGame(players = PLAYERS, settings = {}, rng = Math.random, rol
 export function initialKnowledge(state) {
   const out = {};
   const servant = findByRole(state, 'servant');
-  if (servant) out[servant] = [{ kind: 'servant-master', text: `🧛 Stăpânul tău, vampirul, este ${nameOf(state, findByRole(state, 'vampire'))}.` }];
+  if (servant) out[servant] = [{ kind: 'servant-master', text: `🧛 Stăpânul tău, Contele, este ${nameOf(state, findByRole(state, 'vampire'))}.` }];
   return out;
 }
 
@@ -177,7 +177,7 @@ export function detectiveResult(state, target) {
     kind: 'detective',
     target,
     isVampire,
-    text: isVampire ? `🧛 ${nameOf(state, target)} E VAMPIR` : `✅ ${nameOf(state, target)} nu e vampir`,
+    text: isVampire ? `🧛 ${nameOf(state, target)} E CONTELE` : `✅ ${nameOf(state, target)} nu e Contele`,
   };
 }
 
@@ -237,7 +237,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
   state.hypnotized = null;
   if (hyp.target) {
     if (prev.roles[hyp.target] === 'vampire') {
-      tell(hyp.id, { kind: 'hypnosis-failed', text: `🧛 Hipnoza a eșuat... ai găsit vampirul! Este ${nameOf(state, hyp.target)}.` });
+      tell(hyp.id, { kind: 'hypnosis-failed', text: `🧛 Blestemul a eșuat... ai găsit Contele! Este ${nameOf(state, hyp.target)}.` });
     } else {
       state.hypnotized = hyp.target;
     }
@@ -270,13 +270,13 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     tell(iron.id, {
       kind: 'iron-bitten',
       list,
-      text: `💪 Ai fost mușcat! Mai trăiești o zi. Vampirul e unul dintre: ${list.map((id) => nameOf(state, id)).join(', ')}.`,
+      text: `⚔️ Ai fost mușcat! Mai trăiești o zi. Contele e unul dintre: ${list.map((id) => nameOf(state, id)).join(', ')}.`,
     });
   }
 
   // 7. Paznicul.
   if (bite && watch.target === bite) {
-    tell(watch.id, { kind: 'watchman', text: `👁️ ${nameOf(state, vamp.id)} l-a atacat pe ${nameOf(state, bite)}.` });
+    tell(watch.id, { kind: 'watchman', text: `🏰 ${nameOf(state, vamp.id)} l-a atacat pe ${nameOf(state, bite)}.` });
   }
 
   // 8. Fotograful.
@@ -286,8 +286,8 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     tell(photo.id, {
       kind: 'photo',
       text: seen
-        ? `📸 ${nameOf(state, photo.target)} l-a vizat pe ${nameOf(state, seen)}.`
-        : `📸 ${nameOf(state, photo.target)} n-a vizat pe nimeni.`,
+        ? `📜 ${nameOf(state, photo.target)} l-a vizat pe ${nameOf(state, seen)}.`
+        : `📜 ${nameOf(state, photo.target)} n-a vizat pe nimeni.`,
     });
   }
 
@@ -422,12 +422,12 @@ export function checkWinner(state) {
 
 const ACTION_TEXT = {
   bite: ['vampire', 'a mușcat pe'],
-  hypnosis: ['hypnotist', 'a hipnotizat pe'],
-  protect: ['hunter', 'a protejat pe'],
+  hypnosis: ['hypnotist', 'a blestemat pe'],
+  protect: ['hunter', 'a binecuvântat pe'],
   iron: ['ironman', 'a stat de pază lângă'],
   watch: ['watchman', 'a păzit pe'],
-  photo: ['photographer', 'a fotografiat pe'],
-  check: ['detective', 'a verificat pe'],
+  photo: ['photographer', 'a urmărit pe'],
+  check: ['detective', 'a cercetat pe'],
 };
 
 // Cronologia completă a jocului, pentru ecranul de final.
@@ -442,7 +442,7 @@ export function buildReplay(state) {
         if (actor && target) lines.push(`${ROLES[role].emoji} ${nameOf(state, actor)} ${verb} ${nameOf(state, target)}`);
       }
       const deaths = (h.deaths ?? []).map((id) => nameOf(state, id));
-      if (h.savedBy) lines.push(h.savedBy === 'hunter' ? '🛡️ Vânătorul a salvat victima' : '💪 Omul de fier a preluat mușcătura');
+      if (h.savedBy) lines.push(h.savedBy === 'hunter' ? '✝️ Preotul a salvat victima' : '⚔️ Haiducul a preluat mușcătura');
       lines.push(deaths.length ? `💀 Au murit: ${deaths.join(', ')}` : '🌙 Nu a murit nimeni');
       out.push({ title: `🌑 Noaptea ${h.round}`, lines });
     } else if (h.type === 'vote') {
@@ -475,7 +475,7 @@ export function computeTitles(state) {
 
   // Ghinionistul: primul mort.
   const firstDeath = (state.history ?? []).map((h) => (h.type === 'night' ? h.deaths?.[0] : h.eliminated)).find(Boolean);
-  if (firstDeath) add('🍀', 'Ghinionistul', [firstDeath], 'primul care a părăsit conacul');
+  if (firstDeath) add('🍀', 'Ghinionistul', [firstDeath], 'primul care a părăsit castelul');
 
   // Paranoicul și Justițiarul: voturi date nevinovaților / răilor.
   const innocent = {};
@@ -497,7 +497,7 @@ export function computeTitles(state) {
     if (h.type !== 'night') continue;
     for (const [p, b] of Object.entries(h.bets ?? {})) if (b === vampire) eagle[p] = (eagle[p] ?? 0) + 1;
   }
-  add('🦅', 'Ochiul de vultur', best(eagle), 'a ghicit vampirul de cele mai multe ori');
+  add('🦅', 'Ochiul de vultur', best(eagle), 'a ghicit Contele de cele mai multe ori');
 
   // Actorul: răul care a supraviețuit cel mai mult.
   const lifetime = {};
@@ -515,8 +515,8 @@ export function computeTitles(state) {
   const iron = findByRole(state, 'ironman');
   const hunter = findByRole(state, 'hunter');
   const saves = (state.history ?? []).filter((h) => h.savedBy === 'hunter').length;
-  if (iron && state.iron?.used) add('💪', 'Eroul', [iron], 'a preluat mușcătura vampirului');
-  else if (hunter && saves) add('🗡️', 'Eroul', [hunter], `a salvat ${saves === 1 ? 'o viață' : `${saves} vieți`}`);
+  if (iron && state.iron?.used) add('⚔️', 'Eroul', [iron], 'a preluat mușcătura Contelui');
+  else if (hunter && saves) add('✝️', 'Eroul', [hunter], `a salvat ${saves === 1 ? 'o viață' : `${saves} vieți`}`);
 
   return titles;
 }

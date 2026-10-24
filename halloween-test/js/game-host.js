@@ -257,7 +257,7 @@ function botGossip(self) {
     `L-am văzut pe ${a} ascunzând usturoiul.`,
     `${a} și ${b} au șușotit toată seara.`,
     `Aveți grijă la ${a}. Nu are reflexie în oglindă.`,
-    `${a} mi-a spus în secret că știe cine e vampirul.`,
+    `${a} mi-a spus în secret că știe cine e Contele.`,
     `${b} a ieșit din cameră exact când s-a stins lumina.`,
     `Eu aș avea încredere în ${a}. Deocamdată.`,
   ];
@@ -645,7 +645,7 @@ async function leave(cmd) {
   if (!state || !state.alive[cmd.id] || pub.phase === 'end') return;
   const role = ROLES[state.roles[cmd.id]];
   state.history.push({ type: 'left', round: state.round, id: cmd.id });
-  await setAliveAndCheck(cmd.id, false, { 'public/notice': { text: `🚪 ${nameOf(cmd.id)} a părăsit conacul. Era ${role.emoji} ${role.name}.`, at: serverNow() } });
+  await setAliveAndCheck(cmd.id, false, { 'public/notice': { text: `🚪 ${nameOf(cmd.id)} a părăsit castelul. Era ${role.emoji} ${role.name}.`, at: serverNow() } });
 }
 
 // Din panoul de urgență.

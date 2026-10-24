@@ -285,7 +285,7 @@ input[type=password], input[type=text] {
 body[data-phase="end"] .screen-wrap { position: relative; z-index: 2; }
 .end.evil h1, .end.evil p { text-shadow: 0 0 6px #000, 0 0 20px #000, 0 0 40px rgba(224, 36, 71, 0.6); }
 .sound-hint { position: fixed; left: 14px; bottom: 10px; font: inherit; font-size: 0.85rem; color: var(--muted); z-index: 60; background: none; border: 0; padding: 4px 6px; cursor: pointer; }
-.sound-hint.off { font-size: clamp(1rem, 1.6vw, 1.6rem); color: #fff; background: rgba(120, 10, 10, 0.85); border: 2px solid #e8c37a;
+.sound-hint.off { top: 14px; bottom: auto; font-size: clamp(1rem, 1.6vw, 1.6rem); color: #fff; background: rgba(120, 10, 10, 0.85); border: 2px solid #e8c37a;
   border-radius: 999px; padding: 0.6em 1.2em; box-shadow: 0 0 24px rgba(232, 195, 122, 0.5); animation: sound-pulse 1.6s ease-in-out infinite; }
 @keyframes sound-pulse { 50% { transform: scale(1.06); box-shadow: 0 0 40px rgba(232, 195, 122, 0.85); } }
 
@@ -549,3 +549,11 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 .link-qr { text-align: center; margin-top: 14px; }
 .link-qr .qr { display: inline-block; width: 240px; background: #fff; padding: 10px; border-radius: 12px; }
 .link-qr .qr svg { display: block; width: 100%; height: auto; }
+
+/* Povestea din lobby: două rânduri care se schimbă încet, ca o subtitrare de film. */
+.lobby-story { text-align: center; font-family: Georgia, 'Times New Roman', serif; font-style: italic; color: #e9dcc4;
+  font-size: clamp(16px, min(1.9vw, 3.4vh), 40px); line-height: 1.45; margin: 0 auto 2vh; min-height: 2.9em;
+  text-shadow: 0 0 12px #000, 0 0 24px rgba(0, 0, 0, 0.9); transition: opacity 1.4s ease, filter 1.4s ease; }
+.lobby-story span { display: block; }
+.lobby-story span + span { color: #d9a7a7; }
+.lobby-story.fade { opacity: 0; filter: blur(3px); }

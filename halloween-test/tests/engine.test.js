@@ -63,7 +63,7 @@ test('partida exemplu din specificație', () => {
   assert.equal(report.saved, true);
   assert.equal(state.iron.used, false);
   assert.equal(report.hypnotized, null);
-  assert.match(msg(report, 'bogdan'), /ai găsit vampirul/);
+  assert.match(msg(report, 'bogdan'), /ai găsit Contele/);
   assert.match(msg(report, 'gabriela'), /Marian l-a vizat pe Elisa/);
   assert.equal(sacrificeCandidate(state, 'marian'), 'flori');
   ({ state, report } = applyElimination(state, 'marian', { sacrifice: true }));
@@ -361,7 +361,7 @@ test('titlurile și reluarea pentru partida exemplu', () => {
   const replay = buildReplay(state);
   assert.equal(replay.length, 4);
   assert.ok(replay[0].lines.some((l) => l.includes('Marian a mușcat pe Cella')));
-  assert.ok(replay[2].lines.some((l) => l.includes('Vânătorul a salvat')));
-  assert.ok(replay[3].lines.some((l) => l.includes('Eliminat: Marian (Vampirul)')));
+  assert.ok(replay[2].lines.some((l) => l.includes('Preotul a salvat')));
+  assert.ok(replay[3].lines.some((l) => l.includes('Eliminat: Marian (Contele Dracula)')));
   assert.equal(betLeaderboard(state)[0].name, 'Elisa');
 });

@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
-  <title>Blackwood – Proiector</title>
+  <title>Balul Contelui – Proiector</title>
   <link rel="stylesheet" href="css/style.css">
   <script src="js/vendor/qrcode.js"></script>
 </head>
@@ -37,6 +37,7 @@
     })();
 
     await requireEngineLogin(document.getElementById('login'));
+    document.getElementById('login').hidden = true;
     stage.hidden = false;
 
     await ensurePlayers();
@@ -272,16 +273,42 @@
       });
     }
 
+    // Povestea din lobby: rândurile apar pe rând, ca subtitrarea unui film, cât timp intră oaspeții.
+    const NUMBERS = ['', 'unul', 'doi', 'trei', 'patru', 'cinci', 'șase', 'șapte', 'opt', 'nouă', 'zece', 'unsprezece', 'doisprezece'];
+    const storyLines = (n) => [
+      ['Ați ajuns toți în aceeași seară, fiecare cu scrisoarea lui.', 'Nimeni nu știe cine a mai fost invitat.'],
+      ['Masa era pusă. Vinul din pahare — încă cald.', 'Scaunul gazdei, gol.'],
+      ['Când a intrat ultimul oaspete, ușile grele s-au închis în urma lui.', 'Și nu s-au mai deschis.'],
+      [`În oglinda din sala mare sunteți ${NUMBERS[n] ?? n}.`, 'Dar unul dintre voi… nu are reflexie.'],
+      ['🕯️ Pentru fiecare suflet care își spune numele,', 'se aprinde o lumânare.'],
+    ];
+    let storyIdx = 0;
+    const lobbyCount = () => Object.keys(pub.players ?? {}).filter((id) => pub.lineup?.players?.[id] !== false).length;
+    const storyHtml = () => storyLines(lobbyCount())[storyIdx].map((l) => `<span>${esc(l)}</span>`).join('');
+    setInterval(() => {
+      const el = document.getElementById('lobby-story');
+      if (!el) return;
+      el.classList.add('fade');
+      setTimeout(() => {
+        storyIdx = (storyIdx + 1) % storyLines(0).length;
+        const now = document.getElementById('lobby-story');
+        if (!now) return;
+        now.innerHTML = storyHtml();
+        now.classList.remove('fade');
+      }, 1400);
+    }, 8000);
+
     const views = {
       lobby() {
         const players = Object.entries(pub.players ?? {}).filter(([id]) => pub.lineup?.players?.[id] !== false).map(([, p]) => p);
         const ready = players.filter((p) => p.hasPin || p.bot).length;
         return `
-          <h1>${bt('Conacul Blackwood')}</h1>
+          <h1>${bt('Balul Contelui')}</h1>
+          <p class="lobby-story" id="lobby-story">${storyHtml()}</p>
           <div class="join">
             <div class="qr">${qrSvg}</div>
             <div class="join-text">
-              <div class="join-title">📱 Intră în conac</div>
+              <div class="join-title">📱 Intră la bal</div>
               <ol>
                 <li>Scanează codul cu camera telefonului</li>
                 <li>Atinge-ți numele</li>
@@ -295,10 +322,10 @@
       },
       intro() {
         return `
-          <h1>${bt('Conacul Blackwood')}</h1>
+          <h1>${bt('Balul Contelui')}</h1>
           <div class="story">
-            <p>În noaptea de Halloween, un <b>vampir</b> s-a trezit printre invitații conacului.</p>
-            <p>Până la miezul nopții trebuie descoperit. Altfel, conacul va fi al lui.</p>
+            <p>În noaptea de Halloween, <b>Contele Dracula</b> și-a chemat oaspeții la bal. Unul dintre voi nu e cine pare.</p>
+            <p>Până la miezul nopții trebuie descoperit. Altfel, Castelul Bran va fi al lui pentru totdeauna.</p>
             <ul>
               <li>🔔 La fiecare ședință vine <b>noaptea</b>: toată lumea apasă un nume pe telefon.</li>
               <li>☀️ Dimineața aflăm cine a murit, apoi <b>discutăm</b> și <b>votăm</b>.</li>
@@ -306,12 +333,12 @@
               <li>🤫 Nu-ți arăta telefonul nimănui.</li>
             </ul>
           </div>
-          ${pub.mayor ? `<div class="announce">🎩 Primarul conacului este <b>${esc(pub.mayor.name)}</b><br><span class="muted">Votul lui contează dublu.</span></div>` : ''}`;
+          ${pub.mayor ? `<div class="announce">🗝️ Pârcălabul castelului este <b>${esc(pub.mayor.name)}</b><br><span class="muted">Votul lui contează dublu.</span></div>` : ''}`;
       },
       day() {
         return `
-          <h1>${bt('Conacul Blackwood')}</h1>
-          <p class="center muted lead">Petrecerea continuă… dar vampirul ascultă.</p>
+          <h1>${bt('Balul Contelui')}</h1>
+          <p class="center muted lead">Balul continuă… dar Contele ascultă.</p>
           ${candles()}
           ${pub.nextSessionAt ? timer('Următoarea ședință în', pub.nextSessionAt) : ''}`;
       },
@@ -333,7 +360,7 @@
         return `
           <h1>${bt('Discuția', '💬')}</h1>
           ${timer('Timp rămas', pub.endsAt)}
-          ${m.hypnotized ? `<p class="center lead">🤐 <b>${esc(m.hypnotized)}</b> e hipnotizat și nu are voie să vorbească.</p>` : ''}
+          ${m.hypnotized ? `<p class="center lead">🤐 <b>${esc(m.hypnotized)}</b> e blestemat și nu are voie să vorbească.</p>` : ''}
           ${candles()}`;
       },
       vote() {
@@ -354,7 +381,7 @@
       sacrifice() {
         return `
           <div class="squid-screen center" style="margin:auto">
-            <p class="lead muted">Conacul a ales.</p>
+            <p class="lead muted">Castelul a ales.</p>
             <h1>${bt(pub.doomedName ?? '')}</h1>
             <p class="lead">Soarta se decide…</p>
             <div class="heart-wrap">${heartSVG}</div>
@@ -365,7 +392,7 @@
         if (e.sacrificed) {
           return `
             <div class="squid-screen center" style="margin:auto">
-              <h1>${bt('Servitorul s-a aruncat în fața stăpânului său!', '🩸')}</h1>
+              <h1>${bt('Vizitiul s-a aruncat în fața stăpânului său!', '🩸')}</h1>
               <p class="lead"><b>${esc(e.name)}</b> moare în locul lui. Rolul: ${e.emoji} <b>${esc(e.roleName)}</b></p>
               <p class="lead squid-pink">${esc(e.vampire)} rămâne în viață…</p>
               ${e.testament ? `<div class="testament">„${esc(e.testament)}”</div>` : ''}
@@ -373,7 +400,7 @@
         }
         return `
           <div class="squid-screen center" style="margin:auto">
-            <p class="lead muted">Eliminat din conac</p>
+            <p class="lead muted">Alungat din castel</p>
             <h1>${bt(e.name ?? '')}</h1>
             <div class="role-reveal ${e.evil ? 'evil' : ''}">${e.emoji} ${esc(e.roleName)}</div>
             ${e.testament ? `<div class="testament">„${esc(e.testament)}”</div>` : ''}
@@ -385,7 +412,7 @@
         const stage = pub.endStage ?? 'winner';
         const head = `<div class="end ${good ? 'good' : 'evil'} ${stage === 'winner' ? '' : 'small'}">
             <h1>${good ? bt('Binele a învins', '🕯️', { gold: true }) : bt('Răul a învins', '🩸')}</h1>
-            ${stage === 'winner' ? `<p class="lead">${good ? 'Vampirul a fost alungat din conac.' : 'Conacul Blackwood aparține acum vampirului.'}</p>` : ''}
+            ${stage === 'winner' ? `<p class="lead">${good ? 'Contele a fost alungat din castel.' : 'Castelul Bran aparține acum Contelui.'}</p>` : ''}
           </div>`;
         if (stage === 'roles') {
           return `${head}<div class="final-roles">${(f.roles ?? []).map((x, i) => `
@@ -422,13 +449,13 @@
       } else {
         slides.push('<div class="slide">🌙 Nimeni nu a murit în noaptea asta.</div>');
       }
-      if (m.saved) slides.push('<div class="slide">🛡️ Cineva a fost salvat în noaptea asta.</div>');
-      if (m.hypnotized) slides.push(`<div class="slide">🤐 <b>${esc(m.hypnotized)}</b> este hipnotizat și nu are voie să vorbească la ședință.</div>`);
+      if (m.saved) slides.push('<div class="slide">✝️ Cineva a fost salvat în noaptea asta.</div>');
+      if (m.hypnotized) slides.push(`<div class="slide">🤐 <b>${esc(m.hypnotized)}</b> este blestemat și nu are voie să vorbească la ședință.</div>`);
       if (m.gossip) slides.push(`<div class="slide">🗣️ Bârfitoarea șoptește: <i>„${esc(m.gossip)}”</i></div>`);
       if (m.hints?.length) slides.push(`<div class="slide">👻 Fantomele șoptesc: ${m.hints.map((h) => `<b>${esc(h)}</b>`).join(' · ')}</div>`);
       if (m.thermometer?.length) {
         const max = Math.max(...m.thermometer.map((t) => t.votes));
-        slides.push(`<div class="slide"><div>🌡️ Ce crede conacul <span class="muted">(${m.betCount ?? ''} pariuri)</span></div>${m.thermometer.map((t) => `
+        slides.push(`<div class="slide"><div>🌡️ Ce cred oaspeții <span class="muted">(${m.betCount ?? ''} pariuri)</span></div>${m.thermometer.map((t) => `
           <div class="bar"><span>${esc(t.name)}</span><i style="width:${(t.votes / max) * 100}%"></i><b>${t.votes}</b></div>`).join('')}</div>`);
       }
       return slides;
@@ -479,7 +506,7 @@
       rv.items.forEach((it, i) => {
         const show = () => {
           if (!document.getElementById('reveal-list')) return;
-          list.insertAdjacentHTML('beforeend', `<div class="reveal-item"><span class="voter">${esc(it.voter)}${it.weight > 1 ? ' 🎩×2' : ''}</span>${it.target ? `${slash}<span class="target"><b>${esc(it.target)}</b></span>` : '<span class="target"><i class="muted">se abține</i></span>'}`);
+          list.insertAdjacentHTML('beforeend', `<div class="reveal-item"><span class="voter">${esc(it.voter)}${it.weight > 1 ? ' 🗝️×2' : ''}</span>${it.target ? `${slash}<span class="target"><b>${esc(it.target)}</b></span>` : '<span class="target"><i class="muted">se abține</i></span>'}`);
           if (instant) {
             if (it.target) tally[it.target] = (tally[it.target] ?? 0) + it.weight;
             lastHit = null;
@@ -506,9 +533,9 @@
 
     function outcomeHtml(o) {
       if (!o) return '';
-      if (o.result === 'eliminate') return `<div class="outcome">${o.byMayor ? '🎩 Primarul a decis: ' : 'Conacul a votat: '}<b class="squid-pink">${esc(o.target)}</b></div>`;
+      if (o.result === 'eliminate') return `<div class="outcome">${o.byMayor ? '🗝️ Pârcălabul a decis: ' : 'Castelul a votat: '}<b class="squid-pink">${esc(o.target)}</b></div>`;
       if (o.result === 'revote') return `<div class="outcome">⚖️ Egalitate între <b>${o.candidates.map(esc).join(', ').replace(/, ([^,]*)$/, ' și $1')}</b>. Urmează revotul.</div>`;
-      if (o.result === 'mayor-decides') return `<div class="outcome">⚖️ Tot egalitate. 🎩 <b>Primarul decide</b> pe telefonul lui…</div>`;
+      if (o.result === 'mayor-decides') return `<div class="outcome">⚖️ Tot egalitate. 🗝️ <b>Pârcălabul decide</b> pe telefonul lui…</div>`;
       return '<div class="outcome">Nimeni nu este eliminat în această rundă.</div>';
     }
 
@@ -529,7 +556,7 @@
       else sfx.playMusic(theme ?? null);
     }
 
-    // Anunțuri scurte peste orice ecran (de exemplu cineva a părăsit conacul).
+    // Anunțuri scurte peste orice ecran (de exemplu cineva a părăsit castelul).
     let lastNotice = null;
     function showNotice(n) {
       if (!n || n.at === lastNotice) return;
@@ -581,7 +608,7 @@
         // Ceremonia întâi, apoi rolul.
         const e = pub.elimination;
         stage.innerHTML = '';
-        ceremony(e.name, e.sacrificed ? '🩸 s-a sacrificat pentru stăpânul său' : 'a fost eliminat din conac')
+        ceremony(e.name, e.sacrificed ? '🩸 s-a sacrificat pentru stăpânul său' : 'a fost alungat din castel')
           .then(() => { if (lastPhase === 'elimination') stage.innerHTML = views.elimination(); });
         return;
       }
