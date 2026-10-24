@@ -86,6 +86,32 @@
     // unele televizoare taie marginile, de aceea lăsăm loc.
     // Lumânările se așază pe unul sau două rânduri, cum ies mai mari, și se micșorează doar cât să încapă.
     // Totul trebuie să rămână între 3% și 94% din înălțime (unele televizoare taie marginile).
+    // Reluarea nopților trebuie să încapă toată pe ecran: alegem numărul de coloane
+    // și micșorăm textul până când nu mai iese nimic în afară.
+    function fitReplay() {
+      const box = stage.querySelector('.replay-box');
+      const list = box?.querySelector('.replay');
+      if (!list) return;
+      const blocks = list.children.length;
+      // Cutia se oprește la 94% din înălțimea ecranului (unele televizoare taie marginile).
+      box.style.height = `${Math.max(100, window.innerHeight * 0.94 - box.getBoundingClientRect().top)}px`;
+      let best = null;
+      for (const cols of [3, 4, 5]) {
+        if (cols > Math.max(3, blocks)) break;
+        list.style.columnCount = cols;
+        let lo = 0.4, hi = 1.6;
+        for (let i = 0; i < 12; i++) {
+          const mid = (lo + hi) / 2;
+          list.style.setProperty('--rs', mid);
+          if (list.scrollHeight <= box.clientHeight && list.scrollWidth <= box.clientWidth + 2) lo = mid; else hi = mid;
+        }
+        if (!best || lo > best.scale) best = { cols, scale: lo };
+      }
+      list.style.columnCount = best.cols;
+      list.style.setProperty('--rs', best.scale);
+    }
+    window.addEventListener('resize', fitReplay);
+
     function fitStage() {
       const holder = stage.querySelector('.candle-rows');
       if (!holder) return;
@@ -167,26 +193,11 @@
       await wait(1200); box.remove();
     }
 
-    // Efectele pașilor de final: un sunet la fiecare rol sau titlu, reluarea derulată încet.
+    // Efectele pașilor de final: un sunet la fiecare rol sau titlu.
     function endStageEffects(stage) {
       const f = pub.final ?? {};
       if (stage === 'roles') (f.roles ?? []).forEach((x, i) => setTimeout(() => (x.evil ? sfx.voteHit(0) : sfx.tick()), 400 + i * 600));
       if (stage === 'titles') (f.titles ?? []).forEach((_, i) => setTimeout(() => sfx.bell(0, 330, 3, 0.3), 500 + i * 2200));
-      if (stage === 'replay') {
-        const box = document.getElementById('replay');
-        if (!box) return;
-        const parent = box.parentElement;
-        let y = 0;
-        const scroll = () => {
-          if (!document.body.contains(box)) return;
-          const max = box.scrollHeight - parent.clientHeight;
-          if (max <= 0) return;
-          y = Math.min(max, y + 0.6);
-          box.style.transform = `translateY(${-y}px)`;
-          if (y < max) requestAnimationFrame(scroll);
-        };
-        setTimeout(() => requestAnimationFrame(scroll), 3000);
-      }
     }
 
     // Bătăile inimii: sunet și imagine în același timp, tot mai repede.
@@ -576,6 +587,8 @@
       }
       stage.innerHTML = (views[phase] ?? views.lobby)();
       fitStage();
+      // Titlul de deasupra se așază în prima secundă (animație, font), așa că reluarea se potrivește din nou.
+      if (phase === 'end') [0, 400, 1500].forEach((ms) => setTimeout(fitReplay, ms));
       if (phase === 'sacrifice' && previous !== 'sacrifice') heartbeatLoop();
       if (phase === 'end' && stageChanged && previous === 'end') endStageEffects(pub.endStage);
       if (phase === 'morning') playMorning();

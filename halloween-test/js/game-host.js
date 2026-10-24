@@ -264,23 +264,35 @@ function botGossip(self) {
   return shuffle(lines)[0];
 }
 
+// Ce alege un robot noaptea: ținta (sau indiciul, dacă e fantomă) și pariul.
+function botChoice(id) {
+  const bet = shuffle(aliveIds().filter((x) => x !== id))[0] ?? null;
+  if (nightMode(state, id) === 'ghost') {
+    const hint = Math.random() < 0.5 ? shuffle(BOT_HINTS)[0] : '';
+    return { hint, bet, done: true, at: Date.now() };
+  }
+  const target = shuffle(validTargets(state, id))[0] ?? null;
+  return { target, bet, done: true, at: Date.now() };
+}
+
 async function botAct(id, round) {
   if (pub.phase !== 'night' || state.round !== round) return;
-  const mode = nightMode(state, id);
-  const bet = shuffle(aliveIds().filter((x) => x !== id))[0] ?? null;
-  if (mode === 'ghost') {
-    const hint = Math.random() < 0.5 ? shuffle(BOT_HINTS)[0] : '';
-    return set(r(`actions/${round}/${id}`), { hint, bet, done: true, at: Date.now() });
-  }
-  const targets = validTargets(state, id);
-  const target = shuffle(targets)[0] ?? null;
-  return set(r(`actions/${round}/${id}`), { target, bet, done: true, at: Date.now() });
+  const existing = (await get(r(`actions/${round}/${id}`))).val();
+  if (existing?.done) return;
+  return set(r(`actions/${round}/${id}`), botChoice(id));
 }
 
 function watchNight(endsAt = pub.endsAt) {
   stopActions?.();
   clearTimeout(nightTimer);
   const round = state.round;
+  // După o reîncărcare a proiectorului, roboții care n-au apucat să aleagă aleg acum.
+  get(r(`actions/${round}`)).then((snap) => {
+    const acted = snap.val() ?? {};
+    for (const p of GP().filter((x) => isBot(x.id) && !acted[x.id]?.done)) {
+      setTimeout(() => botAct(p.id, round), 2000 + Math.random() * 8000);
+    }
+  });
   stopActions = onValue(r(`actions/${round}`), serial(async (snap) => {
     if (pub.phase !== 'night' || state.round !== round) return;
     const actions = snap.val() ?? {};
@@ -311,6 +323,11 @@ async function endNight(cmd = {}) {
 
   const round = state.round;
   const raw = (await get(r(`actions/${round}`))).val() ?? {};
+  // Siguranță: dacă un robot (de ex. vampirul) n-a apucat să aleagă, alege acum, înainte de dimineață.
+  for (const p of GP().filter((x) => isBot(x.id) && !raw[x.id]?.done)) {
+    raw[p.id] = botChoice(p.id);
+    await set(r(`actions/${round}/${p.id}`), raw[p.id]);
+  }
   const actions = Object.fromEntries(Object.entries(raw).map(([id, a]) => [id, { target: a.target ?? null, hint: a.hint ?? null, bet: a.bet ?? null }]));
   const { state: next, report } = resolveNight(state, actions);
   state = next;

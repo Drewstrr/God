@@ -446,7 +446,12 @@ export function buildReplay(state) {
       lines.push(deaths.length ? `💀 Au murit: ${deaths.join(', ')}` : '🌙 Nu a murit nimeni');
       out.push({ title: `🌑 Noaptea ${h.round}`, lines });
     } else if (h.type === 'vote') {
-      const lines = Object.entries(h.votes ?? {}).map(([v, t]) => `${nameOf(state, v)} → ${t === 'abstain' ? 'se abține' : nameOf(state, t)}`);
+      // Voturile grupate pe țintă, ca reluarea să încapă pe un singur ecran.
+      const groups = {};
+      for (const [v, t] of Object.entries(h.votes ?? {})) (groups[t] ??= []).push(nameOf(state, v));
+      const lines = Object.entries(groups)
+        .sort(([a, x], [b, y]) => (a === 'abstain') - (b === 'abstain') || y.length - x.length)
+        .map(([t, vs]) => `${t === 'abstain' ? '🤐 S-au abținut' : `${nameOf(state, t)} (${vs.length})`}: ${vs.join(', ')}`);
       if (h.sacrificed) lines.push(`🩸 ${nameOf(state, h.eliminated)} s-a sacrificat pentru ${nameOf(state, h.voted)}`);
       else if (h.eliminated) lines.push(`⚰️ Eliminat: ${nameOf(state, h.eliminated)} (${ROLES[state.roles[h.eliminated]].name})`);
       else lines.push('Nimeni nu a fost eliminat');
