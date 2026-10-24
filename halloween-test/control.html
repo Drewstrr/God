@@ -20,6 +20,8 @@
         <p class="muted">Motorul rulează în pagina <a href="screen" target="_blank">Proiector</a>. Ține-o deschisă pe ecranul proiectorului.</p>
         <button class="btn small ghost" id="sound">🔊 Sunet proiector</button>
         <button class="btn small ghost" id="music">🎵 Muzică</button>
+        <label class="vol">🔊 Volum general <input type="range" id="volume" min="0" max="100" step="5"> <b id="volume-val"></b></label>
+        <label class="vol">🎵 Volum muzică <input type="range" id="music-volume" min="0" max="100" step="5"> <b id="music-volume-val"></b></label>
       </div>
       <div class="card">
         <h2 id="phase-title">Jocul</h2>
@@ -295,6 +297,26 @@
       musicBtn.textContent = off ? '🎵 Muzică: OPRITĂ (apasă să pornești)' : '🎵 Muzică: PORNITĂ (apasă să oprești)';
     });
     musicBtn.addEventListener('click', () => set(r('public/music'), Boolean(musicBtn.dataset.off)));
+
+    // Glisoarele de volum: proiectorul se schimbă pe loc, cât tragi de ele.
+    for (const [id, key] of [['volume', 'volume'], ['music-volume', 'musicVolume']]) {
+      const input = document.getElementById(id);
+      const label = document.getElementById(`${id}-val`);
+      let dragging = false;
+      let pending = null;
+      onValue(r(`public/${key}`), (snap) => {
+        if (dragging) return;
+        input.value = snap.val() ?? 100;
+        label.textContent = `${input.value}%`;
+      });
+      input.addEventListener('input', () => {
+        dragging = true;
+        label.textContent = `${input.value}%`;
+        clearTimeout(pending);
+        pending = setTimeout(() => set(r(`public/${key}`), Number(input.value)), 120);
+      });
+      input.addEventListener('change', () => { dragging = false; set(r(`public/${key}`), Number(input.value)); });
+    }
 
     onValue(r('public/engine'), (snap) => {
       const el = document.getElementById('engine');

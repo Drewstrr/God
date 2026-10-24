@@ -3,6 +3,7 @@
 let ctx = null;
 let master = null;
 let muted = false;
+const MUSIC_LEVEL = 0.32;
 
 export function unlock() {
   if (!ctx) {
@@ -10,7 +11,7 @@ export function unlock() {
     if (!AC) return false;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = muted ? 0 : 0.9;
+    master.gain.value = muted ? 0 : 0.9 * volume;
     master.connect(ctx.destination);
     ctx.onstatechange = () => stateListeners.forEach((cb) => cb(ready()));
   }
@@ -31,7 +32,16 @@ const stateListeners = new Set();
 export const onSoundState = (cb) => { stateListeners.add(cb); };
 
 export const ready = () => Boolean(ctx && ctx.state === 'running');
-export const setMuted = (m) => { muted = m; if (master) master.gain.value = m ? 0 : 0.9; };
+export const setMuted = (m) => { muted = m; applyVolume(); };
+// Volumul din panoul de comandă: volume = tot sunetul, musicVolume = doar muzica (0–1).
+let volume = 1;
+let musicVolume = 1;
+function applyVolume() {
+  if (master) master.gain.value = muted ? 0 : 0.9 * volume;
+  if (musicBus) musicBus.gain.value = MUSIC_LEVEL * musicVolume;
+}
+export const setVolume = (v) => { volume = Math.max(0, Math.min(1, v)); applyVolume(); };
+export const setMusicVolume = (v) => { musicVolume = Math.max(0, Math.min(1, v)); applyVolume(); };
 export const isMuted = () => muted;
 
 function noiseBuffer(seconds) {
@@ -430,7 +440,7 @@ export const setMusic = (on) => {
 function bus() {
   if (!musicBus) {
     musicBus = ctx.createGain();
-    musicBus.gain.value = 0.32;
+    musicBus.gain.value = MUSIC_LEVEL * musicVolume;
     musicBus.connect(master);
   }
   return musicBus;
@@ -661,7 +671,7 @@ function youtubePlayer(YT) {
   });
   return ytPlayer;
 }
-const ytTarget = () => (muted ? 0 : Math.round(YT_VOLUME * ytDuck));
+const ytTarget = () => (muted ? 0 : Math.round(YT_VOLUME * ytDuck * volume * musicVolume));
 
 async function playYouTube(mine, song, fallback) {
   try {
@@ -742,7 +752,7 @@ export async function playMusic(theme, options = {}) {
     if (current !== mine) return;
     const audio = new Audio(new URL(`../audio/${theme}.mp3`, import.meta.url));
     audio.loop = true;
-    audio.volume = muted ? 0 : 0.45;
+    audio.volume = muted ? 0 : 0.45 * volume * musicVolume;
     audio.play().catch(() => {});
     mine.stop = () => {
       let v = audio.volume;
@@ -786,7 +796,7 @@ export function duckMusic(seconds = 8) {
   const t = ctx.currentTime;
   musicBus.gain.cancelScheduledValues(t);
   musicBus.gain.setValueAtTime(musicBus.gain.value, t);
-  musicBus.gain.linearRampToValueAtTime(0.06, t + 0.6);
-  musicBus.gain.setValueAtTime(0.06, t + seconds);
-  musicBus.gain.linearRampToValueAtTime(0.32, t + seconds + 2);
+  musicBus.gain.linearRampToValueAtTime(0.06 * musicVolume, t + 0.6);
+  musicBus.gain.setValueAtTime(0.06 * musicVolume, t + seconds);
+  musicBus.gain.linearRampToValueAtTime(MUSIC_LEVEL * musicVolume, t + seconds + 2);
 }

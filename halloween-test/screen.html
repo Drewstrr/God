@@ -306,7 +306,8 @@
         return `
           <h1>${bt('Balul Contelui')}</h1>
           <p class="lobby-story" id="lobby-story">${storyHtml()}</p>
-          <div class="join">
+          ${candles({ lobby: true })}
+          <div class="join join-low">
             <div class="qr">${qrSvg}</div>
             <div class="join-text">
               <div class="join-title">📱 Intră la bal</div>
@@ -318,8 +319,7 @@
               <div class="muted">sau scrie: <b style="color:var(--text)">${esc(joinUrl)}</b></div>
               <div class="join-count">${ready} din ${players.length} au intrat</div>
             </div>
-          </div>
-          ${candles({ lobby: true })}`;
+          </div>`;
       },
       intro() {
         return `
@@ -603,6 +603,8 @@
       if (phase !== 'reveal') { revealTimers.forEach(clearTimeout); revealTimers = []; }
       sfx.setMuted(Boolean(pub.muted));
       sfx.setMusic(pub.music !== false);
+      sfx.setVolume((pub.volume ?? 100) / 100);
+      sfx.setMusicVolume((pub.musicVolume ?? 100) / 100);
       playThemeFor(phase);
       if (phase !== 'end') {
         stopBlood();

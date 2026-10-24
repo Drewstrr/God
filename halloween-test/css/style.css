@@ -557,3 +557,15 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 .lobby-story span { display: block; }
 .lobby-story span + span { color: #d9a7a7; }
 .lobby-story.fade { opacity: 0; filter: blur(3px); }
+
+/* Glisoarele de volum din panoul de comandă */
+.vol { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-weight: 600; }
+.vol input[type=range] { flex: 1; accent-color: var(--candle); height: 28px; border: 0; background: none; padding: 0; box-shadow: none; margin: 0; }
+.vol b { min-width: 3.2em; text-align: right; color: var(--candle); }
+
+/* Lobby: lumânările la mijloc, iar intrarea (QR + pași) jos, discretă. QR-ul rămâne alb pe negru, ca să se scaneze ușor. */
+.join.join-low { margin-top: 2.5vh; gap: 2vw; }
+.join-low .qr { width: min(19vh, 13vw); padding: 0.8vh; box-shadow: 0 0 0 2px rgba(255, 181, 71, 0.35); }
+.join-low .join-text { font-size: 1.15vw; line-height: 1.45; opacity: 0.55; }
+.join-low .join-title { font-size: 1.5vw; }
+.join-low .join-count { opacity: 0.9; }
