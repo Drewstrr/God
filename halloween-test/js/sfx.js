@@ -674,16 +674,38 @@ async function playYouTube(mine, song, fallback) {
     // Bucla: când ajunge la final, o ia din nou de la minutul ales.
     p.stateChanged = (state) => { if (current === mine && state === YT.PlayerState.ENDED) { p.seekTo(song.start, true); p.playVideo(); } };
     p.failed = () => { if (current === mine) fallbackTo(mine, fallback); };
+    // Reclamele: YouTube nu le anunță, dar se recunosc după faptul că melodia noastră nu înaintează
+    // (sau timpul e înainte de minutul ales). Atunci punem YouTube pe mut și cântă muzica jocului.
+    let lastT = -1;
+    let movedAt = 0;
+    let stalledSince = performance.now();
+    let filler = null;
     const loop = setInterval(() => {
       if (current !== mine) return;
+      const now = performance.now();
       const t = p.getCurrentTime?.() ?? 0;
       if (song.end && t >= song.end - 0.4) p.seekTo(song.start, true);
-      vol = vol < ytTarget() ? Math.min(ytTarget(), vol + 6) : ytTarget();  // intră încet, apoi urmează volumul cerut
+      if (t > lastT + 0.05 && lastT >= 0) movedAt = now;
+      lastT = t;
+      const inSong = t >= song.start - 1 && (!song.end || t <= song.end + 1);
+      const playing = p.getPlayerState?.() === YT.PlayerState.PLAYING && inSong && now - movedAt < 900;
+      if (playing) {
+        stalledSince = now;
+        if (filler) { filler(); filler = null; }
+        if (p.isMuted?.()) p.unMute();
+        vol = vol < ytTarget() ? Math.min(ytTarget(), vol + 6) : ytTarget();  // intră încet, apoi urmează volumul cerut
+      } else {
+        vol = 0;  // reclamă sau încărcare: fără sunet de la YouTube
+        if (!p.isMuted?.()) p.mute();
+        if (!filler && fallback && now - stalledSince > 1500) filler = startSynth(fallback);
+      }
       p.setVolume(vol);
     }, 250);
+    mine.filler = () => { if (filler) { filler(); filler = null; } };
     mine.resume = () => { if (p.getPlayerState?.() !== YT.PlayerState.PLAYING) p.playVideo(); };
     mine.stop = () => {
       clearInterval(loop);
+      mine.filler();
       let v = p.getVolume?.() ?? 0;
       const fade = setInterval(() => {
         v = Math.max(0, v - 5);
@@ -729,6 +751,11 @@ export async function playMusic(theme, options = {}) {
     return;
   }
 
+  mine.stop = startSynth(theme);
+}
+
+// Pornește o temă generată și întoarce funcția care o stinge.
+function startSynth(theme) {
   const out = ctx.createGain();
   out.gain.setValueAtTime(0.0001, ctx.currentTime);
   out.gain.exponentialRampToValueAtTime(1, ctx.currentTime + 2);
@@ -741,7 +768,7 @@ export async function playMusic(theme, options = {}) {
       next += step(next, i++);
     }
   }, 150);
-  mine.stop = () => {
+  return () => {
     clearInterval(timer);
     const t = ctx.currentTime;
     out.gain.cancelScheduledValues(t);
