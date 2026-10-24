@@ -74,7 +74,7 @@
       const players = Object.entries(pub.players ?? {}).filter(([id]) => (lobby ? pub.lineup?.players?.[id] !== false : id in (pub.alive ?? {})));
       const items = players.map(([id, p], i) => {
         const cls = lobby ? (p.hasPin || p.bot ? '' : 'waiting') : (pub.alive?.[id] === false ? 'out' : '');
-        return candleHtml(p.name, cls, `${esc(p.name)}${lobby && p.bot ? ' 🤖' : ''}`, i);
+        return candleHtml(p.name, cls, `${esc(p.name)}${lobby && p.bot ? ' <span class="bot">🤖</span>' : ''}`, i);
       });
       const top = Math.floor(items.length / 2);
       const rows = items.length > 6 ? [items.slice(0, top), items.slice(top)] : [items];
@@ -84,20 +84,46 @@
     // Dacă nu încape totul pe proiector, micșorăm lumânările până încape.
     // Totul (titlu, cronometru, lumânări, nume) trebuie să încapă între 3% și 94% din înălțimea ecranului;
     // unele televizoare taie marginile, de aceea lăsăm loc.
+    // Lumânările se așază pe unul sau două rânduri, cum ies mai mari, și se micșorează doar cât să încapă.
+    // Totul trebuie să rămână între 3% și 94% din înălțime (unele televizoare taie marginile).
     function fitStage() {
-      const rows = stage.querySelector('.candle-rows');
-      if (!rows) return;
-      const extent = () => {
-        const boxes = [...stage.children, ...stage.querySelectorAll('.candle .name')].map((e) => e.getBoundingClientRect());
-        return [Math.min(...boxes.map((b) => b.top)), Math.max(...boxes.map((b) => b.bottom))];
+      const holder = stage.querySelector('.candle-rows');
+      if (!holder) return;
+      const candles = [...holder.querySelectorAll('.candle')];
+      const arrange = (rowCount) => {
+        const per = Math.ceil(candles.length / rowCount);
+        const firstRow = rowCount === 2 ? Math.floor(candles.length / 2) : candles.length;
+        holder.innerHTML = '';
+        const sizes = rowCount === 2 ? [firstRow, candles.length - firstRow] : [per];
+        let i = 0;
+        for (const n of sizes) {
+          const row = document.createElement('div');
+          row.className = 'candle-row';
+          candles.slice(i, i + n).forEach((c) => row.appendChild(c));
+          i += n;
+          holder.appendChild(row);
+        }
       };
-      const fits = () => { const [top, bottom] = extent(); return top >= window.innerHeight * 0.03 && bottom <= window.innerHeight * 0.94; };
-      let size = Math.min(window.innerWidth * 0.0085, window.innerHeight * 0.0125);
-      stage.style.setProperty('--cs', `${size.toFixed(2)}px`);
-      for (let i = 0; i < 30 && !fits(); i++) {
-        size *= 0.94;
+      const fits = () => {
+        const boxes = [...stage.children, ...stage.querySelectorAll('.candle .name')].map((e) => e.getBoundingClientRect());
+        const top = Math.min(...boxes.map((x) => x.top));
+        const bottom = Math.max(...boxes.map((x) => x.bottom));
+        const wide = [...holder.querySelectorAll('.candle-row')].every((row) => row.scrollWidth <= stage.clientWidth * 0.98);
+        return top >= innerHeight * 0.03 && bottom <= innerHeight * 0.94 && wide;
+      };
+      const best = (rowCount) => {
+        arrange(rowCount);
+        let size = Math.min(innerWidth * 0.014, innerHeight * 0.02);
         stage.style.setProperty('--cs', `${size.toFixed(2)}px`);
-      }
+        for (let i = 0; i < 40 && !fits(); i++) {
+          size *= 0.95;
+          stage.style.setProperty('--cs', `${size.toFixed(2)}px`);
+        }
+        return size;
+      };
+      const two = candles.length > 6 ? best(2) : 0;
+      const one = best(1);
+      if (two > one) best(2);
     }
     window.addEventListener('resize', fitStage);
     document.fonts?.ready.then(fitStage);

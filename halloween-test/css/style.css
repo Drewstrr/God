@@ -116,8 +116,8 @@ input[type=password], input[type=text] {
 
 /* Lumânări realiste: halou, flacără cu miez albastru, pâlpâire neregulată */
 .candle-rows { display: flex; flex-direction: column; align-items: center; gap: 3vh; }
-.candle-row { display: flex; justify-content: center; align-items: flex-end; gap: 2.4vw; }
-.candle { --s: 8px; position: relative; display: flex; flex-direction: column; align-items: center; width: calc(var(--s) * 10); text-align: center; }
+.candle-row { display: flex; justify-content: center; align-items: flex-end; gap: calc(var(--cs, 10px) * 1.4); }
+.candle { --s: 8px; position: relative; display: flex; flex-direction: column; align-items: center; min-width: calc(var(--s) * 10); width: max-content; text-align: center; }
 .screen-wrap .candle { --s: var(--cs, min(0.7vw, 0.95vh)); }
 .candle .light {
   position: absolute; left: 50%; top: calc(var(--s) * -5.5);
@@ -180,7 +180,7 @@ input[type=password], input[type=text] {
 }
 .candle.out .dish, .candle.waiting .dish { filter: brightness(0.5); }
 .candle .name { margin-top: calc(var(--s) * 1.2); font-weight: 700; white-space: nowrap; }
-.screen-wrap .candle .name { font-size: calc(var(--s) * 2.2); }
+.screen-wrap .candle .name { font-size: max(15px, calc(var(--s) * 2.7)); }
 .candle .smoke { position: absolute; top: calc(var(--s) * -3); left: 50%; width: 0; height: 0; pointer-events: none; }
 .candle .smoke i {
   position: absolute; left: calc(var(--s) * -0.6); bottom: 0; width: calc(var(--s) * 1.2); height: calc(var(--s) * 4);
@@ -521,3 +521,5 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 .corner-qr .qr { width: min(12vh, 9vw); background: #fff; padding: 4px; border-radius: 8px; }
 .corner-qr .qr svg { display: block; width: 100%; height: auto; }
 .corner-qr[hidden] { display: none; }
+
+.candle .name .bot { font-size: 0.75em; opacity: 0.8; }
