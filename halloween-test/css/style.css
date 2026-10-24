@@ -535,3 +535,13 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 .guide-team h3 { margin: 8px 0 2px; font-size: 1.15rem; }
 .guide-team.evil h3 { color: var(--blood-hi); }
 .guide-team.good h3 { color: var(--candle); }
+
+/* Panou: linkurile jocului */
+.links h2 { margin-bottom: 6px; }
+.link-row { display: flex; gap: 12px; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.link-text { min-width: 0; overflow-wrap: anywhere; font-size: 0.95rem; }
+.link-text a { font-size: 0.9rem; }
+.link-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.link-qr { text-align: center; margin-top: 14px; }
+.link-qr .qr { display: inline-block; width: 240px; background: #fff; padding: 10px; border-radius: 12px; }
+.link-qr .qr svg { display: block; width: 100%; height: auto; }

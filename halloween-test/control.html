@@ -6,10 +6,13 @@
   <meta name="robots" content="noindex">
   <title>Blackwood – Panou</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/vendor/qrcode.js"></script>
 </head>
 <body>
   <main class="wrap" style="max-width:760px">
     <h1>Panoul de comandă</h1>
+    <button class="btn small ghost" id="links-btn">🔗 Linkuri</button>
+    <div class="card links" id="links" hidden></div>
     <div id="login"></div>
     <div id="panel" hidden>
       <div class="card">
@@ -38,6 +41,41 @@
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
+    // Toate paginile jocului, cu link de deschis, copiat sau scanat (QR).
+    const base = location.href.replace(/[^/]*([?#].*)?$/, '');
+    const LINKS = [
+      ['📽️', 'Proiector + motor', 'screen', 'Pe MacBook, pe ecranul proiectorului. Deschis într-un singur loc.'],
+      ['📱', 'Telefon (jucători)', 'play', 'Pentru invitați: aleg numele și PIN-ul. E și codul QR din lobby.'],
+      ['🗳️', 'Cabina de vot (iPad)', 'vote', 'Pe iPad, în Guided Access. Aici se votează pe rând.'],
+      ['🎛️', 'Panoul de comandă', 'control', 'Pagina asta. Nu arată niciun secret.'],
+      ['🚨', 'Panoul de urgență', 'admin', 'Parolă separată. Arată secretele: doar în caz de forță majoră.'],
+      ['📖', 'Ghidul jucătorului (PDF)', 'ghid-jucatori.pdf', 'De trimis invitaților sau de printat.'],
+    ];
+    const linksBox = document.getElementById('links');
+    linksBox.innerHTML = `<h2>🔗 Linkurile jocului</h2>${LINKS.map(([icon, name, path, help]) => `
+      <div class="link-row">
+        <div class="link-text"><b>${icon} ${name}</b><br><a href="${base + path}" target="_blank">${base + path}</a><br><span class="muted">${help}</span></div>
+        <div class="link-actions">
+          <button class="btn small ghost" data-copy="${base + path}">📋 Copiază</button>
+          <button class="btn small ghost" data-qr="${base + path}">▦ QR</button>
+        </div>
+      </div>`).join('')}<div class="link-qr" id="link-qr" hidden></div>`;
+    document.getElementById('links-btn').addEventListener('click', () => { linksBox.hidden = !linksBox.hidden; });
+    linksBox.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '✓ Copiat'; } catch { prompt('Copiază linkul:', b.dataset.copy); }
+      setTimeout(() => { b.textContent = '📋 Copiază'; }, 1500);
+    }));
+    linksBox.querySelectorAll('[data-qr]').forEach((b) => b.addEventListener('click', () => {
+      const box = document.getElementById('link-qr');
+      const qr = window.qrcode(0, 'M');
+      qr.addData(b.dataset.qr);
+      qr.make();
+      box.innerHTML = `<div class="qr">${qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true })}</div><p class="muted">${b.dataset.qr}<br>Scanează cu camera telefonului sau a iPad-ului.</p><button class="btn small ghost" id="qr-close">Închide</button>`;
+      box.hidden = false;
+      box.querySelector('#qr-close').addEventListener('click', () => { box.hidden = true; });
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }));
 
     await requireEngineLogin(document.getElementById('login'));
     document.getElementById('panel').hidden = false;
