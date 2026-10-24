@@ -10,12 +10,25 @@ export function unlock() {
     if (!AC) return false;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = 0.9;
+    master.gain.value = muted ? 0 : 0.9;
     master.connect(ctx.destination);
+    ctx.onstatechange = () => stateListeners.forEach((cb) => cb(ready()));
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  // Safari poate lăsa sunetul „suspended” sau „interrupted” (după somn); îl repornim în ambele cazuri.
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
+  // Un sunet mut redat chiar în timpul click-ului: unele browsere pornesc audio doar așa.
+  try {
+    const src = ctx.createBufferSource();
+    src.buffer = ctx.createBuffer(1, 1, 22050);
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch {}
   return true;
 }
+
+const stateListeners = new Set();
+// Anunță când sunetul pornește sau se oprește singur (ex. după ce MacBookul a dormit).
+export const onSoundState = (cb) => { stateListeners.add(cb); };
 
 export const ready = () => Boolean(ctx && ctx.state === 'running');
 export const setMuted = (m) => { muted = m; if (master) master.gain.value = m ? 0 : 0.9; };

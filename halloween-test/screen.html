@@ -590,17 +590,29 @@
       ticker = setInterval(tick, 250);
     });
 
-    // Sunetul pornește după primul click sau tastă pe pagină (regula browserelor).
-    const hint = document.createElement('div');
+    // Sunetul pornește doar după un click sau o tastă (regula browserelor).
+    // Cât timp e oprit, în colț stă un buton mare; orice click, atingere sau tastă îl pornește.
+    const hint = document.createElement('button');
+    hint.type = 'button';
     hint.className = 'sound-hint';
     document.body.appendChild(hint);
-    const showHint = () => { hint.textContent = sfx.ready() ? (sfx.isMuted() ? '🔇 sunet oprit din panou' : '🔊 sunet pornit') : '🔇 click oriunde pentru sunet'; };
-    ['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, () => {
-      const wasReady = sfx.ready();
-      sfx.unlock();
-      setTimeout(() => { showHint(); if (!wasReady && sfx.ready()) playThemeFor(lastPhase ?? 'lobby'); }, 250);
-    }));
+    let wasReady = false;
+    const showHint = () => {
+      const on = sfx.ready();
+      hint.classList.toggle('off', !on);
+      hint.textContent = !on ? '🔇 Apasă aici (sau orice tastă) pentru sunet'
+        : sfx.isMuted() ? '🔇 sunet oprit din panou' : '🔊 sunet pornit';
+      if (on && !wasReady) {
+        playThemeFor(lastPhase ?? 'lobby');
+        if (!sfx.isMuted()) sfx.chime();
+      }
+      wasReady = on;
+    };
+    const wake = () => { sfx.unlock(); setTimeout(showHint, 150); setTimeout(showHint, 600); };
+    ['pointerdown', 'pointerup', 'click', 'touchend', 'keydown'].forEach((ev) => document.addEventListener(ev, wake, true));
+    sfx.onSoundState(showHint);
     sfx.unlock();
+    showHint();
     setInterval(showHint, 1000);
 
     // Un click oriunde trece proiectorul pe ecran complet.

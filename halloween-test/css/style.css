@@ -284,7 +284,10 @@ input[type=password], input[type=text] {
 @keyframes blood-band { to { height: 3.5vh; } }
 body[data-phase="end"] .screen-wrap { position: relative; z-index: 2; }
 .end.evil h1, .end.evil p { text-shadow: 0 0 6px #000, 0 0 20px #000, 0 0 40px rgba(224, 36, 71, 0.6); }
-.sound-hint { position: fixed; left: 14px; bottom: 10px; font-size: 0.85rem; color: var(--muted); z-index: 40; }
+.sound-hint { position: fixed; left: 14px; bottom: 10px; font: inherit; font-size: 0.85rem; color: var(--muted); z-index: 60; background: none; border: 0; padding: 4px 6px; cursor: pointer; }
+.sound-hint.off { font-size: clamp(1rem, 1.6vw, 1.6rem); color: #fff; background: rgba(120, 10, 10, 0.85); border: 2px solid #e8c37a;
+  border-radius: 999px; padding: 0.6em 1.2em; box-shadow: 0 0 24px rgba(232, 195, 122, 0.5); animation: sound-pulse 1.6s ease-in-out infinite; }
+@keyframes sound-pulse { 50% { transform: scale(1.06); box-shadow: 0 0 40px rgba(232, 195, 122, 0.85); } }
 
 /* Tabel simplu în panou */
 .rows { width: 100%; border-collapse: collapse; }
