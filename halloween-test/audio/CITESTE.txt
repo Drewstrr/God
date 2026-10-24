@@ -13,4 +13,7 @@ pune aici un fișier MP3 cu unul dintre numele de mai jos și el va fi folosit �
   glory.mp3      binele a învins
   doom.mp3       răul a învins
 
+După ce pui un fișier, adaugă numele lui (fără .mp3) în audio/list.json, de exemplu: ["night", "doom"]
+(sau trimite-mi fișierele și le pun eu).
+
 Folosește doar muzică pe care ai voie s-o folosești (de exemplu fără drepturi de autor).

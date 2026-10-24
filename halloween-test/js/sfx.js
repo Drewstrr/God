@@ -602,12 +602,14 @@ function heartbeatAt(out, t, volume) {
   });
 }
 
+// Lista fișierelor MP3 puse în audio/ (audio/list.json), ca să nu căutăm fișiere care nu există.
+let fileList = null;
 async function hasFile(theme) {
   if (theme in fileCache) return fileCache[theme];
-  try {
-    const res = await fetch(new URL(`../audio/${theme}.mp3`, import.meta.url), { method: 'HEAD' });
-    fileCache[theme] = res.ok && (res.headers.get('content-type') ?? '').includes('audio');
-  } catch { fileCache[theme] = false; }
+  if (!fileList) {
+    try { fileList = await (await fetch(new URL('../audio/list.json', import.meta.url), { cache: 'no-cache' })).json(); } catch { fileList = []; }
+  }
+  fileCache[theme] = Array.isArray(fileList) && fileList.includes(theme);
   return fileCache[theme];
 }
 

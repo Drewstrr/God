@@ -6,6 +6,7 @@
   <meta name="robots" content="noindex">
   <title>Blackwood – Proiector</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
   <div class="wrap" id="login"></div>
@@ -25,6 +26,15 @@
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const stage = document.getElementById('stage');
     const joinUrl = `${location.host}${location.pathname.replace(/screen(\.html)?$/, 'play')}`;
+    // Codul QR cu adresa paginii pentru telefoane.
+    const qrSvg = (() => {
+      try {
+        const qr = window.qrcode(0, 'M');
+        qr.addData(`${location.protocol}//${joinUrl}`);
+        qr.make();
+        return qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
+      } catch { return ''; }
+    })();
 
     await requireEngineLogin(document.getElementById('login'));
     stage.hidden = false;
@@ -208,9 +218,20 @@
         const ready = players.filter((p) => p.hasPin || p.bot).length;
         return `
           <h1>Conacul Blackwood</h1>
-          <p class="center muted lead">Intră pe <b style="color:var(--text)">${esc(joinUrl)}</b> și alege-ți numele</p>
-          ${candles({ lobby: true })}
-          <p class="center muted lead">${ready} din ${players.length} au intrat în conac</p>`;
+          <div class="join">
+            <div class="qr">${qrSvg}</div>
+            <div class="join-text">
+              <div class="join-title">📱 Intră în conac</div>
+              <ol>
+                <li>Scanează codul cu camera telefonului</li>
+                <li>Atinge-ți numele</li>
+                <li>Alege-ți un PIN de 4 cifre</li>
+              </ol>
+              <div class="muted">sau scrie: <b style="color:var(--text)">${esc(joinUrl)}</b></div>
+              <div class="join-count">${ready} din ${players.length} au intrat</div>
+            </div>
+          </div>
+          ${candles({ lobby: true })}`;
       },
       intro() {
         return `

@@ -181,8 +181,8 @@
       const alive = st.alive !== false;
       const badges = [
         alive ? '<span class="pill on">în viață</span>' : '<span class="pill">👻 fantomă</span>',
-        st.hypnotized ? '<span class="pill" style="color:var(--blood-hi)">🤐 hipnotizat: nu vorbești la ședință</span>' : '',
-        st.doomed ? '<span class="pill" style="color:var(--blood-hi)">💪 mușcat: mori noaptea viitoare</span>' : '',
+        st.hypnotized && phase !== 'end' ? '<span class="pill" style="color:var(--blood-hi)">🤐 hipnotizat: nu vorbești la ședință</span>' : '',
+        st.doomed && phase !== 'end' ? '<span class="pill" style="color:var(--blood-hi)">💪 mușcat: mori noaptea viitoare</span>' : '',
       ].join('');
       const msgs = Object.values(priv.inbox ?? {}).sort((a, b) => b.round - a.round);
       const lastRound = msgs[0]?.round;
