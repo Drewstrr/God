@@ -225,7 +225,7 @@ input[type=password], input[type=text] {
 .ceremony .candle.appear { opacity: 1; transform: none; }
 .ceremony .candle .flame { transform: scale(0.55); }
 .ceremony .candle.lit .flame { transform: scale(1); }
-.ceremony .candle.flare .flame { transform: scale(2.3, 2.2); filter: brightness(1.5) blur(0.6px); animation-duration: 0.5s, 0.2s; }
+.ceremony .candle.flare .flame { transform: scale(2, 1.9); filter: brightness(1.5) blur(0.6px); animation-duration: 0.5s, 0.2s; }
 .ceremony .candle.flare .light { transform: scale(1.8); opacity: 1; animation: none; transition: transform 1.2s, opacity 1.2s; }
 .ceremony .candle.dying .flame { animation: dying 0.6s linear forwards; }
 .ceremony .candle.dead .flame { opacity: 0; transform: scale(0.1, 0.05) translateY(40%); transition: transform 0.3s ease-in, opacity 0.35s; animation: none; }
@@ -235,13 +235,14 @@ input[type=password], input[type=text] {
 .ceremony .candle.dead .smoke i:nth-child(3) { animation-delay: 0.5s; left: calc(var(--s) * -1); }
 .ceremony .candle .name { display: none; }
 .ceremony-name {
-  margin-top: 5vh; font-family: 'Blackwood Gothic', 'Cinzel', Georgia, serif; font-weight: 800; font-size: 6vw; color: #f1d9d9;
-  opacity: 0; letter-spacing: 0.6em; filter: blur(10px);
+  margin-top: 3vh; font-family: 'Blackwood Gothic', Georgia, serif; font-weight: 800; font-size: min(5.5vw, 9vh); color: #f1d9d9;
+  max-width: 92vw; white-space: nowrap; text-align: center;
+  opacity: 0; letter-spacing: 0.35em; filter: blur(10px);
   text-shadow: 0 0 30px rgba(179, 18, 46, 0.9), 0 0 60px rgba(179, 18, 46, 0.5);
   transition: opacity 2.6s ease-out, letter-spacing 3s ease-out, filter 2.6s ease-out;
 }
-.ceremony-name.show { opacity: 1; letter-spacing: 0.18em; filter: blur(0); }
-.ceremony-sub { margin-top: 2vh; font-size: 2vw; color: var(--muted); opacity: 0; transition: opacity 1.5s; }
+.ceremony-name.show { opacity: 1; letter-spacing: 0.06em; filter: blur(0); }
+.ceremony-sub { margin-top: 1.5vh; font-size: min(2vw, 3.4vh); color: var(--muted); opacity: 0; transition: opacity 1.5s; }
 .ceremony-sub.show { opacity: 1; }
 
 @keyframes dying {
@@ -426,7 +427,7 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 .candle.out .c-svg { filter: grayscale(0.85) brightness(0.5); }
 .candle.waiting .c-svg { filter: brightness(0.45) saturate(0.6); }
 .candle .c-halo, .candle .c-glow { transition: opacity 0.3s; }
-.ceremony .candle { --s: min(2.4vw, 4vh); }
+.ceremony .candle { --s: min(1.25vw, 2.1vh); }
 .smoke-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 35; }
 .blood-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
 .passive-bar { position: fixed; left: 0; right: 0; top: 0; z-index: 70; padding: 10px 16px; background: #5a3a00; color: #ffe2a6; font-weight: 600; text-align: center; }
@@ -508,6 +509,11 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
   animation: bt-drip var(--d) cubic-bezier(.5, 0, .85, .55) var(--delay) forwards;
 }
 @keyframes bt-drip { to { height: var(--len); } }
+.blood-text .bt-drip::after {
+  content: ''; position: absolute; left: 50%; bottom: calc(var(--w) * -0.55); transform: translateX(-50%);
+  width: calc(var(--w) * 1.5); height: calc(var(--w) * 1.7); border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 38% 35%, #ff7a82 0%, #b0001a 50%, #5a0008 100%);
+}
 .blood-text.gold {
   background: linear-gradient(180deg, #fff8dc 0%, #ffd46b 35%, #e19a26 70%, #8a5a10 100%);
   -webkit-background-clip: text; background-clip: text;

@@ -22,15 +22,17 @@ function rng(seed) {
 }
 
 // Returnează HTML-ul unei lumânări. index alege culoarea, ca să existe mereu un amestec.
-export function candleSVG(name, { cls = '', label = '', index = null } = {}) {
+export function candleSVG(name, { cls = '', label = '', index = null, short = false } = {}) {
   const rand = rng(hash(name));
   const id = `c${uid++}`;
   const wax = WAX[index === null ? Math.floor(rand() * WAX.length) : (index * 5 + 3) % WAX.length];
   rand();
-  const W = 26 + rand() * 16;            // grosimea corpului
-  const H = 58 + rand() * 62;            // înălțimea corpului
-  const flame = 0.85 + rand() * 0.35;    // mărimea flăcării
-  const tilt = (rand() - 0.5) * 3;       // înclinare ușoară
+  let W = 26 + rand() * 16;              // grosimea corpului
+  let H = 58 + rand() * 62;              // înălțimea corpului
+  let flame = 0.85 + rand() * 0.35;      // mărimea flăcării
+  let tilt = (rand() - 0.5) * 3;         // înclinare ușoară
+  // În ceremonia morții: lumânare scurtă, dreaptă, ca flacăra să fie în centrul ecranului.
+  if (short) { W = 34; H = 44; flame = 1.15; tilt = 0; }
   const top = 48;                        // unde începe corpul
   const x0 = 50 - W / 2;
   const x1 = 50 + W / 2;

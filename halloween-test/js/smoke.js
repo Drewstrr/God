@@ -46,7 +46,7 @@ function loop(now) {
         life: 2.6 + Math.random() * 1.8,
         vy: -(34 + Math.random() * 22) * e.scale,
         phase: age * 2.2 + Math.random() * 0.4,
-        drift: (Math.random() - 0.3) * 8 * e.scale,
+        drift: (Math.random() - 0.5) * 4 * e.scale,
         r0: (1.2 + Math.random() * 0.8) * e.scale,
         s: e.scale,
       });
