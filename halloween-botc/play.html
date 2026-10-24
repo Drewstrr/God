@@ -112,6 +112,7 @@
     let lastSig = '';
     let lastWake = null;
     let guideOpen = false;
+    let tipsOpen = false;
     let chosen = [];
     let panel = null;   // ce listă e deschisă ziua: 'nominate' | 'slay' | null
     let draftTestament = null;
@@ -144,7 +145,8 @@
       const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.day?.free, pub.endStage, Boolean(pub.script), panel, Boolean(pub.paused)]);
       if (!force && sig === lastSig) return;
       lastSig = sig;
-      guideOpen = document.querySelector('details.guide')?.open ?? guideOpen;
+      guideOpen = document.querySelector('details.guide:not(.evil-tips)')?.open ?? guideOpen;
+      tipsOpen = document.querySelector('details.evil-tips')?.open ?? tipsOpen;
       document.body.classList.toggle('dark-night', Boolean(night));
       // Telefonul se „trezește” singur noaptea, la vot și când Corbierul are de ales.
       const gathering = pub.phase === 'day' && !pub.day?.free ? `g${pub.day?.day}` : null;
@@ -156,8 +158,10 @@
       lastWake = wake;
       if (night) return renderNight(night);
       renderMain(phase);
-      const guide = document.querySelector('details.guide');
+      const guide = document.querySelector('details.guide:not(.evil-tips)');
       if (guide) guide.open = guideOpen;
+      const tips = document.querySelector('details.evil-tips');
+      if (tips) tips.open = tipsOpen;
     }
 
     // Votul public: DA / NU. Fantomele mai au un singur vot pentru tot jocul.
@@ -270,6 +274,7 @@
             <p>${esc(priv.card)}</p>
           </div>
         </div>
+        ${evilTips()}
         ${msgs.length ? `<div class="card inbox"><h3>📜 Ce știi</h3>${msgs.map((m) => `<p class="${m.night === lastNight && m.night > 0 ? 'new' : ''}" style="white-space:pre-line">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(m.text)}</p>`).join('')}</div>` : ''}
         ${alive() && phase !== 'end' ? `
           <div class="card">
@@ -340,6 +345,40 @@
         if (!confirm(`Afli ce rol are ${b.textContent}?`)) return;
         try { await set(r(`playerInput/${me}/raven`), { target: b.dataset.raven, night: priv.raven.night, at: Date.now() }); } catch { alert('Nu s-a trimis.'); }
       }));
+    }
+
+    // Sfaturi pentru cei răi: cum să se ascundă. Le vede doar jucătorul rău, închise implicit.
+    const EVIL_TIPS = {
+      demon: [
+        'Alege unul din cele 3 roluri-paravan (le ai la „Ce știi”) și spune-l cu încredere încă din prima zi.',
+        'Spune-le Slujitorilor în șoaptă ce paravan ai ales și dă-le lor celelalte două, ca să nu pretindeți același rol.',
+        'Noaptea nu-l ucide pe cel care te-a acuzat: ar fi prea evident. Ucide-i pe cei care par să afle prea multe.',
+        'Poți „folosi” țărușul o dată, ca să pari Van Helsing: nu se întâmplă nimic, dar câștigi încredere.',
+      ],
+      poisoner: [
+        'Otrăvește-i pe cei care primesc informații (Ghicitoarea, Groparul…): informația lor poate deveni falsă.',
+        'Pretinde un rol bun; dacă Contele ți-a dat un paravan, folosește-l.',
+        'Când doi buni se contrazic, spune: „Poate unul e otrăvit sau bețiv.” Îndoiala e prietena ta.',
+        'Apără-l pe Conte discret; nu sări prea tare în ajutorul lui.',
+      ],
+      spy: [
+        'Vezi rolurile tuturor: pretinde un rol pe care știi sigur că nu-l are nimeni.',
+        'Spune-i Contelui în șoaptă cine e Ghicitoarea, Preotul sau Van Helsing: el îi va ucide noaptea.',
+        'Abilitățile celorlalți te pot vedea drept bun, deci nu te teme de Ghicitoare.',
+        'Dacă ești acuzat, dă „informații” pe care le știi sigur din grimoar: vei părea foarte credibil.',
+      ],
+      scarlet: [
+        'Dacă Contele e prins cât mai sunt cel puțin 5 în viață, tu devii Contele. Stai departe de bănuieli.',
+        'Nu-l apăra pe Conte prea vizibil: dacă moare el, ai nevoie să nu te bănuiască nimeni.',
+        'Pretinde liniștit un rol bun, de preferat unul din paravanele Contelui.',
+        'Dacă devii Contele, continuă ca și cum nimic nu s-a întâmplat.',
+      ],
+    };
+    function evilTips() {
+      const tips = priv?.team === 'evil' ? EVIL_TIPS[priv.role] : null;
+      if (!tips || pub.phase === 'end') return '';
+      return `<details class="card guide evil-tips"><summary>🩸 Cum să te ascunzi <span class="muted">(doar tu vezi asta)</span></summary>
+        <ul>${tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></details>`;
     }
 
     // La final, după ce proiectorul dezvăluie rolurile, le vede și telefonul; apoi titlurile.
