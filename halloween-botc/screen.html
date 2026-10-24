@@ -18,6 +18,7 @@
     showUpdateBanner();
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
     import { startHost } from './js/game-host.js';
+    import { gen } from './js/engine.js';
     import * as sfx from './js/sfx.js';
     import { YOUTUBE_MUSIC } from './js/music.js';
     import { candleSVG, animateFlames } from './js/candles.js';
@@ -242,8 +243,10 @@
       return `${emoji ? `<span class="emo">${emoji}</span> ` : ''}<span class="blood-text ${gold ? 'gold' : ''}">${esc(text)}${drips}</span>`;
     }
 
+    // În pauză, timpul „stă” la momentul în care s-a apăsat pauza.
+    const nowT = () => pub.paused?.at ?? serverNow();
     function timer(label, endsAt) {
-      return `<div class="big-timer"><div class="muted">${label}</div><div class="clock" data-ends="${endsAt ?? ''}">${endsAt ? fmt(endsAt - serverNow()) : ''}</div></div>`;
+      return `<div class="big-timer"><div class="muted">${label}</div><div class="clock" data-ends="${endsAt ?? ''}">${endsAt ? fmt(endsAt - nowT()) : ''}</div></div>`;
     }
 
     let lastSecond = null;
@@ -251,8 +254,9 @@
       document.querySelectorAll('[data-ends]').forEach((el) => {
         const ends = Number(el.dataset.ends);
         if (!ends) return;
-        const left = ends - serverNow();
+        const left = ends - nowT();
         el.textContent = fmt(left);
+        if (pub.paused) return;
         // Ultimele 10 secunde ticăie; la zero, o bătaie mai gravă.
         const sec = Math.ceil(left / 1000);
         if (sec !== lastSecond && sec <= 10 && sec >= 0 && ['night', 'day'].includes(pub.phase)) sfx.clockTick(sec === 0);
@@ -374,6 +378,11 @@
           ${d.noExecYesterday ? '<p class="center muted">⚠️ Ieri nu a fost executat nimeni. Contele se bucură.</p>' : ''}
           ${townCandles()}
           <div class="noms">${(d.nominations ?? []).map((n) => `<span class="${n.result}">${esc(n.byName)} → <b>${esc(n.targetName)}</b> ${n.count}/${n.threshold}</span>`).join('')}</div>
+          ${!d.current && !(d.nominations ?? []).length ? `<div class="accuse-call">
+            <div class="ac-title">☝️ E momentul acuzațiilor!</div>
+            <div>Pe cine bănuiți? Oricine poate <b>nominaliza</b> pe cineva din telefon: <b>„☝️ Nominalizează”</b>.</div>
+            <div class="muted">Fiecare poate nominaliza o singură dată pe zi. Urmează apărarea și votul.</div>
+          </div>` : !d.current ? '<p class="center lead accuse-more">☝️ Mai bănuiți pe cineva? Nominalizați din telefon. Când ați terminat, ziua se încheie.</p>' : ''}
           <div id="nomination"></div>`;
       },
       execution() {
@@ -381,9 +390,9 @@
         if (!e.name) return `<div class="center" style="margin:auto"><h1>${bt('Nimeni nu a fost executat', '🌙')}</h1><p class="lead muted">Se lasă noaptea…</p></div>`;
         return `
           <div class="squid-screen center" style="margin:auto">
-            <p class="lead muted">Executat din ordinul castelului</p>
+            <p class="lead muted">${gen(e.id, 'Executat', 'Executată')} din ordinul castelului</p>
             <h1>${bt(e.name)}</h1>
-            ${e.saint ? '<p class="lead squid-pink">😇 Era Sfântul! Sângele lui nevinovat blestemă castelul.</p>' : '<p class="lead muted">Rolul lui rămâne secret până la final.</p>'}
+            ${e.saint ? '<p class="lead squid-pink">😇 Era Sfântul! Sângele nevinovat blestemă castelul.</p>' : '<p class="lead muted">Rolul rămâne secret până la final.</p>'}
             ${e.testament ? `<div class="testament">„${esc(e.testament)}”</div>` : ''}
           </div>`;
       },
@@ -445,6 +454,7 @@
       const box = document.getElementById('nomination');
       const c = pub.day?.current;
       if (!box) return;
+      stage.querySelectorAll('.accuse-call, .accuse-more').forEach((el) => { el.hidden = Boolean(c); });
       if (!c) { box.innerHTML = ''; nomKey = null; return; }
       const key = `${c.key}-${c.stage}`;
       if (key === nomKey) {
@@ -455,7 +465,7 @@
       const fresh = true;
       nomKey = key;
       revealTimers.forEach(clearTimeout); revealTimers = [];
-      const head = `<div class="nom-head"><b>${esc(c.byName)}</b> îl nominalizează pe <b class="squid-pink">${esc(c.targetName)}</b></div>`;
+      const head = `<div class="nom-head"><b>${esc(c.byName)}</b> ${gen(c.target, 'îl', 'o')} nominalizează pe <b class="squid-pink">${esc(c.targetName)}</b></div>`;
       if (c.stage === 'defense') {
         box.innerHTML = `<div class="nom-box">${head}<p class="lead">🗣️ Acuzare și apărare</p>${timer('', c.endsAt)}</div>`;
         if (fresh) sfx.bell(0, 196, 3, 0.4);
@@ -542,9 +552,25 @@
       setTimeout(() => el.remove(), 8200);
     }
 
+    function showPause() {
+      let el = document.getElementById('pause-overlay');
+      if (pub.paused && !el) {
+        el = document.createElement('div');
+        el.id = 'pause-overlay';
+        el.className = 'pause-overlay';
+        el.innerHTML = '<div><div class="p-icon">⏸</div><div class="p-title">Pauză</div><div class="muted">Jocul s-a oprit puțin. Cronometrele așteaptă.</div></div>';
+        document.body.appendChild(el);
+        sfx.bell(0, 147, 3, 0.35);
+      } else if (!pub.paused && el) {
+        el.remove();
+        sfx.chime();
+      }
+    }
+
     let joinedBefore = null;
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
+      showPause();
       const phase = pub.phase ?? 'lobby';
       showNotice(pub.notice);
       showSlay(pub.slay);
@@ -586,7 +612,7 @@
       if (phase === 'execution' && previous === 'day' && pub.execution?.name) {
         // Ceremonia întâi, apoi textul.
         stage.innerHTML = '';
-        ceremony(pub.execution.name, 'a fost executat').then(() => { if (lastPhase === 'execution') stage.innerHTML = views.execution(); });
+        ceremony(pub.execution.name, `a fost ${gen(pub.execution.id, 'executat', 'executată')}`).then(() => { if (lastPhase === 'execution') stage.innerHTML = views.execution(); });
         return;
       }
       stage.innerHTML = (views[phase] ?? views.lobby)();

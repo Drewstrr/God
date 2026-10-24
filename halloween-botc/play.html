@@ -17,7 +17,7 @@
     import {
       auth, r, currentUser, signInAnonymously, signOut, onValue, set, update, serverNow, reconnectOnWake, onConnection, APP_VERSION, reloadForVersion,
     } from './js/fb.js';
-    import { ROLES } from './js/engine.js';
+    import { ROLES, gen } from './js/engine.js';
 
     reconnectOnWake();
     const net = document.createElement('div');
@@ -141,7 +141,7 @@
       const phase = pub.phase ?? 'lobby';
       const night = phase === 'night' && priv?.night?.night === pub.round ? priv.night : null;
       const cur = pub.day?.current;
-      const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.day?.free, pub.endStage, Boolean(pub.script), panel]);
+      const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.day?.free, pub.endStage, Boolean(pub.script), panel, Boolean(pub.paused)]);
       if (!force && sig === lastSig) return;
       lastSig = sig;
       guideOpen = document.querySelector('details.guide')?.open ?? guideOpen;
@@ -169,10 +169,10 @@
       if (mine) return `<div class="card center vote-card"><h2>✋ Ai votat: ${mine === 'yes' ? 'DA' : 'NU'}</h2><p class="muted">Poți schimba până se termină timpul.</p>
         <div class="row2"><button class="btn ${mine === 'yes' ? '' : 'ghost'}" data-vote="yes">DA</button><button class="btn ${mine === 'no' ? '' : 'ghost'}" data-vote="no">NU</button></div></div>`;
       return `<div class="card center vote-card">
-          <h2>✋ Votezi execuția lui ${esc(c.targetName)}?</h2>
+          <h2>✋ Votezi ca ${esc(c.targetName)} să fie ${gen(c.target, 'executat', 'executată')}?</h2>
           ${alive() ? '' : '<p class="error">👻 E votul tău de fantomă: dacă votezi DA, nu mai poți vota niciodată.</p>'}
           <p class="muted">Rămân <b data-ends="${c.endsAt ?? ''}"></b> · votul se vede pe proiector</p>
-          <div class="row2"><button class="btn squid-btn" data-vote="yes">✋ DA</button><button class="btn ghost" data-vote="no">NU</button></div>
+          <div class="row2"><button class="btn ghost" data-vote="yes">✋ DA</button><button class="btn ghost" data-vote="no">NU</button></div>
         </div>`;
     }
 
@@ -181,6 +181,7 @@
       const d = pub.day ?? {};
       if (pub.phase !== 'day' || !alive()) return '';
       if (d.free) return `<div class="card center"><p>🎭 <b>Timp liber.</b> Adunarea în <b data-ends="${d.free}"></b>.</p><p class="muted">Nominalizările și țărușul se deschid la adunare. Până atunci: vorbește, ascultă, minte.</p></div>`;
+      if (pub.paused) return '';
       const busy = Boolean(d.current);
       const nominatedToday = (d.nominators ?? []).includes(me);
       const others = Object.keys(players).filter((id) => id in (pub.alive ?? {}));
@@ -198,7 +199,8 @@
         html += `<div class="card day-actions">
           ${nominatedToday ? '<p class="muted center">☝️ Ai nominalizat deja azi.</p>'
             : busy ? '<p class="muted center">⏳ O nominalizare e în curs. Așteaptă să se termine.</p>'
-            : '<button class="btn" data-panel="nominate">☝️ Nominalizează pe cineva</button>'}
+            : `<p class="center"><b>☝️ Bănuiești pe cineva?</b><br><span class="muted">Acuză-l în fața tuturor: urmează apărarea și votul.</span></p>
+               <button class="btn" data-panel="nominate">☝️ Nominalizează pe cineva</button>`}
           ${priv?.slayUsed ? '' : '<button class="btn ghost small" data-panel="slay" style="margin-top:10px">🗡️ Țărușul lui Van Helsing</button>'}
         </div>`;
       }
@@ -246,13 +248,14 @@
         intro: 'Jocul a început. Uită-te la proiector și citește-ți rolul.',
         night: 'Noaptea… uită-te pe ecran.',
         morning: '☀️ Dimineața: uită-te la proiector.',
-        day: pub.day?.free ? '🎭 Balul continuă. Vorbiți în șoaptă!' : pub.day?.current ? `⚖️ ${esc(pub.day.current.byName)} îl nominalizează pe <b>${esc(pub.day.current.targetName)}</b>.` : '🔔 Adunarea: veniți la proiector! Nominalizați și votați.',
+        day: pub.day?.free ? '🎭 Balul continuă. Vorbiți în șoaptă!' : pub.day?.current ? `⚖️ ${esc(pub.day.current.byName)} ${gen(pub.day.current.target, 'îl', 'o')} nominalizează pe <b>${esc(pub.day.current.targetName)}</b>.` : '🔔 Adunarea: veniți la proiector! E momentul acuzațiilor.',
         execution: '⚰️ Uită-te la proiector.',
         end: pub.winner === 'good' ? '🕯️ Binele a învins!' : '🩸 Răul a învins!',
       }[phase] ?? '';
 
       app.innerHTML = `
         <button class="hide-btn" id="hide">🙈 Ascunde</button>
+        ${pub.paused ? '<div class="card center pause-bar">⏸ <b>Pauză.</b> Jocul așteaptă să se întoarcă toată lumea.</div>' : ''}
         <h1 class="center">${esc(name)}</h1>
         <div class="badges">${badges}</div>
         <p class="center">${phaseText}</p>
@@ -323,7 +326,7 @@
         renderGame(true);
       }));
       app.querySelectorAll('[data-nom]').forEach((b) => b.addEventListener('click', async () => {
-        if (!confirm(`Îl nominalizezi pe ${b.textContent.replace(' 👻', '')}? Se anunță pe proiector.`)) return;
+        if (!confirm(`${gen(b.dataset.nom, 'Îl', 'O')} nominalizezi pe ${b.textContent}? Se anunță pe proiector.`)) return;
         try { await set(r(`playerInput/${me}/nominate`), { target: b.dataset.nom, day: pub.day?.day, at: Date.now() }); } catch { alert('Nu s-a trimis.'); }
         panel = null;
         renderGame(true);
@@ -335,7 +338,7 @@
         renderGame(true);
       }));
       app.querySelectorAll('[data-raven]').forEach((b) => b.addEventListener('click', async () => {
-        if (!confirm(`Afli rolul lui ${b.textContent}?`)) return;
+        if (!confirm(`Afli ce rol are ${b.textContent}?`)) return;
         try { await set(r(`playerInput/${me}/raven`), { target: b.dataset.raven, night: priv.raven.night, at: Date.now() }); } catch { alert('Nu s-a trimis.'); }
       }));
     }
@@ -463,7 +466,7 @@
     ['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, resetIdle));
     resetIdle();
     setInterval(() => {
-      document.querySelectorAll('[data-ends]').forEach((el) => { if (+el.dataset.ends) el.textContent = fmt(+el.dataset.ends - serverNow()); });
+      document.querySelectorAll('[data-ends]').forEach((el) => { if (+el.dataset.ends) el.textContent = fmt(+el.dataset.ends - (pub.paused?.at ?? serverNow())); });
     }, 500);
 
     async function logout() {

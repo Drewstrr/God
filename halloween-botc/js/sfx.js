@@ -236,15 +236,39 @@ export function chime(delay = 0) {
 }
 
 // Ultimele secunde ale unui cronometru.
+// Ticăitul unui ceas mecanic vechi: „tic” și „tac” alternativ (clicul ancorei, cu rezonanța cutiei de lemn).
+// La zero bate un gong grav de pendulă.
+let tock = false;
+function escapementClick(t, freq, peak) {
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(0.04);
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = freq;
+  bp.Q.value = 7;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + 0.0015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+  src.connect(bp).connect(g).connect(master);
+  src.start(t);
+  src.stop(t + 0.05);
+}
 export function clockTick(final = false) {
   if (!ready()) return;
   const t = ctx.currentTime;
+  if (final) { bell(0, 73.4, 6, 0.55); return; }
+  tock = !tock;
+  // două clicuri foarte apropiate: ancora lovește, apoi roata se așază
+  escapementClick(t, tock ? 1700 : 2300, 0.9);
+  escapementClick(t + 0.011, tock ? 1200 : 1600, 0.35);
+  // rezonanța de lemn a carcasei
   const o = ctx.createOscillator();
-  o.type = 'triangle';
-  o.frequency.value = final ? 523 : 1046;
-  o.connect(envGain(t, 0.003, final ? 0.4 : 0.18, final ? 0.8 : 0.08));
+  o.type = 'sine';
+  o.frequency.value = tock ? 540 : 680;
+  o.connect(envGain(t, 0.001, 0.1, 0.07));
   o.start(t);
-  o.stop(t + 1);
+  o.stop(t + 0.2);
 }
 
 // Zorii: un acord luminos, dar trist.

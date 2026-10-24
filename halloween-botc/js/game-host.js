@@ -105,7 +105,7 @@ const run = serial(async (cmd) => {
   const handlers = {
     fillBots, clearBots, start, firstNight, endNight, beginDay, startVoting, cancelNomination, endDayCmd,
     toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree,
-    adminRevive, adminKill, adminRestartNight,
+    adminRevive, adminKill, adminRestartNight, pause, resume,
   };
   await handlers[cmd?.type]?.(cmd);
 });
@@ -230,10 +230,11 @@ async function openNight({ restart = false } = {}) {
       seq: (pub.nightSeq ?? 0) + 1,
       pick: spec?.pick ?? 0,
       prompt: spec?.prompt ?? null,
-      targets: spec ? everyone.filter((t) => allowed.includes(t.id)) : null,
+      // Ordinea numelor e alta în fiecare noapte și pe fiecare telefon: cine trage cu ochiul nu ghicește alegerea după poziție.
+      targets: spec ? shuffle(everyone.filter((t) => allowed.includes(t.id))) : null,
       info: Boolean(info),
       ghost: !state.alive[p.id],
-      bets: everyone.filter((t) => t.id !== p.id && state.alive[t.id]),
+      bets: shuffle(everyone.filter((t) => t.id !== p.id && state.alive[t.id])),
     };
   }
   const endsAt = serverNow() + (state.settings.nightSeconds ?? 90) * 1000;
@@ -285,7 +286,7 @@ function watchNight(endsAt = pub.endsAt) {
     await setPublic({ progress: { done, total: GP().length } });
     if (done >= GP().length) setTimeout(() => run({ type: 'endNight', night }), 2500);
   }));
-  nightTimer = setTimeout(() => run({ type: 'endNight', night }), Math.max(0, (endsAt ?? serverNow()) - serverNow()) + 500);
+  if (!host.paused) nightTimer = setTimeout(() => run({ type: 'endNight', night }), Math.max(0, (endsAt ?? serverNow()) - serverNow()) + 500);
 }
 
 async function endNight(cmd = {}) {
@@ -348,6 +349,7 @@ function publicDay(extra = {}) {
     current: host.current ? publicCurrent() : null,
     // Timpul liber (petrecerea): cât rulează, nominalizările sunt închise.
     free: host.free?.endsAt ?? null,
+    lastActivity: host.lastActivity ?? null,
     // Ieri nu a fost executat nimeni: proiectorul le amintește, ca jocul să nu se lungească.
     noExecYesterday: state.night > 1 && [...state.history].reverse().find((h) => h.type === 'day')?.executed === null,
     ...extra,
@@ -367,6 +369,7 @@ async function beginDay(cmd = {}) {
   if (!state || pub.phase !== 'morning') return;
   state = startDay(state);
   host.current = null;
+  host.lastActivity = serverNow();
   const minutes = clamp(cmd.minutes ?? state.settings.freeMinutes, 0, 120, 22);
   host.free = minutes ? { endsAt: serverNow() + minutes * 60000 } : null;
   await update(r(), { 'public/phase': 'day', 'public/day': publicDay(), 'public/endsAt': null, 'public/slay': null });
@@ -377,6 +380,7 @@ async function beginDay(cmd = {}) {
 
 let freeTimer = null;
 function armFree() {
+  if (host.paused) return;
   clearTimeout(freeTimer);
   freeTimer = setTimeout(() => run({ type: 'openGathering', auto: true }), Math.max(0, host.free.endsAt - serverNow()) + 300);
 }
@@ -387,6 +391,7 @@ async function openGathering(cmd = {}) {
   if (cmd.auto && host.free.endsAt > serverNow() + 1000) return armFree();  // timpul a fost prelungit între timp
   clearTimeout(freeTimer);
   host.free = null;
+  host.lastActivity = serverNow();
   await setPublic({ day: publicDay() });
   await save();
 }
@@ -410,6 +415,7 @@ function resumeDay() {
 }
 
 function armDay(endsAt, type) {
+  if (host.paused) return;  // la reluare se pornesc din nou
   clearTimeout(dayTimer);
   const key = host.current?.key;
   dayTimer = setTimeout(() => run({ type, key }), Math.max(0, endsAt - serverNow()) + 300);
@@ -441,8 +447,8 @@ async function inputs(cmd) {
       if ((host.seen[seenKey] ?? 0) >= v.at) continue;
       host.seen[seenKey] = v.at;
       if (kind === 'raven') await onRaven(id, v);
-      if (kind === 'nominate') await onNominate(id, v);
-      if (kind === 'slay') await onSlay(id, v);
+      if (kind === 'nominate' && !host.paused) await onNominate(id, v);
+      if (kind === 'slay' && !host.paused) await onSlay(id, v);
       if (kind === 'vote') await onVote(id, v);
     }
   }
@@ -531,6 +537,7 @@ async function finishReveal(cmd = {}) {
   const c = host.current;
   if (!c || c.stage !== 'reveal' || (cmd.key && cmd.key !== c.key)) return;
   host.current = null;
+  host.lastActivity = serverNow();
   await setPublic({ day: publicDay() });
   await save();
 }
@@ -596,6 +603,7 @@ async function endDayCmd() {
     'public/ghostVote': state.ghostVote,
     'public/day': null,
     'public/execution': {
+      id: report.executed ?? null,
       name: report.executed ? nameOf(report.executed) : null,
       testament: report.executed ? await testamentOf(report.executed) : null,
       saint: report.saint,
@@ -608,6 +616,33 @@ async function endDayCmd() {
   if (state.winner) Object.assign(patch, finalPatch());
   await update(r(), patch);
   await save();
+}
+
+// ---------- pauza (cineva a ieșit din cameră) ----------
+
+// Toate cronometrele se opresc; la reluare, fiecare continuă de unde a rămas.
+async function pause() {
+  if (host.paused || !state || ['lobby', 'end'].includes(pub.phase)) return;
+  host.paused = { at: serverNow() };
+  clearTimeout(nightTimer); clearTimeout(dayTimer); clearTimeout(freeTimer); clearInterval(botDayTimer);
+  await setPublic({ paused: { at: host.paused.at } });
+  await save();
+}
+
+async function resume() {
+  if (!host.paused) return;
+  const shift = serverNow() - host.paused.at;
+  host.paused = null;
+  const patch = { paused: null };
+  if (pub.phase === 'night' && pub.endsAt) patch.endsAt = pub.endsAt + shift;
+  if (host.free) host.free.endsAt += shift;
+  if (host.current?.endsAt) host.current.endsAt += shift;
+  if (host.lastActivity) host.lastActivity += shift;
+  if (pub.phase === 'day') patch.day = publicDay();
+  await setPublic(patch);
+  await save();
+  if (pub.phase === 'night') watchNight(patch.endsAt);
+  if (pub.phase === 'day') resumeDay();
 }
 
 // ---------- finalul ----------
@@ -685,7 +720,7 @@ async function reset() {
     playerInput: null,
   };
   for (const k of ['round', 'gameId', 'alive', 'ghostVote', 'seats', 'counts', 'script', 'morning', 'day', 'execution', 'winner', 'endsAt',
-    'progress', 'final', 'endStage', 'nightSeq', 'notice', 'slay']) patch[`public/${k}`] = null;
+    'progress', 'final', 'endStage', 'nightSeq', 'notice', 'slay', 'paused']) patch[`public/${k}`] = null;
   patch['public/phase'] = 'lobby';
   for (const p of PLAYERS) patch[`private/${p.id}`] = { name: p.name };
   await update(r(), patch);

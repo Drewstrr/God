@@ -40,7 +40,7 @@
     showUpdateBanner();
     import { resetPin } from './js/pin-service.js';
     import { sendCommand } from './js/game-host.js';
-    import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION } from './js/engine.js';
+    import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION, gen } from './js/engine.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
@@ -158,10 +158,10 @@
             <p>Ziua ${d.day ?? ''} · ${blockLine} · minim ${d.threshold ?? '?'} voturi</p>
             ${(d.nominations ?? []).length ? `<p class="muted">Azi: ${(d.nominations ?? []).map((n) => `${esc(n.byName)} → ${esc(n.targetName)} (${n.count})`).join(' · ')}</p>` : ''}
             ${now}
-            <button class="btn" data-cmd="endDayCmd" ${c && c.stage !== 'reveal' ? 'disabled' : ''} data-confirm="${block?.id ? `Închei ziua? ${esc(block.name)} va fi executat.` : 'Închei ziua fără execuție?'}">🌙 Încheie ziua${block?.id ? ` (execută pe ${esc(block.name)})` : ''}</button>`;
+            <button class="btn" data-cmd="endDayCmd" ${c && c.stage !== 'reveal' ? 'disabled' : ''} data-confirm="${block?.id ? `Închei ziua? ${esc(block.name)} va fi ${gen(block.id, 'executat', 'executată')}.` : 'Închei ziua fără execuție?'}">🌙 Încheie ziua${block?.id ? ` (execută pe ${esc(block.name)})` : ''}</button>`;
         }
         case 'execution': return `
-          <p>${pub.execution?.name ? `${esc(pub.execution.name)} a fost executat.` : 'Nimeni nu a fost executat.'}</p>
+          <p>${pub.execution?.name ? `${esc(pub.execution.name)} a fost ${gen(pub.execution.id, 'executat', 'executată')}.` : 'Nimeni nu a fost executat.'}</p>
           <button class="btn" data-cmd="toNight">${pub.winner ? '🏁 Arată finalul' : '🌑 Începe noaptea'}</button>`;
         case 'end': {
           const st = pub.endStage ?? 'winner';
@@ -185,7 +185,10 @@
       const phase = pub.phase ?? 'lobby';
       document.getElementById('phase-title').textContent = TITLES[phase] ?? 'Jocul';
       const box = document.getElementById('actions');
-      box.innerHTML = actionsFor(phase) + (phase !== 'lobby' && phase !== 'end'
+      const pauseHtml = phase === 'lobby' || phase === 'end' ? ''
+        : pub.paused ? '<div class="pause-bar">⏸ <b>Pauză</b> · toate cronometrele stau pe loc. <button class="btn small pulse" data-cmd="resume">▶️ Continuă jocul</button></div>'
+        : '<div style="text-align:right;margin-bottom:8px"><button class="btn small ghost" data-cmd="pause">⏸ Pauză (cineva a ieșit)</button></div>';
+      box.innerHTML = pauseHtml + actionsFor(phase) + (phase !== 'lobby' && phase !== 'end'
         ? '<hr style="border-color:var(--line);margin:14px 0"><button class="btn small ghost" data-cmd="reset" data-confirm="Oprești jocul și începi de la zero? PIN-urile rămân.">🔄 Oprește și începe un joc nou</button>'
         : '');
       box.querySelectorAll('[data-cmd]').forEach((b) => b.addEventListener('click', async () => {
@@ -294,16 +297,47 @@
 
     // Redesenăm butoanele doar când se schimbă ceva relevant, ca să nu pierdem ce scrii în câmpuri.
     let lastSig = '';
+    let pulsePhase = null;
+    let pulseStage = null;
+    let phaseSince = Date.now();
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
       const ready = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
-      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.day, pub.execution, pub.alive, pub.lineup, pub.engineInfo, pub.endStage]);
+      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.day, pub.execution, pub.alive, pub.lineup, pub.engineInfo, pub.endStage, pub.paused]);
+      if (pub.phase !== pulsePhase || pub.endStage !== pulseStage) { pulsePhase = pub.phase; pulseStage = pub.endStage; phaseSince = Date.now(); }
       if (sig !== lastSig) { lastSig = sig; render(); } else renderPlayers();
     });
 
     setInterval(() => {
-      document.querySelectorAll('[data-ends]').forEach((el) => { if (+el.dataset.ends) el.textContent = fmt(+el.dataset.ends - serverNow()); });
+      document.querySelectorAll('[data-ends]').forEach((el) => { if (+el.dataset.ends) el.textContent = fmt(+el.dataset.ends - (pub.paused?.at ?? serverNow())); });
     }, 250);
+
+    // Butonul pe care trebuie să-l apeși ca să mergi mai departe pulsează după ce s-a terminat ce era pe ecran.
+    function pulseTarget() {
+      if (pub.paused) return null;
+      const since = (Date.now() - phaseSince) / 1000;
+      const d = pub.day ?? {};
+      switch (pub.phase) {
+        case 'lobby': return '[data-cmd="start"]:not([disabled])';
+        case 'intro': return since > 25 ? '[data-cmd="firstNight"]' : null;
+        case 'morning': return since > 6 + (pub.morning?.deaths?.length ?? 0) * 11 ? '#begin-day' : null;
+        case 'day':
+          // Ziua o închei tu: îți amintim când nu s-a mai întâmplat nimic de un minut și jumătate.
+          if (d.free || d.current || !d.lastActivity) return null;
+          return serverNow() - d.lastActivity > 90000 ? '[data-cmd="endDayCmd"]:not([disabled])' : null;
+        case 'execution': return since > (pub.execution?.name ? 13 : 3) ? '[data-cmd="toNight"]' : null;
+        case 'end': {
+          const next = { winner: 'roles', roles: 'replay', replay: 'titles' }[pub.endStage ?? 'winner'];
+          return next && since > 8 ? `[data-end="${next}"]` : null;
+        }
+        default: return null;
+      }
+    }
+    setInterval(() => {
+      const sel = pulseTarget();
+      document.querySelectorAll('#actions .btn.pulse').forEach((b) => { if (!sel || !b.matches(sel)) if (b.dataset.cmd !== 'resume') b.classList.remove('pulse'); });
+      if (sel) document.querySelector(`#actions ${sel}`)?.classList.add('pulse');
+    }, 1000);
   </script>
 </body>
 </html>

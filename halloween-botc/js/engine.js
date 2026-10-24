@@ -9,6 +9,12 @@ export const PLAYERS = [
   'Marian', 'Elisa', 'Robi', 'Cella', 'Radu',
 ].map((name) => ({ id: normalize(name), name }));
 
+// Fetele din grup: textele folosesc forma de feminin („o nominalizează pe Flori”, „executată”).
+export const FEMALE = new Set(['nico', 'cella', 'flori', 'gabriela', 'elisa']);
+export const isFemale = (id) => FEMALE.has(id);
+// gen(id, 'executat', 'executată') → forma potrivită pentru jucător.
+export const gen = (id, masc, fem) => (isFemale(id) ? fem : masc);
+
 // Tipurile de personaje (ca la BotC: Townsfolk, Outsider, Minion, Demon).
 export const TYPES = {
   townsfolk: { name: 'Sătean', plural: 'Săteni', team: 'good' },
@@ -336,7 +342,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
   if (night > 1 && prev.lastExecuted) {
     for (const u of holders('undertaker').filter(awake)) {
       const role = functioning(state, u) ? registersAs(state, prev.lastExecuted, rng) : pickOne(ROLE_KEYS, rng);
-      tell(u, { kind: 'info', text: `⚰️ ${nameOf(state, prev.lastExecuted)}, executat ieri, era ${roleName(role)}.` });
+      tell(u, { kind: 'info', text: `⚰️ ${nameOf(state, prev.lastExecuted)}, ${gen(prev.lastExecuted, 'executat', 'executată')} ieri, era ${roleName(role)}.` });
     }
   }
 
@@ -521,13 +527,15 @@ export function buildReplay(state) {
   for (const h of state.history ?? []) {
     if (h.type === 'night') {
       const lines = [];
-      if (h.poisoned) lines.push(`🧙‍♀️ Vrăjitoarea l-a otrăvit pe ${nameOf(state, h.poisoned)}`);
-      if (h.protected) lines.push(`✝️ Preotul l-a binecuvântat pe ${nameOf(state, h.protected)}`);
+      const pe = (id, verb, vf) => (isFemale(id) ? `${vf} pe ${nameOf(state, id)}` : `l-a ${verb} pe ${nameOf(state, id)}`);
+      if (h.poisoned) lines.push(`🧙‍♀️ Vrăjitoarea ${pe(h.poisoned, 'otrăvit', 'a otrăvit-o')}`);
+      if (h.protected) lines.push(`✝️ Preotul ${pe(h.protected, 'binecuvântat', 'a binecuvântat-o')}`);
       if (h.attack) {
         const res = h.attackResult ?? {};
-        let line = `🧛 Contele l-a atacat pe ${nameOf(state, h.attack)}`;
-        if (res.bounced) line += `, dar Primarul a scăpat: în locul lui a fost atacat ${nameOf(state, res.victim)}`;
-        if (res.saved === 'monk') line += ` — salvat de binecuvântarea Preotului`;
+        let line = `🧛 Contele ${pe(h.attack, 'atacat', 'a atacat-o')}`;
+        if (res.bounced) line += `, dar Primarul a scăpat: în locul lui a fost ${gen(res.victim, 'atacat', 'atacată')} ${nameOf(state, res.victim)}`;
+        const who = res.bounced ? res.victim : h.attack;
+        if (res.saved === 'monk') line += ` — ${gen(who, 'salvat', 'salvată')} de binecuvântarea Preotului`;
         else if (res.saved === 'soldier') line += ` — Haiducul nu poate fi ucis`;
         lines.push(line);
       }
@@ -536,7 +544,7 @@ export function buildReplay(state) {
       out.push({ title: `🌑 Noaptea ${h.night}`, lines });
     } else if (h.type === 'day') {
       const lines = h.nominations.map((n) => `${nameOf(state, n.by)} → ${nameOf(state, n.target)}: ${n.count}/${n.threshold} voturi`);
-      lines.push(h.executed ? `⚰️ Executat: ${nameOf(state, h.executed)} (${ROLES[state.roles[h.executed]].name})` : 'Nimeni nu a fost executat');
+      lines.push(h.executed ? `⚰️ ${gen(h.executed, 'Executat', 'Executată')}: ${nameOf(state, h.executed)} (${ROLES[state.roles[h.executed]].name})` : 'Nimeni nu a fost executat');
       out.push({ title: `☀️ Ziua ${h.day}`, lines });
     } else if (h.type === 'slay') {
       out.push({ title: `🗡️ Țărușul (ziua ${h.day})`, lines: [`${nameOf(state, h.by)} → ${nameOf(state, h.target)}: ${h.hit ? 'Contele a murit!' : 'nimic nu s-a întâmplat'}`] });
