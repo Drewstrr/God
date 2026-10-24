@@ -1,4 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+/* Font gotic (Grenze Gotisch, SIL OFL), găzduit local, cu diacritice românești */
+@font-face { font-family: 'Blackwood Gothic'; font-weight: 800; font-display: swap; src: url('../fonts/grenze-gotisch-latin-800-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Blackwood Gothic'; font-weight: 800; font-display: swap; src: url('../fonts/grenze-gotisch-latin-ext-800-normal.woff2') format('woff2'); unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Blackwood Gothic'; font-weight: 600; font-display: swap; src: url('../fonts/grenze-gotisch-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Blackwood Gothic'; font-weight: 600; font-display: swap; src: url('../fonts/grenze-gotisch-latin-ext-600-normal.woff2') format('woff2'); unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+
 
 :root {
   --bg: #0b0709;
@@ -27,7 +35,7 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-h1, h2, h3, .title { font-family: 'Cinzel', Georgia, serif; letter-spacing: 0.03em; margin: 0 0 0.5em; }
+h1, h2, h3, .title { font-family: 'Blackwood Gothic', Georgia, serif; font-weight: 800; letter-spacing: 0.02em; margin: 0 0 0.5em; }
 h1 { font-size: clamp(1.8rem, 6vw, 3.2rem); color: var(--candle); text-shadow: 0 0 24px rgba(255, 140, 40, 0.35); }
 h2 { font-size: 1.5rem; }
 p { line-height: 1.5; }
@@ -227,7 +235,7 @@ input[type=password], input[type=text] {
 .ceremony .candle.dead .smoke i:nth-child(3) { animation-delay: 0.5s; left: calc(var(--s) * -1); }
 .ceremony .candle .name { display: none; }
 .ceremony-name {
-  margin-top: 5vh; font-family: 'Cinzel', Georgia, serif; font-weight: 800; font-size: 6vw; color: #f1d9d9;
+  margin-top: 5vh; font-family: 'Blackwood Gothic', 'Cinzel', Georgia, serif; font-weight: 800; font-size: 6vw; color: #f1d9d9;
   opacity: 0; letter-spacing: 0.6em; filter: blur(10px);
   text-shadow: 0 0 30px rgba(179, 18, 46, 0.9), 0 0 60px rgba(179, 18, 46, 0.5);
   transition: opacity 2.6s ease-out, letter-spacing 3s ease-out, filter 2.6s ease-out;
@@ -334,7 +342,7 @@ body.dark-night .wrap { filter: brightness(0.75); }
 /* Votul în stil Squid Game: negru, roz, verde */
 body[data-phase="vote"], body[data-phase="reveal"], body[data-phase="sacrifice"], body[data-phase="elimination"], body.squid { background: #000; }
 .squid-screen { width: 100%; }
-.squid-title { font-family: 'Inter', sans-serif; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--pink); text-shadow: 0 0 24px rgba(200, 16, 46, 0.7), 0 2px 0 #3a0008; text-align: center; font-family: 'Cinzel', Georgia, serif; }
+.squid-title { font-family: 'Inter', sans-serif; font-weight: 800; letter-spacing: 0.02em; color: var(--pink); text-shadow: 0 0 24px rgba(200, 16, 46, 0.7), 0 2px 0 #3a0008; text-align: center; font-family: 'Blackwood Gothic', 'Cinzel', Georgia, serif; }
 .screen-wrap .squid-title { font-size: 4.5vw; }
 .squid-count { text-align: center; font: 800 12vw 'Inter', sans-serif; color: var(--green); text-shadow: 0 0 40px rgba(255, 150, 40, 0.45); font-variant-numeric: tabular-nums; }
 .wrap .squid-count { font-size: 4rem; }
@@ -469,7 +477,7 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 .titles { display: grid; grid-template-columns: repeat(auto-fit, minmax(22vw, 1fr)); gap: 2vw; margin-top: 2vh; position: relative; z-index: 2; }
 .title-card { text-align: center; padding: 2.4vh 1.5vw; border-radius: 18px; background: rgba(20, 10, 14, 0.88); border: 2px solid var(--candle); box-shadow: 0 0 30px rgba(255, 181, 71, 0.25); opacity: 0; animation: rise 1s ease-out forwards; }
 .title-card .emoji { font-size: 4vw; }
-.title-card .t { font-family: 'Cinzel', Georgia, serif; font-weight: 800; font-size: 2.2vw; color: var(--candle); }
+.title-card .t { font-family: 'Blackwood Gothic', 'Cinzel', Georgia, serif; font-weight: 800; font-size: 2.2vw; color: var(--candle); }
 .title-card .n { font-size: 2vw; font-weight: 800; margin-top: 0.6vh; }
 .title-card .why { color: var(--muted); font-size: 1.2vw; margin-top: 0.4vh; }
 .bets-line { position: relative; z-index: 2; margin-top: 2vh; }
@@ -481,6 +489,35 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 .join .qr { background: #fff; padding: 1vh; border-radius: 14px; box-shadow: 0 0 40px rgba(255, 181, 71, 0.35), 0 0 0 3px var(--candle); width: min(24vh, 17vw); }
 .join .qr svg { display: block; width: 100%; height: auto; }
 .join-text { font-size: 1.6vw; line-height: 1.5; }
-.join-title { font-family: 'Cinzel', Georgia, serif; font-weight: 800; color: var(--candle); font-size: 2.3vw; }
+.join-title { font-family: 'Blackwood Gothic', 'Cinzel', Georgia, serif; font-weight: 800; color: var(--candle); font-size: 2.3vw; }
 .join-text ol { margin: 0.6vh 0 0.8vh; padding-left: 2.2vw; }
 .join-count { margin-top: 1vh; font-weight: 700; color: var(--candle); }
+
+/* Titluri de sânge: roșu lucios cu picături care se scurg */
+.emo { font-family: 'Inter', sans-serif; }
+.blood-text {
+  position: relative; display: inline-block; font-family: 'Blackwood Gothic', Georgia, serif; font-weight: 800;
+  background: linear-gradient(180deg, #ff8a8f 0%, #e4202f 22%, #b0001a 55%, #6d000c 85%, #4a0008 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 0.04em 0 #2a0004) drop-shadow(0 0 0.25em rgba(200, 0, 30, 0.45));
+  text-shadow: none; letter-spacing: 0.01em;
+}
+.blood-text .bt-drip {
+  position: absolute; top: 72%; width: var(--w); height: 0; border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, #6d000c, #c4152a 45%, #ff7a82 52%, #a50016 60%, #5a0008);
+  animation: bt-drip var(--d) cubic-bezier(.5, 0, .85, .55) var(--delay) forwards;
+}
+@keyframes bt-drip { to { height: var(--len); } }
+.blood-text.gold {
+  background: linear-gradient(180deg, #fff8dc 0%, #ffd46b 35%, #e19a26 70%, #8a5a10 100%);
+  -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 0.04em 0 #3a2400) drop-shadow(0 0 0.35em rgba(255, 190, 80, 0.6));
+}
+.screen-wrap h1 { font-size: 5vw; }
+.end.good h1, .end.evil h1 { text-shadow: none; }
+
+/* QR mic în colț, pentru cine intră mai târziu */
+.corner-qr { position: fixed; left: 14px; bottom: 34px; z-index: 30; display: flex; align-items: center; gap: 10px; background: rgba(10, 5, 8, 0.75); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px 8px 8px; font-size: 0.95rem; color: var(--muted); }
+.corner-qr .qr { width: min(12vh, 9vw); background: #fff; padding: 4px; border-radius: 8px; }
+.corner-qr .qr svg { display: block; width: 100%; height: auto; }
+.corner-qr[hidden] { display: none; }

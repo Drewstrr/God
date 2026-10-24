@@ -48,7 +48,7 @@
       me = null;
       const list = Object.entries(players);
       app.innerHTML = `
-        <h1 class="center">Conacul Blackwood</h1>
+        <h1 class="center"><span class="blood-text">Conacul Blackwood</span></h1>
         <p class="center muted">Atinge-ți numele</p>
         ${engineOnline ? '' : '<p class="center error">⏳ Conacul încă nu e deschis. Așteaptă puțin.</p>'}
         <div class="names">
@@ -507,13 +507,13 @@
       onValue(r('public/players'), (snap) => {
         players = snap.val() ?? {};
         if (!Object.keys(players).length) {
-          app.innerHTML = '<h1 class="center">Conacul Blackwood</h1><p class="center muted">⏳ Conacul încă nu e deschis. Pagina se actualizează singură când pornește.</p>';
+          app.innerHTML = '<h1 class="center"><span class="blood-text">Conacul Blackwood</span></h1><p class="center muted">⏳ Conacul încă nu e deschis. Pagina se actualizează singură când pornește.</p>';
           return;
         }
         if (!me && !pendingNonce && !app.querySelector('.keypad')) showNames();
       }, (err) => {
         console.error(err);
-        app.innerHTML = '<h1 class="center">Conacul Blackwood</h1><p class="center error">🔒 Conacul e încuiat: baza de date refuză accesul (regulile Firebase nu sunt publicate).</p>';
+        app.innerHTML = '<h1 class="center"><span class="blood-text">Conacul Blackwood</span></h1><p class="center error">🔒 Conacul e încuiat: baza de date refuză accesul (regulile Firebase nu sunt publicate).</p>';
       });
     }
 

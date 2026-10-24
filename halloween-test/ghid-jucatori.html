@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="ro"><head><meta charset="utf-8">
 <style>
+@font-face { font-family: 'Blackwood Gothic'; font-weight: 800; src: url('fonts/grenze-gotisch-latin-800-normal.woff2'); unicode-range: U+0000-00FF; }
+@font-face { font-family: 'Blackwood Gothic'; font-weight: 800; src: url('fonts/grenze-gotisch-latin-ext-800-normal.woff2'); unicode-range: U+0100-02AF; }
 @page { size: A4; margin: 0; }
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'DejaVu Sans', sans-serif; color: #1c0f0c; font-size: 10pt; line-height: 1.36; }
@@ -9,18 +11,18 @@ body { margin: 0; font-family: 'DejaVu Sans', sans-serif; color: #1c0f0c; font-s
 .page::before { content: ''; position: absolute; inset: 4mm; border: 1.6pt solid #5a0a10; border-radius: 3mm; pointer-events: none; }
 .page::after { content: ''; position: absolute; inset: 5.4mm; border: 0.5pt solid #5a0a10; border-radius: 2mm; pointer-events: none; }
 header { text-align: center; margin-bottom: 3mm; position: relative; }
-h1 { font-family: 'Liberation Serif', serif; font-size: 28pt; letter-spacing: 2.5pt; margin: 0; color: #6b0a12; text-transform: uppercase; }
+h1 { font-family: 'Blackwood Gothic', serif; font-weight: 800; font-size: 40pt; letter-spacing: 0.5pt; margin: 0; color: #8a0a16; text-shadow: 0 1.5pt 0 #3a0006; }
 .sub { font-family: 'Liberation Serif', serif; font-style: italic; font-size: 11pt; color: #3a2418; margin-top: 0.5mm; }
 .bat { position: absolute; top: 0; width: 19mm; fill: #1c0f0c; }
 .bat.l { left: 3mm; transform: rotate(-12deg); } .bat.r { right: 3mm; transform: scaleX(-1) rotate(-12deg); }
 .goal { text-align: center; font-size: 11pt; margin: 0 8mm 3.5mm; padding: 2mm 3mm; border-top: 0.6pt solid #6b0a12; border-bottom: 0.6pt solid #6b0a12; }
-h2 { font-family: 'Liberation Serif', serif; font-size: 13.5pt; color: #6b0a12; margin: 0 0 1.4mm; text-transform: uppercase; letter-spacing: 1pt; border-bottom: 0.8pt solid #6b0a12; padding-bottom: 0.6mm; }
+h2 { font-family: 'Blackwood Gothic', serif; font-weight: 800; font-size: 16pt; color: #6b0a12; margin: 0 0 1.4mm; letter-spacing: 0.3pt; border-bottom: 0.8pt solid #6b0a12; padding-bottom: 0.6mm; }
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm; }
 section { margin-bottom: 4.5mm; }
 .team { border-radius: 2mm; padding: 1.8mm 2.4mm; margin-bottom: 2mm; }
 .team.evil { background: rgba(107, 10, 18, 0.1); border: 0.8pt solid #6b0a12; }
 .team.good { background: rgba(160, 110, 20, 0.1); border: 0.8pt solid #8a6416; }
-.team h3 { margin: 0 0 1mm; font-family: 'Liberation Serif', serif; font-size: 12pt; }
+.team h3 { margin: 0 0 1mm; font-family: 'Blackwood Gothic', serif; font-weight: 800; font-size: 14pt; }
 .team.evil h3 { color: #6b0a12; } .team.good h3 { color: #6e4f10; }
 .role { margin: 0.9mm 0; }
 .role b { color: #1c0f0c; }
@@ -30,7 +32,7 @@ ul { margin: 0; padding-left: 4mm; } li { margin: 0.8mm 0; }
 ol { margin: 0; padding-left: 4.5mm; } ol li { margin: 1mm 0; }
 .step b { color: #6b0a12; }
 .gold { border: 0.8pt dashed #6b0a12; border-radius: 2mm; padding: 1.8mm 2.4mm; background: rgba(255,255,255,0.35); }
-footer { position: absolute; bottom: 7.5mm; left: 0; right: 0; text-align: center; font-family: 'Liberation Serif', serif; font-style: italic; font-size: 9.5pt; color: #6b0a12; }
+footer { position: absolute; bottom: 7.5mm; left: 0; right: 0; text-align: center; font-family: 'Blackwood Gothic', serif; font-weight: 800; font-size: 13pt; color: #6b0a12; }
 .drip { position: absolute; top: 4mm; height: 8mm; left: 4mm; width: calc(100% - 8mm); }
 </style></head>
 <body><div class="page">

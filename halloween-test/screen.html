@@ -193,6 +193,16 @@
     // Sângele care curge când răul a învins.
     function bleed() { startBlood(); }
 
+    // Titlu gotic de sânge, cu picături care se scurg (poziții stabile pentru același text).
+    function bt(text, emoji = '', { gold = false } = {}) {
+      const n = gold ? 0 : 4 + Math.floor(seeded(text, 1) * 4);
+      const drips = Array.from({ length: n }, (_, i) => {
+        const v = (k, lo, hi) => (lo + seeded(text, 10 + i * 7 + k) * (hi - lo)).toFixed(2);
+        return `<i class="bt-drip" style="left:${v(0, 4, 94)}%;--w:${v(1, 0.07, 0.15)}em;--len:${v(2, 0.3, 1.1)}em;--d:${v(3, 2.5, 6)}s;--delay:${v(4, 0.3, 2.5)}s"></i>`;
+      }).join('');
+      return `${emoji ? `<span class="emo">${emoji}</span> ` : ''}<span class="blood-text ${gold ? 'gold' : ''}">${esc(text)}${drips}</span>`;
+    }
+
     function timer(label, endsAt) {
       return `<div class="big-timer"><div class="muted">${label}</div><div class="clock" data-ends="${endsAt ?? ''}">${endsAt ? fmt(endsAt - serverNow()) : ''}</div></div>`;
     }
@@ -217,7 +227,7 @@
         const players = Object.entries(pub.players ?? {}).filter(([id]) => pub.lineup?.players?.[id] !== false).map(([, p]) => p);
         const ready = players.filter((p) => p.hasPin || p.bot).length;
         return `
-          <h1>Conacul Blackwood</h1>
+          <h1>${bt('Conacul Blackwood')}</h1>
           <div class="join">
             <div class="qr">${qrSvg}</div>
             <div class="join-text">
@@ -235,7 +245,7 @@
       },
       intro() {
         return `
-          <h1>Conacul Blackwood</h1>
+          <h1>${bt('Conacul Blackwood')}</h1>
           <div class="story">
             <p>În noaptea de Halloween, un <b>vampir</b> s-a trezit printre invitații conacului.</p>
             <p>Până la miezul nopții trebuie descoperit. Altfel, conacul va fi al lui.</p>
@@ -250,7 +260,7 @@
       },
       day() {
         return `
-          <h1>Conacul Blackwood</h1>
+          <h1>${bt('Conacul Blackwood')}</h1>
           <p class="center muted lead">Petrecerea continuă… dar vampirul ascultă.</p>
           ${candles()}
           ${pub.nextSessionAt ? timer('Următoarea ședință în', pub.nextSessionAt) : ''}`;
@@ -259,19 +269,19 @@
         const p = pub.progress ?? { done: 0, total: 0 };
         return `
           <div class="night">
-            <h1>🌑 Noaptea</h1>
+            <h1>${bt('Noaptea', '🌑')}</h1>
             <p class="lead muted">Toată lumea alege pe telefon. În liniște.</p>
             ${timer('', pub.endsAt)}
             <p class="lead">${p.done} / ${p.total} au ales</p>
           </div>`;
       },
       morning() {
-        return `<h1>☀️ Dimineața</h1><div class="morning" id="morning"></div>`;
+        return `<h1>${bt('Dimineața', '☀️')}</h1><div class="morning" id="morning"></div>`;
       },
       discussion() {
         const m = pub.morning ?? {};
         return `
-          <h1>💬 Discuția</h1>
+          <h1>${bt('Discuția', '💬')}</h1>
           ${timer('Timp rămas', pub.endsAt)}
           ${m.hypnotized ? `<p class="center lead">🤐 <b>${esc(m.hypnotized)}</b> e hipnotizat și nu are voie să vorbească.</p>` : ''}
           ${candles()}`;
@@ -281,7 +291,7 @@
         const order = v.order ?? [];
         return `
           <div class="squid-screen">
-            <h1 class="squid-title">${v.stage === 'revote' ? 'REVOT' : 'VOTUL'}</h1>
+            <h1>${bt(v.stage === 'revote' ? 'Revotul' : 'Votul')}</h1>
             ${v.candidates ? `<p class="center lead">Doar între: <b>${v.candidates.map((c) => esc(c.name)).join(', ').replace(/, ([^,]*)$/, ' și $1')}</b></p>` : ''}
             <div class="squid-count">${v.done ?? 0} / ${v.total ?? 0}</div>
             <p class="center lead muted">Votați pe rând, pe iPad, în ordinea asta:</p>
@@ -289,13 +299,13 @@
           </div>`;
       },
       reveal() {
-        return `<div class="squid-screen"><h1 class="squid-title">DEZVĂLUIREA</h1><div class="reveal-grid"><div id="reveal-list" class="reveal-list"></div><div id="tally" class="tally"></div></div><div id="outcome"></div></div>`;
+        return `<div class="squid-screen"><h1>${bt('Dezvăluirea')}</h1><div class="reveal-grid"><div id="reveal-list" class="reveal-list"></div><div id="tally" class="tally"></div></div><div id="outcome"></div></div>`;
       },
       sacrifice() {
         return `
           <div class="squid-screen center" style="margin:auto">
             <p class="lead muted">Conacul a ales.</p>
-            <h1 class="squid-title">${esc(pub.doomedName)}</h1>
+            <h1>${bt(pub.doomedName ?? '')}</h1>
             <p class="lead">Soarta se decide…</p>
             <div class="heart-wrap">${heartSVG}</div>
           </div>`;
@@ -305,7 +315,7 @@
         if (e.sacrificed) {
           return `
             <div class="squid-screen center" style="margin:auto">
-              <h1 class="squid-title">🩸 Servitorul s-a aruncat în fața stăpânului său!</h1>
+              <h1>${bt('Servitorul s-a aruncat în fața stăpânului său!', '🩸')}</h1>
               <p class="lead"><b>${esc(e.name)}</b> moare în locul lui. Rolul: ${e.emoji} <b>${esc(e.roleName)}</b></p>
               <p class="lead squid-pink">${esc(e.vampire)} rămâne în viață…</p>
               ${e.testament ? `<div class="testament">„${esc(e.testament)}”</div>` : ''}
@@ -314,7 +324,7 @@
         return `
           <div class="squid-screen center" style="margin:auto">
             <p class="lead muted">Eliminat din conac</p>
-            <h1 class="squid-title">${esc(e.name)}</h1>
+            <h1>${bt(e.name ?? '')}</h1>
             <div class="role-reveal ${e.evil ? 'evil' : ''}">${e.emoji} ${esc(e.roleName)}</div>
             ${e.testament ? `<div class="testament">„${esc(e.testament)}”</div>` : ''}
           </div>`;
@@ -324,7 +334,7 @@
         const f = pub.final ?? {};
         const stage = pub.endStage ?? 'winner';
         const head = `<div class="end ${good ? 'good' : 'evil'} ${stage === 'winner' ? '' : 'small'}">
-            <h1>${good ? '🕯️ Binele a învins' : '🩸 Răul a învins'}</h1>
+            <h1>${good ? bt('Binele a învins', '🕯️', { gold: true }) : bt('Răul a învins', '🩸')}</h1>
             ${stage === 'winner' ? `<p class="lead">${good ? 'Vampirul a fost alungat din conac.' : 'Conacul Blackwood aparține acum vampirului.'}</p>` : ''}
           </div>`;
         if (stage === 'roles') {
@@ -553,6 +563,14 @@
     }));
     sfx.unlock();
     setInterval(showHint, 1000);
+
+    // QR mic în colț pe ecranele liniștite, pentru cine intră mai târziu sau are telefonul descărcat.
+    const corner = document.createElement('div');
+    corner.className = 'corner-qr';
+    corner.innerHTML = `<div class="qr">${qrSvg}</div><div>📱 Intră sau<br>reconectează-te</div>`;
+    corner.hidden = true;
+    document.body.appendChild(corner);
+    setInterval(() => { corner.hidden = !['intro', 'day', 'discussion'].includes(pub.phase) || !qrSvg; }, 500);
 
     // Un click oriunde trece proiectorul pe ecran complet.
     document.body.addEventListener('click', () => {

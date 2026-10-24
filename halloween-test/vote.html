@@ -80,7 +80,7 @@
         const done = pub.phase === 'vote' && pub.vote && pub.vote.done >= pub.vote.total;
         app.innerHTML = `
           <div class="squid-center">
-            <h1 class="squid-title">🗳️ Cabina de vot</h1>
+            <h1><span class="emo">🗳️</span> <span class="blood-text">Cabina de vot</span></h1>
             <p class="muted">${done ? 'Toată lumea a votat. Urmează dezvăluirea pe proiector.' : 'Votul nu e deschis acum.'}</p>
           </div>
           <a class="btn ghost" href="play" style="margin-top:30vh">🔋 Telefon descărcat? Intră aici cu PIN-ul tău</a>`;
