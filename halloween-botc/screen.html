@@ -19,7 +19,6 @@
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
     import { startHost } from './js/game-host.js';
     import { gen, inLineup } from './js/engine.js';
-    import { splatter } from './js/splatter.js';
     import * as sfx from './js/sfx.js';
     import { YOUTUBE_MUSIC } from './js/music.js';
     import { candleSVG, animateFlames } from './js/candles.js';
@@ -75,7 +74,7 @@
     // Două rânduri cât mai egale: 11 -> 5 sus și 6 jos.
     function candles({ lobby = false } = {}) {
       // În lobby: doar cei care joacă; în joc: cei din partidă.
-      const players = Object.entries(pub.players ?? {}).filter(([id]) => (lobby ? inLineup(pub.lineup, id) : id in (pub.alive ?? {})));
+      const players = Object.entries(pub.players ?? {}).filter(([id]) => (lobby ? inLineup(pub.lineup, id, pub.players) : id in (pub.alive ?? {})));
       const items = players.map(([id, p], i) => {
         const cls = lobby ? (p.hasPin || p.bot ? '' : 'waiting') : (pub.alive?.[id] === false ? 'out' : '');
         return candleHtml(p.name, cls, `${esc(p.name)}${lobby && p.bot ? ' <span class="bot">🤖</span>' : ''}`, i);
@@ -135,7 +134,8 @@
         }
       };
       const fits = () => {
-        const boxes = [...stage.children, ...stage.querySelectorAll('.candle .name')].map((e) => e.getBoundingClientRect());
+        // Elementele ascunse au poziția (0, 0): nu le socotim, altfel lumânările s-ar micșora degeaba la minim.
+        const boxes = [...stage.children, ...stage.querySelectorAll('.candle .name')].map((e) => e.getBoundingClientRect()).filter((b) => b.width || b.height);
         const top = Math.min(...boxes.map((x) => x.top));
         const bottom = Math.max(...boxes.map((x) => x.bottom));
         const wide = [...holder.querySelectorAll('.candle-row')].every((row) => row.scrollWidth <= stage.clientWidth * 0.98);
@@ -276,7 +276,7 @@
       ['🕯️ Pentru fiecare suflet care își spune numele,', 'se aprinde o lumânare.'],
     ];
     let storyIdx = 0;
-    const lobbyCount = () => Object.keys(pub.players ?? {}).filter((id) => inLineup(pub.lineup, id)).length;
+    const lobbyCount = () => Object.keys(pub.players ?? {}).filter((id) => inLineup(pub.lineup, id, pub.players)).length;
     const storyHtml = () => storyLines(lobbyCount())[storyIdx].map((l) => `<span>${esc(l)}</span>`).join('');
     setInterval(() => {
       const el = document.getElementById('lobby-story');
@@ -314,7 +314,7 @@
 
     const views = {
       lobby() {
-        const players = Object.entries(pub.players ?? {}).filter(([id]) => inLineup(pub.lineup, id)).map(([, p]) => p);
+        const players = Object.entries(pub.players ?? {}).filter(([id]) => inLineup(pub.lineup, id, pub.players)).map(([, p]) => p);
         const ready = players.filter((p) => p.hasPin || p.bot).length;
         return `
           <h1>${bt('Balul Contelui')}</h1>
@@ -440,8 +440,7 @@
       if (!already) {
         sfx.dawn();
         await wait(1500);
-        // Contele a ucis: sângele împroșcă ecranul (de fiecare dată altă variantă), apoi ceremonia lumânării.
-        for (const d of m.deaths ?? []) { splatter(null, { hold: 9 }); await ceremony(d.name, 'a murit în noaptea asta'); }
+        for (const d of m.deaths ?? []) await ceremony(d.name, 'a murit în noaptea asta');
       }
       const slides = m.deaths?.length
         ? m.deaths.map((d) => `<div class="slide death">💀 <b>${esc(d.name)}</b> a murit în noaptea asta.${d.testament ? `<div class="testament">„${esc(d.testament)}”</div>` : ''}</div>`)
@@ -511,7 +510,7 @@
       sfx.whoosh(0);
       setTimeout(() => {
         el.querySelector('.slay-b').innerHTML = sl.hit ? `💀 <b>${esc(sl.targetName)}</b> se prăbușește!${sl.testament ? `<div class="testament">„${esc(sl.testament)}”</div>` : ''}` : '…nimic nu se întâmplă.';
-        if (sl.hit) { sfx.death(); splatter('slash', { zIndex: 96 }); } else sfx.bell(0, 110, 3, 0.4);
+        if (sl.hit) sfx.death(); else sfx.bell(0, 110, 3, 0.4);
       }, 3000);
       setTimeout(() => el.classList.add('leaving'), 7500);
       setTimeout(() => el.remove(), 8700);

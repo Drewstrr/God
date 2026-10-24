@@ -87,11 +87,11 @@
       day: '☀️ Ziua', execution: '⚰️ Execuția', end: '🏁 Final',
     };
 
-    const inLineup = (id) => inLineupFor(pub.lineup, id);
+    const inLineup = (id) => inLineupFor(pub.lineup, id, pub.players);
 
     // Cine joacă: se alege înainte de start. Personajele le împarte aplicația, după numărul de jucători.
     function lineupHtml() {
-      const all = Object.entries(pub.players ?? {});
+      const all = Object.entries(pub.players ?? {}).filter(([id, p]) => id !== 'invitat' || p.hasPin);
       const n = all.filter(([id]) => inLineup(id)).length;
       const d = DISTRIBUTION[n];
       return `
@@ -197,7 +197,8 @@
         await sendCommand(b.dataset.cmd);
       }));
       box.querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => {
-        const players = Object.fromEntries(Object.keys(pub.players ?? {}).map((id) => [id, inLineup(id)]));
+        // Invitatul Secret fără PIN nu se trimite deloc: când își alege PIN-ul, intră singur în joc.
+        const players = Object.fromEntries(Object.entries(pub.players ?? {}).filter(([id, p]) => id !== 'invitat' || p.hasPin).map(([id]) => [id, inLineup(id)]));
         players[b.dataset.play] = !players[b.dataset.play];
         sendCommand('lineup', { players });
       }));
@@ -219,7 +220,7 @@
     }
 
     function renderPlayers() {
-      const players = Object.entries(pub.players ?? {});
+      const players = Object.entries(pub.players ?? {}).filter(([id, p]) => id !== 'invitat' || p.hasPin || id in (pub.alive ?? {}));
       const lobby = (pub.phase ?? 'lobby') === 'lobby';
       document.getElementById('players-help').textContent = lobby
         ? '„Resetează PIN” îl deloghează pe jucător de pe toate dispozitivele și îl lasă să-și aleagă un PIN nou. Nu vezi niciun secret.'

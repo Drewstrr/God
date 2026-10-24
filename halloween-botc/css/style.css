@@ -772,3 +772,6 @@ textarea, input[type=password], input[type=text], input[type=number] {
 .passive-bar, .notice { font-family: 'EB Garamond', Georgia, serif; }
 /* Caseta nominalizării rămâne fixă peste ecran (chenarul gotic de mai sus o făcuse „relative”). */
 .nom-box { position: fixed; inset: 18vh 8vw auto; }
+
+/* Cartea rolului pe telefon: fără emblemă mare, literă obișnuită, ca să nu se vadă de departe. */
+.role-card .shown-role h2 { font-family: 'EB Garamond', Georgia, serif; font-size: 1.3rem; color: var(--text); background: none; padding-bottom: 0; text-shadow: none; }

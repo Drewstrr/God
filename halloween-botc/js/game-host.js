@@ -60,7 +60,7 @@ async function save() {
 
 const setPublic = (patch) => update(r('public'), patch);
 const isBot = (id) => Boolean(pub.players?.[id]?.bot);
-const inLineup = (id) => inLineupFor(pub.lineup, id);
+const inLineup = (id) => inLineupFor(pub.lineup, id, pub.players);
 // Testamentul scris pe telefon (apare pe proiector când moare jucătorul).
 const testamentOf = async (id) => String((await get(r(`playerInput/${id}/testament`))).val() ?? '').trim().slice(0, 200) || null;
 

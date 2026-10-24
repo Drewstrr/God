@@ -6,8 +6,8 @@ export const GAME_TITLE = 'Balul Contelui';
 
 export const PLAYERS = [
   'Andrei', 'Flori', 'Luca', 'Nico', 'Bogdan', 'Gabriela',
-  'Marian', 'Elisa', 'Robi', 'Cella', 'Radu', 'Invitat',
-].map((name) => ({ id: normalize(name), name }));
+  'Marian', 'Elisa', 'Robi', 'Cella', 'Radu',
+].map((name) => ({ id: normalize(name), name })).concat({ id: 'invitat', name: 'Invitatul Secret' });
 
 // Fetele din grup: textele folosesc forma de feminin („o nominalizează pe Flori”, „executată”).
 export const FEMALE = new Set(['nico', 'cella', 'flori', 'gabriela', 'elisa']);
@@ -116,8 +116,9 @@ export const DISTRIBUTION = {
   10: [7, 0, 2, 1], 11: [7, 1, 2, 1], 12: [7, 2, 2, 1], 13: [9, 0, 3, 1], 14: [9, 1, 3, 1], 15: [9, 2, 3, 1],
 };
 export const MIN_PLAYERS = 5;
-// Al 12-lea loc („Invitat”) e scos din joc până îl bifezi în panou; ceilalți intră implicit.
-export const inLineup = (lineup, id) => lineup?.players?.[id] ?? (id !== 'invitat');
+// Al 12-lea loc („Invitatul Secret”) apare și intră în joc doar după ce cineva își setează PIN-ul pe numele lui.
+export const SECRET_GUEST = 'invitat';
+export const inLineup = (lineup, id, players) => lineup?.players?.[id] !== false && (id !== SECRET_GUEST || Boolean(players?.[id]?.hasPin));
 export const MAX_PLAYERS = 15;
 
 // Ordinea în care se rezolvă noaptea (cine acționează înaintea cui).
