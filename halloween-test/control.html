@@ -142,7 +142,7 @@
           ${lineupHtml()}
           <button class="btn" data-cmd="start" ${ready < players.length || !lineupReady() ? 'disabled' : ''}>▶️ Pornește jocul</button>`;
         case 'intro': return `
-          <p class="muted">Proiectorul arată povestea, regulile și Pârcălabul. Fiecare își vede rolul pe telefon.</p>
+          <p class="muted">Proiectorul arată povestea, regulile și Primarul. Fiecare își vede rolul pe telefon.</p>
           <button class="btn" data-cmd="party">🎭 Începe balul</button>
           <button class="btn ghost" data-cmd="session">🔔 Pornește direct prima ședință</button>`;
         case 'day': return `
@@ -171,12 +171,12 @@
         case 'reveal': {
           const o = pub.reveal?.outcome ?? {};
           if (o.result === 'eliminate') return `
-            <p>Rezultat: <b>${esc(o.target)}</b>${o.byMayor ? ' (decizia Pârcălabului)' : ''}. Așteaptă să se termine dezvăluirea pe proiector.</p>
+            <p>Rezultat: <b>${esc(o.target)}</b>${o.byMayor ? ' (decizia Primarului)' : ''}. Așteaptă să se termine dezvăluirea pe proiector.</p>
             <button class="btn" data-cmd="execute">⚰️ Execută eliminarea</button>`;
           if (o.result === 'revote') return `
             <p>Egalitate între <b>${(o.candidates ?? []).map(esc).join(', ').replace(/, ([^,]*)$/, ' și $1')}</b>.</p>
             <button class="btn" data-cmd="revote">⚖️ Pornește revotul</button>`;
-          if (o.result === 'mayor-decides') return '<p>🗝️ Așteptăm decizia Pârcălabului pe telefonul lui…</p>';
+          if (o.result === 'mayor-decides') return '<p>🎩 Așteptăm decizia Primarului pe telefonul lui…</p>';
           return `
             <p>Nimeni nu e eliminat.</p>
             <div class="row">Următoarea ședință peste <input type="number" id="next-min" value="45" min="0" max="180"> minute (0 = fără cronometru)</div>

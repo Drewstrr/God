@@ -333,7 +333,7 @@
               <li>🤫 Nu-ți arăta telefonul nimănui.</li>
             </ul>
           </div>
-          ${pub.mayor ? `<div class="announce">🗝️ Pârcălabul castelului este <b>${esc(pub.mayor.name)}</b><br><span class="muted">Votul lui contează dublu.</span></div>` : ''}`;
+          ${pub.mayor ? `<div class="announce">🎩 Primarul castelului este <b>${esc(pub.mayor.name)}</b><br><span class="muted">Votul lui contează dublu.</span></div>` : ''}`;
       },
       day() {
         return `
@@ -506,7 +506,7 @@
       rv.items.forEach((it, i) => {
         const show = () => {
           if (!document.getElementById('reveal-list')) return;
-          list.insertAdjacentHTML('beforeend', `<div class="reveal-item"><span class="voter">${esc(it.voter)}${it.weight > 1 ? ' 🗝️×2' : ''}</span>${it.target ? `${slash}<span class="target"><b>${esc(it.target)}</b></span>` : '<span class="target"><i class="muted">se abține</i></span>'}`);
+          list.insertAdjacentHTML('beforeend', `<div class="reveal-item"><span class="voter">${esc(it.voter)}${it.weight > 1 ? ' 🎩×2' : ''}</span>${it.target ? `${slash}<span class="target"><b>${esc(it.target)}</b></span>` : '<span class="target"><i class="muted">se abține</i></span>'}`);
           if (instant) {
             if (it.target) tally[it.target] = (tally[it.target] ?? 0) + it.weight;
             lastHit = null;
@@ -533,9 +533,9 @@
 
     function outcomeHtml(o) {
       if (!o) return '';
-      if (o.result === 'eliminate') return `<div class="outcome">${o.byMayor ? '🗝️ Pârcălabul a decis: ' : 'Castelul a votat: '}<b class="squid-pink">${esc(o.target)}</b></div>`;
+      if (o.result === 'eliminate') return `<div class="outcome">${o.byMayor ? '🎩 Primarul a decis: ' : 'Castelul a votat: '}<b class="squid-pink">${esc(o.target)}</b></div>`;
       if (o.result === 'revote') return `<div class="outcome">⚖️ Egalitate între <b>${o.candidates.map(esc).join(', ').replace(/, ([^,]*)$/, ' și $1')}</b>. Urmează revotul.</div>`;
-      if (o.result === 'mayor-decides') return `<div class="outcome">⚖️ Tot egalitate. 🗝️ <b>Pârcălabul decide</b> pe telefonul lui…</div>`;
+      if (o.result === 'mayor-decides') return `<div class="outcome">⚖️ Tot egalitate. 🎩 <b>Primarul decide</b> pe telefonul lui…</div>`;
       return '<div class="outcome">Nimeni nu este eliminat în această rundă.</div>';
     }
 

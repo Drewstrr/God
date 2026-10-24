@@ -33,9 +33,9 @@ export const ROLES = {
     card: 'Noaptea binecuvântezi pe cineva cu apă sfințită și îl aperi de mușcătură. Nu te poți apăra singur și nici aceeași persoană de două ori la rând.',
   },
   mayor: {
-    name: 'Pârcălabul', emoji: '🗝️', team: 'good', ability: false,
+    name: 'Primarul', emoji: '🎩', team: 'good', ability: false,
     prompt: 'Cine crezi că e Contele?',
-    card: 'Ești cârmuitorul castelului și ții cheile lui. Rolul tău e public. Votul tău contează dublu, iar la egalitate după revot decizi tu.',
+    card: 'Rolul tău e public. Votul tău contează dublu, iar la egalitate după revot decizi tu.',
   },
   gossip: {
     name: 'Bârfitoarea', emoji: '🗣️', team: 'good', ability: false,
