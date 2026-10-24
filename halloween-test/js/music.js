@@ -8,5 +8,6 @@ const debateSong = { id: 'pHJUQo6-2yE', start: 3 * 60 + 7 };
 export const YOUTUBE_MUSIC = {
   lobby: ballSong,   // cât intră oaspeții
   discussion: debateSong,  // discuția dinaintea votului
+  vote: debateSong,        // continuă, fără să se oprească, cât votează toată lumea la iPad
   end: ballSong,     // finalul: câștigătorii, rolurile, reluarea, titlurile
 };

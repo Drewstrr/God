@@ -550,7 +550,8 @@
       const generated = phase === 'end' ? (pub.winner === 'good' ? 'glory' : 'doom') : THEME[phase];
       // Fazele cu melodie de pe YouTube (js/music.js); muzica generată rămâne rezervă.
       const youtube = YOUTUBE_MUSIC[phase];
-      const theme = youtube ? `yt-${phase}` : generated;
+      // aceeași melodie în faze consecutive (discuție → vot) continuă fără să se reia
+      const theme = youtube ? `yt-${youtube.id}-${youtube.start}` : generated;
       const options = youtube ? { youtube, fallback: generated } : {};
       // La final, muzica pornește după efectul sonor al victoriei.
       if (phase === 'end') {
