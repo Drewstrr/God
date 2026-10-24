@@ -670,14 +670,14 @@ async function playYouTube(mine, song, fallback) {
     if (current !== mine) return;
     let vol = 0;
     p.setVolume(0);
-    p.loadVideoById({ videoId: song.id, startSeconds: song.start, endSeconds: song.end, suggestedQuality: 'small' });
+    p.loadVideoById({ videoId: song.id, startSeconds: song.start, ...(song.end ? { endSeconds: song.end } : {}), suggestedQuality: 'small' });
     // Bucla: când ajunge la final, o ia din nou de la minutul ales.
     p.stateChanged = (state) => { if (current === mine && state === YT.PlayerState.ENDED) { p.seekTo(song.start, true); p.playVideo(); } };
     p.failed = () => { if (current === mine) fallbackTo(mine, fallback); };
     const loop = setInterval(() => {
       if (current !== mine) return;
       const t = p.getCurrentTime?.() ?? 0;
-      if (t >= song.end - 0.4) p.seekTo(song.start, true);
+      if (song.end && t >= song.end - 0.4) p.seekTo(song.start, true);
       vol = vol < ytTarget() ? Math.min(ytTarget(), vol + 6) : ytTarget();  // intră încet, apoi urmează volumul cerut
       p.setVolume(vol);
     }, 250);
