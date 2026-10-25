@@ -53,6 +53,7 @@
     .row .candle.seen { opacity: 1; }
     #stage.dim { opacity: 0.28; filter: blur(1px); }
     #stage.gone { opacity: 0; }
+    .notrans, .notrans * { transition: none !important; }
 
     /* Titlul și numărătoarea */
     #finale { z-index: 4; gap: 6px; overflow-y: auto; justify-content: flex-start; padding-top: max(7vh, 28px); }
@@ -349,8 +350,11 @@
 
     function reset() {
       $('finale').classList.add('hidden'); $('finale').classList.remove('on');
-      $('stage').className = 'scene'; $('line').className = 'scene';
-      candles.forEach((c) => { c.classList.remove('seen', 'gust', 'ghost'); c.classList.add('waiting'); delete c.dataset.state; delete c.dataset.scale; });
+      // La „Revezi” lumânările dispar instantaneu, fără să mai clipească pe ecran.
+      $('stage').className = 'scene notrans'; $('line').className = 'scene';
+      candles.forEach((c) => { c.classList.remove('seen', 'gust', 'ghost', 'dark'); c.classList.add('waiting'); delete c.dataset.state; delete c.dataset.scale; });
+      void $('stage').offsetWidth;
+      $('stage').classList.remove('notrans');
       stopEyes();
     }
 
