@@ -139,7 +139,6 @@
     <p class="whisper" id="whisper"></p>
     <div class="actions">
       <button id="again">↻ Revezi</button>
-      <a href="regulament">📜 Regulamentul, pentru cei curajoși</a>
     </div>
     <div class="lone" id="lone"></div>
   </section>
@@ -279,7 +278,6 @@
         candles.forEach((c) => c.classList.remove('gust'));
 
         $('stage').classList.add('dim');
-        $('line').classList.remove('low');
         for (const t of ['Ghicitoarea vede prin întuneric.', 'Groparul ascultă morții.', 'Preotul veghează.', 'Vrăjitoarea otrăvește.', 'Mireasa așteaptă.', 'Van Helsing are un singur țăruș.']) {
           sfx.heartbeat(0, 0.25);
           await say(t, token, { hold: 1500, cls: 'small' });
@@ -305,7 +303,6 @@
         await wait(1300, token);
         if (me) await say('Poate chiar a ta.', token, { hold: 2000, cls: 'red' });
 
-        $('line').classList.remove('low');
         $('stage').classList.add('dim');
         await say('Nu vei ști pe cine să crezi.', token, { hold: 2400 });
         await wait(500, token);
