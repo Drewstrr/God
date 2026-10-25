@@ -354,12 +354,13 @@
       stopEyes();
     }
 
-    async function film() {
+    // La prima vizionare nu se poate sări; „Sari peste” apare doar după „Revezi”.
+    async function film(replay = false) {
       const token = ++run;
       reset();
       filmStart = performance.now();
       if (playing()) quietSeek(expectedPos() + 0.5);
-      $('skip').classList.remove('hidden');
+      $('skip').classList.toggle('hidden', !replay);
       try {
         await wait(900, token);
         sfx.churchBell(0, 110, 0.55);
@@ -482,7 +483,7 @@
       $('mute').classList.remove('hidden');
     });
     $('skip').onclick = () => { run++; sfx.doomHit(0); hitDrama(); candles.forEach((c) => c.classList.remove('gust')); $('stage').className = 'scene gone'; finale(); };
-    $('again').onclick = () => film();
+    $('again').onclick = () => film(true);
   </script>
 </body>
 </html>
