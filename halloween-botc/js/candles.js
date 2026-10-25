@@ -181,13 +181,16 @@ export function animateFlames() {
     document.querySelectorAll('.candle').forEach((c) => {
       const g = c.querySelector('.c-flame');
       if (!g) return;
-      const lit = !c.classList.contains('out') && !c.classList.contains('waiting');
+      const ghost = c.classList.contains('ghost');
+      const lit = (ghost || !c.classList.contains('out')) && !c.classList.contains('waiting');
       const state = c.dataset.state ?? 'normal';
       const seed = Number(c.dataset.seed) || 1;
       const gust = c.classList.contains('gust') ? 2.4 : 1;
       let scale = Number(c.dataset.scale ?? (state === 'small' ? 0.55 : 1));
       if (state === 'dying') scale = Math.max(0.15, scale * 0.985) * (0.6 + noise(t * 22 + seed) * 0.8);
       else if (state === 'dead' || !lit) scale = 0;
+      // Lumânarea unei fantome: flacără mică, albastră; la o adiere aproape se stinge, apoi revine încet.
+      else if (ghost) scale += ((gust > 1 ? 0.06 : 0.28 + noise(t * 0.6 + seed) * 0.1) - scale) * (gust > 1 ? 0.22 : 0.035);
       else scale += ((state === 'normal' && document.body.classList.contains('triumph') ? 1.45 : TARGET[state] ?? 1) - scale) * 0.06;
       c.dataset.scale = scale.toFixed(3);
 

@@ -20,6 +20,7 @@
         <p class="muted">Motorul rulează în pagina <a href="screen" target="_blank">Proiector</a>. Ține-o deschisă pe ecranul proiectorului.</p>
         <button class="btn small ghost" id="sound">🔊 Sunet proiector</button>
         <button class="btn small ghost" id="music">🎵 Muzică</button>
+        <button class="btn small ghost" id="voice">🗣️ Vocea naratorului</button>
         <label class="vol">🔊 Volum general <input type="range" id="volume" min="0" max="100" step="5"> <b id="volume-val"></b></label>
         <label class="vol">🎵 Volum muzică <input type="range" id="music-volume" min="0" max="100" step="5"> <b id="music-volume-val"></b></label>
       </div>
@@ -227,7 +228,9 @@
         ? '„Resetează PIN” îl deloghează pe jucător de pe toate dispozitivele și îl lasă să-și aleagă un PIN nou. Nu vezi niciun secret.'
         : 'Lista publică: cine trăiește și cine a murit.';
       document.getElementById('players').innerHTML = players.map(([id, p]) => {
-        const alive = pub.alive?.[id] !== false;
+        // În timpul ritualului dimineții nu arătăm cine a murit: afli odată cu sala.
+        const ritual = pub.phase === 'morning' && pub.morning?.dawnAt && serverNow() < pub.morning.dawnAt + pub.morning.end * 1000;
+        const alive = pub.alive?.[id] !== false || (ritual && (pub.morning.deaths ?? []).some((d) => d.id === id));
         const state = lobby
           ? (p.hasPin ? '<span class="pill on">are PIN</span>' : p.bot ? '<span class="pill">🤖 robot</span>' : '<span class="pill">fără PIN</span>')
           : !(id in (pub.alive ?? {})) ? '<span class="pill">nu joacă</span>'
@@ -269,6 +272,14 @@
       musicBtn.textContent = off ? '🎵 Muzică: OPRITĂ (apasă să pornești)' : '🎵 Muzică: PORNITĂ (apasă să oprești)';
     });
     musicBtn.addEventListener('click', () => set(r('public/music'), Boolean(musicBtn.dataset.off)));
+    // Vocea naratorului (vocea românească a MacBook-ului) pe proiector.
+    const voiceBtn = document.getElementById('voice');
+    onValue(r('public/voice'), (snap) => {
+      const off = snap.val() === false;
+      voiceBtn.dataset.off = off ? '1' : '';
+      voiceBtn.textContent = off ? '🗣️ Vocea naratorului: OPRITĂ (apasă să pornești)' : '🗣️ Vocea naratorului: PORNITĂ (apasă să oprești)';
+    });
+    voiceBtn.addEventListener('click', () => set(r('public/voice'), Boolean(voiceBtn.dataset.off)));
 
     // Glisoarele de volum: proiectorul se schimbă pe loc, cât tragi de ele.
     for (const [id, key] of [['volume', 'volume'], ['music-volume', 'musicVolume']]) {
@@ -322,7 +333,7 @@
       switch (pub.phase) {
         case 'lobby': return '[data-cmd="start"]:not([disabled])';
         case 'intro': return since > 25 ? '[data-cmd="firstNight"]' : null;
-        case 'morning': return since > 6 + (pub.morning?.deaths?.length ?? 0) * 11 ? '#begin-day' : null;
+        case 'morning': return pub.morning?.dawnAt && serverNow() > pub.morning.dawnAt + pub.morning.end * 1000 ? '#begin-day' : null;
         case 'day':
           // Ziua o închei tu: îți amintim când nu s-a mai întâmplat nimic de un minut și jumătate.
           if (d.free || d.current || !d.lastActivity) return null;
@@ -335,7 +346,12 @@
         default: return null;
       }
     }
+    let ritualWas = false;
     setInterval(() => {
+      // La sfârșitul ritualului dimineții, lista jucătorilor se actualizează (abia acum apare cine a murit).
+      const ritualNow = pub.phase === 'morning' && pub.morning?.dawnAt && serverNow() < pub.morning.dawnAt + pub.morning.end * 1000;
+      if (ritualWas && !ritualNow) renderPlayers();
+      ritualWas = Boolean(ritualNow);
       const sel = pulseTarget();
       document.querySelectorAll('#actions .btn.pulse').forEach((b) => { if (!sel || !b.matches(sel)) if (b.dataset.cmd !== 'resume') b.classList.remove('pulse'); });
       if (sel) document.querySelector(`#actions ${sel}`)?.classList.add('pulse');

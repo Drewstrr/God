@@ -320,7 +320,7 @@ async function endNight(cmd = {}) {
     'public/endsAt': null,
     'public/progress': null,
     'public/winner': state.winner,
-    'public/morning': { night, deaths: await Promise.all(report.deaths.map(async (d) => ({ id: d.id, name: nameOf(d.id), testament: await testamentOf(d.id) }))) },
+    'public/morning': await dawnTimeline(night, report.deaths.map((d) => d.id)),
   });
   if (state.winner) Object.assign(patch, finalPatch());
   await update(r(), patch);
@@ -330,6 +330,46 @@ async function endNight(cmd = {}) {
     const target = shuffle(aliveIds())[0];
     setTimeout(() => set(r(`playerInput/${raven}/raven`), { night, target, at: Date.now() }), 3000);
   }
+}
+
+// ---------- dimineața: ritualul lumânărilor ----------
+
+const EPITAPHS = [
+  'A avut încredere în cine nu trebuia.',
+  'Ultimul dans l-a dansat cu Contele.',
+  'Castelul i-a păstrat numele. Contele, sângele.',
+  'A plecat de la bal fără să-și ia rămas-bun.',
+  'Lumânarea i s-a stins înaintea zorilor.',
+  'Nimeni nu i-a auzit ultimul strigăt.',
+  'A închis ochii la miezul nopții și nu i-a mai deschis.',
+  'Pe pernă a rămas doar o pată de sânge.',
+  'Oglinda din sala mare nu-i mai arată chipul.',
+];
+
+// Cronologia dimineții (în secunde de la dawnAt), ca proiectorul și telefoanele să meargă împreună:
+// actul I (clopotul, 0–8 s), actul II (lumânările celor treziți se aprind una câte una, tot mai rar),
+// actul III (doliul, pentru fiecare mort), apoi începe ziua.
+const ACT2 = 8;
+const MOURN = 27;
+async function dawnTimeline(night, deadIds) {
+  const survivors = shuffle(aliveIds());
+  const wake = {};
+  let t = ACT2 + 1.2;
+  survivors.forEach((id, i) => {
+    const left = survivors.length - i;
+    t += left <= 3 ? [3.2, 2.4, 1.7][left - 1] : 0.75 + Math.random() * 0.35;
+    wake[id] = Math.round(t * 10) / 10;
+  });
+  const act3 = t + (deadIds.length ? 3 : 1.5);
+  const epitaphs = shuffle(EPITAPHS);
+  return {
+    night,
+    dawnAt: serverNow() + 1500,
+    wake,
+    act3,
+    end: act3 + (deadIds.length ? deadIds.length * MOURN : 6),
+    deaths: await Promise.all(deadIds.map(async (id, i) => ({ id, name: nameOf(id), testament: await testamentOf(id), epitaph: epitaphs[i % epitaphs.length] }))),
+  };
 }
 
 // ---------- ziua ----------

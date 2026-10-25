@@ -579,6 +579,17 @@ const THEMES = {
       return 4.5;
     };
   },
+  // Doliul: coarde lente, triste, și câteva note rare de cutie muzicală.
+  mourning(out) {
+    const chords = [[50, 53, 57, 62], [46, 50, 53, 58], [48, 52, 55, 60], [45, 49, 52, 57]];
+    const mel = [74, 72, 70, 69, 70, 69, 67, 65];
+    return (t, i) => {
+      chords[i % chords.length].forEach((n, k) => note(out, t, midi(n), { type: 'sawtooth', attack: 2, peak: k ? 0.022 : 0.03, decay: 5.5, partials: [1], detune: 8, filter: 700 }));
+      note(out, t + 1.2, midi(mel[i % mel.length]), { type: 'sine', peak: 0.06, decay: 3.2, attack: 0.01, partials: [1, 3] });
+      note(out, t + 3.4, midi(mel[(i + 3) % mel.length] - 12), { type: 'sine', peak: 0.035, decay: 2.5, attack: 0.01, partials: [1, 3] });
+      return 5.6;
+    };
+  },
   // Discuția: un ceas care ticăie și o dronă discretă.
   ticking(out) {
     const stop = droneNode(out, [73.4, 110], 0.025, 300);

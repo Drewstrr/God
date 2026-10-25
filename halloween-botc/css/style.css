@@ -780,3 +780,38 @@ textarea, input[type=password], input[type=text], input[type=number] {
 .evil-tips summary { color: #e05a6a; }
 .evil-tips ul { margin: 12px 0 0; padding-left: 20px; }
 .evil-tips li { margin: 8px 0; line-height: 1.45; }
+
+/* Lumânarea unei fantome: flacără albastră, slabă */
+.candle.ghost .c-flame, .candle.ghost .c-halo, .candle.ghost .c-glow, .candle.ghost .c-ember { filter: hue-rotate(195deg) saturate(1.6) brightness(1.05); }
+.candle.ghost .c-glow { opacity: 0.35 !important; }
+.candle.ghost .name { color: #8fa8d8; }
+
+/* ---------- Ritualul dimineții ---------- */
+body.dawning { background: #000 !important; }
+body.dawning .screen-wrap { justify-content: center; }
+.dawn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; min-height: 80vh; }
+.dawn-text { font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: clamp(26px, 4vw, 80px); color: #e8dcc8; text-align: center;
+  opacity: 0; transition: opacity 1.2s ease; text-shadow: 0 0 30px rgba(0, 0, 0, 0.9); min-height: 1.3em; }
+.dawn-text.show { opacity: 1; }
+.dawn-text.small { font-size: clamp(16px, 1.8vw, 36px); color: var(--muted); }
+/* Alb-negru peste tot, în afară de lumânarea mortului (flacăra ei albastră rămâne singura culoare). */
+body.mourning #dawn-candles .candle:not(.victim), body.mourning .dawn-text { filter: grayscale(1) brightness(0.75); transition: filter 2s ease; }
+.mourn-card { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; text-align: center;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 50%, rgba(0, 0, 0, 0) 78%); opacity: 0; transition: opacity 2s ease; pointer-events: none; padding: 9vh 8vw 0; }
+.mourn-card.show { opacity: 1; }
+.mourn-card.leaving { opacity: 0; }
+.mourn-card .m-name { font-family: 'Blackwood Gothic', Georgia, serif; font-size: clamp(48px, 9vw, 180px); color: #f2ece2; letter-spacing: 0.04em;
+  text-shadow: 0 0 40px rgba(255, 255, 255, 0.25); }
+.mourn-card .m-date { font-family: 'EB Garamond', Georgia, serif; font-size: clamp(16px, 1.8vw, 34px); color: #a9a29a; letter-spacing: 0.3em; text-transform: uppercase; margin-top: 1vh; }
+.mourn-card .m-epitaph { font-family: 'EB Garamond', Georgia, serif; font-style: italic; font-size: clamp(22px, 3vw, 58px); color: #ddd5c8; margin-top: 4vh; min-height: 1.3em; }
+.mourn-card .m-testament { font-family: 'EB Garamond', Georgia, serif; font-size: clamp(18px, 2.1vw, 42px); color: #b9b0a4; margin-top: 3vh; max-width: 70vw; min-height: 1.3em; }
+.mourn-card .m-silence { font-family: 'EB Garamond', Georgia, serif; font-size: clamp(16px, 1.7vw, 32px); color: #8fa8d8; margin-top: 5vh; letter-spacing: 0.1em; min-height: 1.3em; }
+/* Telefonul în timpul ritualului dimineții */
+.dawn-phone { text-align: center; margin-top: 26vh; font-size: 1.3rem; }
+.dawn-phone .dp-icon { font-size: 3.4rem; margin-bottom: 10px; }
+.dawn-phone.awake b { color: var(--gold-hi); }
+.dawn-phone.dead b { color: #8fa8d8; }
+.dawn-phone.dead .dp-icon { filter: hue-rotate(195deg) saturate(1.5); opacity: 0.8; }
+
+body.dark-night { min-height: 100vh; }
+html:has(body.dark-night) { background: #000; }
