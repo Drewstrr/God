@@ -202,7 +202,7 @@
     <div class="who">Ai fost invitat.</div>
     <div class="sound"><div><b>Dă volumul la maxim…</b><small>…până îți auzi bătăile fricoase ale inimii.</small></div></div>
     <div class="tap">Atinge sigiliul</div>
-    <div class="ver">v17 · inimă</div>
+    <div class="ver">v18 · inimă</div>
   </section>
 
   <section class="scene hidden" id="stage"><div class="row" id="row"></div></section>
@@ -355,6 +355,8 @@
       $('finale').classList.add('hidden'); $('finale').classList.remove('on');
       // La „Revezi” lumânările dispar instantaneu, fără să mai clipească pe ecran.
       $('stage').className = 'scene notrans hidden'; $('line').className = 'scene';
+      // Replica rămasă din vizionarea anterioară se șterge, ca să nu reapară cât bat inimile de la început.
+      text.className = ''; text.textContent = '';
       candles.forEach((c) => { c.classList.remove('seen', 'gust', 'ghost', 'dark'); c.classList.add('waiting'); delete c.dataset.state; delete c.dataset.scale; });
       void $('stage').offsetWidth;
       $('stage').classList.remove('notrans');
