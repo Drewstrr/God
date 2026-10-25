@@ -28,6 +28,22 @@
     #gate .who { color: var(--gold-hi); font-size: 1.35rem; font-style: italic; min-height: 1.4em; }
     #gate .tap { color: var(--muted); letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.85rem; animation: blink 2.4s ease-in-out infinite; }
     #gate .phones { color: #6d5b5f; font-size: 0.85rem; }
+    /* Proba de sunet: înainte de film, lumea își dă volumul la maxim */
+    #check { z-index: 5; gap: 14px; }
+    #check .vol { display: flex; align-items: flex-end; gap: 7px; height: 70px; margin-bottom: 6px; }
+    #check .vol i { width: 12px; background: linear-gradient(180deg, #e8c97a, #8e1023); border-radius: 2px; opacity: 0.25; transition: opacity 0.15s; }
+    #check .vol i:nth-child(1) { height: 20%; } #check .vol i:nth-child(2) { height: 38%; } #check .vol i:nth-child(3) { height: 56%; }
+    #check .vol i:nth-child(4) { height: 74%; } #check .vol i:nth-child(5) { height: 100%; }
+    #check.beat .vol i { opacity: 1; }
+    #check.beat .vol i:nth-child(n+4) { transition-delay: 0.06s; }
+    #check h2 { margin: 0; font: 800 clamp(2rem, 8vw, 3.2rem) 'Blackwood Gothic', serif; color: var(--gold-hi); background: none; padding: 0; text-shadow: 0 2px 0 #000, 0 0 24px rgba(200, 40, 50, 0.45); }
+    #check p { margin: 0; max-width: 22em; color: #c9b8a6; font-size: 1.15rem; line-height: 1.5; }
+    #check p b { color: #efe2cf; }
+    #check .heart { font-size: 2.2rem; transition: transform 0.12s; }
+    #check.beat .heart { transform: scale(1.25); }
+    #check button { margin-top: 10px; font: 800 1.3rem 'Blackwood Gothic', serif; color: #f1e3c4; background: linear-gradient(180deg, #8e1023, #4e0510); border: 1px solid var(--gold); padding: 14px 30px; cursor: pointer;
+      box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.5), 0 0 26px rgba(150, 16, 32, 0.5); }
+    #check .small { font-size: 0.9rem; color: #6d5b5f; }
     #gate .ver { position: fixed; left: 12px; bottom: max(10px, env(safe-area-inset-bottom)); color: #3d3033; font-size: 0.75rem; }
     @keyframes blink { 50% { opacity: 0.35; } }
 
@@ -186,7 +202,16 @@
     <div class="who">Ai fost invitat.</div>
     <div class="tap">Atinge sigiliul</div>
     <div class="phones">🎧 cu sunetul pornit, în întuneric</div>
-    <div class="ver">v14 · mp3</div>
+    <div class="ver">v15 · volum</div>
+  </section>
+
+  <section class="scene hidden" id="check">
+    <div class="heart">🫀</div>
+    <div class="vol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <h2>Volumul la maxim</h2>
+    <p>Teaserul se trăiește cu sunetul <b>dat la maxim</b>, în întuneric.<br>Auzi bătăile inimii?</p>
+    <button id="heard">Aud. Începe ›</button>
+    <p class="small">🎧 cu căști e și mai bine</p>
   </section>
 
   <section class="scene hidden" id="stage"><div class="row" id="row"></div></section>
@@ -466,12 +491,29 @@
     function stopEyes() { clearTimeout(eyesTimer); $('eyes').classList.remove('on'); }
 
     // ---------- intrarea ----------
+    // Atingerea sigiliului pornește sunetul și proba de volum: bătăi de inimă până când omul confirmă că aude.
+    let checkTimer = null;
     $('gate').addEventListener('click', () => {
       sfx.unlock();
-      film();         // pornește ceasul filmului, ca muzica să știe de unde să înceapă
-      startMusic();
+      audioGraph();
+      actx.resume?.();
       vibrate(40);
       $('gate').classList.add('hidden');
+      $('check').classList.remove('hidden');
+      const beat = () => {
+        sfx.heartbeat(0, 1);
+        $('check').classList.add('beat');
+        setTimeout(() => $('check').classList.remove('beat'), 160);
+        setTimeout(() => { $('check').classList.add('beat'); setTimeout(() => $('check').classList.remove('beat'), 140); }, 240);
+      };
+      beat();
+      checkTimer = setInterval(beat, 1150);
+    });
+    $('heard').addEventListener('click', () => {
+      clearInterval(checkTimer);
+      $('check').classList.add('hidden');
+      film();         // pornește ceasul filmului, ca muzica să știe de unde să înceapă
+      startMusic();
       $('mute').classList.remove('hidden');
     });
     $('skip').onclick = () => { run++; sfx.doomHit(0); hitDrama(); candles.forEach((c) => c.classList.remove('gust')); $('stage').className = 'scene gone'; finale(); };
