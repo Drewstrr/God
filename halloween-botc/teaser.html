@@ -94,14 +94,6 @@
     #skip { right: 10px; }
     #mute { left: 10px; font-size: 1.15rem; }
 
-    /* Muzica: dacă telefonul nu o lasă să pornească singură, arătăm playerul YouTube, ca să fie apăsat direct */
-    #music { position: fixed; right: 0; bottom: 0; width: 200px; height: 200px; opacity: 0.01; pointer-events: none; z-index: -1; overflow: hidden; }
-    #music.ask { opacity: 1; pointer-events: auto; z-index: 7; right: 50%; transform: translateX(50%); bottom: 64px; width: 240px; height: auto; padding: 8px; overflow: visible;
-      background: rgba(12, 4, 6, 0.95); border: 1px solid var(--gold-dim); text-align: center; }
-    #music.ask p { margin: 0 0 6px; color: var(--gold-hi); font-size: 0.95rem; }
-    #music.ask .yt { width: 224px; height: 126px; }
-    #music:not(.ask) p, #music:not(.ask) .close { display: none; }
-    #music .close { position: absolute; top: -12px; right: -12px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--gold-dim); background: #000; color: var(--muted); cursor: pointer; }
 
     body.quake { animation: quake 0.5s; }
     @keyframes quake { 20% { transform: translate(-4px, 2px); } 40% { transform: translate(3px, -3px); } 60% { transform: translate(-2px, 3px); } 80% { transform: translate(2px, -1px); } }
@@ -194,7 +186,7 @@
     <div class="who">Ai fost invitat.</div>
     <div class="tap">Atinge sigiliul</div>
     <div class="phones">🎧 cu sunetul pornit, în întuneric</div>
-    <div class="ver">v12 · 6:20</div>
+    <div class="ver">v13 · mp3</div>
   </section>
 
   <section class="scene hidden" id="stage"><div class="row" id="row"></div></section>
@@ -222,7 +214,6 @@
   <div class="eyes" id="eyes"></div>
   <button class="corner hidden" id="skip">Sari peste ›</button>
   <button class="corner hidden" id="mute" aria-label="Sunet">🔊</button>
-  <div id="music"><p>🎵 Apasă ▶ pentru muzica balului</p><button class="close" id="music-close" aria-label="Închide">×</button><div class="yt"><div id="yt"></div></div></div>
 
   <script type="module">
     import { PLAYERS, SECRET_GUEST } from './js/engine.js';
@@ -231,15 +222,16 @@
 
     // Ora la care se deschid porțile (ora României; pe 31 octombrie e deja ora de iarnă, UTC+2).
     const PARTY = new Date('2026-10-31T20:30:00+02:00');
-    // Melodia din lobby (aceeași ca în joc), de la 4:40 la 11:01, în buclă.
-    const SONG = { id: 'x668K4TBUMQ', start: 280, end: 661 };
+    // Melodia balului: fișierul audio/teaser.mp3 e bucata 4:40–11:01 din melodie, cântată în buclă.
+    const SONG_FILE = 'audio/teaser.mp3';
+    const SONG_START = 280;  // 4:40, unde începe fișierul în melodia întreagă
     // Secunda din melodie unde începe partea dramatică: cade exact când apare titlul cu numărătoarea.
-    // Se poate încerca altă valoare din link, fără modificări: teaser?drama=5:52
+    // Se poate încerca altă valoare din link, fără modificări: teaser?drama=6:18
     const DRAMA_DEFAULT = 380;  // 6:20
     const DRAMA = (() => {
       const q = new URLSearchParams(location.search).get('drama');
       const m = q?.match(/^(?:(\d+):)?(\d+(?:\.\d+)?)$/);
-      return m ? Number(m[1] ?? 0) * 60 + Number(m[2]) : DRAMA_DEFAULT;
+      return (m ? Number(m[1] ?? 0) * 60 + Number(m[2]) : DRAMA_DEFAULT) - SONG_START;  // secunda în fișier
     })();
     // Cât durează filmul de la atingerea sigiliului până la titlu (secunde).
     const LEAD = 66;
@@ -249,76 +241,69 @@
     const guests = PLAYERS.filter((p) => p.id !== SECRET_GUEST);
 
 
-    // ---------- muzica de pe YouTube ----------
-    let yt = null, ytReady = false, wantMusic = false, muted = false, fadeTimer = null;
-    window.onYouTubeIframeAPIReady = () => {
-      yt = new YT.Player('yt', {
-        width: 224, height: 126, videoId: SONG.id,
-        playerVars: { controls: 1, playsinline: 1, rel: 0, start: SONG.start, disablekb: 1 },
-        events: {
-          onReady: () => { ytReady = true; if (wantMusic) startMusic(); },
-          onStateChange: (e) => {
-            if (e.data !== YT.PlayerState.PLAYING) return;
-            $('music').classList.remove('ask');
-            // Muzica a pornit mai târziu (încărcare, apăsare pe player): o aducem în pas cu filmul,
-            // cât încă e pe mut, apoi o lăsăm să crească încet.
-            const want = expectedPos();
-            if (want !== null && Math.abs(yt.getCurrentTime() - want) > 0.6) yt.seekTo(want, true);
-            if (!faded) { faded = true; setTimeout(() => fadeTo(MUSIC_VOL, 7000), 600); }
-          },
-        },
-      });
-    };
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-
-    // Volumul crește/scade lin (curbă în S), ca intrarea muzicii să nu se observe.
-    const MUSIC_VOL = 70;
-    let vol = 0, faded = false;
-    function fadeTo(target, ms, done) {
-      clearInterval(fadeTimer);
-      const from = vol, t0 = performance.now();
-      fadeTimer = setInterval(() => {
-        const k = Math.min(1, (performance.now() - t0) / ms);
-        vol = from + (target - from) * (0.5 - Math.cos(Math.PI * k) / 2);
-        if (!muted) yt.setVolume(Math.round(vol));
-        if (k >= 1) { clearInterval(fadeTimer); done?.(); }
-      }, 50);
+    // ---------- muzica ----------
+    // Fișierul se încarcă de cum se deschide pagina. Volumul trece printr-un GainNode (Web Audio),
+    // singurul fel în care fade-in-ul merge și pe iPhone.
+    const MUSIC_VOL = 0.8;
+    const song = new Audio(SONG_FILE);
+    song.preload = 'auto';
+    song.loop = true;
+    song.setAttribute('playsinline', '');
+    let actx = null, gain = null, muted = false, faded = false;
+    function audioGraph() {
+      if (actx) return;
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      gain = actx.createGain();
+      gain.gain.value = 0;
+      actx.createMediaElementSource(song).connect(gain).connect(actx.destination);
     }
-    // Sare în melodie pe ascuns: scade volumul, sare, apoi îl ridică la loc.
-    function quietSeek(t, upMs = 4000) { fadeTo(0, 500, () => { yt.seekTo(t, true); fadeTo(MUSIC_VOL, upMs); }); }
+    // Volum lin, în curbă S (fără salt la început sau la final).
+    function fadeTo(target, seconds) {
+      if (!gain) return;
+      const g = gain.gain, now = actx.currentTime, from = g.value;
+      g.cancelScheduledValues(now);
+      const curve = Float32Array.from({ length: 64 }, (_, i) => from + (target - from) * (0.5 - Math.cos(Math.PI * i / 63) / 2));
+      g.setValueCurveAtTime(curve, now, Math.max(0.05, seconds));
+    }
+    const level = () => (muted ? 0 : MUSIC_VOL);
     // Unde ar trebui să fie melodia acum, ca partea dramatică să cadă pe titlu (null după final).
     let filmStart = null;
     const expectedPos = () => (filmStart === null ? null : Math.max(0, DRAMA - LEAD + (performance.now() - filmStart) / 1000));
-    const playing = () => ytReady && yt.getPlayerState?.() === YT.PlayerState.PLAYING;
+    const playing = () => Boolean(actx) && !song.paused;
+    // Sare în melodie pe ascuns: volumul coboară, sare, apoi urcă la loc.
+    function quietSeek(t, up = 4) { fadeTo(0, 0.4); setTimeout(() => { song.currentTime = t; fadeTo(level(), up); }, 450); }
     // Pe bubuitura titlului: dacă melodia a luat-o înainte sau a rămas în urmă, sare fix la partea dramatică.
     function hitDrama() {
       filmStart = null;
-      if (playing() && Math.abs(yt.getCurrentTime() - DRAMA) > 0.3) yt.seekTo(DRAMA, true);
+      if (playing() && Math.abs(song.currentTime - DRAMA) > 0.25) song.currentTime = DRAMA;
     }
     function startMusic() {
-      wantMusic = true;
-      if (!ytReady) return;
-      const want = expectedPos() ?? SONG.start;
-      yt.unMute();
-      if (yt.getPlayerState() !== YT.PlayerState.PLAYING) { clearInterval(fadeTimer); vol = 0; faded = false; yt.setVolume(0); yt.seekTo(want, true); yt.playVideo(); }
-      else if (Math.abs(yt.getCurrentTime() - want) > 0.6) quietSeek(want);
-      // Dacă telefonul blochează pornirea automată, arătăm playerul ca să fie apăsat direct.
-      setTimeout(() => { if (yt.getPlayerState() !== YT.PlayerState.PLAYING && !muted) $('music').classList.add('ask'); }, 3500);
+      audioGraph();
+      actx.resume?.();
+      faded = false;
+      gain.gain.cancelScheduledValues(actx.currentTime);
+      gain.gain.value = 0;
+      song.currentTime = expectedPos() ?? 0;
+      song.play().catch(() => {});
     }
-    // Bucla între 4:40 și 11:01, cu trecere lină.
+    // Când melodia chiar cântă (după încărcare): se aliniază la film, încă pe mut, apoi crește discret.
+    song.addEventListener('playing', () => {
+      const want = expectedPos();
+      if (want !== null && Math.abs(song.currentTime - want) > 0.25) song.currentTime = want;
+      if (!faded) { faded = true; setTimeout(() => fadeTo(level(), 7), 250); }
+    });
+    // Bucla 11:01 → 4:40: coboară lin înainte de capăt și urcă lin după reluare.
     let looping = false;
-    setInterval(() => {
-      if (!ytReady || yt.getPlayerState?.() !== YT.PlayerState.PLAYING) return;
-      if (yt.getCurrentTime() >= SONG.end - 1 && !looping) { looping = true; quietSeek(SONG.start, 5000); setTimeout(() => { looping = false; }, 3000); }
-    }, 500);
-    $('music-close').onclick = () => $('music').classList.remove('ask');
+    song.addEventListener('timeupdate', () => {
+      if (!faded || !song.duration) return;
+      if (!looping && song.currentTime > song.duration - 1.6) { looping = true; fadeTo(0, 1.4); }
+      else if (looping && song.currentTime < 2) { looping = false; fadeTo(level(), 4); }
+    });
     $('mute').onclick = () => {
       muted = !muted;
       $('mute').textContent = muted ? '🔇' : '🔊';
       sfx.setMuted(muted);
-      if (ytReady) { if (muted) yt.mute(); else { yt.unMute(); yt.setVolume(Math.round(vol)); if (yt.getPlayerState() !== YT.PlayerState.PLAYING) yt.playVideo(); } }
+      if (faded) fadeTo(level(), 0.3);
     };
 
     // ---------- lumânările ----------
