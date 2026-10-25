@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0507">
+  <title>Balul Contelui – Regulamentul</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .rules { max-width: 760px; }
+    .rules h1 { text-align: center; margin-top: 10px; }
+    .rules .sub { text-align: center; color: var(--muted); font-style: italic; margin-top: -6px; }
+    .rules ol, .rules ul { padding-left: 22px; }
+    .rules li { margin: 7px 0; line-height: 1.5; }
+    .rules .goal { font-size: 1.12rem; text-align: center; }
+    .rules .goal b { color: var(--gold-hi); }
+    .rules table { width: 100%; border-collapse: collapse; font-size: 0.98rem; }
+    .rules th, .rules td { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: center; }
+    .rules th:first-child, .rules td:first-child { text-align: left; }
+    .rules tr.hl td { color: var(--gold-hi); font-weight: 700; }
+    .rules .role { padding: 9px 0; border-top: 1px solid var(--line); }
+    .rules .role:first-of-type { border-top: 0; }
+    .rules .role b { color: var(--gold-hi); }
+    .rules .evil .role b { color: #e05a6a; }
+    .rules .role p { margin: 3px 0 0; }
+    .rules .tag { font-size: 0.85rem; color: var(--muted); font-style: italic; }
+    .rules .toc { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 14px 0; }
+    .rules .toc a { text-decoration: none; padding: 5px 10px; border: 1px solid var(--gold-dim); border-radius: 3px; font-size: 0.95rem; }
+    .rules .example { border-left: 3px solid var(--velvet); padding: 6px 12px; background: rgba(12, 5, 7, 0.6); font-style: italic; }
+    @media print {
+      body { background: #fff !important; color: #111; font-size: 11pt; }
+      .card { box-shadow: none !important; background: #fff !important; border: 1px solid #999 !important; break-inside: avoid; padding: 10px 14px; margin: 8px 0; }
+      .card::before, .toc, .no-print { display: none !important; }
+      h1, h2, h3, .rules .role b, .rules tr.hl td { color: #6a0710 !important; text-shadow: none !important; }
+      .rules .evil .role b { color: #6a0710 !important; }
+      .muted, .rules .tag, .rules .sub { color: #555 !important; }
+      .rules .example { background: #f4f0ea; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap rules">
+    <h1><span class="blood-text">Balul Contelui</span></h1>
+    <p class="sub">Regulamentul jocului · o noapte la Castelul Bran</p>
+
+    <nav class="toc">
+      <a href="#scop">Scopul</a><a href="#seara">Cum decurge</a><a href="#vot">Votul</a>
+      <a href="#moarte">Moartea</a><a href="#minciuni">Minciuni</a><a href="#personaje">Personajele</a><a href="#aur">Regulile de aur</a>
+    </nav>
+
+    <section class="card" id="scop">
+      <h2>🕯️ Scopul</h2>
+      <p class="goal"><b>Contele Dracula</b> s-a ascuns printre oaspeți, ajutat de <b>Slujitorii</b> lui.</p>
+      <ul>
+        <li><b>Binele</b> câștigă dacă <b>Contele moare</b> (executat la vot sau lovit de țărușul lui Van Helsing).</li>
+        <li><b>Răul</b> câștigă dacă rămân <b>doar doi jucători în viață</b>.</li>
+        <li>Fiecare are un rol secret, pe telefon. <b>Nu toate personajele de pe listă sunt în joc</b>: unele lipsesc mereu, iar oricine poate pretinde că le are.</li>
+      </ul>
+      <h3>Câte personaje intră în joc</h3>
+      <table id="dist"></table>
+      <p class="muted">La 7 jucători sau mai mulți, răii se cunosc între ei, iar Contele primește 3 roluri-paravan, adică roluri care sigur nu sunt în joc.</p>
+    </section>
+
+    <section class="card" id="seara">
+      <h2>🌑 Cum decurge seara</h2>
+      <ol>
+        <li><b>Noaptea</b> (1–2 minute, în liniște): fiecare apasă pe telefon. Cine are o abilitate o folosește, iar toți fac un <b>pariu</b> despre cine e Contele. În prima noapte Contele nu ucide.</li>
+        <li><b>Dimineața</b>: proiectorul anunță cine a murit și îi arată testamentul. Informațiile apar pe telefonul fiecăruia, la „Ce știi”.</li>
+        <li><b>Timpul liber</b> (~20–25 minute): petrecere. Vorbiți în șoaptă, faceți alianțe, comparați informațiile sau mințiți.</li>
+        <li><b>Adunarea</b>, la proiector: <b>acuzațiile</b> (nominalizările), apărarea și votul.</li>
+        <li>La sfârșitul zilei, cel aflat <b>pe butuc</b> e <b>executat</b>. Apoi vine o nouă noapte.</li>
+      </ol>
+      <p class="muted">Gazda poate pune jocul pe <b>pauză</b> oricând, de exemplu dacă cineva iese din cameră.</p>
+    </section>
+
+    <section class="card" id="vot">
+      <h2>⚖️ Nominalizarea și votul</h2>
+      <ul>
+        <li>Oricine e în viață poate <b>nominaliza o singură dată pe zi</b>, din telefon.</li>
+        <li>Fiecare poate fi nominalizat <b>o singură dată pe zi</b>. Morții nu pot fi nominalizați.</li>
+        <li>După nominalizare urmează <b>un minut de acuzare și apărare</b>, apoi <b>votul public</b>: toți votează odată, pe telefon, <b>DA</b> sau <b>NU</b>. Proiectorul arată cine cum a votat.</li>
+        <li>Poți vota la orice nominalizare, chiar și când ești tu cel nominalizat.</li>
+        <li>Ca să ajungă <b>pe butuc</b>, cineva are nevoie de <b>cel puțin jumătate din voturile celor vii</b>, și de mai multe voturi decât cel aflat deja pe butuc.</li>
+        <li>La <b>egalitate</b> cu cel de pe butuc, nu mai rămâne nimeni pe butuc în ziua aceea.</li>
+        <li>O zi <b>fără execuție</b> e o zi câștigată pentru Conte, fiindcă el ucide în fiecare noapte.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="moarte">
+      <h2>👻 Moartea</h2>
+      <ul>
+        <li>Rolul celor morți <b>rămâne secret</b> până la final, fie că au fost uciși noaptea, fie executați.</li>
+        <li><b>Fantomele pot vorbi</b> în continuare, dar nu mai au abilitate și nu mai pot nominaliza.</li>
+        <li>Fiecare fantomă are <b>un singur vot</b> pentru tot restul jocului. Odată folosit, nu mai poate vota.</li>
+        <li>Pe telefon îți poți scrie <b>testamentul</b>: apare pe proiector când mori.</li>
+      </ul>
+    </section>
+
+    <section class="card" id="minciuni">
+      <h2>🎭 Minciuni și informații false</h2>
+      <ul>
+        <li><b>Poți minți</b> oricând despre rolul tău și despre ce ai aflat. Și cei buni pot minți, dacă vor.</li>
+        <li><b>Contele</b> se ascunde după unul din cele 3 roluri-paravan pe care le primește.</li>
+        <li><b>Vrăjitoarea</b> otrăvește pe cineva în fiecare noapte: informația lui poate fi falsă, fără ca el să știe.</li>
+        <li><b>Bețivul</b> crede că e un Sătean (care nu e în joc), dar abilitatea lui nu merge și informațiile lui pot fi false.</li>
+        <li><b>Sihastrul</b> și <b>Vizitiul</b> pot apărea altfel decât sunt în fața abilităților celorlalți.</li>
+        <li><b>Țărușul</b> îl poate folosi oricine, o dată în tot jocul, la adunare. Doar Van Helsing adevărat îl poate ucide pe Conte. Pentru ceilalți nu se întâmplă nimic, așa că și răul se poate da drept Van Helsing.</li>
+      </ul>
+      <p class="example">Dacă doi jucători pretind același rol, unul sigur minte: rolurile sunt unice, iar nici Bețivul nu are un rol care chiar e în joc.</p>
+    </section>
+
+    <section class="card" id="personaje">
+      <h2>📖 Personajele posibile</h2>
+      <div id="roles"></div>
+    </section>
+
+    <section class="card" id="aur">
+      <h2>✠ Regulile de aur</h2>
+      <ul>
+        <li><b>Nu-ți arăta telefonul nimănui</b> și nu te uita la telefonul altcuiva.</li>
+        <li>Telefonul spune adevărul despre <b>rolul tău</b>; restul e despre încredere.</li>
+        <li>Binele câștigă prin <b>coordonare</b>: comparați informațiile și votați împreună.</li>
+        <li>Răul câștigă prin <b>îndoială</b>: o poveste coerentă, spusă cu încredere.</li>
+        <li>Ce s-a întâmplat la bal rămâne la bal. 🦇</li>
+      </ul>
+    </section>
+
+    <p class="center no-print"><a class="btn ghost" href="play">← Înapoi la joc</a> <button class="btn small ghost" onclick="print()" style="margin-top:10px">🖨️ Printează / salvează PDF</button></p>
+  </main>
+
+  <script type="module">
+    import { ROLES, TYPES, DISTRIBUTION } from './js/engine.js';
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // Tabelul cu personajele din joc, după numărul de jucători.
+    const rows = [5, 6, 7, 8, 9, 10, 11, 12].map((n) => {
+      const [tf, os, mn, dm] = DISTRIBUTION[n];
+      return `<tr class="${n === 11 || n === 12 ? 'hl' : ''}"><td>${n} jucători</td><td>${tf}</td><td>${os}</td><td>${mn}</td><td>${dm}</td></tr>`;
+    }).join('');
+    document.getElementById('dist').innerHTML = `<tr><th></th><th>Săteni</th><th>Străini</th><th>Slujitori</th><th>Conte</th></tr>${rows}`;
+
+    // Personajele, luate direct din regulile aplicației (sunt mereu la zi).
+    const groups = [
+      ['demon', '🧛 Contele', 'Tabăra răului'],
+      ['minion', '🦇 Slujitorii', 'Tabăra răului: îl ajută pe Conte'],
+      ['townsfolk', '🕯️ Sătenii', 'Tabăra binelui: au abilități utile'],
+      ['outsider', '🍷 Străinii', 'Tabăra binelui, dar abilitatea lor mai mult încurcă'],
+    ];
+    document.getElementById('roles').innerHTML = groups.map(([type, title, tag]) => {
+      const list = Object.values(ROLES).filter((r) => r.type === type);
+      const evil = TYPES[type].team === 'evil';
+      return `<div class="${evil ? 'evil' : 'good'}"><h3>${title} <span class="tag">${tag}</span></h3>${list.map((r) => `
+        <div class="role"><b>${r.emoji} ${esc(r.name)}</b><p>${esc(r.card)}</p></div>`).join('')}</div>`;
+    }).join('');
+  </script>
+</body>
+</html>
