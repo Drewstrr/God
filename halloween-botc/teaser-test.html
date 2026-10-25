@@ -202,7 +202,7 @@
     <div class="who">Ai fost invitat.</div>
     <div class="sound"><div><b>Dă volumul la maxim…</b><small>…până îți auzi bătăile fricoase ale inimii.</small></div></div>
     <div class="tap">Atinge sigiliul</div>
-    <div class="ver">TEST · v18</div>
+    <div class="ver">TEST · v19</div>
   </section>
 
   <section class="scene hidden" id="stage"><div class="row" id="row"></div></section>
@@ -276,9 +276,9 @@
       actx.createMediaElementSource(song).connect(gain).connect(actx.destination);
     }
     // Volum lin, în curbă S (fără salt la început sau la final).
-    function fadeTo(target, seconds) {
+    function fadeTo(target, seconds, start = null) {
       if (!gain) return;
-      const g = gain.gain, now = actx.currentTime, from = g.value;
+      const g = gain.gain, now = actx.currentTime, from = start ?? g.value;
       g.cancelScheduledValues(now);
       const curve = Float32Array.from({ length: 64 }, (_, i) => from + (target - from) * (0.5 - Math.cos(Math.PI * i / 63) / 2));
       g.setValueCurveAtTime(curve, now, Math.max(0.05, seconds));
@@ -368,7 +368,14 @@
       const token = ++run;
       reset();
       filmStart = performance.now();
-      if (playing()) quietSeek(expectedPos() + 0.5);
+      // „Revezi”: muzica tace instantaneu, sare la începutul filmului și intră din nou lin, ca prima dată.
+      if (playing()) {
+        const g = gain.gain, now = actx.currentTime;
+        g.cancelScheduledValues(now);
+        g.setValueAtTime(0, now);
+        song.currentTime = expectedPos();
+        setTimeout(() => fadeTo(level(), 7, 0), 250);
+      }
       $('skip').classList.toggle('hidden', !replay);
       try {
         // Întuneric și bătăi de inimă: cât omul își mai dă volumul tare, filmul a început deja.
