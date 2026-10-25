@@ -19,7 +19,6 @@
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
     import { startHost } from './js/game-host.js';
     import { gen, inLineup } from './js/engine.js';
-    import { speak, setVoice, hush } from './js/narrator.js';
     import * as sfx from './js/sfx.js';
     import { YOUTUBE_MUSIC } from './js/music.js';
     import { candleSVG, animateFlames } from './js/candles.js';
@@ -473,8 +472,8 @@
       at(m, 0, (late) => { if (!late) sfx.bell(0, 65.4, 7, 0.55); });
       at(m, 2.4, (late) => { if (!late) sfx.bell(0, 65.4, 7, 0.45); });
       at(m, 4.8, (late) => { if (!late) sfx.bell(0, 61.7, 8, 0.5); });
-      at(m, 1.2, (late) => { if (m.dawnAt + 7500 > serverNow()) { dawnText('Castelul se trezește…'); if (!late) speak('Castelul se trezește.'); } });
-      at(m, 4.4, (late) => { if (m.dawnAt + 7500 > serverNow()) { dawnText('Dar nu toată lumea.'); if (!late) speak('Dar nu toată lumea.'); } });
+      at(m, 1.2, (late) => { if (m.dawnAt + 7500 > serverNow()) { dawnText('Castelul se trezește…'); } });
+      at(m, 4.4, (late) => { if (m.dawnAt + 7500 > serverNow()) { dawnText('Dar nu toată lumea.'); } });
       // Inima bate tot mai repede până la deznodământ.
       const beatUntil = m.dawnAt + m.act3 * 1000;
       let gap = 1250;
@@ -508,7 +507,7 @@
       if (!deadIds.length) {
         at(m, m.act3, (late) => {
           dawnText('Toată lumea s-a trezit… <i>de data asta</i>.');
-          if (!late) { sfx.dawn(); speak('Toată lumea s-a trezit. De data asta.'); }
+          if (!late) sfx.dawn();
         });
       }
       (m.deaths ?? []).forEach((d, i) => {
@@ -531,7 +530,6 @@
         at(m, t0 + 5, (late) => {
           const el = document.querySelector('.mourn-card .m-epitaph');
           if (el) el.textContent = `„${d.epitaph}”`;
-          if (!late) speak(`${d.name}. ${d.epitaph}`);
         });
         if (d.testament) {
           at(m, t0 + 10.5, (late) => {
@@ -542,7 +540,6 @@
             let k = 0;
             const type = () => { if (k <= text.length && document.body.contains(el)) { el.textContent = text.slice(0, k++); dawnTimers.push(setTimeout(type, 45)); } };
             type();
-            speak(`Ultimele cuvinte: ${d.testament}`);
           });
         }
         at(m, t0 + 19.5, () => { const el = document.querySelector('.mourn-card .m-silence'); if (el) el.textContent = '🕯️ Un moment de tăcere'; });
@@ -580,10 +577,10 @@
       const head = `<div class="nom-head"><b>${esc(c.byName)}</b> ${gen(c.target, 'îl', 'o')} nominalizează pe <b class="squid-pink">${esc(c.targetName)}</b></div>`;
       if (c.stage === 'defense') {
         box.innerHTML = `<div class="nom-box">${head}<p class="lead">🗣️ Acuzare și apărare</p>${timer('', c.endsAt)}</div>`;
-        if (fresh) { sfx.bell(0, 196, 3, 0.4); speak(`${c.byName} ${gen(c.target, 'îl', 'o')} acuză pe ${c.targetName}.`); }
+        if (fresh) { sfx.bell(0, 196, 3, 0.4); }
       } else if (c.stage === 'voting') {
         box.innerHTML = `<div class="nom-box">${head}<p class="lead">✠ <b>Votați acum pe telefon!</b></p>${timer('', c.endsAt)}<p class="lead voted">${c.voted ?? 0} au votat</p></div>`;
-        if (fresh) { sfx.sessionBell(); speak('Votați acum.'); }
+        if (fresh) { sfx.sessionBell(); }
       } else if (c.stage === 'reveal') {
         const rv = c.reveal ?? { items: [] };
         box.innerHTML = `<div class="nom-box">${head}<div class="vote-chips">${rv.items.map((it) => `<span class="chip-v ${it.dead ? 'dead' : ''}" data-v="${it.id}">${esc(it.name)}${it.dead ? ' 👻' : ''}</span>`).join('')}</div>
@@ -601,7 +598,6 @@
           const res = box.querySelector('#nom-result');
           if (res) res.innerHTML = resultText;
           sfx.verdict();
-          speak(res?.textContent ?? '');
         }, 1300 + rv.items.length * 600));
       }
       fitStage();
@@ -617,14 +613,12 @@
       const el = document.createElement('div');
       el.className = 'slay-overlay';
       el.innerHTML = `<div><div class="slay-a">🗡️ <b>${esc(sl.byName)}</b> înfige țărușul în <b>${esc(sl.targetName)}</b>…</div><div class="slay-b"></div></div>`;
-      speak(`${sl.byName} înfige țărușul în ${sl.targetName}.`);
       document.body.appendChild(el);
       sfx.duckMusic(8);
       sfx.whoosh(0);
       setTimeout(() => {
         el.querySelector('.slay-b').innerHTML = sl.hit ? `💀 <b>${esc(sl.targetName)}</b> se prăbușește!${sl.testament ? `<div class="testament">„${esc(sl.testament)}”</div>` : ''}` : '…nimic nu se întâmplă.';
         if (sl.hit) sfx.death(); else sfx.bell(0, 110, 3, 0.4);
-        speak(sl.hit ? `${sl.targetName} se prăbușește.` : 'Nimic nu se întâmplă.');
       }, 3000);
       setTimeout(() => el.classList.add('leaving'), 7500);
       setTimeout(() => el.remove(), 8700);
@@ -697,7 +691,6 @@
       sfx.setMusic(pub.music !== false);
       sfx.setVolume((pub.volume ?? 100) / 100);
       sfx.setMusicVolume((pub.musicVolume ?? 100) / 100);
-      setVoice(pub.voice !== false && !pub.muted);
       if (phase === 'morning' && lastPhase === 'morning') return; // nu restartăm animația
       if (phase === 'end' && lastPhase === 'end' && pub.endStage === lastEndStage) return;
       // Ziua: redesenăm doar când se schimbă ceva important; altfel actualizăm nominalizarea curentă.
@@ -729,7 +722,6 @@
       if (phase === 'execution' && previous === 'day' && pub.execution?.name) {
         // Ceremonia întâi, apoi textul.
         stage.innerHTML = '';
-        speak(`${pub.execution.name} a fost ${gen(pub.execution.id, 'executat', 'executată')}.`);
         ceremony(pub.execution.name, `a fost ${gen(pub.execution.id, 'executat', 'executată')}`).then(() => { if (lastPhase === 'execution') stage.innerHTML = views.execution(); });
         return;
       }
@@ -740,8 +732,8 @@
       if (phase === 'end' && stageChanged && previous === 'end') endStageEffects(pub.endStage);
       if (phase === 'morning') playMorning();
       if (phase === 'end' && previous && previous !== 'end') {
-        if (pub.winner === 'evil') { bleed(); sfx.evilWins(); setTimeout(() => speak('Răul a învins. Castelul Bran aparține acum Contelui.'), 2500); }
-        else { triumph(); sfx.goodWins(); setTimeout(() => speak('Binele a învins. Contele a fost nimicit.'), 2500); }
+        if (pub.winner === 'evil') { bleed(); sfx.evilWins(); }
+        else { triumph(); sfx.goodWins(); }
       }
       if (phase === 'end' && pub.winner === 'evil' && !document.querySelector('.blood-canvas')) bleed();
       if (phase === 'end' && pub.winner === 'good' && !document.querySelector('.triumph-layer')) triumph();

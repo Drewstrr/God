@@ -815,3 +815,26 @@ body.mourning #dawn-candles .candle:not(.victim), body.mourning .dawn-text { fil
 
 body.dark-night { min-height: 100vh; }
 html:has(body.dark-night) { background: #000; }
+/* Cărțile cu rolurile de la final: același chenar auriu cu ornamente ca restul jocului */
+.role-tile {
+  border: 1px solid var(--gold);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(42, 16, 21, 0.95), rgba(20, 8, 11, 0.97));
+  box-shadow: inset 0 0 0 3px rgba(10, 5, 7, 0.9), inset 0 0 0 4px var(--gold-dim), inset 0 0 30px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.6);
+  padding: 2.4vh 1.2vw;
+}
+.role-tile::before {
+  content: ''; position: absolute; inset: 5px; pointer-events: none;
+  background: var(--orn-tl) top left / 22px no-repeat, var(--orn-tr) top right / 22px no-repeat,
+              var(--orn-bl) bottom left / 22px no-repeat, var(--orn-br) bottom right / 22px no-repeat;
+  opacity: 0.9;
+}
+.role-tile.evil { border-color: #c9303f; box-shadow: inset 0 0 0 3px rgba(10, 5, 7, 0.9), inset 0 0 0 4px rgba(201, 48, 63, 0.55), 0 0 24px rgba(179, 18, 46, 0.5); }
+.role-tile .who { font-family: 'Blackwood Gothic', Georgia, serif; color: var(--gold-hi); }
+.role-tile .rip { right: 1.4vw; top: 1.2vh; z-index: 1; }
+
+/* Fereastra de confirmare din pagină (în locul celei a browserului) */
+.ask-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0, 0, 0, 0.72); }
+.ask-box { max-width: 460px; width: 100%; text-align: center; }
+.ask-box p { font-size: 1.15rem; margin: 6px 0 18px; }
+.ask-box .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }

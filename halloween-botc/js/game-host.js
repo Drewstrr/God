@@ -98,6 +98,7 @@ export async function startHost({ onPassive = () => {} } = {}) {
   // După o reîncărcare a proiectorului, reluăm de unde era.
   if (pub.phase === 'night' && state) watchNight();
   if (pub.phase === 'day' && state) resumeDay();
+  if (pub.phase === 'morning' && state?.winner) armFinish();
 }
 
 const run = serial(async (cmd) => {
@@ -105,7 +106,7 @@ const run = serial(async (cmd) => {
   const handlers = {
     fillBots, clearBots, start, firstNight, endNight, beginDay, startVoting, cancelNomination, endDayCmd,
     toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree,
-    adminRevive, adminKill, adminRestartNight, pause, resume,
+    adminRevive, adminKill, adminRestartNight, pause, resume, finishDawn,
   };
   await handlers[cmd?.type]?.(cmd);
 });
@@ -313,18 +314,21 @@ async function endNight(cmd = {}) {
     for (const m of msgs) patch[`private/${id}/inbox/n${keyBase}_${n++}`] = { night, text: m.text, kind: m.kind };
   }
   if (state.pendingRaven) patch[`private/${state.pendingRaven.id}/raven`] = { night, targets: names(GP().map((p) => p.id).filter((id) => id !== state.pendingRaven.id)) };
+  // Dimineața vine mereu cu ritualul ei, chiar dacă moartea din noaptea asta încheie jocul:
+  // întâi doliul pentru ultima victimă, apoi finalul (anunțat abia după ritual).
+  const morning = await dawnTimeline(night, report.deaths.map((d) => d.id));
   Object.assign(patch, {
-    'public/phase': state.winner ? 'end' : 'morning',
+    'public/phase': 'morning',
     'public/alive': state.alive,
     'public/ghostVote': state.ghostVote,
     'public/endsAt': null,
     'public/progress': null,
-    'public/winner': state.winner,
-    'public/morning': await dawnTimeline(night, report.deaths.map((d) => d.id)),
+    'public/winner': null,
+    'public/morning': morning,
   });
-  if (state.winner) Object.assign(patch, finalPatch());
   await update(r(), patch);
   await save();
+  if (state.winner) armFinish();
   const raven = state.pendingRaven?.id;
   if (raven && isBot(raven)) {
     const target = shuffle(aliveIds())[0];
@@ -405,8 +409,24 @@ function publicCurrent() {
 }
 
 // Ziua începe cu timp liber (petrecerea), apoi vine adunarea cu nominalizări și voturi.
+// Jocul s-a terminat noaptea: după ritualul dimineții trecem singuri la final.
+let finishTimer = null;
+function armFinish() {
+  clearTimeout(finishTimer);
+  const m = pub.morning;
+  const left = m?.dawnAt ? m.dawnAt + m.end * 1000 - serverNow() : 0;
+  finishTimer = setTimeout(() => run({ type: 'finishDawn' }), Math.max(0, left) + 1500);
+}
+async function finishDawn() {
+  if (!state?.winner || pub.phase !== 'morning') return;
+  clearTimeout(finishTimer);
+  await update(r(), { 'public/phase': 'end', 'public/winner': state.winner, ...finalPatch() });
+  await save();
+}
+
 async function beginDay(cmd = {}) {
   if (!state || pub.phase !== 'morning') return;
+  if (state.winner) return finishDawn();
   state = startDay(state);
   host.current = null;
   host.lastActivity = serverNow();
@@ -750,7 +770,7 @@ export const grimoireLines = () => (state ? grimoire(state) : []);
 
 async function reset() {
   stopActions?.(); stopActions = null;
-  clearTimeout(nightTimer); clearTimeout(dayTimer); clearInterval(botDayTimer); clearTimeout(freeTimer);
+  clearTimeout(nightTimer); clearTimeout(dayTimer); clearInterval(botDayTimer); clearTimeout(freeTimer); clearTimeout(finishTimer);
   state = null;
   host = { seen: {} };
   const patch = {

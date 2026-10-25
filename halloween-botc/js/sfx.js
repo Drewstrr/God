@@ -318,8 +318,40 @@ export function evilLaugh(delay = 0) {
 }
 
 // O cioară: 2–4 croncănituri aspre. distance: 0 = foarte aproape, 1 = departe. pan: -1 stânga … 1 dreapta.
+// Ciorile: dacă există audio/crow.mp3 (trecut în audio/list.json ca "crow"), se folosește înregistrarea reală;
+// altfel, croncănitul generat. Același fișier se aude aproape sau departe (mai încet, mai înfundat, în stânga/dreapta).
+let crowBuffer = null;
+let crowLoading = false;
+async function loadCrow() {
+  if (crowLoading || !ctx) return;
+  crowLoading = true;
+  try {
+    if (await hasFile('crow')) {
+      const res = await fetch(new URL('../audio/crow.mp3', import.meta.url));
+      crowBuffer = await ctx.decodeAudioData(await res.arrayBuffer());
+    }
+  } catch { crowBuffer = null; }
+}
+function crowFromFile(delay, distance, pan) {
+  const t = ctx.currentTime + delay;
+  const src = ctx.createBufferSource();
+  src.buffer = crowBuffer;
+  src.playbackRate.value = 0.92 + Math.random() * 0.16;
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 9000 - distance * 7000;
+  const g = ctx.createGain();
+  g.gain.value = 0.9 * (1 - distance * 0.75);
+  let node = src.connect(lp).connect(g);
+  if (ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; node = node.connect(p); }
+  node.connect(master);
+  src.start(t);
+}
+
 export function crow(delay = 0, { distance = 0.3, pan = 0 } = {}) {
   if (!ready()) return;
+  loadCrow();
+  if (crowBuffer) return crowFromFile(delay, distance, pan);
   const out = ctx.createGain();
   out.gain.value = 0.55 * (1 - distance * 0.8);
   const panner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;

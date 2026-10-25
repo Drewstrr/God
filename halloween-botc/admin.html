@@ -36,6 +36,7 @@
     import { sendCommand } from './js/game-host.js';
     import { ROLES, teamOf } from './js/engine.js';
     import { hashPin } from './js/pin-service.js';
+    import { ask } from './js/ask.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const KEY = 'blackwood-admin-open';
@@ -116,9 +117,9 @@
             </tr>`;
         }).join('');
         document.getElementById('rows').innerHTML = rows || '<tr><td class="muted">Jocul nu a început.</td></tr>';
-        document.querySelectorAll('#rows [data-cmd]').forEach((b) => b.addEventListener('click', () => {
+        document.querySelectorAll('#rows [data-cmd]').forEach((b) => b.addEventListener('click', async () => {
           const labels = { adminKill: 'marchezi mort pe', adminRevive: 'reînvii pe' };
-          if (!confirm(`Sigur ${labels[b.dataset.cmd]} ${name(b.dataset.id)}?`)) return;
+          if (!(await ask(`Sigur ${labels[b.dataset.cmd]} ${name(b.dataset.id)}?`))) return;
           b.disabled = true;
           sendCommand(b.dataset.cmd, { id: b.dataset.id });
         }));
@@ -135,8 +136,8 @@
         render();
       });
 
-      document.getElementById('restart-night').addEventListener('click', () => {
-        if (confirm('Repornești noaptea? Toate alegerile de până acum se șterg și toți aleg din nou.')) sendCommand('adminRestartNight');
+      document.getElementById('restart-night').addEventListener('click', async () => {
+        if (await ask('Repornești noaptea? Toate alegerile de până acum se șterg și toți aleg din nou.')) sendCommand('adminRestartNight');
       });
     }
   </script>

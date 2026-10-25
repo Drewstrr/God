@@ -20,7 +20,6 @@
         <p class="muted">Motorul rulează în pagina <a href="screen" target="_blank">Proiector</a>. Ține-o deschisă pe ecranul proiectorului.</p>
         <button class="btn small ghost" id="sound">🔊 Sunet proiector</button>
         <button class="btn small ghost" id="music">🎵 Muzică</button>
-        <button class="btn small ghost" id="voice">🗣️ Vocea naratorului</button>
         <label class="vol">🔊 Volum general <input type="range" id="volume" min="0" max="100" step="5"> <b id="volume-val"></b></label>
         <label class="vol">🎵 Volum muzică <input type="range" id="music-volume" min="0" max="100" step="5"> <b id="music-volume-val"></b></label>
       </div>
@@ -40,6 +39,7 @@
     import { r, onValue, set, requireEngineLogin, serverNow, showUpdateBanner } from './js/fb.js';
     showUpdateBanner();
     import { resetPin } from './js/pin-service.js';
+    import { ask } from './js/ask.js';
     import { sendCommand } from './js/game-host.js';
     import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION, gen, inLineup as inLineupFor } from './js/engine.js';
 
@@ -66,7 +66,7 @@
       </div>`).join('')}<div class="link-qr" id="link-qr" hidden></div>`;
     document.getElementById('links-btn').addEventListener('click', () => { linksBox.hidden = !linksBox.hidden; });
     linksBox.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '✓ Copiat'; } catch { prompt('Copiază linkul:', b.dataset.copy); }
+      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '✓ Copiat'; } catch { ask(`Copiază linkul de mai jos: ${b.dataset.copy}`, { yes: 'Am copiat', no: 'Închide' }); }
       setTimeout(() => { b.textContent = '📋 Copiază'; }, 1500);
     }));
     linksBox.querySelectorAll('[data-qr]').forEach((b) => b.addEventListener('click', () => {
@@ -194,7 +194,7 @@
         ? '<hr style="border-color:var(--line);margin:14px 0"><button class="btn small ghost" data-cmd="reset" data-confirm="Oprești jocul și începi de la zero? PIN-urile rămân.">🔄 Oprește și începe un joc nou</button>'
         : '');
       box.querySelectorAll('[data-cmd]').forEach((b) => b.addEventListener('click', async () => {
-        if (b.dataset.confirm && !confirm(b.dataset.confirm)) return;
+        if (b.dataset.confirm && !(await ask(b.dataset.confirm))) return;
         b.disabled = true;
         await sendCommand(b.dataset.cmd);
       }));
@@ -245,15 +245,15 @@
             </td>
           </tr>`;
       }).join('');
-      document.querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', () => {
+      document.querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', async () => {
         const name = pub.players[b.dataset.leave].name;
-        if (!confirm(`${name} părăsește castelul? Devine fantomă fără vot (rolul rămâne secret).`)) return;
+        if (!(await ask(`${name} părăsește castelul? Devine fantomă fără vot (rolul rămâne secret).`))) return;
         b.disabled = true;
         sendCommand('leave', { id: b.dataset.leave });
       }));
       document.querySelectorAll('[data-reset]').forEach((b) => b.addEventListener('click', async () => {
         const name = pub.players[b.dataset.reset].name;
-        if (!confirm(`Resetezi PIN-ul lui ${name}? Va trebui să-și aleagă unul nou.`)) return;
+        if (!(await ask(`Resetezi PIN-ul lui ${name}? Va trebui să-și aleagă unul nou.`))) return;
         b.disabled = true;
         await resetPin(b.dataset.reset);
       }));
@@ -272,14 +272,7 @@
       musicBtn.textContent = off ? '🎵 Muzică: OPRITĂ (apasă să pornești)' : '🎵 Muzică: PORNITĂ (apasă să oprești)';
     });
     musicBtn.addEventListener('click', () => set(r('public/music'), Boolean(musicBtn.dataset.off)));
-    // Vocea naratorului (vocea românească a MacBook-ului) pe proiector.
-    const voiceBtn = document.getElementById('voice');
-    onValue(r('public/voice'), (snap) => {
-      const off = snap.val() === false;
-      voiceBtn.dataset.off = off ? '1' : '';
-      voiceBtn.textContent = off ? '🗣️ Vocea naratorului: OPRITĂ (apasă să pornești)' : '🗣️ Vocea naratorului: PORNITĂ (apasă să oprești)';
-    });
-    voiceBtn.addEventListener('click', () => set(r('public/voice'), Boolean(voiceBtn.dataset.off)));
+
 
     // Glisoarele de volum: proiectorul se schimbă pe loc, cât tragi de ele.
     for (const [id, key] of [['volume', 'volume'], ['music-volume', 'musicVolume']]) {
