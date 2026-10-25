@@ -347,16 +347,13 @@
         $('stage').classList.add('dim');
         for (const t of ['Ghicitoarea vede prin întuneric.', 'Groparul ascultă morții.', 'Preotul veghează.', 'Vrăjitoarea otrăvește.', 'Mireasa așteaptă.', 'Van Helsing are un singur țăruș.']) {
           sfx.heartbeat(0, 0.25);
-          await say(t, token, { hold: 1500, cls: 'small' });
+          await say(t, token, { hold: 2900, cls: 'small' });
         }
+        // Liniște, fără text: lumânările se luminează și privirea fuge la ele. Abia apoi una se stinge.
         $('stage').classList.remove('dim');
-
-        // O lumânare se stinge, sincron cu suflul.
         $('line').classList.add('low');
-        const pool = guests;
-        const victim = candleOf(pool[Math.floor(Math.random() * pool.length)].id);
-        await say('În fiecare noapte, o lumânare se stinge.', token, { hold: 1700 });
-        await wait(400, token);
+        const victim = candleOf(guests[Math.floor(Math.random() * guests.length)].id);
+        await wait(3200, token);
         const heardIn = sfx.playFileAt('airblow', { volume: 1 });
         if (heardIn !== null) {
           await wait(heardIn + 30, token);
@@ -367,7 +364,8 @@
           await wait(900, token);
         }
         victim.dataset.state = 'dead'; victim.classList.remove('gust'); victim.classList.add('dark');
-        await wait(1300, token);
+        await wait(1600, token);
+        await say('În fiecare noapte, o lumânare se stinge.', token, { hold: 2600 });
 
         $('stage').classList.add('dim');
         await say('Nu vei ști pe cine să crezi.', token, { hold: 2400 });
