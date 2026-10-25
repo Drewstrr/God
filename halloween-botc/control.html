@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Panou</title>
-  <link rel="stylesheet" href="css/style.css?v=16">
+  <link rel="stylesheet" href="css/style.css?v=17">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body>
@@ -40,6 +40,7 @@
     showUpdateBanner();
     import { resetPin } from './js/pin-service.js';
     import { ask } from './js/ask.js';
+    import { INTRO } from './js/intro.js';
     import { sendCommand } from './js/game-host.js';
     import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION, gen, inLineup as inLineupFor } from './js/engine.js';
 
@@ -129,7 +130,7 @@
           ${lineupHtml()}
           <button class="btn" data-cmd="start" ${ready < players.length || !lineupReady() ? 'disabled' : ''}>▶️ Pornește jocul</button>`;
         case 'intro': return `
-          <p class="muted">Proiectorul arată regulile. Fiecare își citește rolul pe telefon.</p>
+          <p class="muted">Proiectorul rulează filmul de deschidere (~${INTRO.length} s), apoi arată regulile. După film, fiecare rupe sigiliul de pe telefon și își citește rolul.</p>
           <button class="btn" data-cmd="firstNight">🌑 Începe prima noapte</button>`;
         case 'night': return `
           <p class="lead" style="font-size:1.3rem">${pub.progress?.done ?? 0} / ${pub.progress?.total ?? 0} au ales · <span data-ends="${pub.endsAt ?? ''}"></span></p>
@@ -325,7 +326,7 @@
       const d = pub.day ?? {};
       switch (pub.phase) {
         case 'lobby': return '[data-cmd="start"]:not([disabled])';
-        case 'intro': return since > 25 ? '[data-cmd="firstNight"]' : null;
+        case 'intro': return since > INTRO.length + 25 ? '[data-cmd="firstNight"]' : null;
         case 'morning': return pub.morning?.dawnAt && serverNow() > pub.morning.dawnAt + pub.morning.end * 1000 ? '#begin-day' : null;
         case 'day':
           // Ziua o închei tu: îți amintim când nu s-a mai întâmplat nimic de un minut și jumătate.

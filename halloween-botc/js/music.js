@@ -1,13 +1,18 @@
-// Melodii de pe YouTube pentru anumite faze ale jocului (în locul muzicii generate).
-// start / end: secundele dintre care se cântă în buclă (4:40 = 280, 11:01 = 661).
+// Muzica fazelor cu melodie adevărată (în locul muzicii generate).
+//
+// Din fișier (audio/<nume>.mp3, trecut și în audio/list.json): merge fără internet și fără reclame,
+// intră și iese lin, iar când revine continuă de unde a rămas.
+// ball.mp3 = melodia balului, bucata 4:40–11:01, cântată în buclă.
+export const FILE_MUSIC = {
+  lobby: 'ball',   // cât intră oaspeții
+  free: 'ball',    // timpul liber dintre adunări (petrecerea)
+  end: 'ball',     // finalul: câștigătorii, rolurile, reluarea, titlurile
+};
+
+// De pe YouTube. start / end: secundele dintre care se cântă în buclă; fără end: până la final, apoi de la start.
 // Dacă YouTube nu merge (fără internet, videoclip blocat), se aude muzica generată a jocului.
-// Fără end: cântă până la finalul videoclipului, apoi reia de la start.
-const ballSong = { id: 'x668K4TBUMQ', start: 4 * 60 + 40, end: 11 * 60 + 1 };
 const debateSong = { id: 'pHJUQo6-2yE', start: 3 * 60 + 7 };
 
 export const YOUTUBE_MUSIC = {
-  lobby: ballSong,   // cât intră oaspeții
-  free: ballSong,          // timpul liber dintre adunări (petrecerea)
   day: debateSong,         // adunarea: nominalizări, voturi
-  end: ballSong,     // finalul: câștigătorii, rolurile, reluarea, titlurile
 };

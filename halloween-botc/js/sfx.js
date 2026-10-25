@@ -957,18 +957,43 @@ export async function playMusic(theme, options = {}) {
 
   if (await hasFile(theme)) {
     if (current !== mine) return;
-    const audio = new Audio(new URL(`../audio/${theme}.mp3`, import.meta.url));
-    audio.loop = true;
-    audio.volume = muted ? 0 : 0.45 * volume * musicVolume;
-    audio.play().catch(() => {});
-    mine.stop = () => {
-      let v = audio.volume;
-      const fade = setInterval(() => { v = Math.max(0, v - 0.05); audio.volume = v; if (!v) { clearInterval(fade); audio.pause(); } }, 80);
-    };
+    playFile(mine, theme);
     return;
   }
+  if (options.fallback && !THEMES[theme]) theme = options.fallback;
 
   mine.stop = startSynth(theme);
+}
+
+// Melodie din fișier, trecută prin magistrala muzicii (volumul din panou, „duck” la ceremonii).
+// Intră lin, iese lin, iar când revine continuă de unde a rămas (petrecerea nu o ia de la capăt).
+const FILE_LEVEL = 1.6;
+const fileTracks = {};
+function playFile(mine, theme) {
+  let t = fileTracks[theme];
+  if (!t) {
+    const audio = new Audio(new URL(`../audio/${theme}.mp3`, import.meta.url));
+    audio.loop = true;
+    audio.preload = 'auto';
+    const out = ctx.createGain();
+    out.gain.value = 0;
+    ctx.createMediaElementSource(audio).connect(out).connect(bus());
+    t = fileTracks[theme] = { audio, out, pauseTimer: null };
+  }
+  clearTimeout(t.pauseTimer);
+  const g = t.out.gain, now = ctx.currentTime;
+  g.cancelScheduledValues(now);
+  g.setValueAtTime(g.value, now);
+  g.linearRampToValueAtTime(FILE_LEVEL, now + 4);
+  t.audio.play().catch(() => {});
+  mine.resume = () => t.audio.play().catch(() => {});
+  mine.stop = () => {
+    const n = ctx.currentTime;
+    g.cancelScheduledValues(n);
+    g.setValueAtTime(g.value, n);
+    g.linearRampToValueAtTime(0, n + 2);
+    t.pauseTimer = setTimeout(() => t.audio.pause(), 2100);
+  };
 }
 
 // Pornește o temă generată și întoarce funcția care o stinge.

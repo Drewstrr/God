@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0709">
   <meta name="robots" content="noindex">
   <title>Balul Contelui</title>
-  <link rel="stylesheet" href="css/style.css?v=16">
+  <link rel="stylesheet" href="css/style.css?v=17">
 </head>
 <body>
   <main class="wrap" id="app">
@@ -18,6 +18,8 @@
       auth, r, currentUser, signInAnonymously, signOut, onValue, set, update, serverNow, reconnectOnWake, onConnection, APP_VERSION, reloadForVersion,
     } from './js/fb.js';
     import { ROLES, gen } from './js/engine.js';
+    import { sealSVG } from './js/seal.js';
+    import { INTRO } from './js/intro.js';
 
     reconnectOnWake();
     const net = document.createElement('div');
@@ -135,6 +137,7 @@
     }
 
     const alive = () => priv?.status?.alive !== false;
+    const sealed = () => !store(`seal-${pub.gameId}-${me}`);
     const canVoteNow = () => alive() || priv?.status?.ghostVote;
 
     function renderGame(force = false) {
@@ -142,7 +145,7 @@
       const phase = pub.phase ?? 'lobby';
       const night = phase === 'night' && priv?.night?.night === pub.round ? priv.night : null;
       const cur = pub.day?.current;
-      const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.day?.free, pub.endStage, Boolean(pub.script), panel, Boolean(pub.paused), pub.morning?.dawnAt]);
+      const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.day?.free, pub.endStage, Boolean(pub.script), panel, Boolean(pub.paused), pub.morning?.dawnAt, pub.introAt]);
       if (!force && sig === lastSig) return;
       lastSig = sig;
       guideOpen = document.querySelector('details.guide:not(.evil-tips)')?.open ?? guideOpen;
@@ -158,6 +161,7 @@
       lastWake = wake;
       if (night) return renderNight(night);
       if (dawnActive()) return renderDawn();
+      if (filmActive()) return renderFilmWait();
       renderMain(phase);
       const guide = document.querySelector('details.guide:not(.evil-tips)');
       if (guide) guide.open = guideOpen;
@@ -255,6 +259,25 @@
         <div class="targets">${(rv.targets ?? []).map((t) => `<button data-raven="${t.id}">${esc(t.name)}</button>`).join('')}</div></div>`;
     }
 
+    // Filmul de deschidere de pe proiector: telefonul așteaptă (rolul apare după film, sub sigiliu)
+    // și vibrează odată cu „Se ascunde printre voi”.
+    const filmActive = () => pub.phase === 'intro' && pub.introAt && serverNow() < pub.introAt + INTRO.length * 1000 && priv?.role && !priv?.sitOut;
+    let filmTimers = [];
+    function renderFilmWait() {
+      const name = priv?.name ?? players[me]?.name ?? me;
+      app.innerHTML = `
+        <h1 class="center">${esc(name)}</h1>
+        <div class="card center film-wait">
+          <p style="font-size:1.25rem">🎬 Privește proiectorul.</p>
+          <p class="muted">Rolul tău te așteaptă aici, sub sigiliul Contelui, imediat după film.</p>
+        </div>`;
+      filmTimers.forEach(clearTimeout);
+      filmTimers = [];
+      const gustIn = pub.introAt + INTRO.gust * 1000 - serverNow();
+      if (gustIn > 0) filmTimers.push(setTimeout(() => navigator.vibrate?.([60, 80, 60]), gustIn));
+      filmTimers.push(setTimeout(() => renderGame(true), pub.introAt + INTRO.length * 1000 - serverNow() + 300));
+    }
+
     function renderMain(phase) {
       const name = priv?.name ?? players[me]?.name ?? me;
       if (priv?.sitOut && phase !== 'lobby') {
@@ -306,7 +329,7 @@
         ${ravenCard()}
         ${dayActions()}
         <div class="card role-card" id="role">
-          <div class="hidden-role">✦ Atinge aici ca să-ți vezi rolul ✦</div>
+          <div class="hidden-role">${sealed() ? `<div class="seal-wrap"><div class="seal-half l">${sealSVG()}</div><div class="seal-half r">${sealSVG()}</div></div><div class="seal-hint">Rupe sigiliul Contelui</div>` : '✦ Atinge aici ca să-ți vezi rolul ✦'}</div>
           <div class="shown-role" hidden>
             <h2>${esc(priv.roleName)}</h2>
             <p class="muted">${TYPE_LABEL[priv.type] ?? ''} · ${priv.team === 'evil' ? '🩸 Tabăra răului' : '🕯️ Tabăra binelui'}</p>
@@ -336,7 +359,22 @@
         clearTimeout(hideTimer);
         if (on) hideTimer = setTimeout(() => reveal(false), 8000);
       };
-      role.addEventListener('click', () => reveal(role.querySelector('.shown-role').hidden));
+      role.addEventListener('click', () => {
+        // Prima dată rolul stă sub sigiliul de ceară: atingerea îl rupe, apoi apare rolul.
+        if (sealed()) {
+          if (role.classList.contains('breaking')) return;
+          role.classList.add('breaking');
+          navigator.vibrate?.([25, 35, 90]);
+          store(`seal-${pub.gameId}-${me}`, '1');
+          setTimeout(() => {
+            role.classList.remove('breaking');
+            role.querySelector('.hidden-role').textContent = '✦ Atinge aici ca să-ți vezi rolul ✦';
+            reveal(true);
+          }, 1100);
+          return;
+        }
+        reveal(role.querySelector('.shown-role').hidden);
+      });
       app.querySelector('#hide').addEventListener('click', curtain);
       app.querySelector('#logout').addEventListener('click', () => { if (confirm('Te deloghezi de pe acest telefon?')) logout(); });
       // Testamentul: păstrăm ce scrie jucătorul între redesenări.

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Proiector</title>
-  <link rel="stylesheet" href="css/style.css?v=16">
+  <link rel="stylesheet" href="css/style.css?v=17">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
@@ -20,7 +20,8 @@
     import { startHost } from './js/game-host.js';
     import { gen, inLineup } from './js/engine.js';
     import * as sfx from './js/sfx.js';
-    import { YOUTUBE_MUSIC } from './js/music.js';
+    import { YOUTUBE_MUSIC, FILE_MUSIC } from './js/music.js';
+    import { INTRO } from './js/intro.js';
     import { candleSVG, animateFlames } from './js/candles.js';
     import { smokeAt } from './js/smoke.js';
     import { startBlood, stopBlood } from './js/blood.js';
@@ -639,18 +640,92 @@
       setTimeout(() => el.remove(), 8700);
     }
 
+    // ---------- filmul de deschidere ----------
+    // Rulează peste regulile din „intro”, cu timpii socotiți de la public/introAt (ca telefoanele să vibreze odată cu el).
+    // Dacă proiectorul se reîncarcă în timpul filmului, nu îl mai reia: arată direct regulile.
+    let filmTimers = [];
+    function stopIntroFilm() {
+      filmTimers.forEach(clearTimeout);
+      filmTimers = [];
+      document.querySelector('.cine')?.remove();
+    }
+    function playIntroFilm() {
+      stopIntroFilm();
+      const t0 = pub.introAt;
+      if (!t0 || serverNow() - t0 > 4000) return;
+      const seats = (pub.seats ?? Object.keys(pub.players ?? {})).map((id) => ({ id, name: pub.players?.[id]?.name ?? id }));
+      const film = document.createElement('div');
+      film.className = 'cine';
+      film.innerHTML = `<div class="c-grain"></div><div class="c-vignette"></div><div class="c-flash"></div>
+        <div class="c-stage"><div class="c-row">${seats.map((p, i) => candleSVG(p.name, { cls: 'waiting', label: esc(p.name), index: i })).join('')}</div></div>
+        <div class="c-line"><p></p></div>
+        <div class="c-title"><h1>Balul Contelui</h1><p>O noapte. Un Conte. Nicio încredere.</p></div>`;
+      document.body.appendChild(film);
+      const $f = (sel) => film.querySelector(sel);
+      const candlesEls = [...film.querySelectorAll('.candle')];
+      const at = (sec, fn) => { const ms = t0 + sec * 1000 - serverNow(); if (ms >= 0) filmTimers.push(setTimeout(fn, ms)); };
+      // O replică: apare lin, stă `hold` secunde, apoi dispare într-o secundă.
+      const say = (sec, text, hold, cls = '') => {
+        at(sec, () => { const p = $f('.c-line p'); p.className = cls; p.textContent = text; void p.offsetWidth; p.classList.add('show'); });
+        at(sec + hold, () => $f('.c-line p').classList.remove('show'));
+      };
+      const stage = $f('.c-stage'), line = $f('.c-line');
+      sfx.playMusic(null);
+
+      at(0.5, () => sfx.churchBell(0, 110, 0.55));
+      say(0.5, '31 octombrie 2026.', 2.8);
+      say(4.3, 'Contele Dracula dă un bal.', 2.6);
+      at(7.6, () => sfx.churchBell(0, 98, 0.4));
+      say(7.9, 'Oaspeții au sosit.', 2);
+      // Lumânările celor prezenți se aprind una câte una, pe bătăile inimii.
+      at(8.6, () => { line.classList.add('low'); candlesEls.forEach((c) => c.classList.add('seen')); });
+      const step = Math.min(0.62, 7 / Math.max(1, candlesEls.length));
+      candlesEls.forEach((c, i) => at(9 + i * step, () => { c.classList.remove('waiting'); sfx.heartbeat(0, 0.35); }));
+      say(16.5, 'Contele nu vine singur.', 2.2);
+      at(INTRO.gust, () => { candlesEls.forEach((c) => c.classList.add('gust')); sfx.crow(0, { distance: 0.25, pan: -0.3 }); });
+      say(INTRO.gust, 'Se ascunde printre voi.', 2.6, 'red');
+      at(INTRO.gust + 2.6, () => candlesEls.forEach((c) => c.classList.remove('gust')));
+      at(23.2, () => stage.classList.add('dim'));
+      ['Ghicitoarea vede prin întuneric.', 'Groparul ascultă morții.', 'Preotul veghează.', 'Vrăjitoarea otrăvește.', 'Mireasa așteaptă.', 'Van Helsing are un singur țăruș.']
+        .forEach((t, i) => { at(23.6 + i * 3.9, () => sfx.heartbeat(0, 0.25)); say(23.6 + i * 3.9, t, 2.9, 'small'); });
+      // Liniște, privirea fuge la lumânări… o rafală le apleacă pe toate, aproape se sting, apoi își revin.
+      at(47.6, () => stage.classList.remove('dim'));
+      at(50.8, () => {
+        const heard = sfx.playFileAt('airblow', { volume: 1 });
+        const go = () => candlesEls.forEach((c) => { c.classList.add('gust'); c.dataset.state = 'dying'; });
+        if (heard === null) { sfx.blow(); go(); } else setTimeout(go, heard + 30);
+        setTimeout(() => candlesEls.forEach((c) => { c.classList.remove('gust'); c.dataset.state = 'normal'; }), 1400);
+      });
+      say(53, 'În fiecare noapte, o lumânare se va stinge.', 2.6);
+      at(56.6, () => stage.classList.add('dim'));
+      say(56.6, 'Nu vei ști pe cine să crezi.', 2.4);
+      say(59.5, 'Nici măcar pe tine.', 2.6, 'red');
+      at(62.6, () => stage.classList.add('gone'));
+      at(64.2, () => {
+        sfx.doomHit(0);
+        $f('.c-flash').classList.add('on'); setTimeout(() => $f('.c-flash')?.classList.remove('on'), 90);
+        film.classList.add('quake');
+        $f('.c-title').classList.add('show');
+      });
+      // Filmul se stinge, rămân regulile; abia acum pornește muzica introducerii.
+      at(INTRO.length - 2, () => film.classList.add('leaving'));
+      at(INTRO.length, () => { film.remove(); if (lastPhase === 'intro') { sfx.playMusic(null); playThemeFor('intro'); } });
+    }
+
     let lastPhase = null;
     let lastEndStage = null;
     let dayKey = null;
     const THEME = { lobby: 'waltz', intro: 'organ', night: 'night', morning: null, free: 'waltz', day: 'ticking', execution: 'somber' };
     function playThemeFor(phase) {
+      if (document.querySelector('.cine')) return;  // filmul de deschidere își pornește singur muzica la final
       // Timpul liber e petrecere: are muzica lui (melodia balului), adunarea are melodia dezbaterii.
       if (phase === 'day' && pub.day?.free) phase = 'free';
       const generated = phase === 'end' ? (pub.winner === 'good' ? 'glory' : 'doom') : THEME[phase];
-      // Fazele cu melodie de pe YouTube (js/music.js); muzica generată rămâne rezervă.
-      const youtube = YOUTUBE_MUSIC[phase];
-      const theme = youtube ? `yt-${youtube.id}-${youtube.start}` : generated;
-      const options = youtube ? { youtube, fallback: generated } : {};
+      // Fazele cu melodie adevărată (js/music.js), din fișier sau de pe YouTube; muzica generată rămâne rezervă.
+      const file = FILE_MUSIC[phase];
+      const youtube = !file && YOUTUBE_MUSIC[phase];
+      const theme = file ?? (youtube ? `yt-${youtube.id}-${youtube.start}` : generated);
+      const options = file || youtube ? { youtube, fallback: generated } : {};
       // La final, muzica pornește după efectul sonor al victoriei.
       if (phase === 'end') {
         if (sfx.musicTheme() === theme) return;
@@ -727,6 +802,7 @@
       lastPhase = phase;
       if (phase !== 'day') { revealTimers.forEach(clearTimeout); revealTimers = []; nomKey = null; }
       if (phase !== 'morning') clearDawn();
+      if (phase !== 'intro') stopIntroFilm();
       playThemeFor(phase);
       if (phase !== 'end') {
         stopBlood();
@@ -746,6 +822,7 @@
       if (phase === 'end') [0, 400, 1500].forEach((ms) => setTimeout(fitReplay, ms));
       if (phase === 'end' && stageChanged && previous === 'end') endStageEffects(pub.endStage);
       if (phase === 'morning') playMorning();
+      if (phase === 'intro' && previous !== 'intro') playIntroFilm();
       if (phase === 'end' && previous && previous !== 'end') {
         if (pub.winner === 'evil') { bleed(); sfx.evilWins(); }
         else { triumph(); sfx.goodWins(); }

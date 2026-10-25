@@ -185,6 +185,7 @@ async function start() {
     actions: null,
     playerInput: null,
     'public/phase': 'intro',
+    'public/introAt': serverNow() + 1500,  // filmul de deschidere (proiector + vibrațiile telefoanelor)
     'public/gameId': Date.now().toString(36),
     'public/round': 1,
     'public/counts': { townsfolk: tf, outsider: os, minion: mn, demon: dm },
