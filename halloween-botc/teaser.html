@@ -40,7 +40,8 @@
     /* Lumânările */
     #stage { z-index: 1; justify-content: flex-end; padding-bottom: 9vh; transition: opacity 1.5s, filter 1.5s; }
     .row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2vh 2vw; align-items: end; width: min(100%, 560px); }
-    @media (min-width: 900px) { .row { grid-template-columns: repeat(12, 1fr); gap: 2vh 0.8vw; width: min(94vw, 1300px); } }
+    @media (max-width: 899px) { .row { grid-template-columns: repeat(12, 1fr); } .row .candle { grid-column: span 2; } .row .candle:nth-child(7) { grid-column: 2 / span 2; } }
+    @media (min-width: 900px) { .row { grid-template-columns: repeat(11, 1fr); gap: 2vh 0.8vw; width: min(94vw, 1300px); } }
     .row .candle { --s: calc((min(100vw, 560px) - 60px) / 68); justify-self: center; min-width: 0; }
     @media (min-width: 900px) { .row .candle { --s: min(0.58vw, 1.1vh); } }
     .row .candle .name { font-family: 'EB Garamond', serif; font-weight: 600; font-size: clamp(11px, 1.05vw, 16px); color: #c9b8a6; margin-top: 6px; transition: color 1s, text-shadow 1s; }
@@ -60,7 +61,7 @@
     .title-big { font: 800 clamp(3rem, 13vw, 7.5rem) 'Blackwood Gothic', serif; line-height: 0.95; margin: 0;
       color: var(--gold-hi); text-shadow: 0 3px 0 #000, 0 0 30px rgba(200, 40, 50, 0.55), 0 0 60px rgba(201, 161, 74, 0.25); }
     .tagline { color: #c9b8a6; font-style: italic; font-size: clamp(1.05rem, 3.6vw, 1.5rem); margin: 4px 0 18px; }
-    .divider { width: min(320px, 70vw); height: 14px; margin: 0 auto 14px; background: var(--divider, linear-gradient(90deg, transparent, var(--gold), transparent)) center / contain no-repeat; }
+    .divider { width: min(380px, 80vw); height: 42px; margin: 0 auto 16px; background: var(--divider, linear-gradient(90deg, transparent, var(--gold), transparent)) center / contain no-repeat; }
     .count-label { color: var(--gold); letter-spacing: 0.22em; text-transform: uppercase; font-size: 0.85rem; margin-bottom: 10px; }
     .count { display: flex; gap: clamp(8px, 3vw, 22px); justify-content: center; }
     .count div { min-width: clamp(62px, 18vw, 110px); padding: 10px 4px 8px; border: 1px solid var(--gold-dim); background: rgba(20, 6, 9, 0.75);
@@ -76,11 +77,6 @@
     .actions a, .actions button { font: 600 1rem 'EB Garamond', serif; color: var(--gold-hi); background: rgba(20, 6, 9, 0.7); border: 1px solid var(--gold-dim); padding: 10px 16px; cursor: pointer; text-decoration: none; }
     .actions a:hover, .actions button:hover { border-color: var(--gold-hi); }
 
-    .lone { display: flex; flex-direction: column; align-items: center; margin-bottom: 40px; }
-    .lone .candle { --s: 4px; }
-    .lone .candle .name { color: #6d8fb3; font-family: 'EB Garamond', serif; }
-    .lone p { margin: 8px 0 0; color: #7f97b3; font-style: italic; opacity: 0; transition: opacity 2s; }
-    .lone.lit p { opacity: 1; }
 
     /* Ochii din întuneric */
     .eyes { position: fixed; z-index: 3; width: 46px; height: 12px; pointer-events: none; opacity: 0; transition: opacity 0.6s; }
@@ -140,7 +136,7 @@
     <div class="actions">
       <button id="again">↻ Revezi</button>
     </div>
-    <div class="lone" id="lone"></div>
+    <div></div>
   </section>
 
   <div class="eyes" id="eyes"></div>
@@ -213,9 +209,9 @@
 
     // ---------- lumânările ----------
     animateFlames();
-    const seats = [...guests, { id: SECRET_GUEST, name: '?' }];
-    $('row').innerHTML = seats.map((p, i) => candleSVG(p.name === '?' ? 'loc-gol' : p.name, {
-      cls: `waiting${me?.id === p.id ? ' me' : ''}${p.id === SECRET_GUEST ? ' dark' : ''}`, label: esc(p.name), index: i,
+    const seats = guests;
+    $('row').innerHTML = seats.map((p, i) => candleSVG(p.name, {
+      cls: `waiting${me?.id === p.id ? ' me' : ''}`, label: esc(p.name), index: i,
     })).join('');
     const candles = [...$('row').children];
     candles.forEach((c, i) => { c.dataset.id = seats[i].id; });
@@ -267,7 +263,6 @@
           await wait(p === me ? 900 : 620, token);
         }
         if (me) await say(`Printre ei, și tu, ${me.name}.`, token, { hold: 2200, cls: 'small' });
-        await say('Și un loc gol la masă… pentru cineva despre care nimeni nu știe nimic.', token, { hold: 3400, cls: 'small' });
 
         await say('Contele nu vine singur.', token, { hold: 2200 });
         // Rafala: toate flăcările se zbat, se aude corbul.
@@ -314,21 +309,10 @@
         sfx.doomHit(0);
         flash(); quake(); vibrate(200);
         finale();
-        // Locul gol se aprinde singur, după ce toată lumea s-a uitat la titlu.
-        await wait(9000, token);
-        lightLone();
       } catch { /* oprit cu „Sari peste” */ }
     }
 
-    function lightLone() {
-      $('lone').querySelector('.candle').classList.remove('waiting');
-      $('lone').classList.add('lit');
-      sfx.chime(0);
-    }
-
     function finale() {
-      $('lone').classList.remove('lit');
-      $('lone').innerHTML = `${candleSVG('loc-gol', { cls: 'waiting ghost', label: '?', short: true })}<p>Locul gol de la masă s-a aprins singur.</p>`;
       $('skip').classList.add('hidden');
       $('line').classList.add('hidden');
       $('finale').classList.remove('hidden');
@@ -386,7 +370,7 @@
       $('mute').classList.remove('hidden');
       film();
     });
-    $('skip').onclick = () => { const token = ++run; candles.forEach((c) => c.classList.remove('gust')); $('stage').className = 'scene gone'; finale(); wait(7000, token).then(lightLone, () => {}); };
+    $('skip').onclick = () => { run++; candles.forEach((c) => c.classList.remove('gust')); $('stage').className = 'scene gone'; finale(); };
     $('again').onclick = () => film();
   </script>
 </body>
