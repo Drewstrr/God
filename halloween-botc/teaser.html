@@ -20,9 +20,11 @@
 
     /* Intrarea */
     #gate { z-index: 5; cursor: pointer; gap: 18px; }
-    #gate .seal { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font: 800 2.1rem 'Blackwood Gothic', serif; color: #f1d9a0;
-      background: radial-gradient(circle at 38% 32%, #c62a31, #6a0710 70%, #3a0308); box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.6), 0 0 40px rgba(198, 42, 49, 0.45); animation: breathe 2.6s ease-in-out infinite; }
-    @keyframes breathe { 50% { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.6), 0 0 70px rgba(198, 42, 49, 0.8); transform: scale(1.04); } }
+    #gate .seal { width: min(190px, 48vw); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 26px rgba(150, 16, 32, 0.35)); animation: breathe 3.2s ease-in-out infinite; transition: transform 0.25s; }
+    #gate .seal svg { display: block; width: 100%; height: auto; overflow: visible; }
+    #gate:active .seal { transform: scale(0.97); }
+    @keyframes breathe { 50% { filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 46px rgba(190, 24, 44, 0.65)); } }
+    #gate .divider { margin: 4px auto 0; }
     #gate .who { color: var(--gold-hi); font-size: 1.35rem; font-style: italic; min-height: 1.4em; }
     #gate .tap { color: var(--muted); letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.85rem; animation: blink 2.4s ease-in-out infinite; }
     #gate .phones { color: #6d5b5f; font-size: 0.85rem; }
@@ -111,7 +113,82 @@
   <div class="flash" id="flash"></div>
 
   <section class="scene" id="gate">
-    <div class="seal">C</div>
+    <div class="seal" aria-label="Sigiliul Contelui">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- marginea neregulată a cerii turnate -->
+          <filter id="wax-edge" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" result="n"/>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="14" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+          <!-- luciul cerii: lumină de sus-stânga pe relieful formei -->
+          <filter id="wax-gloss" x="-10%" y="-10%" width="120%" height="120%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="5" result="b"/>
+            <feSpecularLighting in="b" surfaceScale="6" specularConstant="0.9" specularExponent="28" lighting-color="#ffd0c8" result="s">
+              <fePointLight x="40" y="20" z="140"/>
+            </feSpecularLighting>
+            <feComposite in="s" in2="SourceAlpha" operator="in" result="s2"/>
+            <feComposite in="SourceGraphic" in2="s2" operator="arithmetic" k1="0" k2="1" k3="0.32" k4="0"/>
+          </filter>
+          <!-- umbra din interiorul amprentei ștampilei -->
+          <filter id="pressed" x="-10%" y="-10%" width="120%" height="120%">
+            <feOffset dx="3" dy="4" in="SourceAlpha" result="o"/>
+            <feGaussianBlur in="o" stdDeviation="3" result="ob"/>
+            <feComposite in="SourceAlpha" in2="ob" operator="out" result="inner"/>
+            <feFlood flood-color="#1a0004" flood-opacity="0.85"/>
+            <feComposite in2="inner" operator="in" result="shadow"/>
+            <feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="shadow"/></feMerge>
+          </filter>
+          <!-- relief pentru litere: lumină sus-stânga, umbră jos-dreapta -->
+          <filter id="emboss" x="-20%" y="-20%" width="140%" height="140%">
+            <feOffset dx="-1" dy="-1.2" in="SourceAlpha" result="hl"/>
+            <feFlood flood-color="#ff9c92" flood-opacity="0.55"/><feComposite in2="hl" operator="in" result="hlc"/>
+            <feOffset dx="1.4" dy="1.8" in="SourceAlpha" result="sh"/>
+            <feFlood flood-color="#160003" flood-opacity="0.9"/><feComposite in2="sh" operator="in" result="shc"/>
+            <feMerge><feMergeNode in="shc"/><feMergeNode in="hlc"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <radialGradient id="wax" cx="0.38" cy="0.34" r="0.75">
+            <stop offset="0" stop-color="#b81f30"/><stop offset="0.45" stop-color="#8a0f1e"/><stop offset="0.85" stop-color="#52050f"/><stop offset="1" stop-color="#2e0207"/>
+          </radialGradient>
+          <radialGradient id="well" cx="0.62" cy="0.66" r="0.8">
+            <stop offset="0" stop-color="#a31727"/><stop offset="0.7" stop-color="#7a0c1b"/><stop offset="1" stop-color="#4e0510"/>
+          </radialGradient>
+          <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#e2505e"/><stop offset="0.5" stop-color="#8e1222"/><stop offset="1" stop-color="#3a0309"/>
+          </linearGradient>
+          <path id="ring-text" d="M100 100 m-47 0 a47 47 0 1 1 94 0 a47 47 0 1 1 -94 0"/>
+        </defs>
+
+        <!-- ceara turnată, cu câteva prelingeri pe margine -->
+        <g filter="url(#wax-gloss)">
+          <g filter="url(#wax-edge)" fill="url(#wax)">
+            <circle cx="100" cy="100" r="84"/>
+            <circle cx="160" cy="146" r="17"/><circle cx="38" cy="58" r="13"/><circle cx="58" cy="168" r="11"/><circle cx="174" cy="82" r="9"/>
+          </g>
+        </g>
+        <!-- buza ridicată din jurul amprentei -->
+        <circle cx="100" cy="100" r="64" fill="none" stroke="url(#rim)" stroke-width="5" opacity="0.9"/>
+        <!-- amprenta ștampilei (adâncită) -->
+        <g filter="url(#pressed)">
+          <circle cx="100" cy="100" r="61" fill="url(#well)"/>
+        </g>
+        <!-- detaliile gravate în ștampilă -->
+        <g filter="url(#emboss)" fill="#8f1424">
+          <circle cx="100" cy="100" r="56" fill="none" stroke="#8f1424" stroke-width="1.6"/>
+          <circle cx="100" cy="100" r="38" fill="none" stroke="#8f1424" stroke-width="1.2"/>
+          <text font-family="'EB Garamond', Georgia, serif" font-size="8.6" font-weight="700" letter-spacing="1.2">
+            <textPath href="#ring-text" startOffset="0" textLength="288" lengthAdjust="spacing">BALUL CONTELUI ✠ CASTELUL BRAN ✠ MMXXVI ✠</textPath>
+          </text>
+          <text x="100" y="121" text-anchor="middle" font-family="'Blackwood Gothic', Georgia, serif" font-weight="800" font-size="62">C</text>
+          <path d="M100 66 l2.4 4.2 h-4.8z M88 72 l1.2 2.4 l-2.6 .4z M112 72 l-1.2 2.4 l2.6 .4z"/>
+          <path d="M80 130 q20 8 40 0" fill="none" stroke="#8f1424" stroke-width="1.2"/>
+          <circle cx="100" cy="133.5" r="1.6"/>
+        </g>
+        <!-- o reflexie fină pe ceară -->
+        <ellipse cx="70" cy="56" rx="20" ry="8" transform="rotate(-32 70 56)" fill="#fff" opacity="0.10"/>
+      </svg>
+    </div>
+    <div class="divider"></div>
     <div class="who" id="who"></div>
     <div class="tap">Atinge sigiliul</div>
     <div class="phones">🎧 cu sunetul pornit, în întuneric</div>
