@@ -10,6 +10,17 @@
   to = "/crew-zaky.html"
   status = 200
 
+# Teaserul s-a mutat la /halloween/teaser; linkurile vechi duc acolo.
+[[redirects]]
+  from = "/halloween-teaser"
+  to = "/halloween/teaser/"
+  status = 301
+
+[[redirects]]
+  from = "/halloween-teaser/*"
+  to = "/halloween/teaser/"
+  status = 301
+
 [[headers]]
   for = "/*"
   [headers.values]

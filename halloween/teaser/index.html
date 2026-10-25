@@ -2,13 +2,13 @@
 <html lang="ro">
 <head>
   <meta charset="utf-8">
-  <base href="/halloween-teaser/">
+  <base href="/halloween/teaser/">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
   <title>Balul Contelui</title>
   <meta property="og:title" content="Balul Contelui · 31 octombrie">
   <meta property="og:description" content="Contele s-a întors. Unul dintre voi nu e ce pare.">
-  <link rel="stylesheet" href="css/style.css?v=16">
+  <link rel="stylesheet" href="css/style.css?v=17">
   <style>
     html, body { background: #000; height: 100%; overflow: hidden; }
     body { font-family: 'EB Garamond', Georgia, serif; }
@@ -21,14 +21,30 @@
 
     /* Intrarea */
     #gate { z-index: 5; cursor: pointer; gap: 18px; }
-    #gate .seal { width: min(190px, 48vw); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 26px rgba(150, 16, 32, 0.35)); animation: breathe 3.2s ease-in-out infinite; transition: transform 0.25s; }
+    #gate .seal { width: min(190px, 48vw); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 26px rgba(150, 16, 32, 0.35)); animation: heartbeat 1.15s ease-out infinite; }
     #gate .seal svg { display: block; width: 100%; height: auto; overflow: visible; }
     #gate:active .seal { transform: scale(0.97); }
-    @keyframes breathe { 50% { filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 46px rgba(190, 24, 44, 0.65)); } }
+    /* Sigiliul bate ca o inimă: două bătăi scurte, apoi pauză */
+    @keyframes heartbeat {
+      0%, 34%, 100% { transform: scale(1); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 26px rgba(150, 16, 32, 0.35)); }
+      9% { transform: scale(1.07); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 50px rgba(200, 24, 44, 0.75)); }
+      17% { transform: scale(1.01); }
+      24% { transform: scale(1.045); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 40px rgba(200, 24, 44, 0.6)); }
+    }
     #gate .divider { margin: 4px auto 0; }
     #gate .who { color: var(--gold-hi); font-size: 1.35rem; font-style: italic; min-height: 1.4em; }
     #gate .tap { color: var(--muted); letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.85rem; animation: blink 2.4s ease-in-out infinite; }
-    #gate .phones { color: #6d5b5f; font-size: 0.85rem; }
+    /* Îndemnul la sunet, pe pagina de intrare */
+    #gate .sound { display: flex; align-items: center; gap: 12px; margin-top: 6px; padding: 10px 18px; border: 1px solid var(--gold-dim); background: rgba(20, 6, 9, 0.7);
+      box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.6), 0 0 22px rgba(122, 12, 30, 0.35); }
+    #gate .sound b { font: 800 clamp(1.25rem, 5.4vw, 1.7rem) 'Blackwood Gothic', serif; color: var(--gold-hi); letter-spacing: 0.02em; }
+    #gate .sound { text-align: center; }
+    #gate .sound small { display: block; color: #c9a3a3; font-size: 1.05rem; font-style: italic; margin-top: 2px; }
+    #gate .bars { display: flex; align-items: flex-end; gap: 3px; height: 28px; }
+    #gate .bars i { width: 5px; border-radius: 1px; background: linear-gradient(180deg, #e8c97a, #8e1023); animation: bar 1.6s ease-in-out infinite; }
+    #gate .bars i:nth-child(1) { height: 30%; animation-delay: 0s; } #gate .bars i:nth-child(2) { height: 50%; animation-delay: 0.15s; }
+    #gate .bars i:nth-child(3) { height: 70%; animation-delay: 0.3s; } #gate .bars i:nth-child(4) { height: 100%; animation-delay: 0.45s; }
+    @keyframes bar { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
     #gate .ver { position: fixed; left: 12px; bottom: max(10px, env(safe-area-inset-bottom)); color: #3d3033; font-size: 0.75rem; }
     @keyframes blink { 50% { opacity: 0.35; } }
 
@@ -54,6 +70,7 @@
     .row .candle.seen { opacity: 1; }
     #stage.dim { opacity: 0.28; filter: blur(1px); }
     #stage.gone { opacity: 0; }
+    .notrans, .notrans * { transition: none !important; }
 
     /* Titlul și numărătoarea */
     #finale { z-index: 4; gap: 6px; overflow-y: auto; justify-content: flex-start; padding-top: max(7vh, 28px); }
@@ -94,14 +111,6 @@
     #skip { right: 10px; }
     #mute { left: 10px; font-size: 1.15rem; }
 
-    /* Muzica: dacă telefonul nu o lasă să pornească singură, arătăm playerul YouTube, ca să fie apăsat direct */
-    #music { position: fixed; right: 0; bottom: 0; width: 200px; height: 200px; opacity: 0.01; pointer-events: none; z-index: -1; overflow: hidden; }
-    #music.ask { opacity: 1; pointer-events: auto; z-index: 7; right: 50%; transform: translateX(50%); bottom: 64px; width: 240px; height: auto; padding: 8px; overflow: visible;
-      background: rgba(12, 4, 6, 0.95); border: 1px solid var(--gold-dim); text-align: center; }
-    #music.ask p { margin: 0 0 6px; color: var(--gold-hi); font-size: 0.95rem; }
-    #music.ask .yt { width: 224px; height: 126px; }
-    #music:not(.ask) p, #music:not(.ask) .close { display: none; }
-    #music .close { position: absolute; top: -12px; right: -12px; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--gold-dim); background: #000; color: var(--muted); cursor: pointer; }
 
     body.quake { animation: quake 0.5s; }
     @keyframes quake { 20% { transform: translate(-4px, 2px); } 40% { transform: translate(3px, -3px); } 60% { transform: translate(-2px, 3px); } 80% { transform: translate(2px, -1px); } }
@@ -192,9 +201,9 @@
     </div>
     <div class="divider"><svg aria-hidden="true" viewBox="0 0 400 44" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="au" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e2a8"/><stop offset=".5" stop-color="#c9a14a"/><stop offset="1" stop-color="#7c5a1e"/></linearGradient><linearGradient id="auh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c9a14a" stop-opacity="0"/><stop offset=".25" stop-color="#c9a14a"/><stop offset=".75" stop-color="#c9a14a"/><stop offset="1" stop-color="#c9a14a" stop-opacity="0"/></linearGradient><radialGradient id="ru" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#ff8a8a"/><stop offset=".3" stop-color="#d0202f"/><stop offset=".8" stop-color="#6a0710"/><stop offset="1" stop-color="#3a0308"/></radialGradient></defs><path d="M4 22 H96" stroke="url(#auh)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au)"/><circle cx="70" cy="22" r="1.2" fill="url(#au)"/><circle cx="84" cy="22" r="1.6" fill="url(#au)"/><circle cx="112" cy="22" r="1.2" fill="url(#au)"/><circle cx="176" cy="12" r="1.2" fill="url(#au)"/><circle cx="176" cy="32" r="1.2" fill="url(#au)"/><g transform="matrix(-1 0 0 1 400 0)"><path d="M4 22 H96" stroke="url(#auh)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au)"/><circle cx="70" cy="22" r="1.2" fill="url(#au)"/><circle cx="84" cy="22" r="1.6" fill="url(#au)"/><circle cx="112" cy="22" r="1.2" fill="url(#au)"/><circle cx="176" cy="12" r="1.2" fill="url(#au)"/><circle cx="176" cy="32" r="1.2" fill="url(#au)"/></g><path d="M200 8 L212 22 L200 36 L188 22 Z" fill="url(#au)"/><path d="M200 12 L208.5 22 L200 32 L191.5 22 Z" fill="url(#ru)"/><path d="M200 12 L204 22 L200 32 M191.5 22 H208.5" stroke="#ff9a9a" stroke-width=".4" opacity=".55" fill="none"/><circle cx="200" cy="4" r="1.6" fill="url(#au)"/><circle cx="200" cy="40" r="1.6" fill="url(#au)"/></svg></div>
     <div class="who">Ai fost invitat.</div>
+    <div class="sound"><div><b>Dă volumul la maxim…</b><small>…până îți auzi bătăile fricoase ale inimii.</small></div></div>
     <div class="tap">Atinge sigiliul</div>
-    <div class="phones">🎧 cu sunetul pornit, în întuneric</div>
-    <div class="ver">v9 · 6:20</div>
+    <div class="ver">v17 · inimă</div>
   </section>
 
   <section class="scene hidden" id="stage"><div class="row" id="row"></div></section>
@@ -222,7 +231,6 @@
   <div class="eyes" id="eyes"></div>
   <button class="corner hidden" id="skip">Sari peste ›</button>
   <button class="corner hidden" id="mute" aria-label="Sunet">🔊</button>
-  <div id="music"><p>🎵 Apasă ▶ pentru muzica balului</p><button class="close" id="music-close" aria-label="Închide">×</button><div class="yt"><div id="yt"></div></div></div>
 
   <script type="module">
     import { PLAYERS, SECRET_GUEST } from './js/engine.js';
@@ -231,94 +239,90 @@
 
     // Ora la care se deschid porțile (ora României; pe 31 octombrie e deja ora de iarnă, UTC+2).
     const PARTY = new Date('2026-10-31T20:30:00+02:00');
-    // Melodia din lobby (aceeași ca în joc), de la 4:40 la 11:01, în buclă.
-    const SONG = { id: 'x668K4TBUMQ', start: 280, end: 661 };
+    // Melodia balului: fișierul audio/ball.mp3 e bucata 4:40–11:01 din melodie, cântată în buclă.
+    const SONG_FILE = 'audio/ball.mp3';
+    const SONG_START = 280;  // 4:40, unde începe fișierul în melodia întreagă
     // Secunda din melodie unde începe partea dramatică: cade exact când apare titlul cu numărătoarea.
-    // Se poate încerca altă valoare din link, fără modificări: teaser?drama=5:52
+    // Se poate încerca altă valoare din link, fără modificări: teaser?drama=6:18
     const DRAMA_DEFAULT = 380;  // 6:20
     const DRAMA = (() => {
       const q = new URLSearchParams(location.search).get('drama');
       const m = q?.match(/^(?:(\d+):)?(\d+(?:\.\d+)?)$/);
-      return m ? Number(m[1] ?? 0) * 60 + Number(m[2]) : DRAMA_DEFAULT;
+      return (m ? Number(m[1] ?? 0) * 60 + Number(m[2]) : DRAMA_DEFAULT) - SONG_START;  // secunda în fișier
     })();
     // Cât durează filmul de la atingerea sigiliului până la titlu (secunde).
-    const LEAD = 66;
+    const LEAD = 68.9;
 
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const guests = PLAYERS.filter((p) => p.id !== SECRET_GUEST);
 
 
-    // ---------- muzica de pe YouTube ----------
-    let yt = null, ytReady = false, wantMusic = false, muted = false, fadeTimer = null;
-    window.onYouTubeIframeAPIReady = () => {
-      yt = new YT.Player('yt', {
-        width: 224, height: 126, videoId: SONG.id,
-        playerVars: { controls: 1, playsinline: 1, rel: 0, start: SONG.start, disablekb: 1 },
-        events: {
-          onReady: () => { ytReady = true; if (wantMusic) startMusic(); },
-          onStateChange: (e) => {
-            if (e.data !== YT.PlayerState.PLAYING) return;
-            $('music').classList.remove('ask');
-            // Muzica a pornit mai târziu (încărcare, apăsare pe player): o aducem în pas cu filmul,
-            // cât încă e pe mut, apoi o lăsăm să crească încet.
-            const want = expectedPos();
-            if (want !== null && Math.abs(yt.getCurrentTime() - want) > 0.6) yt.seekTo(want, true);
-            if (!faded) { faded = true; setTimeout(() => fadeTo(MUSIC_VOL, 7000), 600); }
-          },
-        },
-      });
-    };
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.head.appendChild(tag);
-
-    // Volumul crește/scade lin (curbă în S), ca intrarea muzicii să nu se observe.
-    const MUSIC_VOL = 70;
-    let vol = 0, faded = false;
-    function fadeTo(target, ms, done) {
-      clearInterval(fadeTimer);
-      const from = vol, t0 = performance.now();
-      fadeTimer = setInterval(() => {
-        const k = Math.min(1, (performance.now() - t0) / ms);
-        vol = from + (target - from) * (0.5 - Math.cos(Math.PI * k) / 2);
-        if (!muted) yt.setVolume(Math.round(vol));
-        if (k >= 1) { clearInterval(fadeTimer); done?.(); }
-      }, 50);
+    // ---------- muzica ----------
+    // Fișierul se încarcă de cum se deschide pagina. Volumul trece printr-un GainNode (Web Audio),
+    // singurul fel în care fade-in-ul merge și pe iPhone.
+    // Pe iPhone (iOS 16.4+): sunetul paginii e tratat ca muzică, deci se aude și cu butonul de silențios pornit.
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
+    const MUSIC_VOL = 0.8;
+    const song = new Audio(SONG_FILE);
+    song.preload = 'auto';
+    song.loop = true;
+    song.setAttribute('playsinline', '');
+    let actx = null, gain = null, muted = false, faded = false;
+    function audioGraph() {
+      if (actx) return;
+      actx = new (window.AudioContext || window.webkitAudioContext)();
+      gain = actx.createGain();
+      gain.gain.value = 0;
+      actx.createMediaElementSource(song).connect(gain).connect(actx.destination);
     }
-    // Sare în melodie pe ascuns: scade volumul, sare, apoi îl ridică la loc.
-    function quietSeek(t, upMs = 4000) { fadeTo(0, 500, () => { yt.seekTo(t, true); fadeTo(MUSIC_VOL, upMs); }); }
+    // Volum lin, în curbă S (fără salt la început sau la final).
+    function fadeTo(target, seconds) {
+      if (!gain) return;
+      const g = gain.gain, now = actx.currentTime, from = g.value;
+      g.cancelScheduledValues(now);
+      const curve = Float32Array.from({ length: 64 }, (_, i) => from + (target - from) * (0.5 - Math.cos(Math.PI * i / 63) / 2));
+      g.setValueCurveAtTime(curve, now, Math.max(0.05, seconds));
+    }
+    const level = () => (muted ? 0 : MUSIC_VOL);
     // Unde ar trebui să fie melodia acum, ca partea dramatică să cadă pe titlu (null după final).
     let filmStart = null;
     const expectedPos = () => (filmStart === null ? null : Math.max(0, DRAMA - LEAD + (performance.now() - filmStart) / 1000));
-    const playing = () => ytReady && yt.getPlayerState?.() === YT.PlayerState.PLAYING;
+    const playing = () => Boolean(actx) && !song.paused;
+    // Sare în melodie pe ascuns: volumul coboară, sare, apoi urcă la loc.
+    function quietSeek(t, up = 4) { fadeTo(0, 0.4); setTimeout(() => { song.currentTime = t; fadeTo(level(), up); }, 450); }
     // Pe bubuitura titlului: dacă melodia a luat-o înainte sau a rămas în urmă, sare fix la partea dramatică.
     function hitDrama() {
       filmStart = null;
-      if (playing() && Math.abs(yt.getCurrentTime() - DRAMA) > 0.3) yt.seekTo(DRAMA, true);
+      if (playing() && Math.abs(song.currentTime - DRAMA) > 0.25) song.currentTime = DRAMA;
     }
     function startMusic() {
-      wantMusic = true;
-      if (!ytReady) return;
-      const want = expectedPos() ?? SONG.start;
-      yt.unMute();
-      if (yt.getPlayerState() !== YT.PlayerState.PLAYING) { clearInterval(fadeTimer); vol = 0; faded = false; yt.setVolume(0); yt.seekTo(want, true); yt.playVideo(); }
-      else if (Math.abs(yt.getCurrentTime() - want) > 0.6) quietSeek(want);
-      // Dacă telefonul blochează pornirea automată, arătăm playerul ca să fie apăsat direct.
-      setTimeout(() => { if (yt.getPlayerState() !== YT.PlayerState.PLAYING && !muted) $('music').classList.add('ask'); }, 3500);
+      audioGraph();
+      actx.resume?.();
+      faded = false;
+      gain.gain.cancelScheduledValues(actx.currentTime);
+      gain.gain.value = 0;
+      song.currentTime = expectedPos() ?? 0;
+      song.play().catch(() => {});
     }
-    // Bucla între 4:40 și 11:01, cu trecere lină.
+    // Când melodia chiar cântă (după încărcare): se aliniază la film, încă pe mut, apoi crește discret.
+    song.addEventListener('playing', () => {
+      const want = expectedPos();
+      if (want !== null && Math.abs(song.currentTime - want) > 0.25) song.currentTime = want;
+      if (!faded) { faded = true; setTimeout(() => fadeTo(level(), 7), 250); }
+    });
+    // Bucla 11:01 → 4:40: coboară lin înainte de capăt și urcă lin după reluare.
     let looping = false;
-    setInterval(() => {
-      if (!ytReady || yt.getPlayerState?.() !== YT.PlayerState.PLAYING) return;
-      if (yt.getCurrentTime() >= SONG.end - 1 && !looping) { looping = true; quietSeek(SONG.start, 5000); setTimeout(() => { looping = false; }, 3000); }
-    }, 500);
-    $('music-close').onclick = () => $('music').classList.remove('ask');
+    song.addEventListener('timeupdate', () => {
+      if (!faded || !song.duration) return;
+      if (!looping && song.currentTime > song.duration - 1.6) { looping = true; fadeTo(0, 1.4); }
+      else if (looping && song.currentTime < 2) { looping = false; fadeTo(level(), 4); }
+    });
     $('mute').onclick = () => {
       muted = !muted;
       $('mute').textContent = muted ? '🔇' : '🔊';
       sfx.setMuted(muted);
-      if (ytReady) { if (muted) yt.mute(); else { yt.unMute(); yt.setVolume(Math.round(vol)); if (yt.getPlayerState() !== YT.PlayerState.PLAYING) yt.playVideo(); } }
+      if (faded) fadeTo(level(), 0.3);
     };
 
     // ---------- lumânările ----------
@@ -350,19 +354,25 @@
 
     function reset() {
       $('finale').classList.add('hidden'); $('finale').classList.remove('on');
-      $('stage').className = 'scene'; $('line').className = 'scene';
-      candles.forEach((c) => { c.classList.remove('seen', 'gust', 'ghost'); c.classList.add('waiting'); delete c.dataset.state; delete c.dataset.scale; });
+      // La „Revezi” lumânările dispar instantaneu, fără să mai clipească pe ecran.
+      $('stage').className = 'scene notrans hidden'; $('line').className = 'scene';
+      candles.forEach((c) => { c.classList.remove('seen', 'gust', 'ghost', 'dark'); c.classList.add('waiting'); delete c.dataset.state; delete c.dataset.scale; });
+      void $('stage').offsetWidth;
+      $('stage').classList.remove('notrans');
       stopEyes();
     }
 
-    async function film() {
+    // La prima vizionare nu se poate sări; „Sari peste” apare doar după „Revezi”.
+    async function film(replay = false) {
       const token = ++run;
       reset();
       filmStart = performance.now();
       if (playing()) quietSeek(expectedPos() + 0.5);
-      $('skip').classList.remove('hidden');
+      $('skip').classList.toggle('hidden', !replay);
       try {
-        await wait(900, token);
+        // Întuneric și bătăi de inimă: cât omul își mai dă volumul tare, filmul a început deja.
+        for (const ms of [200, 1150, 1150]) { await wait(ms, token); sfx.heartbeat(0, 1); }
+        await wait(1300, token);
         sfx.churchBell(0, 110, 0.55);
         await say('31 octombrie 2026.', token, { hold: 2600 });
         await say('Contele Dracula dă un bal.', token);
@@ -372,6 +382,7 @@
         // Lumânările se aprind una câte una, pe bătăile inimii.
         $('line').classList.add('low');
         const order = guests;
+        $('stage').classList.remove('hidden');
         candles.forEach((c) => c.classList.add('seen'));
         for (const p of order) {
           candleOf(p.id).classList.remove('waiting');
@@ -483,7 +494,7 @@
       $('mute').classList.remove('hidden');
     });
     $('skip').onclick = () => { run++; sfx.doomHit(0); hitDrama(); candles.forEach((c) => c.classList.remove('gust')); $('stage').className = 'scene gone'; finale(); };
-    $('again').onclick = () => film();
+    $('again').onclick = () => film(true);
   </script>
 </body>
 </html>
