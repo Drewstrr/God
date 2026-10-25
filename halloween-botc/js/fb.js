@@ -10,7 +10,7 @@ import {
 
 export const ENV = 'botc';
 // Crește la fiecare publicare: telefoanele cu cod vechi se reîncarcă singure.
-export const APP_VERSION = 14;
+export const APP_VERSION = 15;
 export const ENGINE_EMAIL = 'motor@blackwood.ro';
 
 // Paginile jucătorilor (telefon, iPad) au logarea lor, separată de cea a motorului:
@@ -100,6 +100,7 @@ export async function requireEngineLogin(mount) {
 // ca pagina să pornească sigur cu versiunea nouă.
 const ASSETS = [
   'audio/crow.mp3',
+  'audio/airblow.mp3',
   'index.html', 'screen.html', 'control.html', 'play.html', 'vote.html', 'admin.html', 'css/style.css',
   'js/fb.js', 'js/engine.js', 'js/game-host.js', 'js/pin-service.js', 'js/sfx.js', 'js/music.js',
   'js/candles.js', 'js/smoke.js', 'js/blood.js', 'js/heart.js', 'js/vendor/qrcode.js', 'audio/list.json',

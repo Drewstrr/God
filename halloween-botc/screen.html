@@ -184,10 +184,24 @@
       sfx.duckMusic(10);
       await wait(100); candle.classList.add('appear');
       await wait(500); candle.dataset.state = 'normal';
-      // Un suflu puternic: flacăra se apleacă, se zbate și se stinge (fără explozie).
-      await wait(1300); sfx.blow(); candle.classList.add('gust');
-      await wait(280); candle.dataset.state = 'dying';
-      await wait(950); candle.dataset.state = 'dead'; candle.classList.remove('gust');
+      await wait(1300);
+      // Suflul (audio/airblow.mp3): flacăra se apleacă la începutul lui și se stinge exact pe vârf.
+      // Timpii vin din fișier: începutul la ~30 ms, vârful la ~100 ms. Sunetul e programat pe ceasul audio,
+      // iar imaginea așteaptă exact cât spune el (inclusiv întârzierea boxelor).
+      const BLOW_START = 30;
+      const BLOW_PEAK = 100;
+      const heardIn = sfx.playFileAt('airblow', { volume: 1 });
+      if (heardIn !== null) {
+        await wait(heardIn + BLOW_START);
+        candle.classList.add('gust'); candle.dataset.state = 'dying';
+        await wait(BLOW_PEAK - BLOW_START);
+        candle.dataset.state = 'dead'; candle.classList.remove('gust');
+      } else {
+        // Fără fișier: suflul generat și o stingere mai lungă.
+        sfx.blow(); candle.classList.add('gust');
+        await wait(280); candle.dataset.state = 'dying';
+        await wait(950); candle.dataset.state = 'dead'; candle.classList.remove('gust');
+      }
       // Fumul pornește din vârful fitilului.
       const ember = candle.querySelector('.c-ember').getBoundingClientRect();
       smokeAt(ember.left + ember.width / 2, ember.top, { seconds: 3.2, scale: Math.max(1, innerHeight / 700) });

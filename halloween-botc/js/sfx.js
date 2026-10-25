@@ -18,6 +18,7 @@ export function unlock() {
   // Safari poate lăsa sunetul „suspended” sau „interrupted” (după somn); îl repornim în ambele cazuri.
   if (ctx.state !== 'running') ctx.resume().catch(() => {});
   loadCrow();
+  loadBuffer('airblow');
   // Un sunet mut redat chiar în timpul click-ului: unele browsere pornesc audio doar așa.
   try {
     const src = ctx.createBufferSource();
@@ -153,6 +154,34 @@ export function tick(delay = 0) {
 }
 
 // Moartea: aprindere puternică, stingere, clopot.
+// ---------- sunete din fișiere (audio/<nume>.mp3, trecute în audio/list.json) ----------
+const buffers = {};
+async function loadBuffer(name) {
+  if (name in buffers || !ctx) return;
+  buffers[name] = null;
+  try {
+    if (await hasFile(name)) {
+      const res = await fetch(new URL(`../audio/${name}.mp3`, import.meta.url));
+      buffers[name] = await ctx.decodeAudioData(await res.arrayBuffer());
+    }
+  } catch { buffers[name] = null; }
+}
+export const preload = (...names) => names.forEach((n) => loadBuffer(n));
+// Pornește fișierul exact peste `lead` secunde, după ceasul audio (foarte precis).
+// Întoarce în câte milisecunde se aude de fapt (cu tot cu întârzierea boxelor), ca imaginea să se sincronizeze;
+// null dacă fișierul nu e încărcat.
+export function playFileAt(name, { lead = 0.08, volume = 1 } = {}) {
+  const buf = buffers[name];
+  if (!ready() || !buf) return null;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const g = ctx.createGain();
+  g.gain.value = volume;
+  src.connect(g).connect(master);
+  src.start(ctx.currentTime + lead);
+  return (lead + (ctx.outputLatency || ctx.baseLatency || 0)) * 1000;
+}
+
 // Un suflu puternic, de voce feminină, care stinge lumânarea: aer printr-o gură mică (zgomot cu formanți înalți),
 // cu un început ferm, un „fff” susținut și o coadă care se pierde.
 export function blow(delay = 0) {
