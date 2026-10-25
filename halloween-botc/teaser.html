@@ -230,6 +230,16 @@
     const PARTY = new Date('2026-10-31T20:30:00+02:00');
     // Melodia din lobby (aceeași ca în joc), de la 4:40 la 11:01, în buclă.
     const SONG = { id: 'x668K4TBUMQ', start: 280, end: 661 };
+    // Secunda din melodie unde începe partea dramatică: cade exact când apare titlul cu numărătoarea.
+    // Se poate încerca altă valoare din link, fără modificări: teaser?drama=5:52
+    const DRAMA_DEFAULT = 346;
+    const DRAMA = (() => {
+      const q = new URLSearchParams(location.search).get('drama');
+      const m = q?.match(/^(?:(\d+):)?(\d+(?:\.\d+)?)$/);
+      return m ? Number(m[1] ?? 0) * 60 + Number(m[2]) : DRAMA_DEFAULT;
+    })();
+    // Cât durează filmul de la atingerea sigiliului până la titlu (secunde).
+    const LEAD = 66;
 
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -244,7 +254,13 @@
         playerVars: { controls: 1, playsinline: 1, rel: 0, start: SONG.start, disablekb: 1 },
         events: {
           onReady: () => { ytReady = true; if (wantMusic) startMusic(); },
-          onStateChange: (e) => { if (e.data === YT.PlayerState.PLAYING && $('music').classList.contains('ask')) { $('music').classList.remove('ask'); fadeIn(); } },
+          onStateChange: (e) => {
+            if (e.data !== YT.PlayerState.PLAYING) return;
+            if ($('music').classList.contains('ask')) { $('music').classList.remove('ask'); fadeIn(); }
+            // Muzica a pornit mai târziu (încărcare, apăsare pe player): o aducem în pas cu filmul.
+            const want = expectedPos();
+            if (want !== null && Math.abs(yt.getCurrentTime() - want) > 0.6) yt.seekTo(want, true);
+          },
         },
       });
     };
@@ -258,10 +274,21 @@
       yt.setVolume(0);
       fadeTimer = setInterval(() => { v = Math.min(70, v + 4); if (!muted) yt.setVolume(v); if (v >= 70) clearInterval(fadeTimer); }, 150);
     }
+    // Unde ar trebui să fie melodia acum, ca partea dramatică să cadă pe titlu (null după final).
+    let filmStart = null;
+    const expectedPos = () => (filmStart === null ? null : Math.max(0, DRAMA - LEAD + (performance.now() - filmStart) / 1000));
+    const playing = () => ytReady && yt.getPlayerState?.() === YT.PlayerState.PLAYING;
+    // Pe bubuitura titlului: dacă melodia a luat-o înainte sau a rămas în urmă, sare fix la partea dramatică.
+    function hitDrama() {
+      filmStart = null;
+      if (playing() && Math.abs(yt.getCurrentTime() - DRAMA) > 0.3) yt.seekTo(DRAMA, true);
+    }
     function startMusic() {
       wantMusic = true;
       if (!ytReady) return;
-      if (yt.getPlayerState() !== YT.PlayerState.PLAYING) { yt.seekTo(SONG.start, true); yt.playVideo(); }
+      const want = expectedPos() ?? SONG.start;
+      if (yt.getPlayerState() !== YT.PlayerState.PLAYING) { yt.seekTo(want, true); yt.playVideo(); }
+      else if (Math.abs(yt.getCurrentTime() - want) > 0.6) yt.seekTo(want, true);
       yt.unMute();
       fadeIn();
       // Dacă telefonul blochează pornirea automată, arătăm playerul ca să fie apăsat direct.
@@ -270,7 +297,7 @@
     // Bucla între 4:40 și 11:01.
     setInterval(() => {
       if (!ytReady || yt.getPlayerState?.() !== YT.PlayerState.PLAYING) return;
-      if (yt.getCurrentTime() >= SONG.end || yt.getCurrentTime() < SONG.start - 2) yt.seekTo(SONG.start, true);
+      if (yt.getCurrentTime() >= SONG.end) yt.seekTo(SONG.start, true);
     }, 500);
     $('music-close').onclick = () => $('music').classList.remove('ask');
     $('mute').onclick = () => {
@@ -317,6 +344,8 @@
     async function film() {
       const token = ++run;
       reset();
+      filmStart = performance.now();
+      if (playing()) yt.seekTo(expectedPos(), true);
       $('skip').classList.remove('hidden');
       try {
         await wait(900, token);
@@ -376,6 +405,7 @@
         $('stage').classList.add('gone');
         await wait(1600, token);
         sfx.doomHit(0);
+        hitDrama();
         flash(); quake(); vibrate(200);
         finale();
       } catch { /* oprit cu „Sari peste” */ }
@@ -432,13 +462,13 @@
     // ---------- intrarea ----------
     $('gate').addEventListener('click', () => {
       sfx.unlock();
+      film();         // pornește ceasul filmului, ca muzica să știe de unde să înceapă
       startMusic();
       vibrate(40);
       $('gate').classList.add('hidden');
       $('mute').classList.remove('hidden');
-      film();
     });
-    $('skip').onclick = () => { run++; candles.forEach((c) => c.classList.remove('gust')); $('stage').className = 'scene gone'; finale(); };
+    $('skip').onclick = () => { run++; sfx.doomHit(0); hitDrama(); candles.forEach((c) => c.classList.remove('gust')); $('stage').className = 'scene gone'; finale(); };
     $('again').onclick = () => film();
   </script>
 </body>
