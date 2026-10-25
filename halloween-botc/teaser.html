@@ -256,10 +256,12 @@
           onReady: () => { ytReady = true; if (wantMusic) startMusic(); },
           onStateChange: (e) => {
             if (e.data !== YT.PlayerState.PLAYING) return;
-            if ($('music').classList.contains('ask')) { $('music').classList.remove('ask'); fadeIn(); }
-            // Muzica a pornit mai târziu (încărcare, apăsare pe player): o aducem în pas cu filmul.
+            $('music').classList.remove('ask');
+            // Muzica a pornit mai târziu (încărcare, apăsare pe player): o aducem în pas cu filmul,
+            // cât încă e pe mut, apoi o lăsăm să crească încet.
             const want = expectedPos();
             if (want !== null && Math.abs(yt.getCurrentTime() - want) > 0.6) yt.seekTo(want, true);
+            if (!faded) { faded = true; setTimeout(() => fadeTo(MUSIC_VOL, 7000), 600); }
           },
         },
       });
@@ -268,12 +270,21 @@
     tag.src = 'https://www.youtube.com/iframe_api';
     document.head.appendChild(tag);
 
-    function fadeIn() {
+    // Volumul crește/scade lin (curbă în S), ca intrarea muzicii să nu se observe.
+    const MUSIC_VOL = 70;
+    let vol = 0, faded = false;
+    function fadeTo(target, ms, done) {
       clearInterval(fadeTimer);
-      let v = 0;
-      yt.setVolume(0);
-      fadeTimer = setInterval(() => { v = Math.min(70, v + 4); if (!muted) yt.setVolume(v); if (v >= 70) clearInterval(fadeTimer); }, 150);
+      const from = vol, t0 = performance.now();
+      fadeTimer = setInterval(() => {
+        const k = Math.min(1, (performance.now() - t0) / ms);
+        vol = from + (target - from) * (0.5 - Math.cos(Math.PI * k) / 2);
+        if (!muted) yt.setVolume(Math.round(vol));
+        if (k >= 1) { clearInterval(fadeTimer); done?.(); }
+      }, 50);
     }
+    // Sare în melodie pe ascuns: scade volumul, sare, apoi îl ridică la loc.
+    function quietSeek(t, upMs = 4000) { fadeTo(0, 500, () => { yt.seekTo(t, true); fadeTo(MUSIC_VOL, upMs); }); }
     // Unde ar trebui să fie melodia acum, ca partea dramatică să cadă pe titlu (null după final).
     let filmStart = null;
     const expectedPos = () => (filmStart === null ? null : Math.max(0, DRAMA - LEAD + (performance.now() - filmStart) / 1000));
@@ -287,24 +298,24 @@
       wantMusic = true;
       if (!ytReady) return;
       const want = expectedPos() ?? SONG.start;
-      if (yt.getPlayerState() !== YT.PlayerState.PLAYING) { yt.seekTo(want, true); yt.playVideo(); }
-      else if (Math.abs(yt.getCurrentTime() - want) > 0.6) yt.seekTo(want, true);
       yt.unMute();
-      fadeIn();
+      if (yt.getPlayerState() !== YT.PlayerState.PLAYING) { clearInterval(fadeTimer); vol = 0; faded = false; yt.setVolume(0); yt.seekTo(want, true); yt.playVideo(); }
+      else if (Math.abs(yt.getCurrentTime() - want) > 0.6) quietSeek(want);
       // Dacă telefonul blochează pornirea automată, arătăm playerul ca să fie apăsat direct.
       setTimeout(() => { if (yt.getPlayerState() !== YT.PlayerState.PLAYING && !muted) $('music').classList.add('ask'); }, 3500);
     }
-    // Bucla între 4:40 și 11:01.
+    // Bucla între 4:40 și 11:01, cu trecere lină.
+    let looping = false;
     setInterval(() => {
       if (!ytReady || yt.getPlayerState?.() !== YT.PlayerState.PLAYING) return;
-      if (yt.getCurrentTime() >= SONG.end) yt.seekTo(SONG.start, true);
+      if (yt.getCurrentTime() >= SONG.end - 1 && !looping) { looping = true; quietSeek(SONG.start, 5000); setTimeout(() => { looping = false; }, 3000); }
     }, 500);
     $('music-close').onclick = () => $('music').classList.remove('ask');
     $('mute').onclick = () => {
       muted = !muted;
       $('mute').textContent = muted ? '🔇' : '🔊';
       sfx.setMuted(muted);
-      if (ytReady) { if (muted) yt.mute(); else { yt.unMute(); yt.setVolume(70); if (yt.getPlayerState() !== YT.PlayerState.PLAYING) yt.playVideo(); } }
+      if (ytReady) { if (muted) yt.mute(); else { yt.unMute(); yt.setVolume(Math.round(vol)); if (yt.getPlayerState() !== YT.PlayerState.PLAYING) yt.playVideo(); } }
     };
 
     // ---------- lumânările ----------
@@ -345,7 +356,7 @@
       const token = ++run;
       reset();
       filmStart = performance.now();
-      if (playing()) yt.seekTo(expectedPos(), true);
+      if (playing()) quietSeek(expectedPos() + 0.5);
       $('skip').classList.remove('hidden');
       try {
         await wait(900, token);
