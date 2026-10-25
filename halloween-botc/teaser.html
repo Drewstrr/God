@@ -27,23 +27,16 @@
     #gate .divider { margin: 4px auto 0; }
     #gate .who { color: var(--gold-hi); font-size: 1.35rem; font-style: italic; min-height: 1.4em; }
     #gate .tap { color: var(--muted); letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.85rem; animation: blink 2.4s ease-in-out infinite; }
-    #gate .phones { color: #6d5b5f; font-size: 0.85rem; }
-    /* Proba de sunet: înainte de film, lumea își dă volumul la maxim */
-    #check { z-index: 5; gap: 14px; }
-    #check .vol { display: flex; align-items: flex-end; gap: 7px; height: 70px; margin-bottom: 6px; }
-    #check .vol i { width: 12px; background: linear-gradient(180deg, #e8c97a, #8e1023); border-radius: 2px; opacity: 0.25; transition: opacity 0.15s; }
-    #check .vol i:nth-child(1) { height: 20%; } #check .vol i:nth-child(2) { height: 38%; } #check .vol i:nth-child(3) { height: 56%; }
-    #check .vol i:nth-child(4) { height: 74%; } #check .vol i:nth-child(5) { height: 100%; }
-    #check.beat .vol i { opacity: 1; }
-    #check.beat .vol i:nth-child(n+4) { transition-delay: 0.06s; }
-    #check h2 { margin: 0; font: 800 clamp(2rem, 8vw, 3.2rem) 'Blackwood Gothic', serif; color: var(--gold-hi); background: none; padding: 0; text-shadow: 0 2px 0 #000, 0 0 24px rgba(200, 40, 50, 0.45); }
-    #check p { margin: 0; max-width: 22em; color: #c9b8a6; font-size: 1.15rem; line-height: 1.5; }
-    #check p b { color: #efe2cf; }
-    #check .heart { font-size: 2.2rem; transition: transform 0.12s; }
-    #check.beat .heart { transform: scale(1.25); }
-    #check button { margin-top: 10px; font: 800 1.3rem 'Blackwood Gothic', serif; color: #f1e3c4; background: linear-gradient(180deg, #8e1023, #4e0510); border: 1px solid var(--gold); padding: 14px 30px; cursor: pointer;
-      box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.5), 0 0 26px rgba(150, 16, 32, 0.5); }
-    #check .small { font-size: 0.9rem; color: #6d5b5f; }
+    /* Îndemnul la sunet, pe pagina de intrare */
+    #gate .sound { display: flex; align-items: center; gap: 12px; margin-top: 6px; padding: 10px 18px; border: 1px solid var(--gold-dim); background: rgba(20, 6, 9, 0.7);
+      box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.6), 0 0 22px rgba(122, 12, 30, 0.35); }
+    #gate .sound b { font: 800 clamp(1.25rem, 5.4vw, 1.7rem) 'Blackwood Gothic', serif; color: var(--gold-hi); letter-spacing: 0.02em; }
+    #gate .sound small { display: block; color: #a8949a; font-size: 0.92rem; font-style: italic; }
+    #gate .bars { display: flex; align-items: flex-end; gap: 3px; height: 28px; }
+    #gate .bars i { width: 5px; border-radius: 1px; background: linear-gradient(180deg, #e8c97a, #8e1023); animation: bar 1.6s ease-in-out infinite; }
+    #gate .bars i:nth-child(1) { height: 30%; animation-delay: 0s; } #gate .bars i:nth-child(2) { height: 50%; animation-delay: 0.15s; }
+    #gate .bars i:nth-child(3) { height: 70%; animation-delay: 0.3s; } #gate .bars i:nth-child(4) { height: 100%; animation-delay: 0.45s; }
+    @keyframes bar { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
     #gate .ver { position: fixed; left: 12px; bottom: max(10px, env(safe-area-inset-bottom)); color: #3d3033; font-size: 0.75rem; }
     @keyframes blink { 50% { opacity: 0.35; } }
 
@@ -200,18 +193,9 @@
     </div>
     <div class="divider"><svg aria-hidden="true" viewBox="0 0 400 44" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="au" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e2a8"/><stop offset=".5" stop-color="#c9a14a"/><stop offset="1" stop-color="#7c5a1e"/></linearGradient><linearGradient id="auh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c9a14a" stop-opacity="0"/><stop offset=".25" stop-color="#c9a14a"/><stop offset=".75" stop-color="#c9a14a"/><stop offset="1" stop-color="#c9a14a" stop-opacity="0"/></linearGradient><radialGradient id="ru" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#ff8a8a"/><stop offset=".3" stop-color="#d0202f"/><stop offset=".8" stop-color="#6a0710"/><stop offset="1" stop-color="#3a0308"/></radialGradient></defs><path d="M4 22 H96" stroke="url(#auh)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au)"/><circle cx="70" cy="22" r="1.2" fill="url(#au)"/><circle cx="84" cy="22" r="1.6" fill="url(#au)"/><circle cx="112" cy="22" r="1.2" fill="url(#au)"/><circle cx="176" cy="12" r="1.2" fill="url(#au)"/><circle cx="176" cy="32" r="1.2" fill="url(#au)"/><g transform="matrix(-1 0 0 1 400 0)"><path d="M4 22 H96" stroke="url(#auh)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au)"/><circle cx="70" cy="22" r="1.2" fill="url(#au)"/><circle cx="84" cy="22" r="1.6" fill="url(#au)"/><circle cx="112" cy="22" r="1.2" fill="url(#au)"/><circle cx="176" cy="12" r="1.2" fill="url(#au)"/><circle cx="176" cy="32" r="1.2" fill="url(#au)"/></g><path d="M200 8 L212 22 L200 36 L188 22 Z" fill="url(#au)"/><path d="M200 12 L208.5 22 L200 32 L191.5 22 Z" fill="url(#ru)"/><path d="M200 12 L204 22 L200 32 M191.5 22 H208.5" stroke="#ff9a9a" stroke-width=".4" opacity=".55" fill="none"/><circle cx="200" cy="4" r="1.6" fill="url(#au)"/><circle cx="200" cy="40" r="1.6" fill="url(#au)"/></svg></div>
     <div class="who">Ai fost invitat.</div>
+    <div class="sound"><div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div><b>Dă sonorul la maxim</b><small>în întuneric · cu căști, dacă poți</small></div></div>
     <div class="tap">Atinge sigiliul</div>
-    <div class="phones">🎧 cu sunetul pornit, în întuneric</div>
-    <div class="ver">v15 · volum</div>
-  </section>
-
-  <section class="scene hidden" id="check">
-    <div class="heart">🫀</div>
-    <div class="vol" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
-    <h2>Volumul la maxim</h2>
-    <p>Teaserul se trăiește cu sunetul <b>dat la maxim</b>, în întuneric.<br>Auzi bătăile inimii?</p>
-    <button id="heard">Aud. Începe ›</button>
-    <p class="small">🎧 cu căști e și mai bine</p>
+    <div class="ver">v16 · sonor</div>
   </section>
 
   <section class="scene hidden" id="stage"><div class="row" id="row"></div></section>
@@ -491,29 +475,12 @@
     function stopEyes() { clearTimeout(eyesTimer); $('eyes').classList.remove('on'); }
 
     // ---------- intrarea ----------
-    // Atingerea sigiliului pornește sunetul și proba de volum: bătăi de inimă până când omul confirmă că aude.
-    let checkTimer = null;
     $('gate').addEventListener('click', () => {
       sfx.unlock();
-      audioGraph();
-      actx.resume?.();
-      vibrate(40);
-      $('gate').classList.add('hidden');
-      $('check').classList.remove('hidden');
-      const beat = () => {
-        sfx.heartbeat(0, 1);
-        $('check').classList.add('beat');
-        setTimeout(() => $('check').classList.remove('beat'), 160);
-        setTimeout(() => { $('check').classList.add('beat'); setTimeout(() => $('check').classList.remove('beat'), 140); }, 240);
-      };
-      beat();
-      checkTimer = setInterval(beat, 1150);
-    });
-    $('heard').addEventListener('click', () => {
-      clearInterval(checkTimer);
-      $('check').classList.add('hidden');
       film();         // pornește ceasul filmului, ca muzica să știe de unde să înceapă
       startMusic();
+      vibrate(40);
+      $('gate').classList.add('hidden');
       $('mute').classList.remove('hidden');
     });
     $('skip').onclick = () => { run++; sfx.doomHit(0); hitDrama(); candles.forEach((c) => c.classList.remove('gust')); $('stage').className = 'scene gone'; finale(); };
