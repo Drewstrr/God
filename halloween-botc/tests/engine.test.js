@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   PLAYERS, ROLES, DISTRIBUTION, newGame, initialKnowledge, resolveNight, resolveRaven, startDay, nominate,
   nominationError, tallyNomination, endDay, slay, nextNight, checkWinner, validTargets, nightAction,
-  voteThreshold, buildReplay, computeTitles, keysOfType, demonId,
+  voteThreshold, buildReplay, computeTitles, keysOfType, demonId, finalRoleName,
 } from '../js/engine.js';
 
 const seq = (...vals) => { let i = 0; return () => vals[i++ % vals.length]; };
@@ -295,4 +295,14 @@ test('Arhivarul: nu intră în joc când nu sunt Străini; altfel numește mereu
     const { report } = resolveNight(g, {});
     assert.match(msgs(report, 'andrei'), /este 😇 Sfântul/);
   }
+});
+
+test('Mireasa care preia rolul apare la final „Mireasa Contelui (Contele)”', () => {
+  const all = Object.fromEntries(Object.keys(ROLES11).map((id) => [id, true]));
+  let g = startDay(fixed(ROLES11));
+  g = nominate(g, 'andrei', 'radu');
+  ({ state: g } = tallyNomination(g, 'andrei', 'radu', all));
+  const { state } = endDay(g);
+  assert.equal(finalRoleName(state, 'cella'), 'Mireasa Contelui (Contele)');
+  assert.equal(finalRoleName(state, 'radu'), 'Contele Dracula');
 });

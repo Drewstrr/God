@@ -181,17 +181,18 @@
       document.body.appendChild(box);
       const candle = box.querySelector('.candle');
       candle.dataset.state = 'small';
-      sfx.duckMusic(9);
-      sfx.death();
+      sfx.duckMusic(10);
       await wait(100); candle.classList.add('appear');
       await wait(500); candle.dataset.state = 'normal';
-      await wait(500); candle.dataset.state = 'flare';
-      await wait(1400); candle.dataset.state = 'dying';
-      await wait(600); candle.dataset.state = 'dead';
+      // Un suflu puternic: flacăra se apleacă, se zbate și se stinge (fără explozie).
+      await wait(1300); sfx.blow(); candle.classList.add('gust');
+      await wait(280); candle.dataset.state = 'dying';
+      await wait(950); candle.dataset.state = 'dead'; candle.classList.remove('gust');
       // Fumul pornește din vârful fitilului.
       const ember = candle.querySelector('.c-ember').getBoundingClientRect();
       smokeAt(ember.left + ember.width / 2, ember.top, { seconds: 3.2, scale: Math.max(1, innerHeight / 700) });
-      await wait(1100); box.querySelector('.ceremony-name').classList.add('show');
+      // Numele apare odată cu bătaia unui clopot de biserică.
+      await wait(1100); box.querySelector('.ceremony-name').classList.add('show'); sfx.churchBell(0, 110, 0.6);
       await wait(1800); box.querySelector('.ceremony-sub').classList.add('show');
       await wait(2600); box.classList.add('leaving');
       await wait(1200); box.remove();
@@ -469,9 +470,9 @@
       sfx.playMusic(null);
 
       // Actul I
-      at(m, 0, (late) => { if (!late) sfx.bell(0, 65.4, 7, 0.55); });
-      at(m, 2.4, (late) => { if (!late) sfx.bell(0, 65.4, 7, 0.45); });
-      at(m, 4.8, (late) => { if (!late) sfx.bell(0, 61.7, 8, 0.5); });
+      at(m, 0, (late) => { if (!late) sfx.churchBell(0, 98, 0.5); });
+      at(m, 2.4, (late) => { if (!late) sfx.churchBell(0, 98, 0.42); });
+      at(m, 4.8, (late) => { if (!late) sfx.churchBell(0, 87.3, 0.5); });
       at(m, 1.2, (late) => { if (m.dawnAt + 7500 > serverNow()) { dawnText('Castelul se trezește…'); } });
       at(m, 4.4, (late) => { if (m.dawnAt + 7500 > serverNow()) { dawnText('Dar nu toată lumea.'); } });
       // Inima bate tot mai repede până la deznodământ.
@@ -517,7 +518,7 @@
           dawnText('', true);
           const c = document.querySelector(`#dawn-candles [data-pid="${d.id}"]`);
           if (c) { c.classList.add('victim'); c.dataset.state = 'dying'; setTimeout(() => { c.dataset.state = 'normal'; c.classList.remove('out'); c.classList.add('ghost'); }, late ? 0 : 2200); }
-          if (!late) { sfx.playMusic('mourning'); sfx.bell(0, 49, 9, 0.6); }
+          if (!late) { sfx.playMusic('mourning'); sfx.churchBell(0, 73.4, 0.55); }
         });
         at(m, t0 + 2.5, () => {
           document.querySelector('.mourn-card')?.remove();
@@ -526,6 +527,7 @@
           card.innerHTML = `<div class="m-name">${esc(d.name)}</div><div class="m-date">${DATE}</div><div class="m-epitaph"></div><div class="m-testament"></div><div class="m-silence"></div>`;
           document.body.appendChild(card);
           requestAnimationFrame(() => card.classList.add('show'));
+          sfx.crow(0.4, { distance: 0.2, pan: Math.random() * 0.8 - 0.4 });   // cioara, când apare numele mortului
         });
         at(m, t0 + 5, (late) => {
           const el = document.querySelector('.mourn-card .m-epitaph');
@@ -543,7 +545,6 @@
           });
         }
         at(m, t0 + 19.5, () => { const el = document.querySelector('.mourn-card .m-silence'); if (el) el.textContent = '🕯️ Un moment de tăcere'; });
-        at(m, t0 + 22, (late) => { if (!late) sfx.crows(0, 5); });
         at(m, t0 + 26, () => document.querySelector('.mourn-card')?.classList.add('leaving'));
         at(m, t0 + 27, () => { document.querySelector('.mourn-card')?.remove(); document.body.classList.remove('mourning'); });
       });

@@ -273,6 +273,9 @@
             <p>🕯️ Ești la bal.</p>
             <p class="muted">Jocul încă n-a început. Rolul tău secret va apărea aici.</p>
           </div>
+          <div class="card center"><p><b>📖 Cât așteptăm ceilalți oaspeți:</b></p><p class="muted">Citește regulile și personajele. Jocul e nou pentru toți: cine le știe, are un avantaj.</p>
+            <a class="btn" href="regulament" target="_blank">📜 Regulamentul jocului</a></div>
+          ${scriptGuide()}
           <button class="btn ghost" id="logout">Nu sunt eu</button>`;
         app.querySelector('#logout').addEventListener('click', logout);
         return;
@@ -432,18 +435,19 @@
 
     // Lista personajelor POSIBILE: nu toate sunt în joc (unele lipsesc mereu, de aici vin minciunile).
     function scriptGuide() {
-      const sc = pub.script;
-      if (!sc) return '';
+      // Înainte de start (lobby) arătăm toată lista, fără numărul exact din joc.
+      const sc = pub.script ?? Object.fromEntries(['demon', 'minion', 'townsfolk', 'outsider'].map((t) => [t, Object.keys(ROLES).filter((k) => ROLES[k].type === t)]));
       const c = pub.counts ?? {};
+      const known = Boolean(pub.counts);
       const order = [['demon', '🧛 Contele'], ['minion', '🦇 Slujitorii'], ['townsfolk', '🕯️ Sătenii'], ['outsider', '🍷 Străinii']];
       return `
         <details class="card guide">
           <summary>📖 Personajele posibile</summary>
-          <p class="muted">În joc sunt: ${c.townsfolk ?? 0} Săteni, ${c.outsider ?? 0} Străini, ${c.minion ?? 0} Slujitori și 1 Conte. Restul personajelor de pe listă <b>nu</b> sunt în joc, dar oricine poate pretinde că le are.</p>
+          <p class="muted">${known ? `În joc sunt: ${c.townsfolk ?? 0} Săteni, ${c.outsider ?? 0} Străini, ${c.minion ?? 0} Slujitori și 1 Conte.` : 'Câte personaje din fiecare fel intră în joc se anunță la start.'} Restul personajelor de pe listă <b>nu</b> sunt în joc, dar oricine poate pretinde că le are.</p>
           ${order.map(([t, title]) => {
             const list = Object.values(sc[t] ?? {});
             const evil = t === 'demon' || t === 'minion';
-            return `<div class="guide-team ${evil ? 'evil' : 'good'}"><h3>${title}${t !== 'demon' ? ` (${c[t] ?? 0} în joc din ${list.length})` : ''}</h3>${list.map((k) => `
+            return `<div class="guide-team ${evil ? 'evil' : 'good'}"><h3>${title}${t !== 'demon' && known ? ` (${c[t] ?? 0} în joc din ${list.length})` : ''}</h3>${list.map((k) => `
               <div class="guide-role ${evil ? 'evil' : 'good'}"><b>${ROLES[k].emoji} ${esc(ROLES[k].name)}</b><p>${esc(ROLES[k].card)}</p></div>`).join('')}</div>`;
           }).join('')}
         </details>`;

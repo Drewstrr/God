@@ -4,7 +4,7 @@
 import {
   PLAYERS, ROLES, TYPES, DISTRIBUTION, MIN_PLAYERS, MAX_PLAYERS, ROLE_KEYS, newGame, initialKnowledge, resolveNight, resolveRaven,
   startDay, nominate, nominationError, tallyNomination, endDay, slay, nextNight, nightAction, validTargets,
-  believedRole, voteThreshold, inLineup as inLineupFor, checkWinner, shuffle, buildReplay, computeTitles, betLeaderboard, teamOf, grimoire,
+  believedRole, voteThreshold, finalRoleName, inLineup as inLineupFor, checkWinner, shuffle, buildReplay, computeTitles, betLeaderboard, teamOf, grimoire,
 } from './engine.js';
 import { setVoteHandler, setEngineActive } from './pin-service.js';
 import {
@@ -41,7 +41,7 @@ function revive(s) {
     nominations: Object.values(h.nominations ?? {}).map((n) => ({ ...n, yes: Object.values(n.yes ?? {}) })),
   }));
   s.bluffs = Object.values(s.bluffs ?? {});
-  for (const k of ['believed', 'ghostVote', 'slayerUsed', 'alive']) s[k] = s[k] ?? {};
+  for (const k of ['believed', 'ghostVote', 'slayerUsed', 'alive', 'promoted']) s[k] = s[k] ?? {};
   for (const k of ['poisoned', 'lastExecuted', 'pendingRaven', 'winner', 'redHerring']) s[k] = s[k] ?? null;
   if (s.today) {
     s.today = {
@@ -714,7 +714,8 @@ function finalPatch() {
       roles: GP().map((p) => {
         const role = state.roles[p.id];
         const drunkAs = role === 'drunk' ? ROLES[state.believed[p.id]]?.name : null;
-        return { name: p.name, roleName: ROLES[role].name, emoji: ROLES[role].emoji, evil: teamOf(role) === 'evil', alive: Boolean(state.alive[p.id]), drunkAs };
+        const bride = state.promoted?.[p.id] === 'scarlet';
+        return { name: p.name, roleName: finalRoleName(state, p.id), emoji: bride ? ROLES.scarlet.emoji : ROLES[role].emoji, evil: teamOf(role) === 'evil', alive: Boolean(state.alive[p.id]), drunkAs };
       }),
       replay: buildReplay(state),
       titles: computeTitles(state),

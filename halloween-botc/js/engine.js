@@ -149,6 +149,9 @@ export function shuffle(list, rng = Math.random) {
 const pickOne = (list, rng) => list[Math.floor(rng() * list.length)];
 export const nameOf = (state, id) => state.players.find((p) => p.id === id)?.name ?? id;
 export const roleName = (role) => `${ROLES[role].emoji} ${ROLES[role].name}`;
+// Numele rolului unui jucător pentru final și reluare (Mireasa care a preluat rolul apare ca atare).
+export const finalRoleName = (state, id) => (state.promoted?.[id] === 'scarlet'
+  ? `${ROLES.scarlet.name} (Contele)` : ROLES[state.roles[id]].name);
 export const alivePlayers = (state) => state.players.filter((p) => state.alive[p.id]);
 export const aliveCount = (state) => alivePlayers(state).length;
 export const findByRole = (state, role) => state.players.find((p) => state.roles[p.id] === role)?.id ?? null;
@@ -458,6 +461,7 @@ function demonDies(state, aliveBefore) {
   const bride = findByRole(state, 'scarlet');
   if (bride && functioning(state, bride) && aliveBefore >= 5) {
     state.roles[bride] = 'demon';
+    (state.promoted ??= {})[bride] = 'scarlet';   // ținem minte: la final apare „Mireasa Contelui (Contele)”
     return { newDemon: bride };
   }
   state.winner = 'good';
@@ -549,7 +553,7 @@ export function buildReplay(state) {
       out.push({ title: `🌑 Noaptea ${h.night}`, lines });
     } else if (h.type === 'day') {
       const lines = h.nominations.map((n) => `${nameOf(state, n.by)} → ${nameOf(state, n.target)}: ${n.count}/${n.threshold} voturi`);
-      lines.push(h.executed ? `⚰️ ${gen(h.executed, 'Executat', 'Executată')}: ${nameOf(state, h.executed)} (${ROLES[state.roles[h.executed]].name})` : 'Nimeni nu a fost executat');
+      lines.push(h.executed ? `⚰️ ${gen(h.executed, 'Executat', 'Executată')}: ${nameOf(state, h.executed)} (${finalRoleName(state, h.executed)})` : 'Nimeni nu a fost executat');
       out.push({ title: `☀️ Ziua ${h.day}`, lines });
     } else if (h.type === 'slay') {
       out.push({ title: `🗡️ Țărușul (ziua ${h.day})`, lines: [`${nameOf(state, h.by)} → ${nameOf(state, h.target)}: ${h.hit ? 'Contele a murit!' : 'nimic nu s-a întâmplat'}`] });

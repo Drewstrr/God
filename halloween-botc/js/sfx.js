@@ -153,6 +153,85 @@ export function tick(delay = 0) {
 }
 
 // Moartea: aprindere puternică, stingere, clopot.
+// Un suflu puternic, de voce feminină, care stinge lumânarea: aer printr-o gură mică (zgomot cu formanți înalți),
+// cu un început ferm, un „fff” susținut și o coadă care se pierde.
+export function blow(delay = 0) {
+  if (!ready()) return;
+  const t = ctx.currentTime + delay;
+  const dur = 1.25;
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(dur + 0.3);
+  const out = ctx.createGain();
+  out.gain.setValueAtTime(0.0001, t);
+  out.gain.exponentialRampToValueAtTime(0.75, t + 0.09);
+  out.gain.setValueAtTime(0.75, t + 0.25);
+  out.gain.exponentialRampToValueAtTime(0.35, t + 0.75);
+  out.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  out.connect(master);
+  // trei „formanți” ai respirației, mai sus decât la o voce bărbătească
+  [[1900, 1.1, 0.9], [3200, 1.6, 0.7], [5200, 2.2, 0.45]].forEach(([f, q, g], i) => {
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.Q.value = q;
+    bp.frequency.setValueAtTime(f * 0.9, t);
+    bp.frequency.linearRampToValueAtTime(f * (i ? 1.05 : 1.12), t + 0.2);
+    bp.frequency.linearRampToValueAtTime(f * 0.85, t + dur);
+    const gain = ctx.createGain();
+    gain.gain.value = g;
+    src.connect(bp).connect(gain).connect(out);
+  });
+  // un pic de „vânt” jos, cât aerul lovește flacăra
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 420;
+  const lg = ctx.createGain();
+  lg.gain.value = 0.35;
+  src.connect(lp).connect(lg).connect(out);
+  src.start(t);
+  src.stop(t + dur + 0.3);
+}
+
+// Clopot de biserică gotic: parțialele unui clopot adevărat (hum, prime, terța mică, cvinta, nominala…),
+// fiecare cu stingerea lui, puțin dezacordate în perechi, ca să „unduiască”; plus lovitura limbii.
+export function churchBell(delay = 0, base = 196, volume = 0.5) {
+  if (!ready()) return;
+  const t = ctx.currentTime + delay;
+  const partials = [
+    [0.5, 0.55, 11], [1, 0.42, 8], [1.19, 0.32, 6], [1.5, 0.18, 4.5], [2, 0.28, 4],
+    [2.51, 0.12, 2.8], [2.66, 0.1, 2.4], [3.01, 0.08, 2], [4.07, 0.05, 1.4], [5.4, 0.03, 0.9],
+  ];
+  const out = ctx.createGain();
+  out.gain.value = volume;
+  out.connect(master);
+  for (const [ratio, amp, decay] of partials) {
+    for (const detune of [-1.5, 1.5]) {
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.value = base * ratio;
+      o.detune.value = detune * (ratio < 1 ? 1 : 2);
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(amp / 2, t + 0.008);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+      o.connect(g).connect(out);
+      o.start(t);
+      o.stop(t + decay + 0.1);
+    }
+  }
+  // lovitura metalică a limbii clopotului
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(0.08);
+  const bp = ctx.createBiquadFilter();
+  bp.type = 'bandpass';
+  bp.frequency.value = base * 6;
+  bp.Q.value = 3;
+  const sg = ctx.createGain();
+  sg.gain.setValueAtTime(0.25, t);
+  sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+  src.connect(bp).connect(sg).connect(out);
+  src.start(t);
+}
+
 export function death() {
   whoosh(0.9);
   puff(3.0);
