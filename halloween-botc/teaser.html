@@ -7,7 +7,7 @@
   <title>Balul Contelui</title>
   <meta property="og:title" content="Balul Contelui · 31 octombrie">
   <meta property="og:description" content="Contele s-a întors. Unul dintre voi nu e ce pare.">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=16">
   <style>
     html, body { background: #000; height: 100%; overflow: hidden; }
     body { font-family: 'EB Garamond', Georgia, serif; }
@@ -47,7 +47,6 @@
     .row .candle { --s: calc((min(100vw, 560px) - 60px) / 68); justify-self: center; min-width: 0; }
     @media (min-width: 900px) { .row .candle { --s: min(0.58vw, 1.1vh); } }
     .row .candle .name { font-family: 'EB Garamond', serif; font-weight: 600; font-size: clamp(11px, 1.05vw, 16px); color: #c9b8a6; margin-top: 6px; transition: color 1s, text-shadow 1s; }
-    .row .candle.me .name { color: var(--gold-hi); text-shadow: 0 0 12px rgba(232, 201, 122, 0.7); }
     .row .candle.dark .name { color: #5a4a4e; }
     .row .candle { opacity: 0; transition: opacity 1.2s; }
     .row .candle.seen { opacity: 1; }
@@ -63,7 +62,8 @@
     .title-big { font: 800 clamp(3rem, 13vw, 7.5rem) 'Blackwood Gothic', serif; line-height: 0.95; margin: 0;
       color: var(--gold-hi); text-shadow: 0 3px 0 #000, 0 0 30px rgba(200, 40, 50, 0.55), 0 0 60px rgba(201, 161, 74, 0.25); }
     .tagline { color: #c9b8a6; font-style: italic; font-size: clamp(1.05rem, 3.6vw, 1.5rem); margin: 4px 0 18px; }
-    .divider { width: min(380px, 80vw); height: 42px; margin: 0 auto 16px; background: var(--divider, linear-gradient(90deg, transparent, var(--gold), transparent)) center / contain no-repeat; }
+    .divider { width: min(380px, 80vw); height: 42px; margin: 0 auto 16px; }
+    .divider svg { display: block; width: 100%; height: 100%; }
     .count-label { color: var(--gold); letter-spacing: 0.22em; text-transform: uppercase; font-size: 0.85rem; margin-bottom: 10px; }
     .count { display: flex; gap: clamp(8px, 3vw, 22px); justify-content: center; }
     .count div { min-width: clamp(62px, 18vw, 110px); padding: 10px 4px 8px; border: 1px solid var(--gold-dim); background: rgba(20, 6, 9, 0.75);
@@ -188,8 +188,8 @@
         <ellipse cx="70" cy="56" rx="20" ry="8" transform="rotate(-32 70 56)" fill="#fff" opacity="0.10"/>
       </svg>
     </div>
-    <div class="divider"></div>
-    <div class="who" id="who"></div>
+    <div class="divider"><svg aria-hidden="true" viewBox="0 0 400 44" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="au" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e2a8"/><stop offset=".5" stop-color="#c9a14a"/><stop offset="1" stop-color="#7c5a1e"/></linearGradient><linearGradient id="auh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c9a14a" stop-opacity="0"/><stop offset=".25" stop-color="#c9a14a"/><stop offset=".75" stop-color="#c9a14a"/><stop offset="1" stop-color="#c9a14a" stop-opacity="0"/></linearGradient><radialGradient id="ru" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#ff8a8a"/><stop offset=".3" stop-color="#d0202f"/><stop offset=".8" stop-color="#6a0710"/><stop offset="1" stop-color="#3a0308"/></radialGradient></defs><path d="M4 22 H96" stroke="url(#auh)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au)"/><circle cx="70" cy="22" r="1.2" fill="url(#au)"/><circle cx="84" cy="22" r="1.6" fill="url(#au)"/><circle cx="112" cy="22" r="1.2" fill="url(#au)"/><circle cx="176" cy="12" r="1.2" fill="url(#au)"/><circle cx="176" cy="32" r="1.2" fill="url(#au)"/><g transform="matrix(-1 0 0 1 400 0)"><path d="M4 22 H96" stroke="url(#auh)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au)"/><circle cx="70" cy="22" r="1.2" fill="url(#au)"/><circle cx="84" cy="22" r="1.6" fill="url(#au)"/><circle cx="112" cy="22" r="1.2" fill="url(#au)"/><circle cx="176" cy="12" r="1.2" fill="url(#au)"/><circle cx="176" cy="32" r="1.2" fill="url(#au)"/></g><path d="M200 8 L212 22 L200 36 L188 22 Z" fill="url(#au)"/><path d="M200 12 L208.5 22 L200 32 L191.5 22 Z" fill="url(#ru)"/><path d="M200 12 L204 22 L200 32 M191.5 22 H208.5" stroke="#ff9a9a" stroke-width=".4" opacity=".55" fill="none"/><circle cx="200" cy="4" r="1.6" fill="url(#au)"/><circle cx="200" cy="40" r="1.6" fill="url(#au)"/></svg></div>
+    <div class="who">Ai fost invitat.</div>
     <div class="tap">Atinge sigiliul</div>
     <div class="phones">🎧 cu sunetul pornit, în întuneric</div>
   </section>
@@ -201,7 +201,7 @@
     <h1 class="title-big">Balul Contelui</h1>
     <p class="tagline">O noapte. Un Conte. Nicio încredere.</p>
     <div>
-      <div class="divider"></div>
+      <div class="divider"><svg aria-hidden="true" viewBox="0 0 400 44" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="au-f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e2a8"/><stop offset=".5" stop-color="#c9a14a"/><stop offset="1" stop-color="#7c5a1e"/></linearGradient><linearGradient id="auh-f" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c9a14a" stop-opacity="0"/><stop offset=".25" stop-color="#c9a14a"/><stop offset=".75" stop-color="#c9a14a"/><stop offset="1" stop-color="#c9a14a" stop-opacity="0"/></linearGradient><radialGradient id="ru-f" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#ff8a8a"/><stop offset=".3" stop-color="#d0202f"/><stop offset=".8" stop-color="#6a0710"/><stop offset="1" stop-color="#3a0308"/></radialGradient></defs><path d="M4 22 H96" stroke="url(#auh-f)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au-f)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au-f)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au-f)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au-f)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au-f)"/><circle cx="70" cy="22" r="1.2" fill="url(#au-f)"/><circle cx="84" cy="22" r="1.6" fill="url(#au-f)"/><circle cx="112" cy="22" r="1.2" fill="url(#au-f)"/><circle cx="176" cy="12" r="1.2" fill="url(#au-f)"/><circle cx="176" cy="32" r="1.2" fill="url(#au-f)"/><g transform="matrix(-1 0 0 1 400 0)"><path d="M4 22 H96" stroke="url(#auh-f)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au-f)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au-f)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au-f)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au-f)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au-f)"/><circle cx="70" cy="22" r="1.2" fill="url(#au-f)"/><circle cx="84" cy="22" r="1.6" fill="url(#au-f)"/><circle cx="112" cy="22" r="1.2" fill="url(#au-f)"/><circle cx="176" cy="12" r="1.2" fill="url(#au-f)"/><circle cx="176" cy="32" r="1.2" fill="url(#au-f)"/></g><path d="M200 8 L212 22 L200 36 L188 22 Z" fill="url(#au-f)"/><path d="M200 12 L208.5 22 L200 32 L191.5 22 Z" fill="url(#ru-f)"/><path d="M200 12 L204 22 L200 32 M191.5 22 H208.5" stroke="#ff9a9a" stroke-width=".4" opacity=".55" fill="none"/><circle cx="200" cy="4" r="1.6" fill="url(#au-f)"/><circle cx="200" cy="40" r="1.6" fill="url(#au-f)"/></svg></div>
       <div class="count-label" id="count-label">Porțile castelului se deschid în</div>
       <div class="count" id="count">
         <div><b id="cd-d">–</b><span>zile</span></div><div><b id="cd-h">–</b><span>ore</span></div>
@@ -222,7 +222,7 @@
   <div id="music"><p>🎵 Apasă ▶ pentru muzica balului</p><button class="close" id="music-close" aria-label="Închide">×</button><div class="yt"><div id="yt"></div></div></div>
 
   <script type="module">
-    import { PLAYERS, SECRET_GUEST, gen, normalize } from './js/engine.js';
+    import { PLAYERS, SECRET_GUEST } from './js/engine.js';
     import { candleSVG, animateFlames } from './js/candles.js';
     import * as sfx from './js/sfx.js';
 
@@ -235,10 +235,6 @@
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const guests = PLAYERS.filter((p) => p.id !== SECRET_GUEST);
 
-    // Link personal: teaser?n=flori
-    const asked = normalize(new URLSearchParams(location.search).get('n') ?? '');
-    const me = guests.find((p) => p.id === asked || normalize(p.name) === asked) ?? null;
-    if (me) $('who').textContent = `${me.name}, ai fost ${gen(me.id, 'invitat', 'invitată')}.`;
 
     // ---------- muzica de pe YouTube ----------
     let yt = null, ytReady = false, wantMusic = false, muted = false, fadeTimer = null;
@@ -288,7 +284,7 @@
     animateFlames();
     const seats = guests;
     $('row').innerHTML = seats.map((p, i) => candleSVG(p.name, {
-      cls: `waiting${me?.id === p.id ? ' me' : ''}`, label: esc(p.name), index: i,
+      cls: 'waiting', label: esc(p.name), index: i,
     })).join('');
     const candles = [...$('row').children];
     candles.forEach((c, i) => { c.dataset.id = seats[i].id; });
@@ -332,14 +328,13 @@
 
         // Lumânările se aprind una câte una, pe bătăile inimii.
         $('line').classList.add('low');
-        const order = guests.filter((p) => p.id !== me?.id).concat(me ? [me] : []);
+        const order = guests;
         candles.forEach((c) => c.classList.add('seen'));
         for (const p of order) {
           candleOf(p.id).classList.remove('waiting');
           sfx.heartbeat(0, 0.35);
-          await wait(p === me ? 900 : 620, token);
+          await wait(620, token);
         }
-        if (me) await say(`Printre ei, și tu, ${me.name}.`, token, { hold: 2200, cls: 'small' });
 
         await say('Contele nu vine singur.', token, { hold: 2200 });
         // Rafala: toate flăcările se zbat, se aude corbul.
@@ -358,7 +353,7 @@
 
         // O lumânare se stinge, sincron cu suflul.
         $('line').classList.add('low');
-        const pool = guests.filter((p) => p.id !== me?.id);
+        const pool = guests;
         const victim = candleOf(pool[Math.floor(Math.random() * pool.length)].id);
         await say('În fiecare noapte, o lumânare se stinge.', token, { hold: 1700 });
         await wait(400, token);
@@ -373,7 +368,6 @@
         }
         victim.dataset.state = 'dead'; victim.classList.remove('gust'); victim.classList.add('dark');
         await wait(1300, token);
-        if (me) await say('Poate chiar a ta.', token, { hold: 2000, cls: 'red' });
 
         $('stage').classList.add('dim');
         await say('Nu vei ști pe cine să crezi.', token, { hold: 2400 });
@@ -418,8 +412,7 @@
     }
     tickCount();
     setInterval(tickCount, 1000);
-    const name = me ? `<b>${esc(me.name)}</b>, ` : '';
-    $('whisper').innerHTML = `${name}${me ? 'rolul' : 'Rolul'} tău îți va fi șoptit la bal, pe telefon, când se vor stinge luminile. Până atunci, privește-i atent pe ceilalți invitați.<br><br><b>Unul dintre ei a început deja să mintă.</b>`;
+    $('whisper').innerHTML = `Rolul tău îți va fi șoptit la bal, pe telefon, când se vor stinge luminile. Până atunci, privește-i atent pe ceilalți invitați.<br><br><b>Unul dintre ei a început deja să mintă.</b>`;
 
     // ---------- ochii din întuneric ----------
     let eyesTimer = null;
