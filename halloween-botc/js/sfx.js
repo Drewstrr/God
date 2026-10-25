@@ -17,6 +17,7 @@ export function unlock() {
   }
   // Safari poate lăsa sunetul „suspended” sau „interrupted” (după somn); îl repornim în ambele cazuri.
   if (ctx.state !== 'running') ctx.resume().catch(() => {});
+  loadCrow();
   // Un sunet mut redat chiar în timpul click-ului: unele browsere pornesc audio doar așa.
   try {
     const src = ctx.createBufferSource();
@@ -416,6 +417,13 @@ export function crow(delay = 0, { distance = 0.3, pan = 0 } = {}) {
 
 // Un stol de ciori, unele aproape, altele departe, timp de câteva secunde.
 export function crows(delay = 0, seconds = 14) {
+  loadCrow();
+  // Cu înregistrarea reală (care are deja mai multe croncănituri): de 2–3 ori, una aproape, restul departe.
+  if (crowBuffer) {
+    const n = Math.max(2, Math.min(3, Math.round(seconds / 5)));
+    for (let i = 0; i < n; i++) crow(delay + (i * seconds) / n + Math.random() * 1.5, { distance: i === 0 ? 0.15 : 0.55 + Math.random() * 0.35, pan: Math.random() * 1.6 - 0.8 });
+    return;
+  }
   for (let i = 0; i < 9; i++) {
     const far = Math.random() < 0.6;
     crow(delay + Math.random() * seconds, { distance: far ? 0.65 + Math.random() * 0.3 : Math.random() * 0.25, pan: Math.random() * 2 - 1 });
@@ -668,7 +676,7 @@ const THEMES = {
     const fn = (t, i) => {
       chords[i % 4].forEach((n) => note(out, t, midi(n + 12), { type: 'sawtooth', attack: 1.5, peak: 0.03, decay: 4, filter: 700, detune: 9 }));
       // Din când în când, ciori în depărtare.
-      if (Math.random() < 0.6) crow(Math.max(0, t - ctx.currentTime) + Math.random() * 4, { distance: 0.6 + Math.random() * 0.35, pan: Math.random() * 2 - 1 });
+      if (Math.random() < (crowBuffer ? 0.18 : 0.6)) crow(Math.max(0, t - ctx.currentTime) + Math.random() * 4, { distance: 0.6 + Math.random() * 0.35, pan: Math.random() * 2 - 1 });
       return 5;
     };
     fn.stop = stop;
