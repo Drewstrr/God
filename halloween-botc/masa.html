@@ -24,11 +24,11 @@
     .links { position: absolute; inset: 0; pointer-events: none; }
     .center { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); text-align: center; width: 40%; }
     .center h1 { margin: 0; font-size: calc(var(--fw) * 0.036); background: none; padding: 0; }
-    .center .t { font: 800 calc(var(--fw) * 0.05) 'Blackwood Gothic', serif; color: #f1e3c4; margin: 4px 0; }
+    .center .t { font: 800 calc(var(--fw) * 0.04) 'Blackwood Gothic', serif; color: #f1e3c4; margin: 4px 0; }
     .center p { margin: 0; color: #c9b8a6; font-size: calc(var(--fw) * 0.014); font-style: italic; }
     /* Telefonul jucătorului ales */
-    .phone { position: absolute; right: 1.2%; top: 2.5%; width: 16%; padding: 1.2% 1.2% 1.4%; border: 1px solid var(--gold-dim); background: rgba(20, 6, 9, 0.92); border-radius: 10px; text-align: center;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7); font-size: calc(var(--fw) * 0.0115); color: #c9b8a6; }
+    .phone { margin: 1.2vh auto 0; width: 78%; padding: 2.4% 3%; border: 1px solid var(--gold-dim); background: rgba(20, 6, 9, 0.85); border-radius: 10px; text-align: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); font-size: calc(var(--fw) * 0.0118); color: #c9b8a6; }
     .phone b { color: #efe2cf; } .phone .lbl { color: var(--gold); letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.8em; display: block; margin-bottom: 4px; }
     .phone .em { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
     .bar { position: fixed; left: 10px; top: 10px; z-index: 5; display: flex; gap: 8px; flex-wrap: wrap; }
@@ -49,9 +49,9 @@
       <h1><span class="blood-text gold">Masa Contelui</span></h1>
       <div class="t">18:42</div>
       <p>timp liber · exemplu de ce stă în mijlocul mesei</p>
+      <div class="phone" id="phone"></div>
     </div>
     <div id="seats"></div>
-    <div class="phone" id="phone"></div>
     <div class="help" id="help"></div>
   </div>
 
