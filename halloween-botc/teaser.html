@@ -20,10 +20,16 @@
 
     /* Intrarea */
     #gate { z-index: 5; cursor: pointer; gap: 18px; }
-    #gate .seal { width: min(190px, 48vw); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 26px rgba(150, 16, 32, 0.35)); animation: breathe 3.2s ease-in-out infinite; transition: transform 0.25s; }
+    #gate .seal { width: min(190px, 48vw); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 26px rgba(150, 16, 32, 0.35)); animation: heartbeat 1.15s ease-out infinite; }
     #gate .seal svg { display: block; width: 100%; height: auto; overflow: visible; }
     #gate:active .seal { transform: scale(0.97); }
-    @keyframes breathe { 50% { filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 46px rgba(190, 24, 44, 0.65)); } }
+    /* Sigiliul bate ca o inimă: două bătăi scurte, apoi pauză */
+    @keyframes heartbeat {
+      0%, 34%, 100% { transform: scale(1); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 26px rgba(150, 16, 32, 0.35)); }
+      9% { transform: scale(1.07); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 50px rgba(200, 24, 44, 0.75)); }
+      17% { transform: scale(1.01); }
+      24% { transform: scale(1.045); filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 40px rgba(200, 24, 44, 0.6)); }
+    }
     #gate .divider { margin: 4px auto 0; }
     #gate .who { color: var(--gold-hi); font-size: 1.35rem; font-style: italic; min-height: 1.4em; }
     #gate .tap { color: var(--muted); letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.85rem; animation: blink 2.4s ease-in-out infinite; }
@@ -31,7 +37,8 @@
     #gate .sound { display: flex; align-items: center; gap: 12px; margin-top: 6px; padding: 10px 18px; border: 1px solid var(--gold-dim); background: rgba(20, 6, 9, 0.7);
       box-shadow: inset 0 0 0 3px rgba(0, 0, 0, 0.6), 0 0 22px rgba(122, 12, 30, 0.35); }
     #gate .sound b { font: 800 clamp(1.25rem, 5.4vw, 1.7rem) 'Blackwood Gothic', serif; color: var(--gold-hi); letter-spacing: 0.02em; }
-    #gate .sound small { display: block; color: #a8949a; font-size: 0.92rem; font-style: italic; }
+    #gate .sound { text-align: center; }
+    #gate .sound small { display: block; color: #c9a3a3; font-size: 1.05rem; font-style: italic; margin-top: 2px; }
     #gate .bars { display: flex; align-items: flex-end; gap: 3px; height: 28px; }
     #gate .bars i { width: 5px; border-radius: 1px; background: linear-gradient(180deg, #e8c97a, #8e1023); animation: bar 1.6s ease-in-out infinite; }
     #gate .bars i:nth-child(1) { height: 30%; animation-delay: 0s; } #gate .bars i:nth-child(2) { height: 50%; animation-delay: 0.15s; }
@@ -193,9 +200,9 @@
     </div>
     <div class="divider"><svg aria-hidden="true" viewBox="0 0 400 44" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="au" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e2a8"/><stop offset=".5" stop-color="#c9a14a"/><stop offset="1" stop-color="#7c5a1e"/></linearGradient><linearGradient id="auh" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c9a14a" stop-opacity="0"/><stop offset=".25" stop-color="#c9a14a"/><stop offset=".75" stop-color="#c9a14a"/><stop offset="1" stop-color="#c9a14a" stop-opacity="0"/></linearGradient><radialGradient id="ru" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#ff8a8a"/><stop offset=".3" stop-color="#d0202f"/><stop offset=".8" stop-color="#6a0710"/><stop offset="1" stop-color="#3a0308"/></radialGradient></defs><path d="M4 22 H96" stroke="url(#auh)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au)"/><circle cx="70" cy="22" r="1.2" fill="url(#au)"/><circle cx="84" cy="22" r="1.6" fill="url(#au)"/><circle cx="112" cy="22" r="1.2" fill="url(#au)"/><circle cx="176" cy="12" r="1.2" fill="url(#au)"/><circle cx="176" cy="32" r="1.2" fill="url(#au)"/><g transform="matrix(-1 0 0 1 400 0)"><path d="M4 22 H96" stroke="url(#auh)" stroke-width="1"/><path d="M96 22 c10 0 14 -10 24 -10 c8 0 10 8 4 9 c-3 .5 -5 -2 -3 -4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M96 22 c10 0 14 10 24 10 c8 0 10 -8 4 -9 c-3 -.5 -5 2 -3 4" fill="none" stroke="url(#au)" stroke-width="1.4" stroke-linecap="round"/><path d="M128 22 c12 0 18 -14 34 -12 c10 1 12 10 4 12 c-4 1 -7 -2 -5 -5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M128 22 c12 0 18 14 34 12 c10 -1 12 -10 4 -12 c-4 -1 -7 2 -5 5" fill="none" stroke="url(#au)" stroke-width="1.6" stroke-linecap="round"/><path d="M120 22 H182" stroke="#8e1023" stroke-width="1"/><path d="M150 22 c4 -5 9 -6 12 -4 c-3 1 -6 3 -12 4z M150 22 c4 5 9 6 12 4 c-3 -1 -6 -3 -12 -4z" fill="url(#au)"/><circle cx="70" cy="22" r="1.2" fill="url(#au)"/><circle cx="84" cy="22" r="1.6" fill="url(#au)"/><circle cx="112" cy="22" r="1.2" fill="url(#au)"/><circle cx="176" cy="12" r="1.2" fill="url(#au)"/><circle cx="176" cy="32" r="1.2" fill="url(#au)"/></g><path d="M200 8 L212 22 L200 36 L188 22 Z" fill="url(#au)"/><path d="M200 12 L208.5 22 L200 32 L191.5 22 Z" fill="url(#ru)"/><path d="M200 12 L204 22 L200 32 M191.5 22 H208.5" stroke="#ff9a9a" stroke-width=".4" opacity=".55" fill="none"/><circle cx="200" cy="4" r="1.6" fill="url(#au)"/><circle cx="200" cy="40" r="1.6" fill="url(#au)"/></svg></div>
     <div class="who">Ai fost invitat.</div>
-    <div class="sound"><div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div><b>Dă sonorul la maxim</b><small>în întuneric · cu căști, dacă poți</small></div></div>
+    <div class="sound"><div><b>Dă volumul la maxim…</b><small>…până îți auzi bătăile fricoase ale inimii.</small></div></div>
     <div class="tap">Atinge sigiliul</div>
-    <div class="ver">v16 · sonor</div>
+    <div class="ver">v17 · inimă</div>
   </section>
 
   <section class="scene hidden" id="stage"><div class="row" id="row"></div></section>
@@ -243,7 +250,7 @@
       return (m ? Number(m[1] ?? 0) * 60 + Number(m[2]) : DRAMA_DEFAULT) - SONG_START;  // secunda în fișier
     })();
     // Cât durează filmul de la atingerea sigiliului până la titlu (secunde).
-    const LEAD = 66;
+    const LEAD = 68.9;
 
     const $ = (id) => document.getElementById(id);
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -362,7 +369,9 @@
       if (playing()) quietSeek(expectedPos() + 0.5);
       $('skip').classList.toggle('hidden', !replay);
       try {
-        await wait(900, token);
+        // Întuneric și bătăi de inimă: cât omul își mai dă volumul tare, filmul a început deja.
+        for (const ms of [200, 1150, 1150]) { await wait(ms, token); sfx.heartbeat(0, 1); }
+        await wait(1300, token);
         sfx.churchBell(0, 110, 0.55);
         await say('31 octombrie 2026.', token, { hold: 2600 });
         await say('Contele Dracula dă un bal.', token);
