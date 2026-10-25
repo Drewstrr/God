@@ -186,7 +186,7 @@
     <div class="who">Ai fost invitat.</div>
     <div class="tap">Atinge sigiliul</div>
     <div class="phones">🎧 cu sunetul pornit, în întuneric</div>
-    <div class="ver">v13 · mp3</div>
+    <div class="ver">v14 · mp3</div>
   </section>
 
   <section class="scene hidden" id="stage"><div class="row" id="row"></div></section>
@@ -244,6 +244,8 @@
     // ---------- muzica ----------
     // Fișierul se încarcă de cum se deschide pagina. Volumul trece printr-un GainNode (Web Audio),
     // singurul fel în care fade-in-ul merge și pe iPhone.
+    // Pe iPhone (iOS 16.4+): sunetul paginii e tratat ca muzică, deci se aude și cu butonul de silențios pornit.
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
     const MUSIC_VOL = 0.8;
     const song = new Audio(SONG_FILE);
     song.preload = 'auto';
