@@ -45,6 +45,10 @@ export const ROLES = {
     nights: { pick: 2, prompt: 'Alege doi jucători: e Contele unul dintre ei?', anyone: true },
     card: 'În fiecare noapte alegi doi jucători și afli dacă unul dintre ei e Contele. Atenție: un anumit jucător bun îți apare mereu drept Conte.',
   },
+  virgin: {
+    name: 'Fecioara', emoji: '🕊️', type: 'townsfolk',
+    card: 'Prima dată când ești nominalizată: dacă cel care te nominalizează e Sătean, e executat pe loc și ziua se termină. Dacă nu e Sătean, nu se întâmplă nimic, dar puterea ta s-a dus.',
+  },
   undertaker: {
     name: 'Groparul', emoji: '⚰️', type: 'townsfolk', nights: { info: true },
     card: 'În fiecare noapte, începând cu a doua, afli rolul celui executat în ziua de dinainte.',
@@ -250,11 +254,42 @@ export function validTargets(state, id) {
     .filter((t) => !(spec.notSelf && t === id));
 }
 
+// ---------- povestitorul ----------
+// Un povestitor de BotC nu decide cine moare sau cine câștigă, dar alege ce lasă regulile la voia lui:
+// ce informație falsă primesc Bețivul și otrăviții, cum „apar” Sihastrul și Vizitiul. Ca să țină jocul strâns,
+// înclină puțin norocul spre tabăra care pierde. Aici facem la fel, doar din a doua noapte și doar dacă e pornit:
+// - Binele e aproape (jumătate din cei buni vii pariază corect pe Conte): informațiile false devin mai convingătoare;
+// - Binele e pierdut (aproape nimeni nu pariază pe Conte, iar jocul se apropie de final): norocul îl ajută puțin.
+export function storytellerLean(state, actions = {}) {
+  if (!state.settings?.storyteller || state.night < 2) return null;
+  const demon = demonId(state);
+  const good = alivePlayers(state).map((p) => p.id).filter((id) => teamOf(state.roles[id]) === 'good');
+  if (!demon || !good.length) return null;
+  const onDemon = good.filter((id) => actions[id]?.bet === demon).length / good.length;
+  if (onDemon >= 0.5) return 'evil';
+  if (onDemon <= 0.15 && aliveCount(state) <= 7) return 'good';
+  return null;
+}
+// Cât de des „apar” Sihastrul și Vizitiul altfel decât sunt.
+const misregister = (state) => ({ evil: 0.7, good: 0.25 }[state.lean] ?? MISREGISTER);
+// Ghicitoarea care nu funcționează: cât de des minte.
+const ftLie = (state) => ({ evil: 0.85, good: 0.5 }[state.lean] ?? 0.7);
+// Rolul fals văzut de Groparul sau Corbierul care nu funcționează. Când norocul ajută răul, minciuna e convingătoare
+// (un rău apare bun și invers); altfel e un rol oarecare.
+function falseRole(state, target, rng) {
+  if (state.lean === 'evil') {
+    const evil = teamOf(state.roles[target]) === 'evil';
+    return pickOne(evil ? keysOfType('townsfolk') : [...keysOfType('minion'), 'demon'], rng);
+  }
+  return pickOne(ROLE_KEYS, rng);
+}
+
 // Cum „apare” un jucător în fața abilităților: Vizitiul poate părea Sătean, Sihastrul poate părea Slujitor sau Conte.
 export function registersAs(state, id, rng = Math.random) {
   const role = state.roles[id];
-  if (role === 'spy' && rng() < MISREGISTER) return pickOne(keysOfType('townsfolk'), rng);
-  if (role === 'recluse' && rng() < MISREGISTER) return pickOne([...keysOfType('minion'), 'demon'], rng);
+  const p = misregister(state);
+  if (role === 'spy' && rng() < p) return pickOne(keysOfType('townsfolk'), rng);
+  if (role === 'recluse' && rng() < p) return pickOne([...keysOfType('minion'), 'demon'], rng);
   return role;
 }
 
@@ -296,6 +331,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
   const priv = {};
   const tell = (id, msg) => { if (id) (priv[id] ??= []).push(msg); };
   const deaths = [];
+  state.lean = storytellerLean(prev, actions);
   const kill = (id, cause) => { if (state.alive[id]) { state.alive[id] = false; state.ghostVote[id] = true; deaths.push({ id, cause }); } };
   const pick = (id) => {
     const t = actions[id]?.targets ?? [];
@@ -349,7 +385,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
   // 5. Groparul: rolul celui executat ieri.
   if (night > 1 && prev.lastExecuted) {
     for (const u of holders('undertaker').filter(awake)) {
-      const role = functioning(state, u) ? registersAs(state, prev.lastExecuted, rng) : pickOne(ROLE_KEYS, rng);
+      const role = functioning(state, u) ? registersAs(state, prev.lastExecuted, rng) : falseRole(state, prev.lastExecuted, rng);
       tell(u, { kind: 'info', text: `⚰️ ${nameOf(state, prev.lastExecuted)}, ${gen(prev.lastExecuted, 'executat', 'executată')} ieri, era ${roleName(role)}.` });
     }
   }
@@ -368,7 +404,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     const pair = pick(ft);
     if (!pair) continue;
     const truth = pair.some((id) => id === state.redHerring || registersAs(state, id, rng) === 'demon');
-    const answer = functioning(state, ft) ? truth : (rng() < 0.7 ? !truth : truth);
+    const answer = functioning(state, ft) ? truth : (rng() < ftLie(state) ? !truth : truth);
     const names = pair.map((id) => nameOf(state, id)).join(' și ');
     tell(ft, { kind: 'info', text: answer ? `🔮 DA: unul dintre ${names} este Contele.` : `🔮 NU: niciunul dintre ${names} nu este Contele.` });
   }
@@ -388,7 +424,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     type: 'night', night,
     poisoned: state.poisoned, protected: protectedId, attack, attackResult,
     fortune: Object.fromEntries(holders('fortune').map((id) => [id, pick(id)])),
-    deaths: deaths.map((d) => d.id), bets,
+    deaths: deaths.map((d) => d.id), bets, lean: state.lean,
   });
   state.winner = checkWinner(state);
   return { state, report: { night, deaths, private: priv } };
@@ -400,7 +436,7 @@ export function resolveRaven(prev, target, rng = Math.random) {
   const pending = state.pendingRaven;
   if (!pending || !state.players.some((p) => p.id === target)) return { state, message: null };
   state.pendingRaven = null;
-  const role = pending.honest ? registersAs(state, target, rng) : pickOne(ROLE_KEYS, rng);
+  const role = pending.honest ? registersAs(state, target, rng) : falseRole(state, target, rng);
   return { state, message: { kind: 'info', text: `🪶 ${nameOf(state, target)} este ${roleName(role)}.` } };
 }
 
@@ -431,6 +467,15 @@ export function nominate(prev, by, target) {
   const state = structuredClone(prev);
   state.today.nominators[by] = true;
   state.today.nominees[target] = true;
+  // Fecioara, la prima nominalizare: dacă cel care nominalizează „apare” Sătean, e executat pe loc și ziua se termină.
+  if (state.roles[target] === 'virgin' && !state.virginUsed) {
+    state.virginUsed = true;
+    const nominatorTown = ROLES[registersAs(state, by)].type === 'townsfolk';
+    if (functioning(state, target) && nominatorTown) {
+      state.today.virgin = { by, target };
+      state.today.block = { id: by, votes: 0, virgin: true };
+    }
+  }
   return state;
 }
 
@@ -488,7 +533,7 @@ export function endDay(prev) {
     const mayor = findByRole(state, 'mayor');
     if (mayor && functioning(state, mayor) && aliveCount(state) === 3) { state.winner = 'good'; report.mayorWin = true; }
   }
-  state.history.push({ type: 'day', day: state.today?.day ?? state.night, nominations: state.today?.nominations ?? [], executed: target });
+  state.history.push({ type: 'day', day: state.today?.day ?? state.night, nominations: state.today?.nominations ?? [], executed: target, virgin: state.today?.virgin ?? null });
   state.today = null;
   state.winner ??= checkWinner(state);
   return { state, report };
@@ -549,10 +594,12 @@ export function buildReplay(state) {
         lines.push(line);
       }
       for (const [, pair] of Object.entries(h.fortune ?? {})) if (pair) lines.push(`🔮 Ghicitoarea i-a cercetat pe ${pair.map((id) => nameOf(state, id)).join(' și ')}`);
+      if (h.lean) lines.push(h.lean === 'good' ? '📜 Povestitorul a înclinat puțin norocul spre Bine' : '📜 Povestitorul a înclinat puțin norocul spre Rău');
       lines.push(h.deaths.length ? `💀 Au murit: ${h.deaths.map((id) => nameOf(state, id)).join(', ')}` : '🌙 Nu a murit nimeni');
       out.push({ title: `🌑 Noaptea ${h.night}`, lines });
     } else if (h.type === 'day') {
       const lines = h.nominations.map((n) => `${nameOf(state, n.by)} → ${nameOf(state, n.target)}: ${n.count}/${n.threshold} voturi`);
+      if (h.virgin) lines.push(`🕊️ ${nameOf(state, h.virgin.by)} a nominalizat-o pe Fecioara (${nameOf(state, h.virgin.target)}) și a fost ${gen(h.virgin.by, 'executat', 'executată')} pe loc`);
       lines.push(h.executed ? `⚰️ ${gen(h.executed, 'Executat', 'Executată')}: ${nameOf(state, h.executed)} (${finalRoleName(state, h.executed)})` : 'Nimeni nu a fost executat');
       out.push({ title: `☀️ Ziua ${h.day}`, lines });
     } else if (h.type === 'slay') {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   PLAYERS, ROLES, DISTRIBUTION, newGame, initialKnowledge, resolveNight, resolveRaven, startDay, nominate,
   nominationError, tallyNomination, endDay, slay, nextNight, checkWinner, validTargets, nightAction,
-  voteThreshold, buildReplay, computeTitles, keysOfType, demonId, finalRoleName,
+  voteThreshold, buildReplay, computeTitles, keysOfType, demonId, finalRoleName, storytellerLean,
 } from '../js/engine.js';
 
 const seq = (...vals) => { let i = 0; return () => vals[i++ % vals.length]; };
@@ -305,4 +305,60 @@ test('Mireasa care preia rolul apare la final „Mireasa Contelui (Contele)”',
   const { state } = endDay(g);
   assert.equal(finalRoleName(state, 'cella'), 'Mireasa Contelui (Contele)');
   assert.equal(finalRoleName(state, 'radu'), 'Contele Dracula');
+});
+
+// ---------- Fecioara ----------
+const ROLES_V = { ...ROLES11, gabriela: 'virgin' };
+
+test('Fecioara: un Sătean care o nominalizează e executat pe loc, iar ziua se termină', () => {
+  let g = startDay(fixed(ROLES_V));
+  g = nominate(g, 'andrei', 'gabriela');
+  assert.deepEqual(g.today.virgin, { by: 'andrei', target: 'gabriela' });
+  const { state, report } = endDay(g);
+  assert.equal(report.executed, 'andrei');
+  assert.equal(state.alive.andrei, false);
+  assert.ok(buildReplay(state).some((d) => d.lines.some((l) => l.includes('Fecioara'))));
+});
+
+test('Fecioara: un rău care o nominalizează nu pățește nimic, dar puterea ei se consumă', () => {
+  let g = startDay(fixed(ROLES_V));
+  g = nominate(g, 'robi', 'gabriela');
+  assert.equal(g.today.virgin, undefined);
+  assert.equal(g.virginUsed, true);
+  g = endDay(g).state;
+  g = startDay(nextNight(g));
+  g = nominate(g, 'andrei', 'gabriela');
+  assert.equal(g.today.virgin, undefined);
+});
+
+test('Fecioara otrăvită nu execută pe nimeni', () => {
+  let g = startDay(fixed(ROLES_V, { poisoned: 'gabriela' }));
+  g = nominate(g, 'andrei', 'gabriela');
+  assert.equal(g.today.virgin, undefined);
+});
+
+// ---------- povestitorul ----------
+test('povestitorul: oprit sau în prima noapte nu înclină nimic', () => {
+  const g = fixed(ROLES11);
+  assert.equal(storytellerLean({ ...g, night: 3 }, {}), null);
+  assert.equal(storytellerLean({ ...g, settings: { ...g.settings, storyteller: true }, night: 1 }, {}), null);
+});
+
+test('povestitorul: Binele aproape de Conte → norocul înclină spre Rău; Binele pierdut la final → spre Bine', () => {
+  const g = { ...fixed(ROLES11), settings: { storyteller: true }, night: 3 };
+  const good = Object.keys(ROLES11).filter((id) => !['robi', 'cella', 'radu'].includes(id));
+  const bets = (ids, on) => Object.fromEntries(ids.map((id) => [id, { bet: on }]));
+  assert.equal(storytellerLean(g, bets(good, 'radu')), 'evil');
+  assert.equal(storytellerLean(g, bets(good, 'andrei')), null);   // 11 în viață: încă devreme
+  const late = { ...g, alive: Object.fromEntries(Object.keys(ROLES11).map((id) => [id, ['andrei', 'flori', 'luca', 'nico', 'robi', 'radu'].includes(id)])) };
+  assert.equal(storytellerLean(late, bets(['andrei', 'flori', 'luca', 'nico'], 'robi')), 'good');
+});
+
+test('povestitorul nu schimbă cine moare: același atac, aceeași moarte', () => {
+  const base = { ...fixed(ROLES11), night: 2, settings: { storyteller: true } };
+  const actions = { radu: { targets: ['andrei'] }, flori: { bet: 'radu' }, luca: { bet: 'radu' }, nico: { bet: 'radu' }, andrei: { bet: 'radu' }, bogdan: { bet: 'radu' } };
+  const on = resolveNight(base, actions, seq(0.3));
+  const off = resolveNight({ ...base, settings: { storyteller: false } }, actions, seq(0.3));
+  assert.deepEqual(on.report.deaths, off.report.deaths);
+  assert.equal(on.state.lean, 'evil');
 });

@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0709">
   <meta name="robots" content="noindex">
   <title>Balul Contelui</title>
-  <link rel="stylesheet" href="css/style.css?v=17">
+  <link rel="stylesheet" href="css/style.css?v=18">
 </head>
 <body>
   <main class="wrap" id="app">
@@ -432,6 +432,7 @@
         'Spune-le Slujitorilor în șoaptă ce paravan ai ales și dă-le lor celelalte două, ca să nu pretindeți același rol.',
         'Noaptea nu-l ucide pe cel care te-a acuzat: ar fi prea evident. Ucide-i pe cei care par să afle prea multe.',
         'Poți „folosi” țărușul o dată, ca să pari Van Helsing: nu se întâmplă nimic, dar câștigi încredere.',
+        'Nu nominaliza pe cine pretinde că e Fecioara: dacă nu pățești nimic, toți vor ști că nu ești Sătean.',
       ],
       poisoner: [
         'Otrăvește-i pe cei care primesc informații (Ghicitoarea, Groparul…): informația lor poate deveni falsă.',
@@ -452,9 +453,38 @@
         'Dacă devii Contele, continuă ca și cum nimic nu s-a întâmplat.',
       ],
     };
+    // Sfaturile pentru cei buni: câteva pentru toată lumea, plus unul-două pentru rolul tău.
+    const GOOD_TIPS = [
+      'Spune-ți informația devreme, măcar câtorva oameni de încredere. Dacă mori noaptea, moare și ea cu tine.',
+      'Dacă doi jucători pretind același rol, unul sigur minte (nici Bețivul nu are un rol care chiar e în joc).',
+      'Nu lăsați nicio zi fără execuție: Contele ucide în fiecare noapte, iar voi pierdeți un om oricum.',
+      'Comparați informațiile: cine apare în mai multe indicii? Cine își schimbă povestea de la o zi la alta?',
+      'Atenție la cei care te grăbesc să votezi sau care apără prea tare pe cineva.',
+    ];
+    const ROLE_TIPS = {
+      washer: ['Cei doi din informația ta: unul sigur are acel rol. Întreabă-i ce rol pretind, fără să spui tu primul.'],
+      librarian: ['Străinul din informația ta poate fi Bețivul: atunci informațiile lui sunt false, chiar dacă el nu știe.'],
+      investigator: ['Unul din cei doi e Slujitor. Urmărește-i: cel care minte despre rolul lui se dă singur de gol.'],
+      fortune: ['Verifică pe cine bănuiești, dar ține minte: un jucător bun îți apare mereu drept Conte (capcana).', 'Dacă primești „DA” de două ori pentru același om, în perechi diferite, e ori Contele, ori capcana ta.'],
+      undertaker: ['Spune ce rol avea cel executat: confirmi sau demaști ce a pretins el, iar Binele învață din greșeli.'],
+      monk: ['Binecuvântează pe cine crezi că e cel mai util Binelui (Ghicitoarea, Groparul) și nu spune pe cine, ca să nu-l ținteasă Contele.'],
+      raven: ['Dacă mori noaptea, alegi pe cineva și îi afli rolul: alege pe cel mai bănuit sau pe cel mai „sigur”, ca să-l verifici.'],
+      slayer: ['Ai un singur țăruș: folosește-l când ești destul de sigur pe cine e Contele. Contele se poate da și el drept Van Helsing.'],
+      soldier: ['Contele nu te poate ucide noaptea: poți spune ce rol ai, ca să te asumi drept om de încredere.'],
+      mayor: ['Dacă rămâneți 3 și nu se execută nimeni, câștigă Binele. Contele te poate ataca, dar uneori moare altcineva în locul tău.'],
+      virgin: ['Spune devreme că ești Fecioara: cine te nominalizează și nu pățește nimic poate fi rău (sau Străin).'],
+      recluse: ['Poți apărea drept rău în fața altor abilități. Spune-ți rolul devreme, ca să nu fii executat pe nedrept.'],
+      saint: ['Dacă ești executat, Binele pierde! Spune-ți rolul la timp, ca să nu fii pus pe butuc.'],
+    };
     function evilTips() {
-      const tips = priv?.team === 'evil' ? EVIL_TIPS[priv.role] : null;
-      if (!tips || pub.phase === 'end') return '';
+      if (!priv?.role || pub.phase === 'end') return '';
+      if (priv.team !== 'evil') {
+        const tips = [...(ROLE_TIPS[priv.role] ?? []), ...GOOD_TIPS];
+        return `<details class="card guide evil-tips good-tips"><summary>🕯️ Cum îl prinzi pe Conte <span class="muted">(sfaturi)</span></summary>
+          <ul>${tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></details>`;
+      }
+      const tips = EVIL_TIPS[priv.role];
+      if (!tips) return '';
       return `<details class="card guide evil-tips"><summary>🩸 Cum să te ascunzi <span class="muted">(doar tu vezi asta)</span></summary>
         <ul>${tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></details>`;
     }

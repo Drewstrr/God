@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Panou</title>
-  <link rel="stylesheet" href="css/style.css?v=17">
+  <link rel="stylesheet" href="css/style.css?v=18">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body>
@@ -20,6 +20,7 @@
         <p class="muted">Motorul rulează în pagina <a href="screen" target="_blank">Proiector</a>. Ține-o deschisă pe ecranul proiectorului.</p>
         <button class="btn small ghost" id="sound">🔊 Sunet proiector</button>
         <button class="btn small ghost" id="music">🎵 Muzică</button>
+        <button class="btn small ghost" id="storyteller">📜 Povestitor inteligent</button>
         <label class="vol">🔊 Volum general <input type="range" id="volume" min="0" max="100" step="5"> <b id="volume-val"></b></label>
         <label class="vol">🎵 Volum muzică <input type="range" id="music-volume" min="0" max="100" step="5"> <b id="music-volume-val"></b></label>
       </div>
@@ -273,6 +274,14 @@
       musicBtn.textContent = off ? '🎵 Muzică: OPRITĂ (apasă să pornești)' : '🎵 Muzică: PORNITĂ (apasă să oprești)';
     });
     musicBtn.addEventListener('click', () => set(r('public/music'), Boolean(musicBtn.dataset.off)));
+    // Povestitorul inteligent: înclină puțin norocul spre tabăra care pierde (doar ce lasă regulile la întâmplare).
+    const stBtn = document.getElementById('storyteller');
+    onValue(r('public/storyteller'), (snap) => {
+      const off = snap.val() === false;
+      stBtn.dataset.off = off ? '1' : '';
+      stBtn.textContent = off ? '📜 Povestitor inteligent: OPRIT (apasă să pornești)' : '📜 Povestitor inteligent: PORNIT (apasă să oprești)';
+    });
+    stBtn.addEventListener('click', () => sendCommand('storyteller', { on: Boolean(stBtn.dataset.off) }));
 
 
     // Glisoarele de volum: proiectorul se schimbă pe loc, cât tragi de ele.

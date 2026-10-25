@@ -885,3 +885,4 @@ html:has(body.dark-night) { background: #000; }
 .role-card.breaking .seal-hint { opacity: 0; transition: opacity 0.4s; }
 @keyframes seal-breathe { 50% { filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 40px rgba(190, 24, 44, 0.6)); } }
 @keyframes seal-crack { 25% { transform: translate(-2px, 1px) rotate(-1deg); } 50% { transform: translate(2px, -1px) rotate(1deg); } 75% { transform: translate(-1px, 0) scale(0.98); } }
+.good-tips summary { color: var(--gold-hi); }

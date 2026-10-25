@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Proiector</title>
-  <link rel="stylesheet" href="css/style.css?v=17">
+  <link rel="stylesheet" href="css/style.css?v=18">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
@@ -621,6 +621,27 @@
 
     // Țărușul lui Van Helsing: anunț dramatic peste orice ecran.
     let lastSlay = null;
+    // Fecioara: cine a nominalizat-o era Sătean, deci e executat pe loc.
+    let lastVirgin = null;
+    function showVirgin(v) {
+      if (!v || v.at === lastVirgin) return;
+      const fresh = lastVirgin !== null || serverNow() - v.at < 15000;
+      lastVirgin = v.at;
+      if (!fresh) return;
+      const el = document.createElement('div');
+      el.className = 'slay-overlay';
+      el.innerHTML = `<div><div class="slay-a">⚖️ <b>${esc(v.byName)}</b> ${gen(v.target, 'îl', 'o')} nominalizează pe <b>${esc(v.targetName)}</b>…</div><div class="slay-b"></div></div>`;
+      document.body.appendChild(el);
+      sfx.duckMusic(10);
+      sfx.whoosh(0);
+      setTimeout(() => {
+        el.querySelector('.slay-b').innerHTML = `🕊️ <b>${esc(v.targetName)}</b> era <b>Fecioara</b>!<br>${esc(v.byName)} e ${gen(v.by, 'executat', 'executată')} pe loc.`;
+        sfx.doomHit(0);
+      }, 3200);
+      setTimeout(() => el.classList.add('leaving'), 8000);
+      setTimeout(() => el.remove(), 9200);
+    }
+
     function showSlay(sl) {
       if (!sl || sl.at === lastSlay) return;
       const fresh = lastSlay !== null || serverNow() - sl.at < 15000;
@@ -773,6 +794,7 @@
       const phase = pub.phase ?? 'lobby';
       showNotice(pub.notice);
       showSlay(pub.slay);
+      showVirgin(pub.virgin);
       const joined = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
       if (phase === 'lobby' && joinedBefore !== null && joined > joinedBefore) sfx.chime();
       joinedBefore = joined;

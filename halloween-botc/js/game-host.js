@@ -106,7 +106,7 @@ const run = serial(async (cmd) => {
   const handlers = {
     fillBots, clearBots, start, firstNight, endNight, beginDay, startVoting, cancelNomination, endDayCmd,
     toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree,
-    adminRevive, adminKill, adminRestartNight, pause, resume, finishDawn,
+    adminRevive, adminKill, adminRestartNight, pause, resume, finishDawn, storyteller,
   };
   await handlers[cmd?.type]?.(cmd);
 });
@@ -161,7 +161,8 @@ async function start() {
   const missing = chosen.filter((p) => !pub.players?.[p.id]?.hasPin && !pub.players?.[p.id]?.bot);
   if (missing.length || chosen.length < MIN_PLAYERS || chosen.length > MAX_PLAYERS) return;
 
-  state = newGame(chosen, pub.settings ?? {});
+  // Povestitorul inteligent e pornit implicit; se poate opri din panou oricând.
+  state = newGame(chosen, { ...(pub.settings ?? {}), storyteller: pub.storyteller !== false });
   host = { seen: {} };
   const knowledge = initialKnowledge(state);
   const patch = {};
@@ -201,6 +202,7 @@ async function start() {
     'public/final': null,
     'public/endStage': null,
     'public/slay': null,
+    'public/virgin': null,
   });
   await update(r(), patch);
   await save();
@@ -381,7 +383,7 @@ async function dawnTimeline(night, deadIds) {
 
 function publicDay(extra = {}) {
   const t = state.today;
-  const block = t?.block;
+  const block = t?.virgin ? null : t?.block;  // execuția Fecioarei nu e un „butuc” cu voturi
   return {
     day: t?.day ?? state.night,
     threshold: voteThreshold(state),
@@ -433,7 +435,7 @@ async function beginDay(cmd = {}) {
   host.lastActivity = serverNow();
   const minutes = clamp(cmd.minutes ?? state.settings.freeMinutes, 0, 120, 22);
   host.free = minutes ? { endsAt: serverNow() + minutes * 60000 } : null;
-  await update(r(), { 'public/phase': 'day', 'public/day': publicDay(), 'public/endsAt': null, 'public/slay': null });
+  await update(r(), { 'public/phase': 'day', 'public/day': publicDay(), 'public/endsAt': null, 'public/slay': null, 'public/virgin': null });
   await save();
   if (host.free) armFree();
   startBotDay();
@@ -526,15 +528,32 @@ async function onRaven(id, v) {
 }
 
 async function onNominate(by, v) {
-  if (pub.phase !== 'day' || !state.today || host.current || host.free) return;
+  if (pub.phase !== 'day' || !state.today || host.current || host.free || state.today.virgin) return;
   if (v.day !== state.today.day) return;
   if (nominationError(state, by, v.target)) return;
   state = nominate(state, by, v.target);
+  if (state.today.virgin) return virginStrikes(by, v.target);
   const endsAt = serverNow() + (state.settings.defenseSeconds ?? 60) * 1000;
   host.current = { key: `${state.today.day}_${state.today.nominations.length}`, by, target: v.target, stage: 'defense', endsAt, votes: {} };
   await setPublic({ day: publicDay() });
   await save();
   armDay(endsAt, 'startVoting');
+}
+
+// Fecioara: proiectorul arată ce s-a întâmplat, apoi cel care a nominalizat-o e executat (ziua se încheie).
+async function virginStrikes(by, target) {
+  clearTimeout(dayTimer); clearInterval(botDayTimer);
+  host.current = null;
+  await setPublic({ virgin: { byName: nameOf(by), targetName: nameOf(target), by, target, at: serverNow() }, day: publicDay() });
+  await save();
+  setTimeout(() => run({ type: 'endDayCmd' }), 9000);
+}
+
+// Povestitorul inteligent: pornit/oprit din panou, în orice fază.
+async function storyteller(cmd) {
+  const on = cmd.on !== false;
+  await setPublic({ storyteller: on });
+  if (state) { state.settings.storyteller = on; await save(); }
 }
 
 async function startVoting(cmd = {}) {
@@ -616,7 +635,7 @@ async function cancelNomination() {
 }
 
 async function onSlay(by, v) {
-  if (pub.phase !== 'day' || !state.today || host.free || state.slayerUsed[by] || !state.alive[by]) return;
+  if (pub.phase !== 'day' || !state.today || host.free || state.today.virgin || state.slayerUsed[by] || !state.alive[by]) return;
   if (!state.players.some((p) => p.id === v.target)) return;
   const { state: next, report } = slay(state, by, v.target);
   state = next;
@@ -782,7 +801,7 @@ async function reset() {
     playerInput: null,
   };
   for (const k of ['round', 'gameId', 'alive', 'ghostVote', 'seats', 'counts', 'script', 'morning', 'day', 'execution', 'winner', 'endsAt',
-    'progress', 'final', 'endStage', 'nightSeq', 'notice', 'slay', 'paused']) patch[`public/${k}`] = null;
+    'progress', 'final', 'endStage', 'nightSeq', 'notice', 'slay', 'paused', 'virgin']) patch[`public/${k}`] = null;
   patch['public/phase'] = 'lobby';
   for (const p of PLAYERS) patch[`private/${p.id}`] = { name: p.name };
   await update(r(), patch);
