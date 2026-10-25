@@ -194,7 +194,7 @@
     <div class="who">Ai fost invitat.</div>
     <div class="tap">Atinge sigiliul</div>
     <div class="phones">🎧 cu sunetul pornit, în întuneric</div>
-    <div class="ver">v9 · 6:20</div>
+    <div class="ver">v12 · 6:20</div>
   </section>
 
   <section class="scene hidden" id="stage"><div class="row" id="row"></div></section>
@@ -351,7 +351,7 @@
     function reset() {
       $('finale').classList.add('hidden'); $('finale').classList.remove('on');
       // La „Revezi” lumânările dispar instantaneu, fără să mai clipească pe ecran.
-      $('stage').className = 'scene notrans'; $('line').className = 'scene';
+      $('stage').className = 'scene notrans hidden'; $('line').className = 'scene';
       candles.forEach((c) => { c.classList.remove('seen', 'gust', 'ghost', 'dark'); c.classList.add('waiting'); delete c.dataset.state; delete c.dataset.scale; });
       void $('stage').offsetWidth;
       $('stage').classList.remove('notrans');
@@ -376,6 +376,7 @@
         // Lumânările se aprind una câte una, pe bătăile inimii.
         $('line').classList.add('low');
         const order = guests;
+        $('stage').classList.remove('hidden');
         candles.forEach((c) => c.classList.add('seen'));
         for (const p of order) {
           candleOf(p.id).classList.remove('waiting');
