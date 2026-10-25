@@ -196,7 +196,7 @@
           <div class="targets">${free.map((id) => `<button data-nom="${id}">${esc(playerName(id))}</button>`).join('')}</div>
           <button class="btn ghost" data-panel="">Renunță</button></div>`;
       } else if (panel === 'slay') {
-        html += `<div class="card"><h3>🗡️ În cine înfigi țărușul?</h3><p class="muted">Se anunță pe proiector, în fața tuturor. Ai voie o singură dată în tot jocul.</p>
+        html += `<div class="card"><h3>🗡️ În cine înfigi țărușul?</h3><p class="muted">Se anunță pe proiector, în fața tuturor. Ai voie o singură dată în tot jocul. Țărușul îl ucide doar pe Conte și doar dacă îl folosește Van Helsing adevărat; pentru ceilalți nu se întâmplă nimic.</p>
           <div class="targets">${others.filter((id) => id !== me && pub.alive?.[id] !== false).map((id) => `<button data-slay="${id}">${esc(playerName(id))}</button>`).join('')}</div>
           <button class="btn ghost" data-panel="">Renunță</button></div>`;
       } else {

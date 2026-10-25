@@ -60,7 +60,7 @@ export const ROLES = {
   },
   slayer: {
     name: 'Van Helsing', emoji: '🗡️', type: 'townsfolk', day: true,
-    card: 'O singură dată în tot jocul, ziua, în fața tuturor, înfigi țărușul într-un jucător. Dacă e Contele, moare.',
+    card: 'O singură dată în tot jocul, la adunare, în fața tuturor, înfigi țărușul într-un jucător. Dacă e Contele, moare. Oricine poate „folosi” țărușul o dată, dar doar al tău, al adevăratului Van Helsing, îl poate ucide pe Conte.',
   },
   soldier: {
     name: 'Haiducul', emoji: '⚔️', type: 'townsfolk',
