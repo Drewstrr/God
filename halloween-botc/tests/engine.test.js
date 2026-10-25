@@ -281,3 +281,18 @@ test('12 jucători: 7 Săteni, 2 Străini, 2 Slujitori, Contele; paravanele tot 
     for (const b of g.bluffs) assert.ok(!Object.values(g.roles).includes(b));
   }
 });
+
+test('Arhivarul: nu intră în joc când nu sunt Străini; altfel numește mereu un Străin', () => {
+  for (const n of [7, 10]) {
+    for (let k = 0; k < 60; k++) {
+      const g = newGame(P(n));
+      assert.ok(!Object.values(g.roles).includes('librarian'));
+      assert.ok(!g.bluffs.includes('librarian'));
+    }
+  }
+  const g = fixed({ ...ROLES11, andrei: 'librarian' });
+  for (let k = 0; k < 30; k++) {
+    const { report } = resolveNight(g, {});
+    assert.match(msgs(report, 'andrei'), /este 😇 Sfântul/);
+  }
+});

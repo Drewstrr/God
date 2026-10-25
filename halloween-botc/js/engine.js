@@ -33,7 +33,7 @@ export const ROLES = {
   },
   librarian: {
     name: 'Arhivarul', emoji: '📚', type: 'townsfolk', night1: { info: true },
-    card: 'În prima noapte afli că unul din doi jucători are un anumit rol de Străin. Ex.: „Ana sau Dan e Bețivul” (sau afli că nu e niciun Străin în joc).',
+    card: 'În prima noapte afli că unul din doi jucători are un anumit rol de Străin. Ex.: „Ana sau Dan e Bețivul”. Așa afli cine încurcă jocul fără să vrea.',
   },
   investigator: {
     name: 'Sfetnicul', emoji: '📯', type: 'townsfolk', night1: { info: true },
@@ -172,7 +172,8 @@ export function newGame(players = PLAYERS, settings = {}, rng = Math.random) {
   const dist = DISTRIBUTION[n];
   if (!dist) throw new Error(`Jocul merge cu ${MIN_PLAYERS}–${MAX_PLAYERS} jucători.`);
   const [tf, os, mn] = dist;
-  const town = shuffle(keysOfType('townsfolk'), rng);
+  // Fără Străini în joc (7 sau 10 jucători), Arhivarul n-ar afla nimic: nu-l folosim deloc, nici ca paravan.
+  const town = shuffle(keysOfType('townsfolk').filter((k) => os > 0 || k !== 'librarian'), rng);
   const outs = shuffle(keysOfType('outsider'), rng);
   const mins = shuffle(keysOfType('minion'), rng);
   const inPlay = [...town.slice(0, tf), ...outs.slice(0, os), ...mins.slice(0, mn), 'demon'];
@@ -258,15 +259,16 @@ function pairInfo(state, self, type, rng, honest) {
   const others = state.players.map((p) => p.id).filter((id) => id !== self);
   const label = { townsfolk: 'Sătean', outsider: 'Străin', minion: 'Slujitor' }[type];
   if (honest) {
-    const matches = shuffle(others, rng).map((id) => [id, registersAs(state, id, rng)]).filter(([, r]) => ROLES[r].type === type);
+    // Pentru Străini folosim rolul adevărat: numărul lor e public, deci Arhivarul trebuie să găsească mereu unul.
+    const seen = (id) => (type === 'outsider' ? state.roles[id] : registersAs(state, id, rng));
+    const matches = shuffle(others, rng).map((id) => [id, seen(id)]).filter(([, r]) => ROLES[r].type === type);
     if (!matches.length) return { text: `Nu e niciun ${label} în joc.` };
     const [x, role] = matches[0];
     const y = pickOne(others.filter((id) => id !== x), rng);
     const [a, b] = shuffle([x, y], rng);
     return { text: `Unul dintre ${nameOf(state, a)} și ${nameOf(state, b)} este ${roleName(role)}.` };
   }
-  // Informație falsă: un rol oarecare de tipul cerut și doi jucători la întâmplare.
-  if (type === 'outsider' && rng() < 0.2) return { text: `Nu e niciun ${label} în joc.` };
+  // Informație falsă: un rol oarecare de tipul cerut și doi jucători la întâmplare (arată la fel ca una adevărată).
   const [a, b] = shuffle(others, rng);
   return { text: `Unul dintre ${nameOf(state, a)} și ${nameOf(state, b)} este ${roleName(pickOne(keysOfType(type), rng))}.` };
 }
