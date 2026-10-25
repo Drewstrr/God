@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Masa Contelui · test</title>
+  <link rel="stylesheet" href="css/style.css?v=17">
+  <style>
+    html, body { height: 100%; overflow: hidden; background: #000; }
+    body { font-family: 'EB Garamond', Georgia, serif; }
+    /* Ecranul proiectorului: 16:9, cât de mare încape */
+    .frame { position: fixed; left: 50%; top: 50%; width: min(100vw, 177.78vh); aspect-ratio: 16 / 9; transform: translate(-50%, -50%); overflow: hidden;
+      background: radial-gradient(ellipse at center, #241019 0%, #0b0709 62%); }
+    .table { position: absolute; left: 50%; top: 52%; width: 66%; height: 58%; transform: translate(-50%, -50%); border-radius: 50%;
+      background: radial-gradient(ellipse at 50% 40%, rgba(122, 12, 30, 0.35), rgba(30, 6, 10, 0.75) 70%);
+      box-shadow: inset 0 0 0 2px rgba(201, 161, 74, 0.35), inset 0 0 0 9px rgba(0, 0, 0, 0.5), inset 0 0 0 10px rgba(201, 161, 74, 0.18), 0 0 60px rgba(0, 0, 0, 0.8); }
+    .seat { position: absolute; transform: translate(-50%, -100%); cursor: pointer; transition: filter 0.3s; }
+    .seat .candle { --s: calc(var(--fw) * 0.0052); }
+    .seat .candle .name { font-family: 'EB Garamond', serif; font-weight: 600; font-size: calc(var(--fw) * 0.0125); color: #d8c8b4; margin-top: 4px; white-space: nowrap; }
+    .seat.me .candle .name { color: var(--gold-hi); text-shadow: 0 0 10px rgba(232, 201, 122, 0.8); }
+    .seat.nb .candle .name { color: #ff8a8a; text-shadow: 0 0 10px rgba(224, 36, 71, 0.8); }
+    .seat .candle.ghost .name { color: #7f97b3; }
+    .links { position: absolute; inset: 0; pointer-events: none; }
+    .center { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); text-align: center; width: 40%; }
+    .center h1 { margin: 0; font-size: calc(var(--fw) * 0.036); background: none; padding: 0; }
+    .center .t { font: 800 calc(var(--fw) * 0.05) 'Blackwood Gothic', serif; color: #f1e3c4; margin: 4px 0; }
+    .center p { margin: 0; color: #c9b8a6; font-size: calc(var(--fw) * 0.014); font-style: italic; }
+    /* Telefonul jucătorului ales */
+    .phone { position: absolute; right: 1.2%; top: 2.5%; width: 16%; padding: 1.2% 1.2% 1.4%; border: 1px solid var(--gold-dim); background: rgba(20, 6, 9, 0.92); border-radius: 10px; text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7); font-size: calc(var(--fw) * 0.0115); color: #c9b8a6; }
+    .phone b { color: #efe2cf; } .phone .lbl { color: var(--gold); letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.8em; display: block; margin-bottom: 4px; }
+    .phone .em { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+    .bar { position: fixed; left: 10px; top: 10px; z-index: 5; display: flex; gap: 8px; flex-wrap: wrap; }
+    .bar button { font: 600 0.95rem 'EB Garamond', serif; color: var(--gold-hi); background: rgba(20, 6, 9, 0.85); border: 1px solid var(--gold-dim); padding: 7px 12px; cursor: pointer; }
+    .help { position: absolute; left: 1.6%; bottom: 3%; width: 26%; color: #8d7a7e; font-size: calc(var(--fw) * 0.0105); line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <button id="shuffle">🎲 Amestecă locurile</button>
+    <button id="mode">💀 Mod: alege jucătorul</button>
+    <button id="evil">🩸 Arată răii (doar test)</button>
+  </div>
+  <div class="frame" id="frame">
+    <div class="table"></div>
+    <svg class="links" id="links"></svg>
+    <div class="center">
+      <h1><span class="blood-text gold">Masa Contelui</span></h1>
+      <div class="t">18:42</div>
+      <p>timp liber · exemplu de ce stă în mijlocul mesei</p>
+    </div>
+    <div id="seats"></div>
+    <div class="phone" id="phone"></div>
+    <div class="help" id="help"></div>
+  </div>
+
+  <script type="module">
+    import { PLAYERS, SECRET_GUEST, gen } from './js/engine.js';
+    import { candleSVG, animateFlames } from './js/candles.js';
+
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const guests = PLAYERS.filter((p) => p.id !== SECRET_GUEST);
+    let order = [...guests];
+    const dead = new Set();
+    let evil = new Set();
+    let me = 'andrei';
+    let mode = 'pick';  // pick = alegi jucătorul al cărui telefon îl vezi; kill = atingerea omoară/învie
+    let showEvil = false;
+
+    const shuffle = (a) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+    function newSeating() {
+      order = shuffle(guests);
+      evil = new Set(shuffle(guests).slice(0, 3).map((p) => p.id));  // ca în joc: Contele + 2 Slujitori la 11 jucători
+      dead.clear();
+    }
+
+    // Vecinii vii cei mai apropiați, în ambele sensuri (morții sunt săriți, ca în jocul original).
+    function livingNeighbours(id) {
+      const n = order.length, i = order.findIndex((p) => p.id === id);
+      const find = (dir) => { for (let k = 1; k < n; k++) { const p = order[(i + dir * k + n) % n]; if (p.id !== id && !dead.has(p.id)) return p; } return null; };
+      const a = find(-1), b = find(1);
+      return a && b && a.id === b.id ? [a] : [a, b].filter(Boolean);
+    }
+    // Chef: câte perechi de răi stau unul lângă altul (cercul se închide: ultimul e vecin cu primul).
+    function evilPairs() {
+      let c = 0;
+      for (let i = 0; i < order.length; i++) if (evil.has(order[i].id) && evil.has(order[(i + 1) % order.length].id)) c++;
+      return c;
+    }
+
+    function draw() {
+      const fw = $('frame').clientWidth;
+      $('frame').style.setProperty('--fw', `${fw}px`);
+      const W = fw, H = fw * 9 / 16;
+      const cx = W / 2, cy = H * 0.52, rx = W * 0.40, ry = H * 0.36;
+      const nbs = livingNeighbours(me);
+      // Locurile pe ovalul mesei, primul sus la mijloc, apoi în sensul acelor de ceasornic.
+      const pos = order.map((p, i) => { const a = -Math.PI / 2 + (i / order.length) * Math.PI * 2; return { p, x: cx + rx * Math.cos(a), y: cy + ry * Math.sin(a) + H * 0.06 }; });
+      $('seats').innerHTML = pos.map(({ p, x, y }, i) => {
+        const cls = [p.id === me ? 'me' : '', nbs.some((n) => n.id === p.id) ? 'nb' : ''].join(' ');
+        const label = `${esc(p.name)}${showEvil && evil.has(p.id) ? ' 🩸' : ''}`;
+        return `<div class="seat ${cls}" data-id="${p.id}" style="left:${x}px;top:${y}px">${candleSVG(p.name, { cls: dead.has(p.id) ? 'ghost' : '', label, index: guests.findIndex((g) => g.id === p.id) })}</div>`;
+      }).join('');
+      // Firul auriu dintre tine și vecinii tăi vii.
+      const at = (id) => { const s = pos.find((q) => q.p.id === id); return [s.x, s.y - H * 0.05]; };
+      const [mx, my] = at(me);
+      $('links').setAttribute('viewBox', `0 0 ${W} ${H}`);
+      $('links').innerHTML = nbs.map((n) => { const [x, y] = at(n.id); return `<line x1="${mx}" y1="${my}" x2="${x}" y2="${y}" stroke="#e8c97a" stroke-width="${W * 0.0015}" stroke-dasharray="${W * 0.006} ${W * 0.004}" opacity="0.7"/>`; }).join('');
+      const meP = guests.find((g) => g.id === me);
+      const empath = nbs.filter((n) => evil.has(n.id)).length;
+      $('phone').innerHTML = `<span class="lbl">📱 telefonul lui ${esc(meP.name)}</span>
+        ${dead.has(me) ? '👻 Ești fantomă, dar locul tău rămâne la masă.<br>' : ''}
+        La masa Contelui stai între <b>${esc(nbs[0]?.name ?? '—')}</b> și <b>${esc(nbs[1]?.name ?? nbs[0]?.name ?? '—')}</b>.
+        <div class="em">Dacă ${esc(meP.name)} ar fi Empath: <b>${empath}</b> ${empath === 1 ? 'vecin rău' : 'vecini răi'}.<br>Chef, în prima noapte: <b>${evilPairs()}</b> ${evilPairs() === 1 ? 'pereche' : 'perechi'} de răi alăturați.</div>`;
+      $('help').innerHTML = mode === 'pick'
+        ? 'Atinge o lumânare ca să vezi telefonul acelui jucător și vecinii lui (cu roșu). Primul și ultimul din cerc sunt vecini, ca la o masă rotundă.'
+        : 'Atinge o lumânare ca s-o „omori” (flacără albastră) sau s-o învii. Vecinul unui mort devine următorul jucător viu din cerc.';
+      animateFlames();
+    }
+
+    $('seats').addEventListener('click', (e) => {
+      const seat = e.target.closest('.seat');
+      if (!seat) return;
+      const id = seat.dataset.id;
+      if (mode === 'pick') me = id;
+      else if (dead.has(id)) dead.delete(id); else dead.add(id);
+      draw();
+    });
+    $('shuffle').onclick = () => { newSeating(); draw(); };
+    $('mode').onclick = () => { mode = mode === 'pick' ? 'kill' : 'pick'; $('mode').textContent = mode === 'pick' ? '💀 Mod: alege jucătorul' : '🕯️ Mod: omoară / învie'; draw(); };
+    $('evil').onclick = () => { showEvil = !showEvil; draw(); };
+    addEventListener('resize', draw);
+    newSeating();
+    draw();
+  </script>
+</body>
+</html>
