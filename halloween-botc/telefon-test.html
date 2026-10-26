@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0507">
+  <meta name="robots" content="noindex">
+  <title>Telefon · test pergament</title>
+  <link rel="stylesheet" href="css/style.css?v=18">
+  <style>
+    body { font-family: 'EB Garamond', Georgia, serif; }
+    .wrap { padding-bottom: 120px; }
+    /* Comutator de exemple (doar pe pagina de test) */
+    .demo { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin: 4px 0 10px; }
+    .demo button { font: 600 0.82rem 'EB Garamond', serif; color: #8d7a7e; background: transparent; border: 1px dashed #4a3238; padding: 4px 8px; cursor: pointer; }
+    .demo button.on { color: var(--gold-hi); border-color: var(--gold-dim); }
+    .phase-line { text-align: center; font-size: 1.15rem; margin: 6px 0 14px; }
+    .news { border-left: 3px solid var(--gold); padding: 10px 14px; background: rgba(20, 8, 11, 0.7); margin: 14px 0; }
+    .news .lbl { color: var(--gold); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .news p { margin: 4px 0 0; }
+
+    /* Butonul pergamentului: mereu jos, la îndemâna degetului */
+    .dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 10px; justify-content: center; padding: 12px 16px max(14px, env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, transparent, rgba(5, 2, 3, 0.95) 35%); }
+    .dock .scroll-btn { flex: 1; max-width: 420px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 18px; cursor: pointer;
+      font: 800 1.15rem 'Blackwood Gothic', serif; color: #3a1a0c; letter-spacing: 0.02em; border: 0; border-radius: 3px;
+      background: linear-gradient(180deg, #ecdcb8, #cfb07a); box-shadow: 0 0 0 1px #7c5a1e, 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(124, 74, 20, 0.35); }
+    .dock .scroll-btn .dot { min-width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #c62a31, #6a0710); color: #f1d9a0; font: 700 0.8rem 'EB Garamond', serif; display: grid; place-items: center; }
+
+    /* Pergamentul: o foaie veche care se derulează peste ecran */
+    .parchment-veil { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.75); opacity: 0; pointer-events: none; transition: opacity 0.35s; }
+    .parchment-veil.open { opacity: 1; pointer-events: auto; }
+    .parchment { position: fixed; z-index: 51; left: 50%; top: max(12px, env(safe-area-inset-top)); bottom: max(12px, env(safe-area-inset-bottom)); width: min(94vw, 520px);
+      transform: translateX(-50%); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+      clip-path: inset(0 0 100% 0); transition: clip-path 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); color: #2e1a0e; padding: 34px 26px 50px;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='4' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.3 0 0 0 0 0.12 0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E"),
+        radial-gradient(ellipse at 50% 40%, #f3e6c6 0%, #e6d2a6 55%, #cdb07a 100%);
+      box-shadow: inset 0 0 40px rgba(110, 60, 20, 0.55), inset 0 0 120px rgba(90, 50, 15, 0.35), 0 20px 60px rgba(0, 0, 0, 0.8);
+      border-radius: 4px; }
+    .parchment.open { clip-path: inset(0 0 0 0); }
+    .parchment h2 { font: 800 1.45rem 'Blackwood Gothic', serif; color: #6a0710; margin: 22px 0 6px; padding: 0 0 22px; text-align: center; text-shadow: none;
+      background: var(--divider) center bottom / 170px 18px no-repeat; }
+    .parchment h2:first-of-type { margin-top: 4px; }
+    .parchment p, .parchment li { font-size: 1.08rem; line-height: 1.5; }
+    .parchment .muted { color: #6e5233; }
+    .parchment .entry { padding: 8px 0; border-bottom: 1px dashed rgba(110, 70, 30, 0.35); white-space: pre-line; }
+    .parchment .entry b { color: #6a0710; }
+    .parchment .entry.new { background: rgba(198, 42, 49, 0.08); padding: 8px 8px; }
+    .parchment textarea { width: 100%; min-height: 80px; background: rgba(255, 250, 235, 0.6); border: 1px solid #a0804a; color: #2e1a0e; font: 1.05rem 'EB Garamond', serif; padding: 10px; border-radius: 3px; }
+    .parchment .pbtn { font: 700 1rem 'EB Garamond', serif; color: #f3e6c6; background: #6a0710; border: 0; padding: 9px 16px; border-radius: 3px; cursor: pointer; margin-top: 8px; }
+    .parchment .role-line { padding: 4px 0; }
+    .parchment .role-line b { color: #3a1a0c; }
+    .parchment .role-line.evil b { color: #7a0c1e; }
+    .parchment details summary { cursor: pointer; font-weight: 700; color: #6a0710; padding: 6px 0; }
+    .parchment .close-hint { text-align: center; color: #8a6a44; font-style: italic; font-size: 0.95rem; margin-top: 26px; }
+    .parchment .seal-top { width: 64px; height: 64px; margin: -6px auto 0; border-radius: 50%; display: grid; place-items: center; font: 800 1.6rem 'Blackwood Gothic', serif; color: #f1d9a0;
+      background: radial-gradient(circle at 38% 32%, #c62a31, #6a0710 70%, #3a0308); box-shadow: 0 3px 6px rgba(60, 20, 5, 0.5); }
+  </style>
+</head>
+<body>
+  <main class="wrap" id="app"></main>
+  <div class="dock"><button class="scroll-btn" id="open">📜 Pergamentul <span class="dot" id="dot">2</span></button></div>
+  <div class="parchment-veil" id="veil"></div>
+  <article class="parchment" id="sheet"></article>
+
+  <script type="module">
+    import { ROLES, TYPES } from './js/engine.js';
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    // Date de exemplu: Andrei e Ghicitoarea, în a doua zi.
+    const me = { name: 'Andrei', role: 'fortune' };
+    const inbox = [
+      { night: 2, text: '🔮 DA: unul dintre Bogdan și Robi este Contele.', fresh: true },
+      { night: 1, text: '🔮 NU: niciunul dintre Flori și Elisa nu este Contele.' },
+    ];
+    const players = ['Flori', 'Luca', 'Nico', 'Bogdan', 'Gabriela', 'Marian', 'Elisa', 'Robi', 'Cella', 'Radu'];
+    let phase = 'free';
+
+    const PHASES = {
+      free: { label: 'Timp liber', line: '🎭 Balul continuă. Vorbiți în șoaptă!' },
+      gather: { label: 'Adunarea', line: '☩ Adunarea: veniți la proiector!' },
+      vote: { label: 'Vot', line: '⚖️ Cella o nominalizează pe <b>Gabriela</b>.' },
+      night: { label: 'Noaptea', line: 'Noaptea… alegi pe telefon.' },
+      ghost: { label: 'Fantomă', line: '☩ Adunarea: veniți la proiector!' },
+    };
+
+    function main() {
+      const ghost = phase === 'ghost';
+      const action = {
+        free: `<div class="card center"><p>🎭 <b>Timp liber.</b> Adunarea în <b>17:42</b>.</p></div>`,
+        gather: `<div class="card day-actions"><button class="btn">⚖︎ Nominalizează pe cineva</button><button class="btn ghost" style="margin-top:10px">🗡️ Țărușul lui Van Helsing</button></div>`,
+        vote: `<div class="card center vote-card"><h2>✠ Votezi ca Gabriela să fie executată?</h2><p class="muted">Rămân <b>0:14</b> · votul se vede pe proiector</p>
+          <div class="row2"><button class="btn ghost">✠ DA</button><button class="btn ghost">NU</button></div></div>`,
+        night: `<div class="card"><h3>🔮 Alege doi jucători: e Contele unul dintre ei?</h3><div class="targets">${players.slice(0, 6).map((p) => `<button>${p}</button>`).join('')}</div><button class="btn">Confirmă</button></div>`,
+        ghost: `<div class="card center"><p>👻 Ești fantomă: poți vorbi, dar nu mai nominalizezi.</p><p class="muted">Mai ai <b>votul de fantomă</b>, o singură dată.</p></div>`,
+      }[phase];
+      $('app').innerHTML = `
+        <div class="demo">${Object.entries(PHASES).map(([k, v]) => `<button data-ph="${k}" class="${k === phase ? 'on' : ''}">${v.label}</button>`).join('')}</div>
+        <h1 class="center" style="margin-bottom:2px">${me.name}</h1>
+        <div class="badges">${ghost ? '<span class="pill">👻 fantomă</span><span class="pill">🗳️ vot de fantomă</span>' : '<span class="pill on">în viață</span>'}</div>
+        <p class="phase-line">${PHASES[phase].line}</p>
+        ${action}
+        <div class="card role-card" id="role"><div class="hidden-role">✦ Atinge aici ca să-ți vezi rolul ✦</div>
+          <div class="shown-role" hidden><h2>${ROLES[me.role].name}</h2><p class="muted">Sătean · 🕯️ Tabăra binelui</p></div></div>
+        ${phase === 'night' ? '' : `<div class="news"><span class="lbl">Ultima veste · noaptea 2</span><p>${esc(inbox[0].text)}</p></div>`}`;
+      $('app').querySelectorAll('[data-ph]').forEach((b) => b.addEventListener('click', () => { phase = b.dataset.ph; main(); }));
+      const role = $('role');
+      role.addEventListener('click', () => { const s = role.querySelector('.shown-role'); s.hidden = !s.hidden; role.querySelector('.hidden-role').hidden = !s.hidden; });
+    }
+
+    // Tot restul stă în pergament.
+    function sheet() {
+      const r = ROLES[me.role];
+      const groups = Object.keys(TYPES).map((t) => {
+        const list = Object.values(ROLES).filter((x) => x.type === t);
+        return `<details><summary>${TYPES[t].plural} (${list.length})</summary>${list.map((x) => `<div class="role-line ${TYPES[t].team === 'evil' ? 'evil' : ''}"><b>${x.emoji} ${esc(x.name)}</b><br><span class="muted">${esc(x.card)}</span></div>`).join('')}</details>`;
+      }).join('');
+      $('sheet').innerHTML = `
+        <div class="seal-top">C</div>
+        <h2>Rolul tău</h2>
+        <p style="text-align:center"><b style="font-size:1.25rem">${r.emoji} ${r.name}</b><br><span class="muted">Sătean · Tabăra binelui</span></p>
+        <p>${esc(r.card)}</p>
+        <h2>Ce știi</h2>
+        ${inbox.map((m) => `<div class="entry ${m.fresh ? 'new' : ''}"><span class="muted">Noaptea ${m.night}:</span> ${esc(m.text)}</div>`).join('')}
+        <h2>Cum îl prinzi pe Conte</h2>
+        <ul>
+          <li>Verifică pe cine bănuiești, dar ține minte: un jucător bun îți apare mereu drept Conte (capcana).</li>
+          <li>Dacă primești „DA” de două ori pentru același om, în perechi diferite, e ori Contele, ori capcana ta.</li>
+          <li>Spune-ți informația devreme, măcar câtorva oameni de încredere.</li>
+          <li>Dacă doi jucători pretind același rol, unul sigur minte.</li>
+          <li>Nu lăsați nicio zi fără execuție.</li>
+        </ul>
+        <h2>Testamentul tău</h2>
+        <p class="muted">Apare pe proiector dacă mori.</p>
+        <textarea placeholder="Ultimele tale cuvinte…"></textarea>
+        <button class="pbtn">Salvează</button>
+        <h2>Personajele posibile</h2>
+        <p class="muted">Nu toate sunt în joc. Oricine poate pretinde oricare.</p>
+        ${groups}
+        <h2>Altele</h2>
+        <p><a href="regulament" style="color:#6a0710">📜 Regulamentul complet</a></p>
+        <button class="pbtn" style="background:#5a4630">Nu sunt eu (deloghează-mă)</button>
+        <p class="close-hint">Atinge foaia ca s-o închizi</p>`;
+    }
+
+    // Deschis: foaia se derulează de sus în jos. Închis: o atingere oriunde pe foaie (nu pe butoane sau câmpuri).
+    function openSheet() { sheet(); $('sheet').scrollTop = 0; $('veil').classList.add('open'); $('sheet').classList.add('open'); $('dot').hidden = true; navigator.vibrate?.(15); }
+    function closeSheet() { $('veil').classList.remove('open'); $('sheet').classList.remove('open'); }
+    $('open').addEventListener('click', openSheet);
+    $('veil').addEventListener('click', closeSheet);
+    $('sheet').addEventListener('click', (e) => { if (!e.target.closest('button, textarea, input, a, summary, details[open] .role-line')) closeSheet(); });
+    main();
+  </script>
+</body>
+</html>
