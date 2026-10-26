@@ -401,23 +401,43 @@ body[data-phase="vote"], body[data-phase="reveal"], body[data-phase="sacrifice"]
 .screen-wrap .heartbeat { font-size: 14vh; }
 @keyframes heartbeat { 0%, 100% { transform: scale(1); } 12% { transform: scale(1.22); } 24% { transform: scale(1); } 36% { transform: scale(1.14); } 50% { transform: scale(1); } }
 
-/* Binele a învins: explozie de lumină aurie, raze, scântei care urcă */
-.triumph-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
-.triumph-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 35%, #fffbe8 0%, rgba(255, 220, 140, 0.9) 25%, rgba(255, 180, 60, 0) 70%); animation: tflash 2.4s ease-out forwards; }
-.triumph-rays {
-  position: absolute; left: 50%; top: 32%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax;
-  background: repeating-conic-gradient(from 0deg, rgba(255, 214, 120, 0.22) 0deg 6deg, rgba(255, 214, 120, 0) 6deg 18deg);
-  -webkit-mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.6) 25%, transparent 60%);
-  mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.6) 25%, transparent 60%);
-  animation: rays-in 2s ease-out forwards, spin 60s linear infinite;
-}
-.triumph-halo { position: absolute; left: 50%; top: 32%; width: 60vmin; height: 60vmin; margin: -30vmin 0 0 -30vmin; border-radius: 50%; background: radial-gradient(circle, rgba(255, 236, 170, 0.55), rgba(255, 190, 80, 0.15) 45%, transparent 70%); animation: halo 3s ease-in-out infinite; }
-.spark { position: absolute; bottom: -2vh; width: var(--sz); height: var(--sz); border-radius: 50%; background: radial-gradient(circle, #fffbe0 0%, #ffd56b 40%, rgba(255, 170, 40, 0) 70%); filter: drop-shadow(0 0 6px rgba(255, 200, 90, 0.9)); animation: rise-spark var(--dur) linear var(--delay) infinite; opacity: 0; }
-@keyframes tflash { 0% { opacity: 0; } 8% { opacity: 1; } 100% { opacity: 0.25; } }
-@keyframes rays-in { from { opacity: 0; transform: scale(0.3); } to { opacity: 1; transform: scale(1); } }
+/* Binele a învins: răsare soarele peste castel (js/triumph.js) */
+.triumph-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: #05030a; }
+.tr-sky { position: absolute; inset: 0; }
+.tr-sky.night { background: linear-gradient(180deg, #05040c 0%, #0c0a1e 55%, #1a0f22 100%); }
+.tr-sky.dawn { opacity: 0; animation: dawn-sky 6s ease-out 0.6s forwards;
+  background: linear-gradient(180deg, #2b3d6e 0%, #6a6ea8 22%, #e59a7a 52%, #ffc27a 70%, #ffe2a6 82%, #3a2018 100%); }
+@keyframes dawn-sky { to { opacity: 1; } }
+/* Soarele urcă de după dealuri: totul (raze, strălucire, disc) urcă împreună */
+.tr-rise { position: absolute; left: 50%; top: 23%; width: 0; height: 0; transform: translateY(70vh); animation: sunrise 5.5s cubic-bezier(0.2, 0.7, 0.2, 1) 0.4s forwards; }
+@keyframes sunrise { to { transform: translateY(0); } }
+.sun-svg { position: absolute; width: 46vmin; height: 46vmin; left: -23vmin; top: -23vmin; overflow: visible; filter: drop-shadow(0 0 4vmin rgba(255, 220, 140, 0.9)); }
+.tr-glow { position: absolute; width: 150vmin; height: 150vmin; left: -75vmin; top: -75vmin; border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 244, 205, 0.75) 0%, rgba(255, 210, 120, 0.35) 18%, rgba(255, 160, 70, 0.12) 38%, transparent 62%);
+  animation: glow-breathe 5s ease-in-out infinite; }
+@keyframes glow-breathe { 50% { transform: scale(1.06); opacity: 0.9; } }
+/* Razele: două straturi care se rotesc în sensuri opuse, estompate spre margini */
+.tr-rays { position: absolute; width: 260vmax; height: 260vmax; left: -130vmax; top: -130vmax; opacity: 0; filter: blur(1.5px);
+  -webkit-mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.7) 12%, rgba(0, 0, 0, 0.25) 30%, transparent 48%);
+  mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.7) 12%, rgba(0, 0, 0, 0.25) 30%, transparent 48%); }
+.tr-rays.a { background: repeating-conic-gradient(from 0deg, rgba(255, 228, 160, 0.26) 0deg 4deg, rgba(255, 228, 160, 0) 7deg 15deg);
+  animation: rays-on 3s ease-out 2.6s forwards, spin 90s linear infinite; }
+.tr-rays.b { background: repeating-conic-gradient(from 5deg, rgba(255, 200, 120, 0.16) 0deg 2.5deg, rgba(255, 200, 120, 0) 5deg 11deg);
+  animation: rays-on 3s ease-out 3.2s forwards, spin-back 140s linear infinite; }
+@keyframes rays-on { to { opacity: 1; } }
 @keyframes spin { to { rotate: 360deg; } }
-@keyframes halo { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.12); opacity: 1; } }
-@keyframes rise-spark { 0% { opacity: 0; transform: translate(0, 0); } 10% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--dx), -110vh); } }
+@keyframes spin-back { to { rotate: -360deg; } }
+/* Reflexe de lentilă, discrete, care apar după răsărit */
+.tr-flare i { position: absolute; left: var(--x); top: var(--y); width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%;
+  background: radial-gradient(circle, var(--c) 0%, var(--c) 55%, transparent 72%); opacity: 0; animation: rays-on 2s ease-out 5s forwards; }
+.tr-castle { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 26vh; }
+/* Firele de praf auriu care plutesc în lumină */
+.mote { position: absolute; bottom: -2vh; width: var(--sz); height: var(--sz); border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, #fffbe0 0%, #ffd56b 45%, rgba(255, 170, 40, 0) 72%); animation: rise-mote var(--dur) linear var(--delay) infinite; }
+@keyframes rise-mote { 0% { opacity: 0; transform: translate(0, 0); } 12% { opacity: 0.9; } 100% { opacity: 0; transform: translate(var(--dx), -100vh); } }
+/* Titlul apare când soarele a urcat */
+body.triumph .end.good:not(.small) { animation: title-in 1.6s ease-out 3s both; }
+@keyframes title-in { from { opacity: 0; transform: translateY(2vh) scale(0.97); } to { opacity: 1; transform: none; } }
 .end.good h1 { color: #fff3c4; text-shadow: 0 0 20px rgba(255, 220, 120, 0.95), 0 0 60px rgba(255, 170, 40, 0.8), 0 2px 0 #6a4300; animation: glory 2.5s ease-in-out infinite; }
 .end.good p { text-shadow: 0 0 10px #000, 0 0 30px rgba(255, 200, 90, 0.6); }
 @keyframes glory { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }

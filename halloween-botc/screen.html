@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Proiector</title>
-  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/style.css?v=22">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
@@ -22,6 +22,7 @@
     import * as sfx from './js/sfx.js';
     import { YOUTUBE_MUSIC, FILE_MUSIC } from './js/music.js';
     import { INTRO } from './js/intro.js';
+    import { triumph } from './js/triumph.js';
     import { candleSVG, animateFlames } from './js/candles.js';
     import { smokeAt } from './js/smoke.js';
     import { startBlood, stopBlood } from './js/blood.js';
@@ -221,19 +222,6 @@
     }
 
     // Binele a învins: explozie de lumină aurie, raze și scântei care urcă.
-    function triumph() {
-      document.querySelector('.triumph-layer')?.remove();
-      const layer = document.createElement('div');
-      layer.className = 'triumph-layer';
-      let html = '<div class="triumph-rays"></div><div class="triumph-halo"></div><div class="triumph-flash"></div>';
-      for (let i = 0; i < 70; i++) {
-        html += `<div class="spark" style="left:${(Math.random() * 100).toFixed(1)}%;--sz:${(0.4 + Math.random() * 1.2).toFixed(2)}vw;--dur:${(5 + Math.random() * 7).toFixed(1)}s;--delay:${(Math.random() * 6).toFixed(1)}s;--dx:${(Math.random() * 30 - 15).toFixed(1)}vw"></div>`;
-      }
-      layer.innerHTML = html;
-      document.body.prepend(layer);
-      document.body.classList.add('triumph');
-    }
-
     // Sângele care curge când răul a învins.
     function bleed() { startBlood(); }
 

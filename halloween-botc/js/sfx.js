@@ -597,29 +597,87 @@ export function evilWins() {
   if (playClip('laugh', { delay: 4.5, volume: 1 }) === null) evilLaugh(4.5);
 }
 
+// Binele a învins, sincron cu răsăritul din js/triumph.js:
+// 0–4 s  un val de aer care crește din adânc (soarele urcă de după dealuri),
+// ~3 s   un acord major cald, ca un cor, care se deschide încet (soarele iese întreg, apar razele),
+// ~3.4 s clopotele bisericii bat de sărbătoare, în trepte, apoi două bătăi grave.
 export function goodWins() {
   if (!ready()) return;
-  // Fanfară: arpegii majore urcătoare, apoi clopote luminoase.
-  const chords = [[261.63, 329.63, 392], [293.66, 369.99, 440], [329.63, 415.3, 493.88], [392, 493.88, 587.33, 783.99]];
-  chords.forEach((ch, i) => {
-    ch.forEach((f, j) => {
-      const t = ctx.currentTime + 0.2 + i * 0.55 + j * 0.06;
-      ['triangle', 'sawtooth'].forEach((type, k) => {
-        const o = ctx.createOscillator();
-        o.type = type;
-        o.frequency.value = f * (k ? 1.003 : 1);
-        const fl = ctx.createBiquadFilter();
-        fl.type = 'lowpass';
-        fl.frequency.value = 2600;
-        o.connect(fl).connect(envGain(t, 0.03, k ? 0.05 : 0.14, i === 3 ? 4 : 1.1));
-        o.start(t);
-        o.stop(t + 5);
-      });
+  const t0 = ctx.currentTime + 0.1;
+  const out = ctx.createGain();
+  out.gain.value = 1;
+  out.connect(master);
+
+  // 1. Valul răsăritului: zgomot filtrat (aer) + două note grave, filtrul se deschide treptat.
+  const swell = ctx.createGain();
+  swell.gain.setValueAtTime(0.0001, t0);
+  swell.gain.exponentialRampToValueAtTime(0.22, t0 + 3.6);
+  swell.gain.exponentialRampToValueAtTime(0.0001, t0 + 7);
+  const lp = ctx.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.setValueAtTime(180, t0);
+  lp.frequency.exponentialRampToValueAtTime(2600, t0 + 3.8);
+  lp.connect(swell).connect(out);
+  const air = ctx.createBufferSource();
+  air.buffer = noiseBuffer(7.5);
+  const airG = ctx.createGain();
+  airG.gain.value = 0.35;
+  air.connect(airG).connect(lp);
+  air.start(t0);
+  [65.41, 98].forEach((f) => {
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(f, t0);
+    o.frequency.linearRampToValueAtTime(f * 1.003, t0 + 6);
+    o.connect(lp);
+    o.start(t0);
+    o.stop(t0 + 7.2);
+  });
+
+  // 2. Acordul cald (Do major), din fierăstraie ușor dezacordate, cu filtrul deschizându-se lent.
+  const ta = t0 + 3;
+  const pad = ctx.createGain();
+  pad.gain.setValueAtTime(0.0001, ta);
+  pad.gain.exponentialRampToValueAtTime(0.11, ta + 1.6);
+  pad.gain.setValueAtTime(0.11, ta + 5);
+  pad.gain.exponentialRampToValueAtTime(0.0001, ta + 9);
+  const padLp = ctx.createBiquadFilter();
+  padLp.type = 'lowpass';
+  padLp.Q.value = 0.7;
+  padLp.frequency.setValueAtTime(500, ta);
+  padLp.frequency.exponentialRampToValueAtTime(3200, ta + 3);
+  padLp.connect(pad).connect(out);
+  [130.81, 164.81, 196, 261.63, 329.63, 392].forEach((f) => {
+    [-7, 0, 7].forEach((cents) => {
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.value = f;
+      o.detune.value = cents;
+      const g = ctx.createGain();
+      g.gain.value = 0.06;
+      o.connect(g).connect(padLp);
+      o.start(ta);
+      o.stop(ta + 9.2);
     });
   });
-  bell(2.0, 523, 5, 0.25);
-  bell(2.3, 659, 5, 0.22);
-  bell(2.6, 784, 6, 0.22);
+  // sclipiri sus, ca lumina pe apă
+  [1046.5, 1318.5, 1568, 2093, 1568, 1318.5].forEach((f, i) => {
+    const t = ta + 0.6 + i * 0.32;
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = f;
+    o.connect(envGain(t, 0.01, 0.035, 1.6));
+    o.start(t);
+    o.stop(t + 1.8);
+  });
+
+  // 3. Clopotele de sărbătoare: două rânduri în trepte coborâtoare, apoi bătăile grave.
+  const peal = [523.25, 440, 392, 329.63, 293.66, 261.63];
+  for (let round = 0; round < 2; round++) {
+    peal.forEach((f, i) => churchBell(3.4 + round * 2.9 + i * 0.44, f, 0.17));
+  }
+  churchBell(9.3, 196, 0.32);
+  churchBell(9.32, 130.81, 0.3);
 }
 
 // ---------- muzica de fundal, generată pe loc ----------
