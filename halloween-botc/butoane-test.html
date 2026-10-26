@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0507">
+  <meta name="robots" content="noindex">
+  <title>Butoane · test</title>
+  <link rel="stylesheet" href="css/style.css?v=18">
+  <style>
+    body { font-family: 'EB Garamond', Georgia, serif; }
+    .wrap { max-width: 430px; padding: 18px 12px 60px; }
+    .set { margin: 26px 0 34px; }
+    .set h2 { text-align: center; margin: 0 0 2px; }
+    .set .what { text-align: center; color: var(--muted); font-style: italic; margin: 0 0 12px; font-size: 1rem; }
+    /* O bucată de ecran de telefon, cu bara de jos */
+    .mock { position: relative; height: 170px; border: 1px solid #2a1a1f; border-radius: 14px; overflow: hidden;
+      background: radial-gradient(ellipse at top, #241019 0%, #0b0709 70%); }
+    .mock .ghost { position: absolute; left: 16px; right: 16px; top: 14px; height: 44px; border: 1px solid rgba(201, 161, 74, 0.25); background: rgba(20, 8, 11, 0.6); }
+    .dock { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 10px; justify-content: center; align-items: flex-end; padding: 10px 12px 14px;
+      background: linear-gradient(180deg, transparent, rgba(5, 2, 3, 0.95) 35%); }
+    /* Ambalajul ține bulina în afara formei decupate a butonului */
+    .bw { position: relative; flex: 1; max-width: 125px; display: flex; align-items: flex-end; justify-content: center; }
+    .b { position: relative; flex: 1; width: 100%; min-height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      border: 0; cursor: pointer; font: 800 1.02rem 'Blackwood Gothic', serif; letter-spacing: 0.02em; transition: transform 0.12s, filter 0.2s; }
+    .b:active { transform: translateY(2px) scale(0.98); }
+    .b .ico { width: 30px; height: 30px; }
+    .bw .dot { position: absolute; top: -7px; right: -5px; min-width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; z-index: 3;
+      font: 700 0.8rem 'EB Garamond', serif; color: #f1d9a0; background: radial-gradient(circle at 38% 32%, #c62a31, #6a0710); box-shadow: 0 0 0 2px #120608; }
+    /* Pete de sânge, puse diferit pe fiecare buton */
+    .b::after { content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 2; background-repeat: no-repeat; opacity: 0.9;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60'%3E%3Cg fill='%237a0c1e'%3E%3Cpath d='M30 22c6-1 10 3 9 8s-6 7-11 6-8-5-6-9 4-5 8-5z'/%3E%3Ccircle cx='44' cy='18' r='2.4'/%3E%3Ccircle cx='17' cy='34' r='1.8'/%3E%3Ccircle cx='48' cy='38' r='1.4'/%3E%3Ccircle cx='22' cy='16' r='1.2'/%3E%3Cpath d='M36 34c1 5 1 11-1 16-1 2-3 2-3 0 0-5 1-10 4-16z'/%3E%3Cpath d='M26 36c0 3-1 6-2 8-1 1-2 0-2-1 1-3 2-5 4-7z'/%3E%3C/g%3E%3C/svg%3E"); }
+    .b.s1::after { background-size: 34px; background-position: 96% -6px; }
+    .b.s2::after { background-size: 30px; background-position: 4% 110%; transform: scaleX(-1); }
+    .b.s3::after { background-size: 36px; background-position: 2% -8px; }
+
+    /* ===== Setul 1: Relicvele Contelui ===== */
+    .set1 .b { color: #2e1a0e; }
+    .set1 .scroll { background: radial-gradient(ellipse at 50% 40%, #f0e0bb, #cfae74 80%); border-radius: 12px / 30px; box-shadow: inset 0 0 14px rgba(110, 60, 20, 0.6), 0 6px 14px rgba(0, 0, 0, 0.7), -6px 0 0 -2px #b08c55, 6px 0 0 -2px #b08c55; }
+    .set1 .book { color: #e8c97a; background: linear-gradient(90deg, #3a1e10 0 8%, #5a2f19 8% 100%); border-radius: 3px 8px 8px 3px;
+      box-shadow: inset 0 0 0 2px #2a1408, inset 6px 0 10px rgba(0, 0, 0, 0.6), inset 0 0 0 5px rgba(201, 161, 74, 0.35), 0 6px 14px rgba(0, 0, 0, 0.7); }
+    .set1 .stone { color: #e3d8c8; background: radial-gradient(ellipse at 50% 30%, #6a6460, #3b3633 80%); border-radius: 46% 46% 4px 4px / 34% 34% 4px 4px;
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -10px 16px rgba(0, 0, 0, 0.5), 0 6px 14px rgba(0, 0, 0, 0.7); text-shadow: 0 1px 0 #000; }
+
+    /* ===== Setul 2: Vitraliile capelei ===== */
+    .set2 .b { color: #f6e2a8; clip-path: polygon(0 100%, 0 38%, 12% 16%, 32% 4%, 50% 0, 68% 4%, 88% 16%, 100% 38%, 100% 100%); padding-top: 14px; text-shadow: 0 1px 2px #000; }
+    .set2 .b::before { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background: linear-gradient(115deg, transparent 0 30%, rgba(0, 0, 0, 0.55) 30% 32%, transparent 32% 64%, rgba(0, 0, 0, 0.55) 64% 66%, transparent 66%),
+        linear-gradient(0deg, transparent 0 46%, rgba(0, 0, 0, 0.55) 46% 48%, transparent 48%); }
+    .set2 .b > * { position: relative; z-index: 2; }
+    .set2 .red { background: radial-gradient(circle at 40% 30%, #e0475a, #8e1023 55%, #3e040b); box-shadow: inset 0 0 0 3px #c9a14a; }
+    .set2 .violet { background: radial-gradient(circle at 40% 30%, #8a5fc0, #4a2475 55%, #1c0b30); }
+    .set2 .green { background: radial-gradient(circle at 40% 30%, #3f9a72, #1d5a40 55%, #0a2418); }
+    .set2 .frame { position: absolute; inset: 0; z-index: 2; pointer-events: none; border: 3px solid #c9a14a; clip-path: inherit; }
+
+    /* ===== Setul 3: Sigiliu, scut și sicriu ===== */
+    .set3 .b { color: #f1e3c4; text-shadow: 0 1px 2px #000; }
+    .set3 .seal { border-radius: 50%; aspect-ratio: 1; max-width: 86px; min-height: 0; background: radial-gradient(circle at 38% 32%, #c62a31, #7a0c1e 62%, #3a0308);
+      box-shadow: inset 0 0 0 4px rgba(0, 0, 0, 0.25), inset 0 0 0 7px rgba(255, 140, 140, 0.18), 0 6px 14px rgba(0, 0, 0, 0.7); font-size: 0.86rem; }
+    .set3 .shield { font-size: 0.9rem; background: linear-gradient(180deg, #2a1a12, #120a07); clip-path: polygon(0 0, 100% 0, 100% 52%, 50% 100%, 0 52%); padding-bottom: 14px;
+      box-shadow: inset 0 0 0 3px #c9a14a; }
+    .set3 .shield .rim { position: absolute; inset: 0; clip-path: polygon(0 0, 100% 0, 100% 52%, 50% 100%, 0 52%, 0 0, 4% 4%, 4% 50%, 50% 93%, 96% 50%, 96% 4%, 4% 4%); background: #c9a14a; }
+    .set3 .coffin { background: linear-gradient(90deg, #3b2014, #5a3420 50%, #3b2014); clip-path: polygon(30% 0, 70% 0, 100% 24%, 82% 100%, 18% 100%, 0 24%); }
+    .set3 .coffin .cross { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); width: 12px; height: 18px;
+      background: linear-gradient(#c9a14a, #c9a14a) center / 3px 100% no-repeat, linear-gradient(#c9a14a, #c9a14a) center 30% / 100% 3px no-repeat; opacity: 0.8; }
+
+    /* ===== Setul 4: Fier forjat ===== */
+    .set4 .b { color: #d8c49a; background: linear-gradient(180deg, #2b2a2c, #141315); border: 1px solid #000;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 4px #1d1c1e, inset 0 0 0 5px rgba(201, 161, 74, 0.35), 0 6px 14px rgba(0, 0, 0, 0.8); text-shadow: 0 1px 0 #000; }
+    .set4 .b .rv { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #8a8580, #2a2826); }
+    .set4 .b .rv.r1 { top: 6px; left: 6px; } .set4 .b .rv.r2 { top: 6px; right: 6px; } .set4 .b .rv.r3 { bottom: 6px; left: 6px; } .set4 .b .rv.r4 { bottom: 6px; right: 6px; }
+    .set4 .p1 { border-radius: 4px 4px 22px 22px; }
+    .set4 .p2 { border-radius: 22px 22px 4px 4px; }
+    .set4 .p3 { clip-path: polygon(10% 0, 90% 0, 100% 15%, 100% 85%, 90% 100%, 10% 100%, 0 85%, 0 15%); }
+  </style>
+</head>
+<body>
+  <main class="wrap" id="app"></main>
+  <script type="module">
+    // Pictograme desenate (fără emoji): pergament, carte, balanță, cheie etc.
+    const ICON = {
+      scroll: '<svg class="ico" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M8 6h15a3 3 0 0 1 0 6H11v12a3 3 0 0 1-6 0V9a3 3 0 0 1 3-3z"/><path d="M11 12v12a3 3 0 0 0 3 3h11a3 3 0 0 0 3-3v-1H14"/><path d="M15 16h8M15 20h6"/></svg>',
+      book: '<svg class="ico" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M16 9c-3-2-7-2-10-1v17c3-1 7-1 10 1 3-2 7-2 10-1V8c-3-1-7-1-10 1z"/><path d="M16 9v17"/><path d="M9 13h4M9 17h4M19 13h4M19 17h4" stroke-linecap="round"/></svg>',
+      scales: '<svg class="ico" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 5v21M10 27h12M7 9h18"/><path d="M7 9l-4 8h8zM25 9l-4 8h8z"/><circle cx="16" cy="5" r="1.4" fill="currentColor"/></svg>',
+      skull: '<svg class="ico" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M16 4c-6 0-10 4-10 10 0 3 1 5 3 6v4h14v-4c2-1 3-3 3-6 0-6-4-10-10-10z"/><circle cx="12" cy="14" r="2.4" fill="currentColor"/><circle cx="20" cy="14" r="2.4" fill="currentColor"/><path d="M14 24v3M18 24v3M16 18l-1 3h2z"/></svg>',
+      bat: '<svg class="ico" viewBox="0 0 32 32" fill="currentColor"><path d="M16 12c-1-2-1-3 0-4 1 1 1 2 0 4zm0 0c2-2 6-3 9-1 2 1 4 4 5 7-2-1-4-1-5 0-1-1-3-1-4 1-1-1-3-1-5 2-2-3-4-3-5-2-1-2-3-2-4-1-1-1-3-1-5 0 1-3 3-6 5-7 3-2 7-1 9 1z"/></svg>',
+      candle: '<svg class="ico" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M16 3c2 3 2 5 0 7-2-2-2-4 0-7z" fill="currentColor"/><path d="M12 12h8v14h-8zM9 26h14"/></svg>',
+    };
+    const L = { s: 'Pergamentul', p: 'Personajele', r: 'Regulile' };
+    const dot = '<span class="dot">2</span>';
+    const sets = [
+      ['1. Relicvele Contelui', 'Trei obiecte diferite: un sul de pergament, o carte veche legată în piele și o lespede de piatră.', 'set1', [
+        ['scroll s1', ICON.scroll, L.s, dot], ['book s2', ICON.book, L.p, ''], ['stone s3', ICON.scales, L.r, '']]],
+      ['2. Vitraliile capelei', 'Ferestre gotice în arc, ca vitraliile unei capele: roșu, violet și verde, cu rame de plumb.', 'set2', [
+        ['red s1', ICON.candle, L.s, dot], ['violet s2', ICON.bat, L.p, ''], ['green s3', ICON.scales, L.r, '']]],
+      ['3. Sigiliu, scut și sicriu', 'Forme diferite din aceeași lume: sigiliul de ceară, un scut heraldic și un sicriu de lemn.', 'set3', [
+        ['seal s1', ICON.scroll, L.s, dot], ['shield s2', '<span class="rim"></span>' + ICON.skull, L.p, ''], ['coffin s3', '<span class="cross"></span>', L.r, '']]],
+      ['4. Fier forjat', 'Plăci de fier negru cu nituri, fiecare cu altă formă, cu litere aurii și pete de sânge.', 'set4', [
+        ['p1 s1', ICON.scroll, L.s, dot], ['p2 s2', ICON.book, L.p, ''], ['p3 s3', ICON.scales, L.r, '']]],
+    ];
+    const rivets = '<span class="rv r1"></span><span class="rv r2"></span><span class="rv r3"></span><span class="rv r4"></span>';
+    document.getElementById('app').innerHTML = `<h1 class="center">Butoanele de jos</h1>
+      <p class="center muted">Patru seturi. În fiecare set, cele trei butoane sunt diferite, dar din aceeași lume.</p>` +
+      sets.map(([title, what, cls, btns]) => `
+        <section class="set ${cls}">
+          <h2>${title}</h2><p class="what">${what}</p>
+          <div class="mock"><div class="ghost"></div>
+            <div class="dock">${btns.map(([c, ico, label, extra]) => `<span class="bw"><button class="b ${c}">${cls === 'set4' ? rivets : ''}${ico}<span>${label}</span></button>${extra}</span>`).join('')}</div>
+          </div>
+        </section>`).join('');
+  </script>
+</body>
+</html>

@@ -90,6 +90,8 @@
   <script type="module">
     import { ROLES, TYPES } from './js/engine.js';
     const $ = (id) => document.getElementById(id);
+    // Fără iconițele personajelor (🔮, ⚰️…): cine se uită peste umăr n-ar trebui să-ți ghicească rolul după desen.
+    const plain = (t) => String(t ?? '').replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '');
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
     // Date de exemplu: Andrei e Ghicitoarea, în a doua zi.
@@ -121,14 +123,14 @@
       }[phase];
       $('app').innerHTML = `
         <div class="demo">${Object.entries(PHASES).map(([k, v]) => `<button data-ph="${k}" class="${k === phase ? 'on' : ''}">${v.label}</button>`).join('')}</div>
-        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">test v4 · Pergament:</span>${['A', 'B', 'C'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
+        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">test v5 · Pergament:</span>${['A', 'B', 'C'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
         <h1 class="center" style="margin-bottom:2px">${me.name}</h1>
         <div class="badges">${ghost ? '<span class="pill">👻 fantomă</span><span class="pill">🗳️ vot de fantomă</span>' : '<span class="pill on">în viață</span>'}</div>
         <p class="phase-line">${PHASES[phase].line}</p>
         ${action}
         <div class="card role-card" id="role"><div class="hidden-role">✦ Atinge aici ca să-ți vezi rolul ✦</div>
           <div class="shown-role" hidden><h2>${ROLES[me.role].name}</h2><p class="muted">Sătean · 🕯️ Tabăra binelui</p></div></div>
-        ${phase === 'night' ? '' : `<div class="news"><span class="lbl">Ultima veste · noaptea 2</span><p>${esc(inbox[0].text)}</p></div>`}`;
+        ${phase === 'night' ? '' : `<div class="news"><span class="lbl">Ultima veste · noaptea 2</span><p>${esc(plain(inbox[0].text))}</p></div>`}`;
       $('app').querySelectorAll('[data-ph]').forEach((b) => b.addEventListener('click', () => { phase = b.dataset.ph; main(); }));
       $('app').querySelectorAll('[data-var]').forEach((b) => b.addEventListener('click', () => { variant = b.dataset.var; tab = 'mine'; main(); dock(); if (variant !== 'C') openSheet(); }));
       const role = $('role');
@@ -141,7 +143,7 @@
     const R = () => ROLES[me.role];
     const rolesHtml = (open) => Object.keys(TYPES).map((t) => {
       const list = Object.values(ROLES).filter((x) => x.type === t);
-      return `<details ${open ? 'open' : ''}><summary>${TYPES[t].plural} (${list.length})</summary>${list.map((x) => `<div class="role-line ${TYPES[t].team === 'evil' ? 'evil' : ''}"><b>${x.emoji} ${esc(x.name)}</b><br><span class="muted">${esc(x.card)}</span></div>`).join('')}</details>`;
+      return `<details ${open ? 'open' : ''}><summary>${TYPES[t].plural} (${list.length})</summary>${list.map((x) => `<div class="role-line ${TYPES[t].team === 'evil' ? 'evil' : ''}"><b>${esc(x.name)}</b><br><span class="muted">${esc(x.card)}</span></div>`).join('')}</details>`;
     }).join('');
     const rulesHtml = `
       <ul class="rules-short">
@@ -156,10 +158,10 @@
       <p style="text-align:center"><a href="regulament" style="color:#6a0710">📜 Regulamentul complet ›</a></p>`;
     const mineHtml = () => `
       <h2 id="s-role">Rolul tău</h2>
-      <p style="text-align:center"><b style="font-size:1.25rem">${R().emoji} ${R().name}</b><br><span class="muted">Sătean · Tabăra binelui</span></p>
+      <p style="text-align:center"><b style="font-size:1.25rem">${R().name}</b><br><span class="muted">Sătean · Tabăra binelui</span></p>
       <p>${esc(R().card)}</p>
       <h2 id="s-info">Ce știi</h2>
-      ${inbox.map((m) => `<div class="entry ${m.fresh ? 'new' : ''}"><span class="muted">Noaptea ${m.night}:</span> ${esc(m.text)}</div>`).join('')}
+      ${inbox.map((m) => `<div class="entry ${m.fresh ? 'new' : ''}"><span class="muted">Noaptea ${m.night}:</span> ${esc(plain(m.text))}</div>`).join('')}
       <h2 id="s-tips">Cum îl prinzi pe Conte</h2>
       <ul>
         <li>Verifică pe cine bănuiești, dar ține minte: un jucător bun îți apare mereu drept Conte (capcana).</li>
