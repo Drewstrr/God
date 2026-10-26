@@ -949,3 +949,4 @@ html.sheet-open .dock { z-index: 52; }
   background: radial-gradient(circle at 38% 32%, #c62a31, #6a0710 70%, #3a0308); box-shadow: 0 3px 6px rgba(60, 20, 5, 0.5); }
 .parchment .rules-short li { margin: 8px 0; }
 .parchment a { color: #6a0710; }
+.cine .c-row .candle.dark .name { color: #5a4a4e; }

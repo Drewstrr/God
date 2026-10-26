@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Proiector</title>
-  <link rel="stylesheet" href="css/style.css?v=19">
+  <link rel="stylesheet" href="css/style.css?v=20">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
@@ -732,13 +732,16 @@
         .forEach((t, i) => { at(23.6 + i * 3.9, () => sfx.heartbeat(0, 0.25)); say(23.6 + i * 3.9, t, 2.9, 'small'); });
       // Liniște, privirea fuge la lumânări… o rafală le apleacă pe toate, aproape se sting, apoi își revin.
       at(47.6, () => stage.classList.remove('dim'));
+      // Ca în teaser: o singură lumânare, aleasă la întâmplare, se stinge exact pe suflu (începutul la ~30 ms, vârful la ~100 ms).
       at(50.8, () => {
+        const victim = candlesEls[Math.floor(Math.random() * candlesEls.length)];
+        if (!victim) return;
+        const out = () => { victim.dataset.state = 'dead'; victim.classList.remove('gust'); victim.classList.add('dark'); };
         const heard = sfx.playFileAt('airblow', { volume: 1 });
-        const go = () => candlesEls.forEach((c) => { c.classList.add('gust'); c.dataset.state = 'dying'; });
-        if (heard === null) { sfx.blow(); go(); } else setTimeout(go, heard + 30);
-        setTimeout(() => candlesEls.forEach((c) => { c.classList.remove('gust'); c.dataset.state = 'normal'; }), 1400);
+        if (heard === null) { sfx.blow(); victim.classList.add('gust'); victim.dataset.state = 'dying'; setTimeout(out, 900); return; }
+        setTimeout(() => { victim.classList.add('gust'); victim.dataset.state = 'dying'; setTimeout(out, 70); }, heard + 30);
       });
-      say(53, 'În fiecare noapte, o lumânare se va stinge.', 2.6);
+      say(53, 'În fiecare noapte, o lumânare se stinge.', 2.6);
       at(56.6, () => stage.classList.add('dim'));
       say(56.6, 'Nu vei ști pe cine să crezi.', 2.4);
       say(59.5, 'Nici măcar pe tine.', 2.6, 'red');
