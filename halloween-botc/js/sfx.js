@@ -19,6 +19,7 @@ export function unlock() {
   if (ctx.state !== 'running') ctx.resume().catch(() => {});
   loadCrow();
   loadBuffer('airblow');
+  ['bell', 'door', 'nightclock'].forEach(loadBuffer);
   // Un sunet mut redat chiar în timpul click-ului: unele browsere pornesc audio doar așa.
   try {
     const src = ctx.createBufferSource();
@@ -180,6 +181,33 @@ export function playFileAt(name, { lead = 0.08, volume = 1 } = {}) {
   src.connect(g).connect(master);
   src.start(ctx.currentTime + lead);
   return (lead + (ctx.outputLatency || ctx.baseLatency || 0)) * 1000;
+}
+
+// Un clip din fișier, de la o anumită secundă, cu intrare lină; întoarce funcția care îl oprește lin (sau null).
+export function playClip(name, { offset = 0, volume = 1, delay = 0, fadeIn = 0 } = {}) {
+  const buf = buffers[name];
+  if (!ready() || !buf) return null;
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const g = ctx.createGain();
+  const t = ctx.currentTime + delay;
+  if (fadeIn) { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(volume, t + fadeIn); } else g.gain.value = volume;
+  src.connect(g).connect(master);
+  src.start(t, Math.max(0, Math.min(offset, buf.duration - 0.05)));
+  return (fade = 0.6) => {
+    const n = ctx.currentTime;
+    g.gain.cancelScheduledValues(n);
+    g.gain.setValueAtTime(g.gain.value, n);
+    g.gain.linearRampToValueAtTime(0, n + fade);
+    try { src.stop(n + fade + 0.05); } catch {}
+  };
+}
+export const clipLength = (name) => buffers[name]?.duration ?? 0;
+
+// Se lasă noaptea: dangătul de seară, apoi ușa grea a castelului se închide. Fără fișiere: clopotul generat.
+export function nightFalls() {
+  if (playClip('bell', { volume: 0.9 }) === null) return sessionBell();
+  playClip('door', { delay: 2.4, volume: 0.95 });
 }
 
 // Un suflu puternic, de voce feminină, care stinge lumânarea: aer printr-o gură mică (zgomot cu formanți înalți),

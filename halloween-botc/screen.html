@@ -267,7 +267,10 @@
     }
 
     let lastSecond = null;
+    // Sfârșitul nopții: pianul întors cu ceasul (audio/nightclock.mp3) se termină exact când se termină noaptea.
+    let nightClock = null;
     function tick() {
+      if (nightClock && (pub.phase !== 'night' || pub.paused)) { nightClock(); nightClock = null; }
       document.querySelectorAll('[data-ends]').forEach((el) => {
         const ends = Number(el.dataset.ends);
         if (!ends) return;
@@ -276,7 +279,9 @@
         if (pub.paused) return;
         // Ultimele 10 secunde ticăie; la zero, o bătaie mai gravă.
         const sec = Math.ceil(left / 1000);
-        if (sec !== lastSecond && sec <= 10 && sec >= 0 && ['night', 'day'].includes(pub.phase)) sfx.clockTick(sec === 0);
+        const clip = pub.phase === 'night' ? sfx.clipLength('nightclock') : 0;
+        if (clip && !nightClock && left > 0 && left <= clip * 1000) { nightClock = sfx.playClip('nightclock', { offset: clip - left / 1000, fadeIn: 0.3 }); sfx.duckMusic(left / 1000); }
+        if (sec !== lastSecond && sec <= 10 && sec >= 0 && ['night', 'day'].includes(pub.phase) && !(clip && nightClock)) sfx.clockTick(sec === 0);
         lastSecond = sec;
         el.classList.toggle('urgent', sec <= 10);
       });
@@ -831,7 +836,7 @@
         document.querySelector('.triumph-layer')?.remove();
         document.body.classList.remove('triumph');
       }
-      if (phase === 'night' && previous && previous !== 'night') sfx.sessionBell();
+      if (phase === 'night' && previous && previous !== 'night') sfx.nightFalls();
       if (phase === 'execution' && previous === 'day' && pub.execution?.name) {
         // Ceremonia întâi, apoi textul.
         stage.innerHTML = '';
