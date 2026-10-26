@@ -15,8 +15,17 @@
     .demo button { font: 600 0.82rem 'EB Garamond', serif; color: #8d7a7e; background: transparent; border: 1px dashed #4a3238; padding: 4px 8px; cursor: pointer; }
     .demo button.on { color: var(--gold-hi); border-color: var(--gold-dim); }
     .phase-line { text-align: center; font-size: 1.15rem; margin: 6px 0 14px; }
-    .card.calling { animation: calling 0.8s ease-in-out 3; }
+    /* Pulsul „e rândul tău”: stă aprins până când jucătorul face ce i se cere */
+    .card.calling { animation: calling 1.6s ease-in-out infinite; }
     @keyframes calling { 50% { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 30px rgba(232, 201, 122, 0.6); } }
+    .edge-frame { position: fixed; inset: 0; z-index: 45; pointer-events: none; display: none; animation: edge 1.6s ease-in-out infinite;
+      box-shadow: inset 0 0 0 3px rgba(232, 201, 122, 0.85), inset 0 0 50px rgba(200, 24, 44, 0.55); }
+    body.p-edge.needs .edge-frame { display: block; }
+    @keyframes edge { 50% { box-shadow: inset 0 0 0 5px rgba(232, 201, 122, 1), inset 0 0 90px rgba(200, 24, 44, 0.8); } }
+    .call-banner { position: sticky; top: 0; z-index: 20; margin: 0 -16px 10px; padding: 12px 16px; text-align: center; cursor: pointer;
+      font: 800 1.15rem 'Blackwood Gothic', serif; color: #f6e2a8; background: linear-gradient(180deg, #8e1023, #4e0510); border-bottom: 1px solid var(--gold);
+      animation: banner 1.6s ease-in-out infinite; }
+    @keyframes banner { 50% { box-shadow: 0 0 26px rgba(232, 201, 122, 0.7); color: #fff; } }
     .news { border-left: 3px solid var(--gold); padding: 10px 14px; background: rgba(20, 8, 11, 0.7); margin: 14px 0; }
     .news .lbl { color: var(--gold); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; }
     .news p { margin: 4px 0 0; }
@@ -86,6 +95,7 @@
 <body>
   <main class="wrap" id="app"></main>
   <div class="dock" id="dock"><button class="scroll-btn" id="open">📜 Pergamentul <span class="dot" id="dot">2</span></button></div>
+  <div class="edge-frame"></div>
   <div class="parchment-veil" id="veil"></div>
   <article class="parchment" id="sheet"></article>
 
@@ -125,8 +135,9 @@
       }[phase];
       $('app').innerHTML = `
         <div class="demo">${Object.entries(PHASES).map(([k, v]) => `<button data-ph="${k}" class="${k === phase ? 'on' : ''}">${v.label}</button>`).join('')}</div>
-        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">test v6 · Pergament:</span>${['A', 'B', 'C'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
+        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">test v7 · Pergament:</span>${['A', 'B', 'C'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
         <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">Simulează (apoi deschide pergamentul):</span><button data-sim="vote">Votul în 5 s</button><button data-sim="night">Noaptea în 5 s</button></div>
+        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">Pulsul:</span>${[['card', 'Pe acțiune'], ['edge', 'Marginea ecranului'], ['banner', 'Banda de sus']].map(([k, l]) => `<button data-pulse="${k}" class="${k === pulse ? 'on' : ''}">${l}</button>`).join('')}</div>
         <h1 class="center" style="margin-bottom:2px">${me.name}</h1>
         <div class="badges">${ghost ? '<span class="pill">👻 fantomă</span><span class="pill">🗳️ vot de fantomă</span>' : '<span class="pill on">în viață</span>'}</div>
         <p class="phase-line">${PHASES[phase].line}</p>
@@ -135,8 +146,9 @@
           <div class="shown-role" hidden><h2>${ROLES[me.role].name}</h2><p class="muted">Sătean · 🕯️ Tabăra binelui</p></div></div>
         ${phase === 'night' ? '' : `<div class="news"><span class="lbl">Ultima veste · noaptea 2</span><p>${esc(plain(inbox[0].text))}</p></div>`}`;
       $('app').querySelectorAll('[data-ph]').forEach((b) => b.addEventListener('click', () => goPhase(b.dataset.ph)));
+      $('app').querySelectorAll('[data-pulse]').forEach((b) => b.addEventListener('click', () => { pulse = b.dataset.pulse; main(); applyPulse(); }));
       $('app').querySelectorAll('[data-sim]').forEach((b) => b.addEventListener('click', () => { b.textContent = '…în 5 s'; setTimeout(() => goPhase(b.dataset.sim), 5000); }));
-      $('app').querySelectorAll('[data-var]').forEach((b) => b.addEventListener('click', () => { variant = b.dataset.var; tab = 'mine'; main(); dock(); if (variant !== 'C') openSheet(); }));
+      $('app').querySelectorAll('[data-var]').forEach((b) => b.addEventListener('click', () => { variant = b.dataset.var; tab = 'mine'; main(); applyPulse(); dock(); if (variant !== 'C') openSheet(); }));
       const role = $('role');
       role.addEventListener('click', () => { const s = role.querySelector('.shown-role'); s.hidden = !s.hidden; role.querySelector('.hidden-role').hidden = !s.hidden; });
     }
@@ -239,16 +251,35 @@
     // Când jocul îți cere ceva (votul, noaptea, adunarea), pergamentul se închide singur:
     // telefonul vibrează, iar acțiunea apare imediat pe ecran.
     const NEEDS_ACTION = new Set(['vote', 'night', 'gather']);
+    let pulse = 'card';
+    const done = {};   // ce a făcut deja jucătorul în faza curentă (atunci pulsul se stinge)
+    const pending = () => NEEDS_ACTION.has(phase) && !done[phase];
+    const CALL = { vote: '✠ Votează acum!', night: '🌑 E noapte: alege pe telefon', gather: '☩ Adunarea: poți nominaliza' };
+    function applyPulse() {
+      const on = pending();
+      document.body.className = `p-${pulse}${on ? ' needs' : ''}`;
+      const card = $('app').querySelector('.vote-card, .day-actions, .targets')?.closest('.card');
+      card?.classList.toggle('calling', on);
+      $('app').querySelector('.call-banner')?.remove();
+      if (on && pulse === 'banner') {
+        const b = document.createElement('div');
+        b.className = 'call-banner';
+        b.textContent = CALL[phase];
+        b.addEventListener('click', () => card?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+        $('app').prepend(b);
+      }
+      // Orice apăsare în cardul acțiunii înseamnă „am făcut” (în joc: votul trimis, alegerea confirmată).
+      card?.querySelectorAll('button').forEach((x) => x.addEventListener('click', () => { done[phase] = true; applyPulse(); }));
+    }
     function goPhase(p) {
       phase = p;
       main();
-      if (NEEDS_ACTION.has(p) && $('sheet').classList.contains('open')) {
-        closeSheet();
+      delete done[p];
+      if (NEEDS_ACTION.has(p)) {
+        if ($('sheet').classList.contains('open')) closeSheet();
         navigator.vibrate?.([200, 80, 200]);
-        const card = $('app').querySelector('.vote-card, .day-actions, .targets')?.closest('.card');
-        card?.classList.add('calling');
-        setTimeout(() => card?.classList.remove('calling'), 2400);
       }
+      applyPulse();
     }
     function closeSheet() { $('veil').classList.remove('open'); $('sheet').classList.remove('open'); }
     $('veil').addEventListener('click', closeSheet);
