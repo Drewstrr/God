@@ -382,3 +382,18 @@ test('reluarea spune pe scurt ce a făcut povestitorul', () => {
   assert.ok(night.leanNotes.some((n) => n.includes('Sihastrul')), JSON.stringify(night.leanNotes));
   assert.ok(buildReplay(state).some((d) => d.lines.some((l) => l.startsWith('📜 Povestitorul (spre Rău):'))));
 });
+
+test('reluarea spune când Spălătoreasa, otrăvită în prima noapte, a primit informație falsă', () => {
+  const g = fixed(ROLES11);
+  let { state } = resolveNight(g, { robi: { targets: ['andrei'] } });
+  assert.ok(buildReplay(state)[0].lines.some((l) => /Spălătoreasa \(Andrei\), otrăvit în prima noapte, a primit o informație falsă: „Unul dintre/.test(l)));
+  // Neotrăvită: nicio mențiune.
+  ({ state } = resolveNight(fixed(ROLES11), { robi: { targets: ['luca'] } }));
+  assert.ok(!buildReplay(state)[0].lines.some((l) => /informație falsă/.test(l)));
+});
+
+test('reluarea spune când Bețivul a crezut că e Spălătoreasa', () => {
+  const g = fixed({ ...ROLES11, andrei: 'drunk' }, { believed: { andrei: 'washer' } });
+  const { state } = resolveNight(g, { robi: { targets: ['luca'] } });
+  assert.ok(buildReplay(state)[0].lines.some((l) => /Andrei era de fapt Bețivul, deci informația primită ca Spălătoreasa era falsă/.test(l)));
+});

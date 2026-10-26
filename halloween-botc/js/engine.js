@@ -404,10 +404,15 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
   }
 
   // 6. Informațiile din prima noapte.
+  // Cine e otrăvit sau e Bețivul primește o informație falsă; se notează pentru reluarea de la final.
+  const falseInfo = [];
   if (night === 1) {
     for (const [role, type] of [['washer', 'townsfolk'], ['librarian', 'outsider'], ['investigator', 'minion']]) {
       for (const id of holders(role)) {
-        tell(id, { kind: 'info', text: `${ROLES[role].emoji} ${pairInfo(state, id, type, rng, functioning(state, id)).text}` });
+        const honest = functioning(state, id);
+        const text = pairInfo(state, id, type, rng, honest).text;
+        tell(id, { kind: 'info', text: `${ROLES[role].emoji} ${text}` });
+        if (!honest) falseInfo.push({ id, role, why: state.roles[id] === 'drunk' ? 'drunk' : 'poisoned', text });
       }
     }
   }
@@ -438,7 +443,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     type: 'night', night,
     poisoned: state.poisoned, protected: protectedId, attack, attackResult,
     fortune: Object.fromEntries(holders('fortune').map((id) => [id, pick(id)])),
-    deaths: deaths.map((d) => d.id), bets, lean: state.lean, leanNotes: state.leanNotes,
+    deaths: deaths.map((d) => d.id), bets, lean: state.lean, leanNotes: state.leanNotes, falseInfo,
   });
   // Notițele rămân doar în istoric; ziua nu mai adaugă nimic la ele.
   state.leanNotes = null;
@@ -612,6 +617,12 @@ export function buildReplay(state) {
         if (res.saved === 'monk') line += ` — ${gen(who, 'salvat', 'salvată')} de binecuvântarea Preotului`;
         else if (res.saved === 'soldier') line += ` — Haiducul nu poate fi ucis`;
         lines.push(line);
+      }
+      for (const f of h.falseInfo ?? []) {
+        const who = `${ROLES[f.role].name} (${nameOf(state, f.id)})`;
+        lines.push(f.why === 'drunk'
+          ? `🍺 ${nameOf(state, f.id)} era de fapt Bețivul, deci informația primită ca ${ROLES[f.role].name} era falsă: „${f.text}”`
+          : `☠️ ${who}, ${gen(f.id, 'otrăvit', 'otrăvită')} în prima noapte, a primit o informație falsă: „${f.text}”`);
       }
       for (const [, pair] of Object.entries(h.fortune ?? {})) if (pair) lines.push(`🔮 Ghicitoarea i-a cercetat pe ${pair.map((id) => nameOf(state, id)).join(' și ')}`);
       if (h.lean) {
