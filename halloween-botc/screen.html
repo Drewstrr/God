@@ -529,8 +529,10 @@
         at(m, m.act3, (late) => {
           dawnText('Toată lumea s-a trezit… <i>de data asta</i>.');
           if (late) return;
-          // Contele a fost oprit: urletul lui furios se aude din depărtare (audio/growl.mp3). Altfel, sunetul liniștit al dimineții.
-          if (!m.growl || sfx.playClip('growl', { delay: 0.9, volume: 1 }) === null) sfx.dawn();
+          // Contele a fost oprit: urletul lui furios se aude din depărtare (audio/growl.mp3).
+          // Fără atac (prima noapte): ciripit de păsări (audio/birds.mp3), o dimineață liniștită.
+          const clip = m.growl ? sfx.playClip('growl', { delay: 0.9, volume: 1 }) : sfx.playClip('birds', { delay: 0.3, volume: 0.9 });
+          if (clip === null) sfx.dawn();
         });
       }
       (m.deaths ?? []).forEach((d, i) => {

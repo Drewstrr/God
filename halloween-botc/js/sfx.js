@@ -19,7 +19,7 @@ export function unlock() {
   if (ctx.state !== 'running') ctx.resume().catch(() => {});
   loadCrow();
   loadBuffer('airblow');
-  ['bell', 'door', 'nightclock', 'stake', 'growl'].forEach(loadBuffer);
+  ['bell', 'door', 'nightclock', 'stake', 'growl', 'birds'].forEach(loadBuffer);
   // Un sunet mut redat chiar în timpul click-ului: unele browsere pornesc audio doar așa.
   try {
     const src = ctx.createBufferSource();
