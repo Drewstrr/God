@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Finalul Binelui · test</title>
-  <link rel="stylesheet" href="css/style.css?v=24">
+  <link rel="stylesheet" href="css/style.css?v=25">
   <style>
     .go { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: #000; cursor: pointer; }
     .go button { font: 800 1.6rem 'Blackwood Gothic', serif; color: var(--gold-hi); background: rgba(20, 6, 9, 0.9); border: 1px solid var(--gold); padding: 16px 30px; cursor: pointer; }
@@ -18,7 +18,7 @@
   <button class="again" id="again" hidden>↻ Revezi</button>
   <script type="module">
     // Exact ce face proiectorul când câștigă Binele: imaginea (js/triumph.js), sunetul victoriei,
-    // apoi, după 6 secunde, melodia balului din finalul jocului.
+    // apoi, după 11 secunde (după clopote), melodia balului din finalul jocului.
     import { triumph, clearTriumph } from './js/triumph.js';
     import * as sfx from './js/sfx.js';
     const stage = document.getElementById('stage');
@@ -30,7 +30,7 @@
       stage.innerHTML = `<div class="end good"><h1><span class="emo">🕯️</span> <span class="blood-text gold">Binele a învins</span></h1><p class="lead">Contele a fost nimicit.</p></div>`;
       triumph();
       sfx.goodWins();
-      musicTimer = setTimeout(() => sfx.playMusic('ball', { fallback: 'glory' }), 6000);
+      musicTimer = setTimeout(() => sfx.playMusic('ball', { fallback: 'glory' }), 11000);
     }
     document.getElementById('go').addEventListener('click', () => {
       sfx.unlock();

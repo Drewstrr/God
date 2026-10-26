@@ -652,10 +652,12 @@ export function evilWins() {
   if (playClip('laugh', { delay: 4.5, volume: 1 }) === null) evilLaugh(4.5);
 }
 
-// Binele a învins, sincron cu răsăritul din js/triumph.js:
-// 0–4 s  un val de aer care crește din adânc (soarele urcă de după dealuri),
-// ~3 s   un acord major cald, ca un cor, care se deschide încet (soarele iese întreg, apar razele),
-// ~3.4 s clopotele bisericii bat de sărbătoare, în trepte, apoi două bătăi grave.
+// Binele a învins, sincron cu js/triumph.js:
+// 0–3.6 s  castelul se ridică din spatele dealului: un huruit adânc de piatră, apoi o bufnitură moale când se așază,
+// 3.4–9 s  soarele urcă: un val de aer care crește din adânc,
+// ~6 s     soarele iese de după castel, apar razele: un acord major cald, ca un cor, care se deschide încet,
+// ~5.6 s   porumbeii își iau zborul: bătăi de aripi și ciripitul păsărilor (audio/birds.mp3),
+// ~6.4 s   clopotele bisericii bat de sărbătoare, în trepte, apoi două bătăi grave.
 export function goodWins() {
   if (!ready()) return;
   const t0 = ctx.currentTime + 0.1;
@@ -663,34 +665,61 @@ export function goodWins() {
   out.gain.value = 1;
   out.connect(master);
 
+  // 0. Castelul se ridică: zgomot foarte grav, ca piatra care urcă din pământ, și o bufnitură când se așază.
+  const rumble = ctx.createBufferSource();
+  rumble.buffer = noiseBuffer(4.5);
+  const rlp = ctx.createBiquadFilter();
+  rlp.type = 'lowpass';
+  rlp.frequency.setValueAtTime(70, t0);
+  rlp.frequency.linearRampToValueAtTime(160, t0 + 3);
+  const rg = ctx.createGain();
+  rg.gain.setValueAtTime(0.0001, t0);
+  rg.gain.exponentialRampToValueAtTime(1.4, t0 + 0.8);
+  rg.gain.setValueAtTime(1.4, t0 + 2.6);
+  rg.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.2);
+  rumble.connect(rlp).connect(rg).connect(out);
+  rumble.start(t0);
+  const thud = ctx.createOscillator();
+  thud.type = 'sine';
+  thud.frequency.setValueAtTime(70, t0 + 3.5);
+  thud.frequency.exponentialRampToValueAtTime(34, t0 + 4.4);
+  const tg = ctx.createGain();
+  tg.gain.setValueAtTime(0.0001, t0 + 3.5);
+  tg.gain.exponentialRampToValueAtTime(0.5, t0 + 3.53);
+  tg.gain.exponentialRampToValueAtTime(0.0001, t0 + 4.6);
+  thud.connect(tg).connect(out);
+  thud.start(t0 + 3.5);
+  thud.stop(t0 + 4.7);
+
   // 1. Valul răsăritului: zgomot filtrat (aer) + două note grave, filtrul se deschide treptat.
+  const ts = t0 + 3.4;
   const swell = ctx.createGain();
-  swell.gain.setValueAtTime(0.0001, t0);
-  swell.gain.exponentialRampToValueAtTime(0.22, t0 + 3.6);
-  swell.gain.exponentialRampToValueAtTime(0.0001, t0 + 7);
+  swell.gain.setValueAtTime(0.0001, ts);
+  swell.gain.exponentialRampToValueAtTime(0.22, ts + 3.2);
+  swell.gain.exponentialRampToValueAtTime(0.0001, ts + 7);
   const lp = ctx.createBiquadFilter();
   lp.type = 'lowpass';
-  lp.frequency.setValueAtTime(180, t0);
-  lp.frequency.exponentialRampToValueAtTime(2600, t0 + 3.8);
+  lp.frequency.setValueAtTime(180, ts);
+  lp.frequency.exponentialRampToValueAtTime(2600, ts + 3.8);
   lp.connect(swell).connect(out);
   const air = ctx.createBufferSource();
   air.buffer = noiseBuffer(7.5);
   const airG = ctx.createGain();
   airG.gain.value = 0.35;
   air.connect(airG).connect(lp);
-  air.start(t0);
+  air.start(ts);
   [65.41, 98].forEach((f) => {
     const o = ctx.createOscillator();
     o.type = 'sine';
-    o.frequency.setValueAtTime(f, t0);
-    o.frequency.linearRampToValueAtTime(f * 1.003, t0 + 6);
+    o.frequency.setValueAtTime(f, ts);
+    o.frequency.linearRampToValueAtTime(f * 1.003, ts + 6);
     o.connect(lp);
-    o.start(t0);
-    o.stop(t0 + 7.2);
+    o.start(ts);
+    o.stop(ts + 7.2);
   });
 
   // 2. Acordul cald (Do major), din fierăstraie ușor dezacordate, cu filtrul deschizându-se lent.
-  const ta = t0 + 3;
+  const ta = t0 + 6;
   const pad = ctx.createGain();
   pad.gain.setValueAtTime(0.0001, ta);
   pad.gain.exponentialRampToValueAtTime(0.11, ta + 1.6);
@@ -729,10 +758,35 @@ export function goodWins() {
   // 3. Clopotele de sărbătoare: două rânduri în trepte coborâtoare, apoi bătăile grave.
   const peal = [523.25, 440, 392, 329.63, 293.66, 261.63];
   for (let round = 0; round < 2; round++) {
-    peal.forEach((f, i) => churchBell(3.4 + round * 2.9 + i * 0.44, f, 0.17));
+    peal.forEach((f, i) => churchBell(6.4 + round * 2.9 + i * 0.44, f, 0.17));
   }
-  churchBell(9.3, 196, 0.32);
-  churchBell(9.32, 130.81, 0.3);
+  churchBell(12.3, 196, 0.32);
+  churchBell(12.32, 130.81, 0.3);
+
+  // 4. Porumbeii: bătăi ușoare de aripi care urcă, apoi ciripitul păsărilor (înregistrarea).
+  const tb = t0 + 5.6;
+  const wings = ctx.createBufferSource();
+  wings.buffer = noiseBuffer(3);
+  const wbp = ctx.createBiquadFilter();
+  wbp.type = 'bandpass';
+  wbp.frequency.value = 1100;
+  wbp.Q.value = 0.8;
+  const wam = ctx.createGain();
+  wam.gain.value = 0;
+  const lfo = ctx.createOscillator();
+  lfo.frequency.value = 7;
+  const lfoG = ctx.createGain();
+  lfoG.gain.value = 0.5;
+  lfo.connect(lfoG).connect(wam.gain);
+  const wenv = ctx.createGain();
+  wenv.gain.setValueAtTime(0.0001, tb);
+  wenv.gain.exponentialRampToValueAtTime(0.3, tb + 0.3);
+  wenv.gain.exponentialRampToValueAtTime(0.0001, tb + 2.8);
+  wings.connect(wbp).connect(wam).connect(wenv).connect(out);
+  wings.start(tb);
+  lfo.start(tb);
+  lfo.stop(tb + 3);
+  playClip('birds', { delay: 5.4, volume: 0.9, fadeIn: 1.2 });
 }
 
 // ---------- muzica de fundal, generată pe loc ----------

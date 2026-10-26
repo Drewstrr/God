@@ -401,42 +401,70 @@ body[data-phase="vote"], body[data-phase="reveal"], body[data-phase="sacrifice"]
 .screen-wrap .heartbeat { font-size: 14vh; }
 @keyframes heartbeat { 0%, 100% { transform: scale(1); } 12% { transform: scale(1.22); } 24% { transform: scale(1); } 36% { transform: scale(1.14); } 50% { transform: scale(1); } }
 
-/* Binele a învins: răsare soarele peste castel (js/triumph.js) */
-.triumph-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: #05030a; }
+/* Binele a învins: castelul se ridică din spatele dealului, apoi răsare soarele de după el (js/triumph.js) */
+.triumph-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: #060a1c; }
 .tr-sky { position: absolute; inset: 0; }
-.tr-sky.night { background: linear-gradient(180deg, #05040c 0%, #0c0a1e 55%, #1a0f22 100%); }
-.tr-sky.dawn { opacity: 0; animation: dawn-sky 6s ease-out 0.6s forwards;
-  background: linear-gradient(180deg, #2b3d6e 0%, #6a6ea8 22%, #e59a7a 52%, #ffc27a 70%, #ffe2a6 82%, #3a2018 100%); }
-@keyframes dawn-sky { to { opacity: 1; } }
-/* Soarele urcă de după dealuri: totul (raze, strălucire, disc) urcă împreună */
-.tr-rise { position: absolute; left: 50%; top: 23%; width: 0; height: 0; transform: translateY(70vh); animation: sunrise 5.5s cubic-bezier(0.2, 0.7, 0.2, 1) 0.4s forwards; }
+.tr-sky.night { background: linear-gradient(180deg, #060a1c 0%, #121a36 60%, #2a2340 100%); }
+.tr-sky.dawn { opacity: 0; animation: rays-on 4.5s ease-in-out 3.5s forwards;
+  background: linear-gradient(180deg, #1e3a6e 0%, #4f6fa8 28%, #d99a86 55%, #ffc27a 72%, #ffe2a6 86%); }
+.tr-sky.day { opacity: 0; animation: rays-on 5s ease-in-out 7.5s forwards;
+  background: radial-gradient(ellipse 50% 40% at 50% 42%, rgba(255, 246, 214, 0.7), transparent 70%),
+    linear-gradient(180deg, #2c62a8 0%, #6a9fd6 30%, #bcd7ee 56%, #ffe9bf 78%, #fff1cf 92%); }
+.tr-stars { position: absolute; inset: 0; animation: tr-stars-out 4s ease-in 3.2s forwards; }
+.tr-stars i { position: absolute; width: var(--sz); height: var(--sz); border-radius: 50%; background: #fff; opacity: var(--o); animation: twinkle var(--tw) ease-in-out infinite alternate; }
+@keyframes tr-stars-out { to { opacity: 0; } }
+/* Soarele urcă de după munți și castel, după ce castelul s-a așezat: razele, strălucirea și discul urcă împreună */
+.tr-rise { position: absolute; left: 50%; top: 40%; width: 0; height: 0; transform: translateY(95vh); animation: sunrise 6s cubic-bezier(0.25, 0.6, 0.25, 1) 3.6s forwards; }
 @keyframes sunrise { to { transform: translateY(0); } }
-.sun-svg { position: absolute; width: 46vmin; height: 46vmin; left: -23vmin; top: -23vmin; overflow: visible; filter: drop-shadow(0 0 4vmin rgba(255, 220, 140, 0.9)); }
-.tr-glow { position: absolute; width: 150vmin; height: 150vmin; left: -75vmin; top: -75vmin; border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 244, 205, 0.75) 0%, rgba(255, 210, 120, 0.35) 18%, rgba(255, 160, 70, 0.12) 38%, transparent 62%);
-  animation: glow-breathe 5s ease-in-out infinite; }
+.sun-svg { position: absolute; width: 80vmin; height: 80vmin; left: -40vmin; top: -40vmin; overflow: visible; filter: drop-shadow(0 0 5vmin rgba(255, 220, 140, 0.9)); }
+.tr-glow { position: absolute; width: 170vmin; height: 170vmin; left: -85vmin; top: -85vmin; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(255, 244, 205, 0.8) 0%, rgba(255, 210, 120, 0.38) 18%, rgba(255, 160, 70, 0.12) 38%, transparent 62%);
+  animation: rays-on 4s ease-in 4s forwards, glow-breathe 5s ease-in-out infinite; }
 @keyframes glow-breathe { 50% { transform: scale(1.06); opacity: 0.9; } }
 /* Razele: două straturi care se rotesc în sensuri opuse, estompate spre margini */
 .tr-rays { position: absolute; width: 260vmax; height: 260vmax; left: -130vmax; top: -130vmax; opacity: 0; filter: blur(1.5px);
   -webkit-mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.7) 12%, rgba(0, 0, 0, 0.25) 30%, transparent 48%);
   mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.7) 12%, rgba(0, 0, 0, 0.25) 30%, transparent 48%); }
-.tr-rays.a { background: repeating-conic-gradient(from 0deg, rgba(255, 228, 160, 0.26) 0deg 4deg, rgba(255, 228, 160, 0) 7deg 15deg);
-  animation: rays-on 3s ease-out 2.6s forwards, spin 90s linear infinite; }
-.tr-rays.b { background: repeating-conic-gradient(from 5deg, rgba(255, 200, 120, 0.16) 0deg 2.5deg, rgba(255, 200, 120, 0) 5deg 11deg);
-  animation: rays-on 3s ease-out 3.2s forwards, spin-back 140s linear infinite; }
+.tr-rays.a { background: repeating-conic-gradient(from 0deg, rgba(255, 236, 180, 0.3) 0deg 4deg, rgba(255, 236, 180, 0) 7deg 15deg);
+  animation: rays-on 3s ease-out 6.5s forwards, spin 90s linear infinite; }
+.tr-rays.b { background: repeating-conic-gradient(from 5deg, rgba(255, 214, 140, 0.18) 0deg 2.5deg, rgba(255, 214, 140, 0) 5deg 11deg);
+  animation: rays-on 3s ease-out 7.1s forwards, spin-back 140s linear infinite; }
 @keyframes rays-on { to { opacity: 1; } }
 @keyframes spin { to { rotate: 360deg; } }
 @keyframes spin-back { to { rotate: -360deg; } }
+/* Munții de departe, castelul, dealul: întâi în umbra nopții, apoi luminați de soare */
+.tr-hills { position: absolute; left: 0; bottom: 0; width: 100%; height: 50vh; filter: brightness(0.35); animation: tr-light 6s ease-in-out 3.6s forwards; }
+.tr-castle { position: absolute; left: 50%; bottom: 2vh; height: 64vh; transform: translate(-50%, 70vh); filter: brightness(0.35) drop-shadow(0 -0.6vh 1.4vh rgba(255, 220, 150, 0));
+  animation: castle-rise 3.4s cubic-bezier(0.3, 0.7, 0.3, 1) 0.2s forwards, castle-light 6s ease-in-out 3.6s forwards; }
+@keyframes castle-rise { to { transform: translate(-50%, 0); } }
+@keyframes castle-light { to { filter: brightness(1) drop-shadow(0 -0.6vh 1.4vh rgba(255, 220, 150, 0.55)); } }
+.tr-ground { position: absolute; left: 0; bottom: 0; width: 100%; height: 34vh; filter: brightness(0.35); animation: tr-light 6s ease-in-out 3.6s forwards; }
+@keyframes tr-light { to { filter: brightness(1); } }
+/* Nori albi, aurii pe dedesubt, care trec încet */
+.tr-clouds { position: absolute; inset: 0; opacity: 0; animation: rays-on 4s ease-in 6s forwards; }
+.tr-clouds i { position: absolute; left: 0; width: 60vw; height: 9vh; border-radius: 50%; filter: blur(10px); animation: cloud-drift linear infinite;
+  background: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, 0.85) 0%, rgba(255, 236, 200, 0.55) 40%, transparent 70%); }
+.tr-clouds .c1 { top: 16vh; animation-duration: 90s; animation-delay: -30s; }
+.tr-clouds .c2 { top: 30vh; height: 7vh; width: 45vw; animation-duration: 120s; animation-delay: -80s; opacity: 0.8; }
+.tr-clouds .c3 { top: 8vh; height: 6vh; width: 40vw; animation-duration: 150s; animation-delay: -10s; opacity: 0.7; }
 /* Reflexe de lentilă, discrete, care apar după răsărit */
 .tr-flare i { position: absolute; left: var(--x); top: var(--y); width: var(--s); height: var(--s); margin: calc(var(--s) / -2); border-radius: 50%;
-  background: radial-gradient(circle, var(--c) 0%, var(--c) 55%, transparent 72%); opacity: 0; animation: rays-on 2s ease-out 5s forwards; }
-.tr-castle { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 26vh; }
+  background: radial-gradient(circle, var(--c) 0%, var(--c) 55%, transparent 72%); opacity: 0; animation: rays-on 2s ease-out 9s forwards; }
+/* Porumbeii albi: pornesc de lângă noi și zboară spre soare, tot mai mici, până se pierd în lumină */
+.dove { position: absolute; bottom: -8vh; width: 3.4vw; margin-left: -1.7vw; opacity: 0; filter: drop-shadow(0 0.2vw 0.3vw rgba(90, 70, 40, 0.35));
+  animation: dove-fly var(--d) cubic-bezier(0.2, 0.5, 0.4, 1) var(--delay) forwards; }
+.dove b { display: block; transform-origin: 50% 38%; animation: flap var(--f) ease-in-out infinite alternate; }
+.dove svg { display: block; width: 100%; }
+@keyframes dove-fly { 0% { opacity: 0; transform: translate(0, 0) scale(var(--s0)); } 8%, 75% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.12); } }
 /* Firele de praf auriu care plutesc în lumină */
 .mote { position: absolute; bottom: -2vh; width: var(--sz); height: var(--sz); border-radius: 50%; opacity: 0;
   background: radial-gradient(circle, #fffbe0 0%, #ffd56b 45%, rgba(255, 170, 40, 0) 72%); animation: rise-mote var(--dur) linear var(--delay) infinite; }
 @keyframes rise-mote { 0% { opacity: 0; transform: translate(0, 0); } 12% { opacity: 0.9; } 100% { opacity: 0; transform: translate(var(--dx), -100vh); } }
-/* Titlul apare când soarele a urcat */
-body.triumph .end.good:not(.small) { animation: title-in 1.6s ease-out 3s both; }
+/* Titlul apare sus, după ce soarele a ieșit de după castel; contur închis ca să se citească pe cerul luminos */
+.screen-wrap:has(.end.good:not(.small)) { justify-content: flex-start; padding-top: 3vh; }
+body.triumph .end.good:not(.small) { animation: title-in 1.8s ease-out 6.5s both; }
+body.triumph .end.good .blood-text.gold { filter: drop-shadow(0 0.04em 0 #5a3500) drop-shadow(0 0 0.12em rgba(60, 30, 0, 0.9)) drop-shadow(0 0 0.5em rgba(255, 210, 120, 0.7)); }
+body.triumph .end.good p { color: #fff; font-weight: 600; text-shadow: 0 0 3px #2a1800, 0 0 10px rgba(40, 25, 0, 0.95), 0 0 26px rgba(40, 25, 0, 0.7); }
 @keyframes title-in { from { opacity: 0; transform: translateY(2vh) scale(0.97); } to { opacity: 1; transform: none; } }
 .end.good h1 { color: #fff3c4; text-shadow: 0 0 20px rgba(255, 220, 120, 0.95), 0 0 60px rgba(255, 170, 40, 0.8), 0 2px 0 #6a4300; animation: glory 2.5s ease-in-out infinite; }
 .end.good p { text-shadow: 0 0 10px #000, 0 0 30px rgba(255, 200, 90, 0.6); }

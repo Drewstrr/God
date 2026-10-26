@@ -1,6 +1,9 @@
-// Finalul „Binele a învins”: răsare soarele peste castel. Cerul trece din noapte în zori, soarele urcă de după
-// dealuri, iar razele se rotesc încet în două straturi (unul într-un sens, unul în celălalt), ca să lucească.
+// Finalul „Binele a învins”, opusul nopții cu lună sângerie: castelul se ridică încet din spatele dealului,
+// iar după ce s-a așezat răsare soarele de după el. Cerul trece din noapte în dimineață, razele se rotesc,
+// porumbeii albi zboară spre lumină, iar praful auriu plutește în aer.
 // Același cod rulează pe proiector (screen.html) și pe pagina de test (final-bine-test.html).
+
+import { forest, seeded } from './forest.js';
 
 const SUN = `
 <svg class="sun-svg" viewBox="-200 -200 400 400" aria-hidden="true">
@@ -31,47 +34,94 @@ const SUN = `
   <circle r="66" fill="url(#sun-core)"/>
 </svg>`;
 
-// Silueta castelului pe deal (Bran): turnuri, acoperișuri ascuțite, ferestre aprinse.
-const CASTLE = `
-<svg class="tr-castle" viewBox="0 0 1600 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-  <path d="M0 300 V210 C120 190 220 170 330 182 C430 192 520 150 610 140 C700 130 760 160 820 168 C900 178 980 150 1060 158 C1170 168 1260 200 1380 190 C1480 182 1550 196 1600 200 V300 Z" fill="#0d0708"/>
-  <g fill="#120a0a">
-    <rect x="640" y="70" width="60" height="80"/><path d="M632 70 L670 18 L708 70 Z"/>
-    <rect x="700" y="96" width="120" height="60"/><path d="M694 96 L760 56 L826 96 Z"/>
-    <rect x="820" y="60" width="44" height="96"/><path d="M814 60 L842 6 L870 60 Z"/>
-    <rect x="864" y="104" width="70" height="52"/><path d="M858 104 L899 72 L940 104 Z"/>
-    <rect x="600" y="118" width="40" height="38"/><path d="M596 118 L620 92 L644 118 Z"/>
-  </g>
-  <g fill="#ffcf6a" opacity="0.7">
-    <rect x="662" y="98" width="8" height="14" rx="4"/><rect x="740" y="118" width="8" height="12" rx="4"/>
-    <rect x="836" y="88" width="7" height="13" rx="3.5"/><rect x="896" y="122" width="7" height="11" rx="3.5"/>
-  </g>
+// Porumbelul alb în zbor, văzut de dedesubt: aripi rotunjite, coada rotundă. Jumătatea stângă, oglindită.
+const DOVE_HALF = 'M60 12 C57.5 12 56 14 56 16.5 C56 18.5 56.5 20 57 21.5 C48 17 34 11 20 12 C12 12.5 6 15 3 19 C8 21 14 22 20 23 C12 25 7 28 5 31 C14 31 22 30 30 29 C38 31 47 33 55 33 C55 37 54 40 53 43 C50 46 49 50 51 53 C54 54.5 57 55 60 55 Z';
+const DOVE = `<svg viewBox="0 0 120 60" aria-hidden="true"><g fill="#fffdf6"><path d="${DOVE_HALF}"/><path d="${DOVE_HALF}" transform="matrix(-1 0 0 1 120 0)"/></g></svg>`;
+
+// Dealul luminat de soare pe toată lățimea, cu pădurea pe margini, în fața castelului.
+// Aceeași pădure ca noaptea, dar în umbra caldă a dimineții, cu marginile aurite de lumină.
+const GROUND = `
+<svg class="tr-ground" viewBox="0 0 1600 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <defs>
+    <linearGradient id="tr-hill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a7656"/>
+      <stop offset="0.25" stop-color="#4a4258"/>
+      <stop offset="1" stop-color="#26222f"/>
+    </linearGradient>
+    <linearGradient id="tr-tree" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b3752"/>
+      <stop offset="1" stop-color="#25222f"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#tr-tree)" stroke="rgba(255, 214, 140, 0.45)" stroke-width="0.8">${forest()}</g>
+  <path d="M-200 300 V262 C0 250 160 246 320 254 C440 258 540 264 640 266 C760 268 840 268 960 266 C1060 264 1160 258 1280 252 C1420 246 1560 250 1800 262 V300 Z" fill="url(#tr-hill)"/>
 </svg>`;
+
+// Munții de departe, în ceața albăstruie a dimineții (soarele răsare din spatele lor).
+// Creasta: vârfuri mari, pe care se adaugă tot mai multe zimțuri mici, ca la munții adevărați.
+function ridge(seed, base, amp) {
+  const r = seeded(seed);
+  let pts = [];
+  for (let x = -100; x <= 1700; x += 160 + r() * 120) pts.push([x, base - amp * (0.25 + 0.75 * r())]);
+  for (let k = 0, spread = amp * 0.4; k < 6; k++, spread *= 0.5) {
+    const next = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
+      next.push(pts[i], [(x1 + x2) / 2, (y1 + y2) / 2 + (r() - 0.55) * spread]);
+    }
+    next.push(pts[pts.length - 1]);
+    pts = next;
+  }
+  return `M-100 300 ${pts.map(([x, y]) => `L${x.toFixed(1)} ${Math.min(base + 20, y).toFixed(1)}`).join(' ')} L1700 300 Z`;
+}
+const HILLS = `
+<svg class="tr-hills" viewBox="0 0 1600 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <path d="${ridge(5, 175, 130)}" fill="#8b9cc0" opacity="0.5"/>
+  <path d="${ridge(12, 225, 70)}" fill="#66749a" opacity="0.65"/>
+</svg>`;
+
+const rnd = (a, b) => a + Math.random() * (b - a);
 
 export function triumph() {
   document.querySelector('.triumph-layer')?.remove();
   const layer = document.createElement('div');
   layer.className = 'triumph-layer';
+  let stars = '';
+  for (let i = 0; i < 70; i++) {
+    stars += `<i style="left:${rnd(0, 100).toFixed(1)}%;top:${rnd(0, 55).toFixed(1)}%;--sz:${rnd(1, 2.4).toFixed(1)}px;--tw:${rnd(2, 6).toFixed(1)}s;--o:${rnd(0.3, 0.9).toFixed(2)}"></i>`;
+  }
+  // Porumbeii pornesc de jos, de lângă noi, și zboară spre soare, tot mai mici, până se pierd în lumină.
+  let doves = '';
+  for (let i = 0; i < 11; i++) {
+    const x = rnd(5, 95);
+    doves += `<i class="dove" style="left:${x.toFixed(1)}%;--tx:${((50 - x) * rnd(0.7, 0.95)).toFixed(1)}vw;--ty:${rnd(-92, -78).toFixed(1)}vh;--s0:${rnd(3, 5.5).toFixed(2)};--d:${rnd(4.5, 6.5).toFixed(1)}s;--delay:${(5.6 + rnd(0, 1.8)).toFixed(2)}s;--f:${rnd(0.16, 0.24).toFixed(2)}s"><b>${DOVE}</b></i>`;
+  }
   let motes = '';
   for (let i = 0; i < 60; i++) {
-    motes += `<i class="mote" style="left:${(Math.random() * 100).toFixed(1)}%;--sz:${(0.25 + Math.random() * 0.7).toFixed(2)}vw;--dur:${(9 + Math.random() * 10).toFixed(1)}s;--delay:${(2 + Math.random() * 8).toFixed(1)}s;--dx:${(Math.random() * 24 - 12).toFixed(1)}vw"></i>`;
+    motes += `<i class="mote" style="left:${rnd(0, 100).toFixed(1)}%;--sz:${rnd(0.25, 0.95).toFixed(2)}vw;--dur:${rnd(9, 19).toFixed(1)}s;--delay:${rnd(5, 13).toFixed(1)}s;--dx:${rnd(-12, 12).toFixed(1)}vw"></i>`;
   }
   layer.innerHTML = `
     <div class="tr-sky night"></div>
+    <div class="tr-stars">${stars}</div>
     <div class="tr-sky dawn"></div>
+    <div class="tr-sky day"></div>
     <div class="tr-rise">
       <div class="tr-rays a"></div>
       <div class="tr-rays b"></div>
       <div class="tr-glow"></div>
       ${SUN}
     </div>
+    ${HILLS}
+    <div class="tr-clouds"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>
+    <img class="tr-castle" src="${new URL('../img/castel-zi.webp', import.meta.url)}" alt="">
+    ${GROUND}
     <div class="tr-flare">
-      <i style="--x:58%;--y:44%;--s:7vmin;--c:rgba(255,220,150,0.18)"></i>
-      <i style="--x:66%;--y:56%;--s:3vmin;--c:rgba(180,220,255,0.16)"></i>
+      <i style="--x:58%;--y:48%;--s:7vmin;--c:rgba(255,220,150,0.18)"></i>
+      <i style="--x:66%;--y:58%;--s:3vmin;--c:rgba(180,220,255,0.16)"></i>
       <i style="--x:76%;--y:72%;--s:11vmin;--c:rgba(255,170,90,0.10)"></i>
       <i style="--x:83%;--y:84%;--s:4vmin;--c:rgba(160,255,200,0.12)"></i>
     </div>
-    ${CASTLE}
+    <div class="tr-doves">${doves}</div>
     <div class="tr-motes">${motes}</div>`;
   document.body.prepend(layer);
   document.body.classList.add('triumph');
