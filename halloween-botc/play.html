@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0709">
   <meta name="robots" content="noindex">
   <title>Balul Contelui</title>
-  <link rel="stylesheet" href="css/style.css?v=25">
+  <link rel="stylesheet" href="css/style.css?v=26">
 </head>
 <body>
   <main class="wrap" id="app">
@@ -25,7 +25,7 @@
     import {
       auth, r, currentUser, signInAnonymously, signOut, onValue, set, update, serverNow, reconnectOnWake, onConnection, APP_VERSION, reloadForVersion,
     } from './js/fb.js';
-    import { ROLES, gen } from './js/engine.js';
+    import { ROLES, gen, finalDayWarning } from './js/engine.js';
     import { sealSVG } from './js/seal.js';
     import { INTRO } from './js/intro.js';
 
@@ -455,6 +455,12 @@
         end: pub.winner === 'good' ? '🕯️ Binele a învins!' : '🩸 Răul a învins!',
       }[phase] ?? '';
 
+      // Avertismentul povestitorului în ultimele zile; la începutul ultimei zile telefonul vibrează o dată.
+      const doom = (phase === 'day' || phase === 'morning') ? finalDayWarning(pub.alive) : null;
+      if (doom?.level === 'final' && phase === 'day' && !store(`final-${pub.gameId}-${pub.day?.day}`)) {
+        store(`final-${pub.gameId}-${pub.day?.day}`, '1');
+        navigator.vibrate?.([200, 120, 200, 120, 400]);
+      }
       const fresh = msgs[0] && msgs[0].night === lastNight && lastNight > 0 ? msgs[0] : null;
       showDock(true);
       app.classList.add('with-dock');
@@ -464,6 +470,7 @@
         <h1 class="center">${esc(name)}</h1>
         <div class="badges">${badges}</div>
         <p class="phase-line">${phaseText}</p>
+        ${doom ? `<div class="card doom-card ${doom.level}"><b>⚠️ ${esc(doom.title)}</b>${doom.lines.map((l) => `<p>${esc(l)}</p>`).join('')}</div>` : ''}
         ${voteCard()}
         ${ravenCard()}
         ${dayActions()}

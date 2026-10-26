@@ -591,6 +591,29 @@ export function nextNight(prev) {
 }
 
 // Binele câștigă când moare Contele; răul, când rămân doar doi jucători în viață.
+// Avertismentul povestitorului pentru ultimele zile (Răul câștigă când rămân doar doi în viață).
+// 3 în viață: ultima zi. Un nevinovat executat = 2 în viață, Răul câștigă pe loc; fără execuție, Contele mușcă la noapte.
+// 4 în viață: un nevinovat executat lasă 3, iar mușcătura de la noapte poate încheia jocul.
+export function finalDayWarning(alive) {
+  const n = Object.values(alive ?? {}).filter(Boolean).length;
+  if (n === 3) return {
+    level: 'final', title: 'Ultima zi',
+    lines: [
+      'Au mai rămas doar 3 în viață.',
+      'Dacă executați un nevinovat, Răul câștigă pe loc. Dacă nu executați pe nimeni, Contele mușcă la noapte și, aproape sigur, câștigă.',
+      'Azi trebuie să-l găsiți pe Conte.',
+    ],
+  };
+  if (n === 4) return {
+    level: 'warn', title: 'Au mai rămas 4 în viață',
+    lines: [
+      'Dacă azi executați un nevinovat, la noapte Contele poate câștiga jocul.',
+      'Dacă nu executați pe nimeni, mâine e ultima zi.',
+    ],
+  };
+  return null;
+}
+
 export function checkWinner(state) {
   if (state.winner) return state.winner;
   const demon = demonId(state);

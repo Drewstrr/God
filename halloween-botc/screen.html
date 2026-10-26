@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Proiector</title>
-  <link rel="stylesheet" href="css/style.css?v=25">
+  <link rel="stylesheet" href="css/style.css?v=26">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
@@ -18,7 +18,7 @@
     showUpdateBanner();
     import { ensurePlayers, announceEngine, startPinService } from './js/pin-service.js';
     import { startHost } from './js/game-host.js';
-    import { gen, inLineup } from './js/engine.js';
+    import { gen, inLineup, finalDayWarning } from './js/engine.js';
     import * as sfx from './js/sfx.js';
     import { YOUTUBE_MUSIC, FILE_MUSIC } from './js/music.js';
     import { INTRO } from './js/intro.js';
@@ -320,6 +320,30 @@
       return `<div class="candle-rows">${rows.map((row) => `<div class="candle-row">${row.join('')}</div>`).join('')}</div>`;
     }
 
+    // Avertismentul povestitorului în ultimele zile (3 sau 4 în viață), sus pe ecran toată ziua.
+    function doomBanner() {
+      const w = finalDayWarning(pub.alive);
+      return w ? `<div class="doom-banner ${w.level}"><b>⚠️ ${esc(w.title)}</b><span>${w.lines.map(esc).join(' ')}</span></div>` : '';
+    }
+    // Când începe ultima zi: un anunț mare peste tot ecranul, cu clopotul de moarte și inima.
+    let finalDayShown = null;
+    function showFinalDay() {
+      const w = finalDayWarning(pub.alive);
+      if (!w || w.level !== 'final' || finalDayShown === pub.gameId + pub.day?.day) return;
+      finalDayShown = pub.gameId + pub.day?.day;
+      document.querySelector('.final-day-card')?.remove();
+      const card = document.createElement('div');
+      card.className = 'final-day-card';
+      card.innerHTML = `<h1>${bt(w.title, '⏳')}</h1>${w.lines.map((l, i) => `<p style="animation-delay:${1.2 + i * 1.6}s">${esc(l)}</p>`).join('')}`;
+      document.body.appendChild(card);
+      requestAnimationFrame(() => card.classList.add('show'));
+      sfx.duckMusic(13);
+      [0, 2.4, 4.8].forEach((t) => sfx.churchBell(t, 65.4, 0.55));
+      for (let k = 0; k < 10; k++) sfx.heartbeat(5.6 + k * 0.85, 0.85);
+      setTimeout(() => card.classList.add('leaving'), 13000);
+      setTimeout(() => card.remove(), 14200);
+    }
+
     const views = {
       lobby() {
         const players = Object.entries(pub.players ?? {}).filter(([id]) => inLineup(pub.lineup, id, pub.players)).map(([, p]) => p);
@@ -375,6 +399,7 @@
         const d = pub.day ?? {};
         if (d.free) return `
           <h1>${bt('Balul continuă', '🎭')}</h1>
+          ${doomBanner()}
           <p class="center lead muted">Vorbiți în șoaptă, faceți alianțe… sau mințiți. Nominalizările se deschid la adunare.</p>
           ${timer('☩ Adunarea în', d.free)}
           ${townCandles()}`;
@@ -383,6 +408,7 @@
           : block ? `⚖️ Egalitate la ${block.votes} voturi: nimeni pe butuc` : '⚖️ Nimeni pe butuc deocamdată';
         return `
           <h1>${bt(`Ziua ${d.day ?? ''}`, '☀️')}</h1>
+          ${doomBanner()}
           <p class="center lead day-status">${blockLine} · pentru execuție trebuie minim <b>${d.threshold ?? '?'}</b> voturi</p>
           ${d.noExecYesterday ? '<p class="center muted">⚠️ Ieri nu a fost executat nimeni. Contele se bucură.</p>' : ''}
           ${townCandles()}
@@ -460,7 +486,7 @@
     function dawnSummary(m) {
       const box = document.getElementById('dawn');
       if (!box) return;
-      box.innerHTML = `<h1>${bt('Dimineața', '☀️')}</h1>${townCandles()}<div class="morning" id="morning">${m.deaths?.length
+      box.innerHTML = `<h1>${bt('Dimineața', '☀️')}</h1>${doomBanner()}${townCandles()}<div class="morning" id="morning">${m.deaths?.length
         ? m.deaths.map((d) => `<div class="slide death">💀 <b>${esc(d.name)}</b> a murit în noaptea asta.${d.testament ? `<div class="testament">„${esc(d.testament)}”</div>` : ''}</div>`).join('')
         : '<div class="slide">🌙 Nimeni nu a murit în noaptea asta.</div>'}</div>`;
       fitStage();
@@ -855,6 +881,8 @@
       if (phase === 'end') [0, 400, 1500].forEach((ms) => setTimeout(fitReplay, ms));
       if (phase === 'end' && stageChanged && previous === 'end') endStageEffects(pub.endStage);
       if (phase === 'morning') playMorning();
+      document.body.classList.toggle('final-day', phase === 'day' && finalDayWarning(pub.alive)?.level === 'final');
+      if (phase === 'day' && previous && previous !== 'day') showFinalDay();
       if (phase === 'intro' && previous !== 'intro') playIntroFilm();
       if (phase === 'end' && previous && previous !== 'end') {
         if (pub.winner === 'evil') { bloodMoon(); sfx.evilWins(); }

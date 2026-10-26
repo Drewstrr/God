@@ -397,3 +397,12 @@ test('reluarea spune când Bețivul a crezut că e Spălătoreasa', () => {
   const { state } = resolveNight(g, { robi: { targets: ['luca'] } });
   assert.ok(buildReplay(state)[0].lines.some((l) => /Andrei era de fapt Bețivul, deci informația primită ca Spălătoreasa era falsă/.test(l)));
 });
+
+test('povestitorul anunță ultima zi la 3 în viață și avertizează la 4', async () => {
+  const { finalDayWarning } = await import('../js/engine.js');
+  const alive = (n) => Object.fromEntries(PLAYERS.map((p, i) => [p.id, i < n]));
+  assert.equal(finalDayWarning(alive(3)).level, 'final');
+  assert.equal(finalDayWarning(alive(4)).level, 'warn');
+  assert.equal(finalDayWarning(alive(5)), null);
+  assert.equal(finalDayWarning(alive(11)), null);
+});

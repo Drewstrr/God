@@ -1048,3 +1048,29 @@ html.sheet-open .dock { z-index: 52; }
 .parchment .rules-short li { margin: 8px 0; }
 .parchment a { color: #6a0710; }
 .cine .c-row .candle.dark .name { color: #5a4a4e; }
+
+/* Ultimele zile: avertismentul povestitorului (3 în viață = ultima zi, 4 = atenție) */
+.doom-banner { margin: 0.6vh auto 1.4vh; max-width: 78vw; text-align: center; padding: 1.1vh 2vw; border-radius: 14px; font-size: 1.5vw; line-height: 1.35;
+  background: rgba(30, 6, 10, 0.85); border: 1px solid rgba(232, 195, 122, 0.45); color: #f1e3c4; }
+.doom-banner b { display: block; font: 800 2.2vw 'Blackwood Gothic', serif; color: var(--gold-hi); margin-bottom: 0.3vh; letter-spacing: 0.02em; }
+.doom-banner.final { border: 2px solid var(--blood-hi); box-shadow: 0 0 40px rgba(224, 36, 71, 0.45), inset 0 0 30px rgba(120, 0, 20, 0.5); animation: doom-pulse 2.4s ease-in-out infinite; }
+.doom-banner.final b { color: #ff6b7a; font-size: 3vw; text-shadow: 0 0 20px rgba(224, 36, 71, 0.8); }
+@keyframes doom-pulse { 50% { box-shadow: 0 0 70px rgba(224, 36, 71, 0.75), inset 0 0 40px rgba(160, 0, 30, 0.6); } }
+/* Ultima zi: marginea ecranului pulsează roșu, ca o inimă */
+body.final-day::after { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(150, 0, 20, 0.55) 100%); animation: final-vignette 1.6s ease-in-out infinite; }
+@keyframes final-vignette { 0%, 100% { opacity: 0.55; } 15% { opacity: 1; } 30% { opacity: 0.65; } 45% { opacity: 0.9; } }
+/* Anunțul mare de la începutul ultimei zile */
+.final-day-card { position: fixed; inset: 0; z-index: 85; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 10vw;
+  background: radial-gradient(ellipse at center, #280006 0%, #000 75%); opacity: 0; transition: opacity 1.2s; }
+.final-day-card.show { opacity: 1; }
+.final-day-card.leaving { opacity: 0; }
+.final-day-card h1 { font-size: 9vw; margin: 0 0 3vh; animation: heartbeat 1.7s ease-in-out infinite; }
+.final-day-card p { font-size: 2.3vw; color: #f1e3c4; margin: 0.8vh 0; max-width: 70vw; opacity: 0; animation: rise 1s ease-out forwards; }
+.final-day-card p:last-child { color: #ff8a95; font-weight: 700; font-size: 2.8vw; margin-top: 2.5vh; }
+/* Telefon: același avertisment */
+.doom-card { border: 1px solid var(--gold-dim); background: rgba(30, 6, 10, 0.85); }
+.doom-card b { color: var(--gold-hi); font-size: 1.1rem; }
+.doom-card p { margin: 6px 0 0; }
+.doom-card.final { border: 2px solid var(--blood-hi); box-shadow: 0 0 24px rgba(224, 36, 71, 0.45); animation: doom-pulse 2.4s ease-in-out infinite; }
+.doom-card.final b { color: #ff6b7a; font-size: 1.35rem; }
