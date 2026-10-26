@@ -19,7 +19,7 @@ export function unlock() {
   if (ctx.state !== 'running') ctx.resume().catch(() => {});
   loadCrow();
   loadBuffer('airblow');
-  ['bell', 'door', 'nightclock', 'stake', 'growl', 'birds', 'bite1', 'bite2'].forEach(loadBuffer);
+  ['bell', 'door', 'nightclock', 'stake', 'growl', 'birds', 'bite1', 'bite2', 'laugh'].forEach(loadBuffer);
   // Un sunet mut redat chiar în timpul click-ului: unele browsere pornesc audio doar așa.
   try {
     const src = ctx.createBufferSource();
@@ -593,7 +593,8 @@ export function evilWins() {
   doomHit(0.2);
   drone(1.5, 14);
   crows(1.2, 16);
-  evilLaugh(4.5);
+  // Râsul Contelui (audio/laugh.mp3); fără fișier, râsul generat.
+  if (playClip('laugh', { delay: 4.5, volume: 1 }) === null) evilLaugh(4.5);
 }
 
 export function goodWins() {
