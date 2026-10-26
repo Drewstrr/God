@@ -284,7 +284,9 @@ function falseRole(state, target, rng) {
     note(state, `${nameOf(state, target)} a apărut drept ${ROLES[role].name}, o minciună convingătoare`);
     return role;
   }
-  return pickOne(ROLE_KEYS, rng);
+  const role = pickOne(ROLE_KEYS, rng);
+  note(state, `${nameOf(state, target)} a apărut drept ${ROLES[role].name}, o minciună la întâmplare, mai ușor de prins`);
+  return role;
 }
 // Ce a făcut povestitorul în noaptea asta, pe scurt (apare doar la final, în reluare).
 function note(state, text) {
@@ -298,7 +300,8 @@ export function registersAs(state, id, rng = Math.random) {
   let seen = role;
   if (role === 'spy' && rng() < p) seen = pickOne(keysOfType('townsfolk'), rng);
   if (role === 'recluse' && rng() < p) seen = pickOne([...keysOfType('minion'), 'demon'], rng);
-  if (seen !== role) note(state, `${ROLES[role].name} (${nameOf(state, id)}) a apărut drept ${ROLES[seen].name}`);
+  if (seen !== role) note(state, `${ROLES[role].name} (${nameOf(state, id)}) a fost verificat și a apărut drept ${ROLES[seen].name}`);
+  else if (role === 'spy' || role === 'recluse') note(state, `${ROLES[role].name} (${nameOf(state, id)}) a fost verificat și a apărut așa cum e (${teamOf(role) === 'evil' ? 'rău' : 'bun'})`);
   return seen;
 }
 
@@ -415,7 +418,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     if (!pair) continue;
     const truth = pair.some((id) => id === state.redHerring || registersAs(state, id, rng) === 'demon');
     const answer = functioning(state, ft) ? truth : (rng() < ftLie(state) ? !truth : truth);
-    if (answer !== truth) note(state, `Ghicitoarea, otrăvită sau bețivă, a primit un „${answer ? 'DA' : 'NU'}” fals`);
+    if (!functioning(state, ft)) note(state, answer !== truth ? `Ghicitoarea, otrăvită sau bețivă, a primit un „${answer ? 'DA' : 'NU'}” fals` : 'Ghicitoarea, deși otrăvită sau bețivă, a primit răspunsul adevărat');
     const names = pair.map((id) => nameOf(state, id)).join(' și ');
     tell(ft, { kind: 'info', text: answer ? `🔮 DA: unul dintre ${names} este Contele.` : `🔮 NU: niciunul dintre ${names} nu este Contele.` });
   }
@@ -613,7 +616,7 @@ export function buildReplay(state) {
       for (const [, pair] of Object.entries(h.fortune ?? {})) if (pair) lines.push(`🔮 Ghicitoarea i-a cercetat pe ${pair.map((id) => nameOf(state, id)).join(' și ')}`);
       if (h.lean) {
         const side = h.lean === 'good' ? 'Bine' : 'Rău';
-        lines.push(h.leanNotes?.length ? `📜 Povestitorul (spre ${side}): ${h.leanNotes.join('; ')}` : `📜 Povestitorul a vrut să încline norocul spre ${side}, dar n-a fost nevoie`);
+        lines.push(h.leanNotes?.length ? `📜 Povestitorul (spre ${side}): ${h.leanNotes.join('; ')}` : `📜 Povestitorul ar fi ajutat ${h.lean === 'good' ? 'Binele' : 'Răul'}, dar în noaptea asta nu a avut nicio ocazie`);
       }
       lines.push(h.deaths.length ? `💀 Au murit: ${h.deaths.map((id) => nameOf(state, id)).join(', ')}` : '🌙 Nu a murit nimeni');
       out.push({ title: `🌑 Noaptea ${h.night}`, lines });
