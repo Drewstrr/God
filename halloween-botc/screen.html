@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Proiector</title>
-  <link rel="stylesheet" href="css/style.css?v=22">
+  <link rel="stylesheet" href="css/style.css?v=23">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
@@ -23,9 +23,10 @@
     import { YOUTUBE_MUSIC, FILE_MUSIC } from './js/music.js';
     import { INTRO } from './js/intro.js';
     import { triumph } from './js/triumph.js';
+    import { bloodMoon, clearBloodMoon } from './js/bloodmoon.js';
     import { candleSVG, animateFlames } from './js/candles.js';
     import { smokeAt } from './js/smoke.js';
-    import { startBlood, stopBlood } from './js/blood.js';
+    import { stopBlood } from './js/blood.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const stage = document.getElementById('stage');
@@ -220,10 +221,6 @@
       if (stage === 'roles') (f.roles ?? []).forEach((x, i) => setTimeout(() => (x.evil ? sfx.voteHit(0) : sfx.tick()), 400 + i * 600));
       if (stage === 'titles') (f.titles ?? []).forEach((_, i) => setTimeout(() => sfx.bell(0, 330, 3, 0.3), 500 + i * 2200));
     }
-
-    // Binele a învins: explozie de lumină aurie, raze și scântei care urcă.
-    // Sângele care curge când răul a învins.
-    function bleed() { startBlood(); }
 
     // Titlu gotic de sânge, cu picături care se scurg (poziții stabile pentru același text).
     function bt(text, emoji = '', { gold = false } = {}) {
@@ -763,7 +760,8 @@
       if (phase === 'end') {
         if (sfx.musicTheme() === theme) return;
         sfx.playMusic(null);
-        setTimeout(() => { if (lastPhase === 'end') sfx.playMusic(theme, options); }, 6000);
+        // La victoria Răului, după ce se termină râsul Contelui.
+        setTimeout(() => { if (lastPhase === 'end') sfx.playMusic(theme, options); }, pub.winner === 'evil' ? 11000 : 6000);
       }
       else sfx.playMusic(theme ?? null, options);
     }
@@ -840,6 +838,7 @@
       playThemeFor(phase);
       if (phase !== 'end') {
         stopBlood();
+        clearBloodMoon();
         document.querySelector('.triumph-layer')?.remove();
         document.body.classList.remove('triumph');
       }
@@ -858,10 +857,10 @@
       if (phase === 'morning') playMorning();
       if (phase === 'intro' && previous !== 'intro') playIntroFilm();
       if (phase === 'end' && previous && previous !== 'end') {
-        if (pub.winner === 'evil') { bleed(); sfx.evilWins(); }
+        if (pub.winner === 'evil') { bloodMoon(); sfx.evilWins(); }
         else { triumph(); sfx.goodWins(); }
       }
-      if (phase === 'end' && pub.winner === 'evil' && !document.querySelector('.blood-canvas')) bleed();
+      if (phase === 'end' && pub.winner === 'evil' && !document.querySelector('.bloodmoon-layer')) bloodMoon();
       if (phase === 'end' && pub.winner === 'good' && !document.querySelector('.triumph-layer')) triumph();
       clearInterval(ticker);
       ticker = setInterval(tick, 250);

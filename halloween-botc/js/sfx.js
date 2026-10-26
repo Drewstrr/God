@@ -589,10 +589,137 @@ export function doomHit(delay = 0) {
   bell(delay + 0.1, 55, 9, 0.5);
 }
 
+// Răul a învins, sincron cu luna sângerie din js/bloodmoon.js:
+// 0 s     lovitura grea, apoi un geamăt adânc care crește cât urcă luna, cu vântul care urlă printre turnuri,
+// ~2 s    clopotul de moarte, rar,
+// ~3.4 s  un cor întunecat, disonant (titlul),
+// 4.5 s   râsul Contelui și zborul liliecilor, apoi ciorile.
 export function evilWins() {
   doomHit(0.2);
-  drone(1.5, 14);
-  crows(1.2, 16);
+  if (ready()) {
+    const t0 = ctx.currentTime + 0.1;
+    const out = ctx.createGain();
+    out.gain.value = 1;
+    out.connect(master);
+
+    // 1. Geamătul: două fierăstraie grave, dezacordate, cu filtrul deschizându-se cât urcă luna.
+    const groan = ctx.createGain();
+    groan.gain.setValueAtTime(0.0001, t0);
+    groan.gain.exponentialRampToValueAtTime(0.3, t0 + 6);
+    groan.gain.setValueAtTime(0.3, t0 + 8);
+    groan.gain.exponentialRampToValueAtTime(0.0001, t0 + 15);
+    const glp = ctx.createBiquadFilter();
+    glp.type = 'lowpass';
+    glp.frequency.setValueAtTime(110, t0);
+    glp.frequency.exponentialRampToValueAtTime(700, t0 + 7);
+    glp.connect(groan).connect(out);
+    [41.2, 41.2 * 1.006, 61.7].forEach((f) => {
+      const o = ctx.createOscillator();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f * 0.97, t0);
+      o.frequency.linearRampToValueAtTime(f, t0 + 7);
+      o.connect(glp);
+      o.start(t0);
+      o.stop(t0 + 15.5);
+    });
+
+    // 2. Vântul care urlă: zgomot printr-un filtru îngust care urcă și coboară.
+    const wind = ctx.createBufferSource();
+    wind.buffer = noiseBuffer(16);
+    const wbp = ctx.createBiquadFilter();
+    wbp.type = 'bandpass';
+    wbp.Q.value = 9;
+    [[0, 320], [3, 640], [5.5, 430], [8, 760], [11, 380], [15, 300]].forEach(([s, f]) => wbp.frequency.linearRampToValueAtTime(f, t0 + s));
+    const wg = ctx.createGain();
+    wg.gain.setValueAtTime(0.0001, t0);
+    wg.gain.exponentialRampToValueAtTime(0.5, t0 + 3);
+    wg.gain.setValueAtTime(0.5, t0 + 11);
+    wg.gain.exponentialRampToValueAtTime(0.0001, t0 + 16);
+    wind.connect(wbp).connect(wg).connect(out);
+    wind.start(t0);
+
+    // 3. Corul întunecat: voci „aaa” (fierăstraie prin două filtre de vocală), un acord micșorat, cu vibrato.
+    const tc = t0 + 3.3;
+    const choir = ctx.createGain();
+    choir.gain.setValueAtTime(0.0001, tc);
+    choir.gain.exponentialRampToValueAtTime(0.16, tc + 2.2);
+    choir.gain.setValueAtTime(0.16, tc + 7);
+    choir.gain.exponentialRampToValueAtTime(0.0001, tc + 12);
+    choir.connect(out);
+    const formants = [[750, 6, 1], [1150, 8, 0.55], [2600, 10, 0.2]].map(([f, q, g]) => {
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = f;
+      bp.Q.value = q;
+      const gg = ctx.createGain();
+      gg.gain.value = g;
+      bp.connect(gg).connect(choir);
+      return bp;
+    });
+    const vib = ctx.createOscillator();
+    vib.frequency.value = 5.2;
+    const vibDepth = ctx.createGain();
+    vibDepth.gain.value = 9;
+    vib.connect(vibDepth);
+    vib.start(tc);
+    vib.stop(tc + 12.5);
+    [82.41, 164.81, 196, 233.08, 329.63].forEach((f, i) => {
+      [-10, 0, 10].forEach((cents) => {
+        const o = ctx.createOscillator();
+        o.type = 'sawtooth';
+        o.frequency.value = f;
+        o.detune.value = cents + (i === 3 ? -4 : 0);
+        vibDepth.connect(o.detune);
+        const g = ctx.createGain();
+        g.gain.value = i === 0 ? 0.12 : 0.07;
+        o.connect(g);
+        formants.forEach((bp) => g.connect(bp));
+        o.start(tc);
+        o.stop(tc + 12.5);
+      });
+    });
+
+    // 4. Zborul liliecilor (odată cu râsul): bătăi repezi de aripi, de la stânga la dreapta, și câteva țipete subțiri.
+    const tb = t0 + 4.6;
+    const flutter = ctx.createBufferSource();
+    flutter.buffer = noiseBuffer(2.4);
+    const fbp = ctx.createBiquadFilter();
+    fbp.type = 'bandpass';
+    fbp.frequency.value = 1600;
+    fbp.Q.value = 1.2;
+    const fam = ctx.createGain();
+    fam.gain.value = 0;
+    const lfo = ctx.createOscillator();
+    lfo.type = 'square';
+    lfo.frequency.value = 13;
+    const lfoG = ctx.createGain();
+    lfoG.gain.value = 0.5;
+    lfo.connect(lfoG).connect(fam.gain);
+    const fenv = ctx.createGain();
+    fenv.gain.setValueAtTime(0.0001, tb);
+    fenv.gain.exponentialRampToValueAtTime(0.35, tb + 0.4);
+    fenv.gain.exponentialRampToValueAtTime(0.0001, tb + 2.3);
+    const pan = ctx.createStereoPanner();
+    pan.pan.setValueAtTime(-0.8, tb);
+    pan.pan.linearRampToValueAtTime(0.8, tb + 2.3);
+    flutter.connect(fbp).connect(fam).connect(fenv).connect(pan).connect(out);
+    flutter.start(tb);
+    lfo.start(tb);
+    lfo.stop(tb + 2.5);
+    [0.2, 0.55, 0.8, 1.3].forEach((s) => {
+      const t = tb + s;
+      const o = ctx.createOscillator();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(7200 + Math.random() * 1500, t);
+      o.frequency.exponentialRampToValueAtTime(4200, t + 0.07);
+      o.connect(envGain(t, 0.005, 0.03, 0.08));
+      o.start(t);
+      o.stop(t + 0.12);
+    });
+  }
+  // 5. Clopotul de moarte, rar și grav.
+  [2, 7.5, 12.5].forEach((s) => churchBell(s, 82.41, 0.38));
+  crows(8, 9);
   // Râsul Contelui (audio/laugh.mp3); fără fișier, râsul generat.
   if (playClip('laugh', { delay: 4.5, volume: 1 }) === null) evilLaugh(4.5);
 }

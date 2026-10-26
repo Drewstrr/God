@@ -444,6 +444,54 @@ body.triumph .end.good:not(.small) { animation: title-in 1.6s ease-out 3s both; 
 body.triumph .candle .flame { scale: 1.35; filter: brightness(1.35); }
 body.triumph .candle .light { scale: 1.6; }
 body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
+/* Răul a învins: răsare luna sângerie de după castel (js/bloodmoon.js) */
+.bloodmoon-layer { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: #010003; }
+.bm-sky { position: absolute; inset: 0; }
+.bm-sky.night { background: linear-gradient(180deg, #010003 0%, #07030a 60%, #12040a 100%); }
+.bm-sky.blood { opacity: 0; animation: rays-on 7s ease-in 0.8s forwards;
+  background: radial-gradient(ellipse 55% 45% at 50% 40%, rgba(150, 14, 18, 0.5), transparent 70%),
+    linear-gradient(180deg, #060102 0%, #1c0305 45%, #3d060a 75%, #5a0a0e 100%); }
+.bm-stars { position: absolute; inset: 0; animation: stars-dim 7s ease-in 1s forwards; }
+.bm-stars i { position: absolute; width: var(--sz); height: var(--sz); border-radius: 50%; background: #fff; opacity: var(--o); animation: twinkle var(--tw) ease-in-out infinite alternate; }
+@keyframes stars-dim { to { opacity: 0.3; } }
+@keyframes twinkle { to { opacity: 0.1; } }
+/* Luna urcă încet de după castel; jos, prin aerul gros, e mai întunecată, sus devine roșie ca sângele */
+.bm-rise { position: absolute; left: 50%; top: 40%; width: 0; height: 0; transform: translateY(58vh); animation: sunrise 7.5s cubic-bezier(0.25, 0.6, 0.25, 1) 0.3s forwards; }
+.moon-svg { position: absolute; width: 40vmin; height: 40vmin; left: -20vmin; top: -20vmin; overflow: visible; animation: moon-blood 7.5s ease-in 0.3s both; }
+@keyframes moon-blood {
+  from { filter: brightness(0.45) saturate(0.6) drop-shadow(0 0 2vmin rgba(255, 50, 20, 0.3)); }
+  to { filter: brightness(1) saturate(1.1) drop-shadow(0 0 5vmin rgba(255, 30, 10, 0.7)); } }
+.bm-glow { position: absolute; width: 130vmin; height: 130vmin; left: -65vmin; top: -65vmin; border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, rgba(255, 60, 30, 0.45) 0%, rgba(200, 20, 20, 0.22) 20%, rgba(120, 8, 12, 0.1) 38%, transparent 60%);
+  animation: rays-on 6s ease-in 1.5s forwards, glow-breathe 6s ease-in-out infinite; }
+/* Norii trec încet prin fața lunii */
+.bm-clouds { position: absolute; inset: 0; opacity: 0; animation: rays-on 5s ease-in 2.5s forwards; }
+.bm-clouds i { position: absolute; left: 0; width: 70vw; height: 8vh; border-radius: 50%; filter: blur(8px);
+  background: radial-gradient(ellipse at 50% 45%, rgba(18, 3, 5, 0.9) 0%, rgba(30, 5, 8, 0.6) 40%, transparent 70%); animation: cloud-drift linear infinite; }
+.bm-clouds .c1 { top: 30vh; animation-duration: 80s; animation-delay: -38s; }
+.bm-clouds .c2 { top: 41vh; height: 6vh; width: 55vw; animation-duration: 110s; animation-delay: -70s; opacity: 0.8; }
+.bm-clouds .c3 { top: 22vh; height: 5vh; width: 45vw; animation-duration: 140s; animation-delay: -20s; opacity: 0.6; }
+@keyframes cloud-drift { from { transform: translateX(-75vw); } to { transform: translateX(110vw); } }
+.bm-castle { position: absolute; left: 50%; bottom: 2vh; height: 64vh; transform: translateX(-50%); filter: drop-shadow(0 -0.4vh 1.4vh rgba(255, 40, 20, 0.22)); }
+.bm-ground { position: absolute; left: 0; bottom: 0; width: 100%; height: 16vh; }
+/* Ceața roșiatică de la poalele dealului */
+.bm-fog i { position: absolute; left: 0; bottom: -4vh; width: 200vw; height: 24vh; opacity: 0.9;
+  background: radial-gradient(ellipse 22% 60% at 20% 70%, rgba(70, 10, 12, 0.4), transparent 70%), radial-gradient(ellipse 25% 55% at 55% 75%, rgba(50, 6, 10, 0.45), transparent 70%),
+    radial-gradient(ellipse 20% 50% at 85% 70%, rgba(80, 12, 14, 0.35), transparent 70%); animation: fog-drift 50s linear infinite; }
+.bm-fog i + i { animation-duration: 75s; animation-direction: reverse; opacity: 0.6; bottom: -2vh; }
+@keyframes fog-drift { to { transform: translateX(-100vw); } }
+/* Liliecii: pornesc din turn când râde Contele și zboară spre noi */
+.bat { position: absolute; left: 51%; top: 47%; width: 3vw; margin-left: -1.5vw; opacity: 0; animation: bat-fly var(--d) cubic-bezier(0.5, 0, 0.9, 0.6) var(--delay) forwards; }
+.bat svg { display: block; width: 100%; transform-origin: 50% 45%; animation: flap var(--f) ease-in-out infinite alternate; }
+@keyframes bat-fly { 0% { opacity: 0; transform: translate(0, 0) scale(0.12); } 12%, 85% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(var(--s)); } }
+@keyframes flap { to { transform: scaleY(0.45) translateY(8%); } }
+/* Scântei roșii care urcă încet */
+.ember { position: absolute; bottom: -2vh; width: var(--sz); height: var(--sz); border-radius: 50%; opacity: 0;
+  background: radial-gradient(circle, #ffb08a 0%, #ff3a1a 45%, rgba(160, 10, 10, 0) 72%); animation: rise-mote var(--dur) linear var(--delay) infinite; }
+.bm-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, transparent 50%, rgba(0, 0, 0, 0.8) 100%); }
+/* Titlul apare când luna a urcat, sus, deasupra lunii */
+.screen-wrap:has(.end.evil:not(.small)) { justify-content: flex-start; padding-top: 3vh; }
+body.bloodmoon .end.evil:not(.small) { animation: title-in 1.8s ease-out 3.4s both; }
 .big-timer .clock.urgent { color: var(--blood-hi); text-shadow: 0 0 30px rgba(224, 36, 71, 0.7); animation: heartbeat 1s ease-in-out infinite; }
 
 /* Lumânările SVG */
