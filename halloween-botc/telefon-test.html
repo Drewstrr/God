@@ -37,15 +37,15 @@
       font: 800 1.15rem 'Blackwood Gothic', serif; color: #3a1a0c; letter-spacing: 0.02em; border: 0; border-radius: 3px;
       background: linear-gradient(180deg, #ecdcb8, #cfb07a); box-shadow: 0 0 0 1px #7c5a1e, 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(124, 74, 20, 0.35); }
     .dock.three { gap: 8px; }
+    /* Cu foaia deschisă, butoanele de jos rămân deasupra ei; cel deschis are culorile inversate */
+    html.sheet-open .dock.three { z-index: 52; }
+    html.sheet-open.var-c .parchment { bottom: calc(100px + env(safe-area-inset-bottom)); }
+    .dock.three .scroll-btn.on { color: #ecdcb8; background: linear-gradient(180deg, #3a1a0c, #24100a);
+      box-shadow: 0 0 0 1px #cfb07a, 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(207, 176, 122, 0.18); }
     .dock.three .scroll-btn { padding: 12px 6px; font-size: 1rem; flex-direction: column; gap: 2px; max-width: 160px; position: relative; }
     .dock.three .scroll-btn .ico { font-size: 1.35rem; line-height: 1; }
     .dock.three .scroll-btn .dot { position: absolute; top: -8px; right: -6px; }
     /* În pergament, varianta C: aceleași trei butoane, lipite jos */
-    .parchment .bottom-tabs { position: sticky; bottom: -50px; z-index: 2; display: flex; gap: 6px; margin: 20px -26px -50px; padding: 12px 12px max(14px, env(safe-area-inset-bottom));
-      background: linear-gradient(0deg, #d9c08e 70%, rgba(217, 192, 142, 0)); }
-    .parchment .bottom-tabs button { flex: 1; white-space: nowrap; font: 800 0.86rem 'Blackwood Gothic', serif; color: #f3e6c6; background: #6e4a2a; border: 0; padding: 12px 4px 10px; cursor: pointer; opacity: 0.8;
-      clip-path: polygon(0 18%, 50% 0, 100% 18%, 100% 100%, 0 100%); }
-    .parchment .bottom-tabs button.on { background: linear-gradient(0deg, #8e1023, #5a0612); opacity: 1; }
     .dock .scroll-btn .dot { min-width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #c62a31, #6a0710); color: #f1d9a0; font: 700 0.8rem 'EB Garamond', serif; display: grid; place-items: center; }
 
     /* Pergamentul: o foaie veche care se derulează peste ecran */
@@ -135,7 +135,7 @@
       }[phase];
       $('app').innerHTML = `
         <div class="demo">${Object.entries(PHASES).map(([k, v]) => `<button data-ph="${k}" class="${k === phase ? 'on' : ''}">${v.label}</button>`).join('')}</div>
-        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">test v7 · Pergament:</span>${['A', 'B', 'C'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
+        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">test v9 · Pergament:</span>${['A', 'B', 'C'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
         <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">Simulează (apoi deschide pergamentul):</span><button data-sim="vote">Votul în 5 s</button><button data-sim="night">Noaptea în 5 s</button></div>
         <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">Pulsul:</span>${[['card', 'Pe acțiune'], ['edge', 'Marginea ecranului'], ['banner', 'Banda de sus']].map(([k, l]) => `<button data-pulse="${k}" class="${k === pulse ? 'on' : ''}">${l}</button>`).join('')}</div>
         <h1 class="center" style="margin-bottom:2px">${me.name}</h1>
@@ -194,13 +194,11 @@
 
     function sheet() {
       if (variant === 'C') {
-        const tabs = [['mine', '📜', 'Pergamentul'], ['roles', '📖', 'Personajele'], ['rules', '⚖️', 'Regulile']];
         $('sheet').innerHTML = `
           ${tab === 'mine' ? `<div class="seal-top">C</div>${mineHtml()}` : tab === 'roles'
             ? `<h2>Personajele posibile</h2><p class="muted">Nu toate sunt în joc. Oricine poate pretinde oricare.</p>${rolesHtml(true)}`
             : `<h2>Regulamentul pe scurt</h2>${rulesHtml}`}
-          ${tab === 'mine' ? footer : '<p class="close-hint">Atinge foaia ca s-o închizi</p>'}
-          <div class="bottom-tabs">${tabs.map(([k, i, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${i} ${l}</button>`).join('')}</div>`;
+          ${tab === 'mine' ? footer : '<p class="close-hint">Atinge foaia ca s-o închizi</p>'}`;
       } else if (variant === 'A') {
         $('sheet').innerHTML = `
           <div class="seal-top">C</div>
@@ -244,10 +242,16 @@
         d.innerHTML = [['mine', '📜', 'Pergamentul', '<span class="dot" id="dot">2</span>'], ['roles', '📖', 'Personajele', ''], ['rules', '⚖️', 'Regulile', '']]
           .map(([k, i, l, x]) => `<button class="scroll-btn" data-open="${k}"><span class="ico">${i}</span>${l}${x}</button>`).join('');
       }
-      d.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.open; openSheet(); }));
+      d.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => {
+        const open = $('sheet').classList.contains('open');
+        if (open && tab === b.dataset.open) return closeSheet();   // același buton: închide foaia
+        tab = b.dataset.open;
+        if (open) { sheet(); $('sheet').scrollTop = 0; markDock(); } else openSheet();
+      }));
       $('open')?.addEventListener('click', () => { tab = 'mine'; openSheet(); });
     }
-    function openSheet() { sheet(); $('sheet').scrollTop = 0; $('veil').classList.add('open'); $('sheet').classList.add('open'); if ($('dot') && tab === 'mine') $('dot').hidden = true; navigator.vibrate?.(15); }
+    const markDock = () => document.querySelectorAll('#dock [data-open]').forEach((b) => b.classList.toggle('on', $('sheet').classList.contains('open') && b.dataset.open === tab));
+    function openSheet() { document.documentElement.classList.add('sheet-open'); document.documentElement.classList.toggle('var-c', variant === 'C'); setTimeout(markDock); sheet(); $('sheet').scrollTop = 0; $('veil').classList.add('open'); $('sheet').classList.add('open'); if ($('dot') && tab === 'mine') $('dot').hidden = true; navigator.vibrate?.(15); }
     // Când jocul îți cere ceva (votul, noaptea, adunarea), pergamentul se închide singur:
     // telefonul vibrează, iar acțiunea apare imediat pe ecran.
     const NEEDS_ACTION = new Set(['vote', 'night', 'gather']);
@@ -281,7 +285,7 @@
       }
       applyPulse();
     }
-    function closeSheet() { $('veil').classList.remove('open'); $('sheet').classList.remove('open'); }
+    function closeSheet() { $('veil').classList.remove('open'); $('sheet').classList.remove('open'); document.documentElement.classList.remove('sheet-open'); markDock(); }
     $('veil').addEventListener('click', closeSheet);
     $('sheet').addEventListener('click', (e) => { if (!e.target.closest('button, textarea, input, a, summary, .toc')) closeSheet(); });
     main();
