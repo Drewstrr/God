@@ -6,12 +6,20 @@
   <meta name="theme-color" content="#0b0709">
   <meta name="robots" content="noindex">
   <title>Balul Contelui</title>
-  <link rel="stylesheet" href="css/style.css?v=18">
+  <link rel="stylesheet" href="css/style.css?v=19">
 </head>
 <body>
   <main class="wrap" id="app">
     <p class="center muted">Se deschid porțile castelului…</p>
   </main>
+  <!-- Jos: Pergamentul, Personajele, Regulile. Fiecare deschide foaia de pergament la pagina lui. -->
+  <nav class="dock" id="dock" hidden>
+    <button class="scroll-btn" data-open="mine"><span class="ico">📜</span>Pergamentul<span class="dot" id="dot" hidden></span></button>
+    <button class="scroll-btn" data-open="roles"><span class="ico">📖</span>Personajele</button>
+    <button class="scroll-btn" data-open="rules"><span class="ico">⚖️</span>Regulile</button>
+  </nav>
+  <div class="parchment-veil" id="veil"></div>
+  <article class="parchment" id="sheet"></article>
 
   <script type="module">
     import {
@@ -123,6 +131,128 @@
     const sentKey = (night) => `night-${me}-${pub.gameId}-${night}-${pub.nightSeq ?? 0}`;
     const fmt = (ms) => { const t = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; };
     const playerName = (id) => players[id]?.name ?? id;
+    // Fără iconițele personajelor (🔮, ⚰️…) la începutul informațiilor: cine se uită peste umăr n-ar trebui să-ți ghicească rolul.
+    const plain = (t) => String(t ?? '').replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, '');
+
+    // ---------- pergamentul (Pergamentul / Personajele / Regulile) ----------
+    let sheetTab = 'mine';
+    const sheetEl = () => document.getElementById('sheet');
+    const sheetOpen = () => sheetEl().classList.contains('open');
+    const inboxList = () => Object.values(priv?.inbox ?? {}).sort((a, b) => (b.night ?? 0) - (a.night ?? 0));
+    const seenKey = () => `seen-${pub.gameId}-${me}`;
+    function showDock(on) {
+      const dock = document.getElementById('dock');
+      dock.hidden = !on;
+      if (!on) { closeSheet(); app.classList.remove('with-dock'); return; }
+      // Bulina: câte informații noi n-ai citit încă în pergament.
+      const unseen = inboxList().length - Number(store(seenKey()) ?? 0);
+      const dot = document.getElementById('dot');
+      dot.hidden = unseen <= 0;
+      dot.textContent = unseen > 0 ? unseen : '';
+    }
+    function markDock() {
+      document.querySelectorAll('#dock [data-open]').forEach((b) => b.classList.toggle('on', sheetOpen() && b.dataset.open === sheetTab));
+    }
+    function openSheet(tab) {
+      sheetTab = tab;
+      fillSheet();
+      sheetEl().scrollTop = 0;
+      document.documentElement.classList.add('sheet-open');
+      document.getElementById('veil').classList.add('open');
+      sheetEl().classList.add('open');
+      markDock();
+      navigator.vibrate?.(15);
+    }
+    function closeSheet() {
+      if (!sheetOpen()) return;
+      document.documentElement.classList.remove('sheet-open');
+      document.getElementById('veil').classList.remove('open');
+      sheetEl().classList.remove('open');
+      markDock();
+    }
+    // Dacă foaia e deschisă și s-a schimbat ceva (o informație nouă), o rescriem, dar nu cât scrie cineva testamentul.
+    function refreshSheet() {
+      if (sheetOpen() && document.activeElement?.id !== 'f-testament') { const y = sheetEl().scrollTop; fillSheet(); sheetEl().scrollTop = y; }
+    }
+    function fillSheet() {
+      const el = sheetEl();
+      if (sheetTab === 'roles') el.innerHTML = sheetRoles();
+      else if (sheetTab === 'rules') el.innerHTML = sheetRules();
+      else { el.innerHTML = sheetMine(); store(seenKey(), String(inboxList().length)); showDock(true); }
+      wireSheet();
+    }
+    function sheetMine() {
+      const msgs = inboxList();
+      const lastNight = msgs[0]?.night;
+      const tips = tipsFor();
+      return `
+        <div class="seal-top">C</div>
+        <h2>Rolul tău</h2>
+        <p style="text-align:center"><b style="font-size:1.25rem">${esc(priv?.roleName ?? '')}</b><br><span class="muted">${TYPE_LABEL[priv?.type] ?? ''} · ${priv?.team === 'evil' ? 'Tabăra răului' : 'Tabăra binelui'}</span></p>
+        <p>${esc(priv?.card ?? '')}</p>
+        <h2>Ce știi</h2>
+        ${msgs.length ? msgs.map((m) => `<div class="entry ${m.night === lastNight && m.night > 0 ? 'new' : ''}">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(plain(m.text))}</div>`).join('')
+          : '<p class="muted">Încă nimic. Informațiile vin dimineața, după noapte.</p>'}
+        ${tips ? `<h2>${tips.title}</h2><ul>${tips.list.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+        ${alive() && pub.phase !== 'end' ? `
+          <h2>Testamentul tău</h2>
+          <p class="muted">Apare pe proiector dacă mori. Poți scrie ce rol pretinzi, pe cine bănuiești… sau o minciună.</p>
+          <textarea id="f-testament" maxlength="200" placeholder="Ultimele tale cuvinte…"></textarea>
+          <button class="pbtn" id="save-testament">Salvează</button><span id="testament-ok" class="ok"></span>` : ''}
+        ${!alive() ? '<p class="muted" style="margin-top:18px">Ești fantomă: poți vorbi în continuare, dar nu mai ai abilitate și ai un singur vot pentru tot restul jocului.</p>' : ''}
+        <button class="pbtn quiet" id="logout">Nu sunt eu (deloghează-mă)</button>
+        <p class="close-hint">Atinge foaia ca s-o închizi</p>`;
+    }
+    function sheetRoles() {
+      const n = (k, one, many) => `${k ?? 0} ${k === 1 ? one : many}`;
+      const sc = pub.script ?? Object.fromEntries(Object.keys(TYPE_LABEL).map((t) => [t, Object.keys(ROLES).filter((k) => ROLES[k].type === t)]));
+      const c = pub.counts;
+      const order = [['townsfolk', 'Sătenii'], ['outsider', 'Străinii'], ['minion', 'Slujitorii'], ['demon', 'Contele']];
+      return `
+        <h2>Personajele posibile</h2>
+        <p class="muted">${c ? `În joc sunt: ${n(c.townsfolk, 'Sătean', 'Săteni')}, ${n(c.outsider, 'Străin', 'Străini')}, ${n(c.minion, 'Slujitor', 'Slujitori')} și 1 Conte. ` : ''}Restul personajelor de pe listă nu sunt în joc, dar oricine poate pretinde că le are.</p>
+        ${order.map(([t, title]) => {
+          const list = Object.values(sc[t] ?? {});
+          const evil = t === 'minion' || t === 'demon';
+          return `<details open><summary>${title} (${list.length})</summary>${list.map((k) => `<div class="role-line ${evil ? 'evil' : ''}"><b>${esc(ROLES[k].name)}</b><br><span class="muted">${esc(ROLES[k].card)}</span></div>`).join('')}</details>`;
+        }).join('')}
+        <p class="close-hint">Atinge foaia ca s-o închizi</p>`;
+    }
+    function sheetRules() {
+      return `
+        <h2>Regulamentul pe scurt</h2>
+        <ul class="rules-short">
+          <li><b>Scopul:</b> Binele câștigă dacă moare Contele. Răul câștigă dacă rămân doar doi în viață.</li>
+          <li><b>Noaptea:</b> toți apasă pe telefon, în liniște. Contele ucide începând cu a doua noapte.</li>
+          <li><b>Ziua:</b> timp liber, apoi adunarea. Nominalizezi o singură dată pe zi, din telefon.</li>
+          <li><b>Votul:</b> public, pe telefon. Pe butuc ajunge cine are cel puțin jumătate din voturile celor vii și mai multe decât cel aflat deja acolo. La sfârșitul zilei, cel de pe butuc e executat.</li>
+          <li><b>Moartea:</b> rolul rămâne secret. Fantomele vorbesc, dar au un singur vot pentru tot jocul.</li>
+          <li><b>Minciuni:</b> oricine poate minți. Bețivul și otrăviții primesc informații false fără să știe.</li>
+          <li><b>Țărușul:</b> oricine îl poate folosi o dată, la adunare. Ucide doar Contele, și doar dacă îl folosește Van Helsing adevărat.</li>
+        </ul>
+        <p style="text-align:center"><a href="regulament" target="_blank">📜 Regulamentul complet ›</a></p>
+        <p class="close-hint">Atinge foaia ca s-o închizi</p>`;
+    }
+    function wireSheet() {
+      const el = sheetEl();
+      el.querySelector('#logout')?.addEventListener('click', () => { if (confirm('Te deloghezi de pe acest telefon?')) { closeSheet(); logout(); } });
+      // Testamentul: păstrăm ce scrie jucătorul între redesenări.
+      const tEl = el.querySelector('#f-testament');
+      if (!tEl) return;
+      tEl.value = draftTestament ?? store(`testament-${pub.gameId}-${me}`) ?? '';
+      tEl.addEventListener('input', () => { draftTestament = tEl.value; });
+      el.querySelector('#save-testament').addEventListener('click', async (e) => {
+        const text = tEl.value.trim();
+        e.target.disabled = true;
+        try {
+          await set(r(`playerInput/${me}/testament`), text);
+          store(`testament-${pub.gameId}-${me}`, text);
+          draftTestament = null;
+          el.querySelector('#testament-ok').textContent = '✓ Salvat';
+        } catch { el.querySelector('#testament-ok').textContent = 'Nu s-a salvat. Mai încearcă.'; }
+        e.target.disabled = false;
+      });
+    }
 
     function showHome() {
       stopPrivate?.();
@@ -156,13 +286,15 @@
       const wake = night ? `n${pub.round}` : cur?.stage === 'voting' ? `v${cur.key}` : priv?.raven ? 'raven' : gathering;
       if (wake) {
         document.querySelector('.curtain')?.remove();
-        if (wake !== lastWake) navigator.vibrate?.(300);
+        // Jocul îți cere ceva: pergamentul se închide singur, ca acțiunea să fie imediat sub deget.
+        if (wake !== lastWake) { navigator.vibrate?.(300); closeSheet(); }
       }
       lastWake = wake;
-      if (night) return renderNight(night);
-      if (dawnActive()) return renderDawn();
-      if (filmActive()) return renderFilmWait();
+      if (night) { showDock(false); return renderNight(night); }
+      if (dawnActive()) { showDock(false); return renderDawn(); }
+      if (filmActive()) { showDock(false); return renderFilmWait(); }
       renderMain(phase);
+      refreshSheet();
       const guide = document.querySelector('details.guide:not(.evil-tips)');
       if (guide) guide.open = guideOpen;
       const tips = document.querySelector('details.evil-tips');
@@ -177,7 +309,7 @@
       const mine = store(`vote-${pub.gameId}-${c.key}`);
       if (mine) return `<div class="card center vote-card"><h2>✠ Ai votat: ${mine === 'yes' ? 'DA' : 'NU'}</h2><p class="muted">Poți schimba până se termină timpul.</p>
         <div class="row2"><button class="btn ${mine === 'yes' ? '' : 'ghost'}" data-vote="yes">DA</button><button class="btn ${mine === 'no' ? '' : 'ghost'}" data-vote="no">NU</button></div></div>`;
-      return `<div class="card center vote-card">
+      return `<div class="card center vote-card calling">
           <h2>✠ Votezi ca ${esc(c.targetName)} să fie ${gen(c.target, 'executat', 'executată')}?</h2>
           ${alive() ? '' : '<p class="error">👻 E votul tău de fantomă: dacă votezi DA, nu mai poți vota niciodată.</p>'}
           <p class="muted">Rămân <b data-ends="${c.endsAt ?? ''}"></b> · votul se vede pe proiector</p>
@@ -205,7 +337,9 @@
           <div class="targets">${others.filter((id) => id !== me && pub.alive?.[id] !== false).map((id) => `<button data-slay="${id}">${esc(playerName(id))}</button>`).join('')}</div>
           <button class="btn ghost" data-panel="">Renunță</button></div>`;
       } else {
-        html += `<div class="card day-actions">
+        // La deschiderea adunării cardul pulsează până când atingi ceva în el.
+        const calling = !nominatedToday && !busy && !store(`gath-${pub.gameId}-${d.day}-${me}`);
+        html += `<div class="card day-actions${calling ? ' calling' : ''}">
           ${nominatedToday ? '<p class="muted center">⚖︎ Ai nominalizat deja azi.</p>'
             : busy ? '<p class="muted center">⏳ O nominalizare e în curs. Așteaptă să se termine.</p>'
             : `<p class="center"><b>⚖︎ Bănuiești pe cineva?</b><br><span class="muted">Acuză-l în fața tuturor: urmează apărarea și votul.</span></p>
@@ -255,7 +389,7 @@
     function ravenCard() {
       const rv = priv?.raven;
       if (!rv) return '';
-      return `<div class="card center"><h2>🪶 Corbii tăi zboară o ultimă dată</h2><p>Alege un jucător și îi vei afla rolul.</p>
+      return `<div class="card center calling"><h2>🪶 Corbii tăi zboară o ultimă dată</h2><p>Alege un jucător și îi vei afla rolul.</p>
         <div class="targets">${(rv.targets ?? []).map((t) => `<button data-raven="${t.id}">${esc(t.name)}</button>`).join('')}</div></div>`;
     }
 
@@ -281,6 +415,7 @@
     function renderMain(phase) {
       const name = priv?.name ?? players[me]?.name ?? me;
       if (priv?.sitOut && phase !== 'lobby') {
+        showDock(false);
         app.innerHTML = `
           <h1 class="center">${esc(name)}</h1>
           <div class="card center"><p>🍷 Nu joci în această partidă.</p><p class="muted">Bucură-te de spectacol pe proiector!</p></div>
@@ -290,6 +425,7 @@
         return;
       }
       if (!priv?.role || phase === 'lobby') {
+        showDock(false);
         app.innerHTML = `
           <h1 class="center">Bun venit, ${esc(name)}</h1>
           <div class="card center">
@@ -319,12 +455,15 @@
         end: pub.winner === 'good' ? '🕯️ Binele a învins!' : '🩸 Răul a învins!',
       }[phase] ?? '';
 
+      const fresh = msgs[0] && msgs[0].night === lastNight && lastNight > 0 ? msgs[0] : null;
+      showDock(true);
+      app.classList.add('with-dock');
       app.innerHTML = `
         <button class="hide-btn" id="hide">☾ Ascunde</button>
         ${pub.paused ? '<div class="card center pause-bar">⌛ <b>Pauză.</b> Jocul așteaptă să se întoarcă toată lumea.</div>' : ''}
         <h1 class="center">${esc(name)}</h1>
         <div class="badges">${badges}</div>
-        <p class="center">${phaseText}</p>
+        <p class="phase-line">${phaseText}</p>
         ${voteCard()}
         ${ravenCard()}
         ${dayActions()}
@@ -336,20 +475,8 @@
             <p>${esc(priv.card)}</p>
           </div>
         </div>
-        ${evilTips()}
-        ${msgs.length ? `<div class="card inbox"><h3>📜 Ce știi</h3>${msgs.map((m) => `<p class="${m.night === lastNight && m.night > 0 ? 'new' : ''}" style="white-space:pre-line">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(m.text)}</p>`).join('')}</div>` : ''}
-        ${alive() && phase !== 'end' ? `
-          <div class="card">
-            <h3>✍️ Testamentul tău</h3>
-            <p class="muted">Apare pe proiector dacă mori. Poți scrie ce rol pretinzi, pe cine bănuiești… sau o minciună.</p>
-            <textarea id="f-testament" maxlength="200" placeholder="Ultimele tale cuvinte…"></textarea>
-            <button class="btn small" id="save-testament">Salvează</button> <span id="testament-ok" class="ok"></span>
-          </div>` : ''}
-        ${!alive() ? '<div class="card center muted">👻 Ești fantomă: poți vorbi în continuare, dar nu mai ai abilitate și ai un singur vot pentru tot restul jocului.</div>' : ''}
-        ${finalCards(phase)}
-        ${scriptGuide()}
-        <a class="btn ghost" href="regulament" target="_blank" style="margin-bottom:10px">📜 Regulamentul complet</a>
-        <button class="btn ghost" id="logout">Nu sunt eu</button>`;
+        ${fresh ? `<div class="news"><span class="lbl">Ultima veste · noaptea ${fresh.night}</span><p>${esc(plain(fresh.text))}</p></div>` : ''}
+        ${finalCards(phase)}`;
 
       const role = app.querySelector('#role');
       let hideTimer = null;
@@ -376,25 +503,7 @@
         reveal(role.querySelector('.shown-role').hidden);
       });
       app.querySelector('#hide').addEventListener('click', curtain);
-      app.querySelector('#logout').addEventListener('click', () => { if (confirm('Te deloghezi de pe acest telefon?')) logout(); });
-      // Testamentul: păstrăm ce scrie jucătorul între redesenări.
-      const tEl = document.getElementById('f-testament');
-      if (tEl) {
-        tEl.value = draftTestament ?? store(`testament-${pub.gameId}-${me}`) ?? '';
-        tEl.addEventListener('input', () => { draftTestament = tEl.value; });
-        document.getElementById('save-testament').addEventListener('click', async (e) => {
-          const text = tEl.value.trim();
-          e.target.disabled = true;
-          try {
-            await set(r(`playerInput/${me}/testament`), text);
-            store(`testament-${pub.gameId}-${me}`, text);
-            draftTestament = null;
-            document.getElementById('testament-ok').textContent = '✓ Salvat';
-          } catch { document.getElementById('testament-ok').textContent = 'Nu s-a salvat. Mai încearcă.'; }
-          e.target.disabled = false;
-        });
-      }
-      app.querySelectorAll('[data-panel]').forEach((b) => b.addEventListener('click', () => { panel = b.dataset.panel || null; renderGame(true); }));
+      app.querySelectorAll('[data-panel]').forEach((b) => b.addEventListener('click', () => { store(`gath-${pub.gameId}-${pub.day?.day}-${me}`, '1'); panel = b.dataset.panel || null; renderGame(true); }));
       app.querySelectorAll('[data-vote]').forEach((b) => b.addEventListener('click', async () => {
         const c = pub.day?.current;
         if (!c) return;
@@ -476,17 +585,11 @@
       recluse: ['Poți apărea drept rău în fața altor abilități. Spune-ți rolul devreme, ca să nu fii executat pe nedrept.'],
       saint: ['Dacă ești executat, Binele pierde! Spune-ți rolul la timp, ca să nu fii pus pe butuc.'],
     };
-    function evilTips() {
-      if (!priv?.role || pub.phase === 'end') return '';
-      if (priv.team !== 'evil') {
-        const tips = [...(ROLE_TIPS[priv.role] ?? []), ...GOOD_TIPS];
-        return `<details class="card guide evil-tips good-tips"><summary>🕯️ Cum îl prinzi pe Conte <span class="muted">(sfaturi)</span></summary>
-          <ul>${tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></details>`;
-      }
-      const tips = EVIL_TIPS[priv.role];
-      if (!tips) return '';
-      return `<details class="card guide evil-tips"><summary>🩸 Cum să te ascunzi <span class="muted">(doar tu vezi asta)</span></summary>
-        <ul>${tips.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></details>`;
+    function tipsFor() {
+      if (!priv?.role || pub.phase === 'end') return null;
+      if (priv.team !== 'evil') return { title: 'Cum îl prinzi pe Conte', list: [...(ROLE_TIPS[priv.role] ?? []), ...GOOD_TIPS] };
+      const list = EVIL_TIPS[priv.role];
+      return list ? { title: 'Cum să te ascunzi', list } : null;
     }
 
     // La final, după ce proiectorul dezvăluie rolurile, le vede și telefonul; apoi titlurile.
@@ -546,7 +649,7 @@
           ${night.ghost ? '<p class="center muted">👻 Ești fantomă: nu mai ai abilitate, dar poți paria.</p>' : ''}
           <p class="center" style="font-size:1.25rem"><b>🎲 Pariul nopții: cine crezi că e Contele?</b></p>
           <p class="center muted" style="margin-top:-6px">Secret. La final, cine ghicește cel mai des primește un titlu.</p>
-          <div class="targets">${(night.bets ?? []).map((t) => `<button data-t="${t.id}">${esc(t.name)}</button>`).join('')}</div>
+          <div class="targets calling">${(night.bets ?? []).map((t) => `<button data-t="${t.id}">${esc(t.name)}</button>`).join('')}</div>
           <p class="center error" id="msg"></p>
           <button class="btn" id="confirm" disabled>Pariază</button>
           <button class="btn ghost" id="skip" style="margin-top:10px">Nu știu</button>`;
@@ -575,7 +678,7 @@
         ${timer}
         <p class="center" style="font-size:1.25rem"><b>${esc(night.prompt)}</b></p>
         ${night.pick > 1 ? `<p class="center muted">Alege ${night.pick} jucători.</p>` : ''}
-        <div class="targets">${(night.targets ?? []).map((t) => `<button data-t="${t.id}">${esc(t.name)}${pub.alive?.[t.id] === false ? ' 👻' : ''}</button>`).join('')}</div>
+        <div class="targets calling">${(night.targets ?? []).map((t) => `<button data-t="${t.id}">${esc(t.name)}${pub.alive?.[t.id] === false ? ' 👻' : ''}</button>`).join('')}</div>
         <p class="center error" id="msg"></p>
         <button class="btn" id="confirm" disabled>Confirmă</button>`;
       app.querySelectorAll('[data-t]').forEach((b) => b.addEventListener('click', () => {
@@ -595,6 +698,16 @@
         } catch { fail(e.target); }
       });
     }
+
+    // Butoanele de jos: deschid foaia la pagina lor; apăsat din nou, butonul paginii deschise o închide.
+    document.querySelectorAll('#dock [data-open]').forEach((b) => b.addEventListener('click', () => {
+      if (sheetOpen() && sheetTab === b.dataset.open) return closeSheet();
+      if (sheetOpen()) { sheetTab = b.dataset.open; fillSheet(); sheetEl().scrollTop = 0; markDock(); }
+      else openSheet(b.dataset.open);
+    }));
+    document.getElementById('veil').addEventListener('click', closeSheet);
+    // O atingere pe foaie o închide (nu și pe butoane, linkuri, câmpuri sau titlurile grupelor).
+    sheetEl().addEventListener('click', (e) => { if (!e.target.closest('button, textarea, input, a, summary')) closeSheet(); });
 
     // Ecranul se întunecă singur după 40 de secunde fără atingere.
     let idle = null;

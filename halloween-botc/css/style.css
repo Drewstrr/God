@@ -886,3 +886,66 @@ html:has(body.dark-night) { background: #000; }
 @keyframes seal-breathe { 50% { filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 40px rgba(190, 24, 44, 0.6)); } }
 @keyframes seal-crack { 25% { transform: translate(-2px, 1px) rotate(-1deg); } 50% { transform: translate(2px, -1px) rotate(1deg); } 75% { transform: translate(-1px, 0) scale(0.98); } }
 .good-tips summary { color: var(--gold-hi); }
+
+/* ================================================================
+   TELEFONUL ÎN JOC: ecran simplu + butoanele de jos + pergamentul
+   ================================================================ */
+.wrap.with-dock { padding-bottom: 130px; }
+.phase-line { text-align: center; font-size: 1.15rem; margin: 6px 0 14px; }
+.news { border-left: 3px solid var(--gold); padding: 10px 14px; background: rgba(20, 8, 11, 0.7); margin: 14px 0; }
+.news .lbl { color: var(--gold); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; }
+.news p { margin: 4px 0 0; white-space: pre-line; }
+
+/* Pulsul „e rândul tău”: stă aprins pe acțiune până când jucătorul face ce i se cere */
+.card.calling, .targets.calling { animation: calling 1.6s ease-in-out infinite; }
+.targets.calling { border-radius: 6px; }
+@keyframes calling { 50% { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 30px rgba(232, 201, 122, 0.6); } }
+
+/* Cele trei butoane de jos */
+.dock { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; display: flex; gap: 8px; justify-content: center; padding: 12px 16px max(14px, env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, rgba(5, 2, 3, 0.95) 35%); }
+.dock[hidden] { display: none; }
+.dock .scroll-btn { position: relative; flex: 1; max-width: 160px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 12px 6px; cursor: pointer;
+  font: 800 1rem 'Blackwood Gothic', serif; color: #3a1a0c; letter-spacing: 0.02em; border: 0; border-radius: 3px;
+  background: linear-gradient(180deg, #ecdcb8, #cfb07a); box-shadow: 0 0 0 1px #7c5a1e, 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(124, 74, 20, 0.35); }
+.dock .scroll-btn .ico { font-size: 1.35rem; line-height: 1; }
+.dock .scroll-btn .dot { position: absolute; top: -8px; right: -6px; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 11px; display: grid; place-items: center;
+  background: radial-gradient(circle at 38% 32%, #c62a31, #6a0710); color: #f1d9a0; font: 700 0.8rem 'EB Garamond', serif; }
+.dock .scroll-btn .dot[hidden] { display: none; }
+/* Butonul paginii deschise: culorile inversate */
+.dock .scroll-btn.on { color: #ecdcb8; background: linear-gradient(180deg, #3a1a0c, #24100a);
+  box-shadow: 0 0 0 1px #cfb07a, 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(207, 176, 122, 0.18); }
+html.sheet-open .dock { z-index: 52; }
+
+/* Pergamentul: foaie veche care se derulează peste ecran */
+.parchment-veil { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, 0.75); opacity: 0; pointer-events: none; transition: opacity 0.35s; }
+.parchment-veil.open { opacity: 1; pointer-events: auto; }
+.parchment { position: fixed; z-index: 51; left: 50%; top: max(12px, env(safe-area-inset-top)); bottom: calc(100px + env(safe-area-inset-bottom)); width: min(94vw, 520px);
+  transform: translateX(-50%); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  clip-path: inset(0 0 100% 0); visibility: hidden; transition: clip-path 0.6s cubic-bezier(0.2, 0.7, 0.2, 1), visibility 0s 0.6s;
+  color: #2e1a0e; padding: 30px 24px 40px; border-radius: 4px; font-family: 'EB Garamond', Georgia, serif;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.04' numOctaves='4' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.3 0 0 0 0 0.12 0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 40%, #f3e6c6 0%, #e6d2a6 55%, #cdb07a 100%);
+  box-shadow: inset 0 0 40px rgba(110, 60, 20, 0.55), inset 0 0 120px rgba(90, 50, 15, 0.35), 0 20px 60px rgba(0, 0, 0, 0.8); }
+.parchment.open { clip-path: inset(0 0 0 0); visibility: visible; transition: clip-path 0.6s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.parchment h2 { font: 800 1.45rem 'Blackwood Gothic', serif; color: #6a0710; margin: 22px 0 6px; padding: 0 0 22px; text-align: center; text-shadow: none;
+  background: var(--divider) center bottom / 170px 18px no-repeat; }
+.parchment h2:first-of-type { margin-top: 4px; }
+.parchment p, .parchment li { font-size: 1.08rem; line-height: 1.5; }
+.parchment .muted { color: #6e5233; }
+.parchment .entry { padding: 8px 0; border-bottom: 1px dashed rgba(110, 70, 30, 0.35); white-space: pre-line; }
+.parchment .entry.new { background: rgba(198, 42, 49, 0.08); padding: 8px; }
+.parchment textarea { width: 100%; min-height: 80px; background: rgba(255, 250, 235, 0.6); border: 1px solid #a0804a; color: #2e1a0e; font: 1.05rem 'EB Garamond', serif; padding: 10px; border-radius: 3px; }
+.parchment .pbtn { font: 700 1rem 'EB Garamond', serif; color: #f3e6c6; background: #6a0710; border: 0; padding: 9px 16px; border-radius: 3px; cursor: pointer; margin-top: 8px; }
+.parchment .pbtn.quiet { background: #5a4630; margin-top: 24px; }
+.parchment .ok { color: #2f6b2f; font-weight: 700; margin-left: 8px; }
+.parchment .role-line { padding: 4px 0; }
+.parchment .role-line b { color: #3a1a0c; }
+.parchment .role-line.evil b { color: #7a0c1e; }
+.parchment details summary { cursor: pointer; font-weight: 700; color: #6a0710; padding: 6px 0; }
+.parchment .close-hint { text-align: center; color: #8a6a44; font-style: italic; font-size: 0.95rem; margin-top: 26px; }
+.parchment .seal-top { width: 60px; height: 60px; margin: -4px auto 0; border-radius: 50%; display: grid; place-items: center; font: 800 1.5rem 'Blackwood Gothic', serif; color: #f1d9a0;
+  background: radial-gradient(circle at 38% 32%, #c62a31, #6a0710 70%, #3a0308); box-shadow: 0 3px 6px rgba(60, 20, 5, 0.5); }
+.parchment .rules-short li { margin: 8px 0; }
+.parchment a { color: #6a0710; }
