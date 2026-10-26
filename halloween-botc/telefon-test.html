@@ -15,6 +15,8 @@
     .demo button { font: 600 0.82rem 'EB Garamond', serif; color: #8d7a7e; background: transparent; border: 1px dashed #4a3238; padding: 4px 8px; cursor: pointer; }
     .demo button.on { color: var(--gold-hi); border-color: var(--gold-dim); }
     .phase-line { text-align: center; font-size: 1.15rem; margin: 6px 0 14px; }
+    .card.calling { animation: calling 0.8s ease-in-out 3; }
+    @keyframes calling { 50% { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 30px rgba(232, 201, 122, 0.6); } }
     .news { border-left: 3px solid var(--gold); padding: 10px 14px; background: rgba(20, 8, 11, 0.7); margin: 14px 0; }
     .news .lbl { color: var(--gold); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; }
     .news p { margin: 4px 0 0; }
@@ -123,7 +125,8 @@
       }[phase];
       $('app').innerHTML = `
         <div class="demo">${Object.entries(PHASES).map(([k, v]) => `<button data-ph="${k}" class="${k === phase ? 'on' : ''}">${v.label}</button>`).join('')}</div>
-        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">test v5 · Pergament:</span>${['A', 'B', 'C'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
+        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">test v6 · Pergament:</span>${['A', 'B', 'C'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
+        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">Simulează (apoi deschide pergamentul):</span><button data-sim="vote">Votul în 5 s</button><button data-sim="night">Noaptea în 5 s</button></div>
         <h1 class="center" style="margin-bottom:2px">${me.name}</h1>
         <div class="badges">${ghost ? '<span class="pill">👻 fantomă</span><span class="pill">🗳️ vot de fantomă</span>' : '<span class="pill on">în viață</span>'}</div>
         <p class="phase-line">${PHASES[phase].line}</p>
@@ -131,7 +134,8 @@
         <div class="card role-card" id="role"><div class="hidden-role">✦ Atinge aici ca să-ți vezi rolul ✦</div>
           <div class="shown-role" hidden><h2>${ROLES[me.role].name}</h2><p class="muted">Sătean · 🕯️ Tabăra binelui</p></div></div>
         ${phase === 'night' ? '' : `<div class="news"><span class="lbl">Ultima veste · noaptea 2</span><p>${esc(plain(inbox[0].text))}</p></div>`}`;
-      $('app').querySelectorAll('[data-ph]').forEach((b) => b.addEventListener('click', () => { phase = b.dataset.ph; main(); }));
+      $('app').querySelectorAll('[data-ph]').forEach((b) => b.addEventListener('click', () => goPhase(b.dataset.ph)));
+      $('app').querySelectorAll('[data-sim]').forEach((b) => b.addEventListener('click', () => { b.textContent = '…în 5 s'; setTimeout(() => goPhase(b.dataset.sim), 5000); }));
       $('app').querySelectorAll('[data-var]').forEach((b) => b.addEventListener('click', () => { variant = b.dataset.var; tab = 'mine'; main(); dock(); if (variant !== 'C') openSheet(); }));
       const role = $('role');
       role.addEventListener('click', () => { const s = role.querySelector('.shown-role'); s.hidden = !s.hidden; role.querySelector('.hidden-role').hidden = !s.hidden; });
@@ -139,7 +143,7 @@
 
     // Tot restul stă în pergament. Două variante de acces rapid la personaje și regulament:
     // A = cuprins sus (sare la secțiune), B = file cu semne de carte (pagini separate).
-    let variant = 'A', tab = 'mine';
+    let variant = 'C', tab = 'mine';
     const R = () => ROLES[me.role];
     const rolesHtml = (open) => Object.keys(TYPES).map((t) => {
       const list = Object.values(ROLES).filter((x) => x.type === t);
@@ -232,6 +236,20 @@
       $('open')?.addEventListener('click', () => { tab = 'mine'; openSheet(); });
     }
     function openSheet() { sheet(); $('sheet').scrollTop = 0; $('veil').classList.add('open'); $('sheet').classList.add('open'); if ($('dot') && tab === 'mine') $('dot').hidden = true; navigator.vibrate?.(15); }
+    // Când jocul îți cere ceva (votul, noaptea, adunarea), pergamentul se închide singur:
+    // telefonul vibrează, iar acțiunea apare imediat pe ecran.
+    const NEEDS_ACTION = new Set(['vote', 'night', 'gather']);
+    function goPhase(p) {
+      phase = p;
+      main();
+      if (NEEDS_ACTION.has(p) && $('sheet').classList.contains('open')) {
+        closeSheet();
+        navigator.vibrate?.([200, 80, 200]);
+        const card = $('app').querySelector('.vote-card, .day-actions, .targets')?.closest('.card');
+        card?.classList.add('calling');
+        setTimeout(() => card?.classList.remove('calling'), 2400);
+      }
+    }
     function closeSheet() { $('veil').classList.remove('open'); $('sheet').classList.remove('open'); }
     $('veil').addEventListener('click', closeSheet);
     $('sheet').addEventListener('click', (e) => { if (!e.target.closest('button, textarea, input, a, summary, .toc')) closeSheet(); });
