@@ -25,6 +25,16 @@
     .dock .scroll-btn { flex: 1; max-width: 420px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 18px; cursor: pointer;
       font: 800 1.15rem 'Blackwood Gothic', serif; color: #3a1a0c; letter-spacing: 0.02em; border: 0; border-radius: 3px;
       background: linear-gradient(180deg, #ecdcb8, #cfb07a); box-shadow: 0 0 0 1px #7c5a1e, 0 6px 18px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(124, 74, 20, 0.35); }
+    .dock.three { gap: 8px; }
+    .dock.three .scroll-btn { padding: 12px 6px; font-size: 1rem; flex-direction: column; gap: 2px; max-width: 160px; position: relative; }
+    .dock.three .scroll-btn .ico { font-size: 1.35rem; line-height: 1; }
+    .dock.three .scroll-btn .dot { position: absolute; top: -8px; right: -6px; }
+    /* În pergament, varianta C: aceleași trei butoane, lipite jos */
+    .parchment .bottom-tabs { position: sticky; bottom: -50px; z-index: 2; display: flex; gap: 6px; margin: 20px -26px -50px; padding: 12px 12px max(14px, env(safe-area-inset-bottom));
+      background: linear-gradient(0deg, #d9c08e 70%, rgba(217, 192, 142, 0)); }
+    .parchment .bottom-tabs button { flex: 1; white-space: nowrap; font: 800 0.86rem 'Blackwood Gothic', serif; color: #f3e6c6; background: #6e4a2a; border: 0; padding: 12px 4px 10px; cursor: pointer; opacity: 0.8;
+      clip-path: polygon(0 18%, 50% 0, 100% 18%, 100% 100%, 0 100%); }
+    .parchment .bottom-tabs button.on { background: linear-gradient(0deg, #8e1023, #5a0612); opacity: 1; }
     .dock .scroll-btn .dot { min-width: 22px; height: 22px; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #c62a31, #6a0710); color: #f1d9a0; font: 700 0.8rem 'EB Garamond', serif; display: grid; place-items: center; }
 
     /* Pergamentul: o foaie veche care se derulează peste ecran */
@@ -73,7 +83,7 @@
 </head>
 <body>
   <main class="wrap" id="app"></main>
-  <div class="dock"><button class="scroll-btn" id="open">📜 Pergamentul <span class="dot" id="dot">2</span></button></div>
+  <div class="dock" id="dock"><button class="scroll-btn" id="open">📜 Pergamentul <span class="dot" id="dot">2</span></button></div>
   <div class="parchment-veil" id="veil"></div>
   <article class="parchment" id="sheet"></article>
 
@@ -111,7 +121,7 @@
       }[phase];
       $('app').innerHTML = `
         <div class="demo">${Object.entries(PHASES).map(([k, v]) => `<button data-ph="${k}" class="${k === phase ? 'on' : ''}">${v.label}</button>`).join('')}</div>
-        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">Pergament:</span>${['A', 'B'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
+        <div class="demo"><span style="color:#8d7a7e;font-size:0.85rem;align-self:center">Pergament:</span>${['A', 'B', 'C'].map((v) => `<button data-var="${v}" class="${v === variant ? 'on' : ''}">Varianta ${v}</button>`).join('')}</div>
         <h1 class="center" style="margin-bottom:2px">${me.name}</h1>
         <div class="badges">${ghost ? '<span class="pill">👻 fantomă</span><span class="pill">🗳️ vot de fantomă</span>' : '<span class="pill on">în viață</span>'}</div>
         <p class="phase-line">${PHASES[phase].line}</p>
@@ -120,7 +130,7 @@
           <div class="shown-role" hidden><h2>${ROLES[me.role].name}</h2><p class="muted">Sătean · 🕯️ Tabăra binelui</p></div></div>
         ${phase === 'night' ? '' : `<div class="news"><span class="lbl">Ultima veste · noaptea 2</span><p>${esc(inbox[0].text)}</p></div>`}`;
       $('app').querySelectorAll('[data-ph]').forEach((b) => b.addEventListener('click', () => { phase = b.dataset.ph; main(); }));
-      $('app').querySelectorAll('[data-var]').forEach((b) => b.addEventListener('click', () => { variant = b.dataset.var; tab = 'mine'; main(); openSheet(); }));
+      $('app').querySelectorAll('[data-var]').forEach((b) => b.addEventListener('click', () => { variant = b.dataset.var; tab = 'mine'; main(); dock(); if (variant !== 'C') openSheet(); }));
       const role = $('role');
       role.addEventListener('click', () => { const s = role.querySelector('.shown-role'); s.hidden = !s.hidden; role.querySelector('.hidden-role').hidden = !s.hidden; });
     }
@@ -165,7 +175,15 @@
     const footer = `<button class="pbtn" style="background:#5a4630;margin-top:24px">Nu sunt eu (deloghează-mă)</button><p class="close-hint">Atinge foaia ca s-o închizi</p>`;
 
     function sheet() {
-      if (variant === 'A') {
+      if (variant === 'C') {
+        const tabs = [['mine', '📜', 'Pergamentul'], ['roles', '📖', 'Personajele'], ['rules', '⚖️', 'Regulile']];
+        $('sheet').innerHTML = `
+          ${tab === 'mine' ? `<div class="seal-top">C</div>${mineHtml()}` : tab === 'roles'
+            ? `<h2>Personajele posibile</h2><p class="muted">Nu toate sunt în joc. Oricine poate pretinde oricare.</p>${rolesHtml(true)}`
+            : `<h2>Regulamentul pe scurt</h2>${rulesHtml}`}
+          ${tab === 'mine' ? footer : '<p class="close-hint">Atinge foaia ca s-o închizi</p>'}
+          <div class="bottom-tabs">${tabs.map(([k, i, l]) => `<button data-tab="${k}" class="${tab === k ? 'on' : ''}">${i} ${l}</button>`).join('')}</div>`;
+      } else if (variant === 'A') {
         $('sheet').innerHTML = `
           <div class="seal-top">C</div>
           <div class="quick">
@@ -199,12 +217,24 @@
     }
 
     // Deschis: foaia se derulează de sus în jos. Închis: o atingere oriunde pe foaie (nu pe butoane sau câmpuri).
-    function openSheet() { sheet(); $('sheet').scrollTop = 0; $('veil').classList.add('open'); $('sheet').classList.add('open'); $('dot').hidden = true; navigator.vibrate?.(15); }
+    // Bara de jos: un buton (A, B) sau trei butoane-pergament (C), fiecare deschide foaia la pagina lui.
+    function dock() {
+      const d = $('dock');
+      if (variant !== 'C') { d.className = 'dock'; d.innerHTML = '<button class="scroll-btn" id="open">📜 Pergamentul <span class="dot" id="dot">2</span></button>'; }
+      else {
+        d.className = 'dock three';
+        d.innerHTML = [['mine', '📜', 'Pergamentul', '<span class="dot" id="dot">2</span>'], ['roles', '📖', 'Personajele', ''], ['rules', '⚖️', 'Regulile', '']]
+          .map(([k, i, l, x]) => `<button class="scroll-btn" data-open="${k}"><span class="ico">${i}</span>${l}${x}</button>`).join('');
+      }
+      d.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.open; openSheet(); }));
+      $('open')?.addEventListener('click', () => { tab = 'mine'; openSheet(); });
+    }
+    function openSheet() { sheet(); $('sheet').scrollTop = 0; $('veil').classList.add('open'); $('sheet').classList.add('open'); if ($('dot') && tab === 'mine') $('dot').hidden = true; navigator.vibrate?.(15); }
     function closeSheet() { $('veil').classList.remove('open'); $('sheet').classList.remove('open'); }
-    $('open').addEventListener('click', openSheet);
     $('veil').addEventListener('click', closeSheet);
     $('sheet').addEventListener('click', (e) => { if (!e.target.closest('button, textarea, input, a, summary, details[open] .role-line, .toc')) closeSheet(); });
     main();
+    dock();
   </script>
 </body>
 </html>
