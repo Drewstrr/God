@@ -716,6 +716,8 @@
       at(8.6, () => { line.classList.add('low'); candlesEls.forEach((c) => c.classList.add('seen')); });
       const step = Math.min(0.62, 7 / Math.max(1, candlesEls.length));
       candlesEls.forEach((c, i) => at(9 + i * step, () => { c.classList.remove('waiting'); sfx.heartbeat(0, 0.35); }));
+      // După ultimul oaspete, ușile grele ale castelului se închid în urma lui (audio/door.mp3).
+      at(15.9, () => sfx.playClip('door', { volume: 0.95 }));
       say(16.5, 'Contele nu vine singur.', 2.2);
       at(INTRO.gust, () => { candlesEls.forEach((c) => c.classList.add('gust')); sfx.crow(0, { distance: 0.25, pan: -0.3 }); });
       say(INTRO.gust, 'Se ascunde printre voi.', 2.6, 'red');

@@ -204,10 +204,9 @@ export function playClip(name, { offset = 0, volume = 1, delay = 0, fadeIn = 0 }
 }
 export const clipLength = (name) => buffers[name]?.duration ?? 0;
 
-// Se lasă noaptea: dangătul de seară, apoi ușa grea a castelului se închide. Fără fișiere: clopotul generat.
+// Se lasă noaptea: dangătul de seară (audio/bell.mp3). Fără fișier: clopotul generat.
 export function nightFalls() {
-  if (playClip('bell', { volume: 0.9 }) === null) return sessionBell();
-  playClip('door', { delay: 2.4, volume: 0.95 });
+  if (playClip('bell', { volume: 0.9 }) === null) sessionBell();
 }
 
 // Un suflu puternic, de voce feminină, care stinge lumânarea: aer printr-o gură mică (zgomot cu formanți înalți),
