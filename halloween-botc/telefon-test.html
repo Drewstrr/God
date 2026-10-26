@@ -232,7 +232,7 @@
     function openSheet() { sheet(); $('sheet').scrollTop = 0; $('veil').classList.add('open'); $('sheet').classList.add('open'); if ($('dot') && tab === 'mine') $('dot').hidden = true; navigator.vibrate?.(15); }
     function closeSheet() { $('veil').classList.remove('open'); $('sheet').classList.remove('open'); }
     $('veil').addEventListener('click', closeSheet);
-    $('sheet').addEventListener('click', (e) => { if (!e.target.closest('button, textarea, input, a, summary, details[open] .role-line, .toc')) closeSheet(); });
+    $('sheet').addEventListener('click', (e) => { if (!e.target.closest('button, textarea, input, a, summary, .toc')) closeSheet(); });
     main();
     dock();
   </script>
