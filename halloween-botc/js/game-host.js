@@ -368,12 +368,16 @@ async function dawnTimeline(night, deadIds) {
     wake[id] = Math.round(t * 10) / 10;
   });
   const act3 = t + (deadIds.length ? 3 : 1.5);
+  // Contele a atacat, dar nu a murit nimeni (Preotul, Haiducul): dimineața se aude urletul lui furios, din depărtare.
+  // Nu spune pe cine a atacat; după prima noapte, o dimineață fără morți înseamnă oricum un atac oprit.
+  const growl = !deadIds.length && Boolean(state.history.at(-1)?.attack);
   const epitaphs = shuffle(EPITAPHS);
   return {
     night,
     dawnAt: serverNow() + 1500,
     wake,
     act3,
+    growl,
     end: act3 + (deadIds.length ? deadIds.length * MOURN : 6),
     deaths: await Promise.all(deadIds.map(async (id, i) => ({ id, name: nameOf(id), testament: await testamentOf(id), epitaph: epitaphs[i % epitaphs.length] }))),
   };

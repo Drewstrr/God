@@ -528,7 +528,9 @@
       if (!deadIds.length) {
         at(m, m.act3, (late) => {
           dawnText('Toată lumea s-a trezit… <i>de data asta</i>.');
-          if (!late) sfx.dawn();
+          if (late) return;
+          // Contele a fost oprit: urletul lui furios se aude din depărtare (audio/growl.mp3). Altfel, sunetul liniștit al dimineții.
+          if (!m.growl || sfx.playClip('growl', { delay: 0.9, volume: 1 }) === null) sfx.dawn();
         });
       }
       (m.deaths ?? []).forEach((d, i) => {
