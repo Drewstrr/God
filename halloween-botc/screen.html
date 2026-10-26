@@ -542,7 +542,12 @@
           dawnText('', true);
           const c = document.querySelector(`#dawn-candles [data-pid="${d.id}"]`);
           if (c) { c.classList.add('victim'); c.dataset.state = 'dying'; setTimeout(() => { c.dataset.state = 'normal'; c.classList.remove('out'); c.classList.add('ghost'); }, late ? 0 : 2200); }
-          if (!late) { sfx.playMusic('mourning'); sfx.churchBell(0, 73.4, 0.55); }
+          if (!late) {
+            // Mușcătura Contelui (audio/bite1.mp3 sau bite2.mp3, la întâmplare), chiar când se zbate lumânarea victimei.
+            sfx.playClip(Math.random() < 0.5 ? 'bite1' : 'bite2', { volume: 1 });
+            sfx.playMusic('mourning');
+            sfx.churchBell(1.6, 73.4, 0.55);
+          }
         });
         at(m, t0 + 2.5, () => {
           document.querySelector('.mourn-card')?.remove();
