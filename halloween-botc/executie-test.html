@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Execuția · test</title>
+  <link rel="stylesheet" href="css/style.css?v=19">
+  <style>
+    html, body { height: 100%; overflow: hidden; background: #000; }
+    body { font-family: 'EB Garamond', Georgia, serif; }
+    .bar { position: fixed; left: 10px; top: 10px; z-index: 20; display: flex; gap: 8px; flex-wrap: wrap; }
+    .bar button { font: 600 1rem 'EB Garamond', serif; color: var(--gold-hi); background: rgba(20, 6, 9, 0.85); border: 1px solid var(--gold-dim); padding: 8px 14px; cursor: pointer; }
+    .bar input { font: 1rem 'EB Garamond', serif; width: 120px; background: #140608; color: #efe2cf; border: 1px solid var(--gold-dim); padding: 7px 10px; }
+    /* Ecranul proiectorului */
+    .frame { position: fixed; left: 50%; top: 50%; width: min(100vw, 177.78vh); aspect-ratio: 16 / 9; transform: translate(-50%, -50%); overflow: hidden;
+      background: radial-gradient(ellipse at 50% 70%, #2a0d12 0%, #0b0507 55%, #000 100%); }
+    .frame.shake { animation: shake 0.5s; }
+    @keyframes shake { 15% { transform: translate(calc(-50% - 9px), calc(-50% + 4px)); } 35% { transform: translate(calc(-50% + 7px), calc(-50% - 5px)); }
+      55% { transform: translate(calc(-50% - 4px), calc(-50% + 5px)); } 75% { transform: translate(calc(-50% + 3px), calc(-50% - 2px)); } }
+    .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 8; transition: opacity 1.2s; }
+    .flash.on { opacity: 0.35; transition: opacity 0.05s; }
+    .scene { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s; }
+    .scene.show { opacity: 1; }
+    .scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .caption { position: absolute; left: 0; right: 0; top: 9%; text-align: center; z-index: 6; font-size: clamp(1.4rem, 3vw, 3rem); color: #efe2cf; opacity: 0; transition: opacity 1s;
+      text-shadow: 0 0 18px #000; }
+    .caption.show { opacity: 1; }
+    .caption b { color: #e8c97a; }
+
+    /* Securea: se ridică încet, apoi cade pe butuc */
+    #axe { transform-box: view-box; transform-origin: 1180px 880px; transform: rotate(0deg); }
+    #axe.raise { transform: rotate(40deg); transition: transform 2.2s cubic-bezier(0.3, 0, 0.5, 1); }
+    #axe.drop { transform: rotate(-2deg); transition: transform 0.16s cubic-bezier(0.6, 0, 1, 1); }
+    .chip { position: absolute; width: 10px; height: 4px; background: #6a4422; border-radius: 1px; z-index: 5; opacity: 0; }
+    .chip.fly { animation: chip 0.9s ease-out forwards; }
+    @keyframes chip { 0% { opacity: 1; transform: translate(0, 0) rotate(0); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--r)); } }
+
+    /* Țeapa: o pădure de țepe în ceață; cea din mijloc se ridică brusc */
+    #stake { transform: translateY(560px); }
+    #stake.rise { transform: translateY(0); transition: transform 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+    .fog { position: absolute; left: -10%; right: -10%; bottom: 0; height: 40%; z-index: 4; pointer-events: none;
+      background: radial-gradient(ellipse at 30% 100%, rgba(120, 100, 110, 0.25), transparent 60%), radial-gradient(ellipse at 75% 100%, rgba(120, 100, 110, 0.2), transparent 55%);
+      animation: fog 14s ease-in-out infinite alternate; }
+    @keyframes fog { to { transform: translateX(6%); } }
+
+    /* Ceremonia lumânării, aceeași ca în joc */
+    .ceremony { position: absolute; inset: 0; z-index: 7; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transition: opacity 1s; }
+    .ceremony.show { opacity: 1; }
+    .ceremony .candle { --s: 1.9vw; }
+    .ceremony .c-name { margin-top: 2vh; font: 800 clamp(2.4rem, 5vw, 5rem) 'Blackwood Gothic', serif; color: var(--gold-hi); opacity: 0; transition: opacity 1.2s; }
+    .ceremony .c-sub { color: #c9b8a6; font-style: italic; font-size: clamp(1.1rem, 2vw, 2rem); opacity: 0; transition: opacity 1.2s; }
+    .ceremony .show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <input id="name" value="Radu" aria-label="Numele">
+    <button data-run="axe">1. Securea pe butuc</button>
+    <button data-run="stake">2. Țeapa</button>
+  </div>
+  <div class="frame" id="frame">
+    <!-- 1. Securea și butucul, în contralumina unei torțe -->
+    <div class="scene" id="s-axe">
+      <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+        <defs><radialGradient id="torch" cx="0.5" cy="0.62" r="0.6"><stop offset="0" stop-color="#7a2a14" stop-opacity="0.75"/><stop offset="0.6" stop-color="#2a0a0a" stop-opacity="0.3"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
+        <rect width="1600" height="900" fill="url(#torch)"/>
+        <!-- podeaua și butucul -->
+        <path d="M0 780 H1600 V900 H0z" fill="#070304"/>
+        <path d="M640 700 Q800 670 960 700 L950 790 Q800 815 650 790 Z" fill="#0d0605"/>
+        <ellipse cx="800" cy="700" rx="160" ry="30" fill="#2a160c"/>
+        <ellipse cx="800" cy="700" rx="110" ry="18" fill="none" stroke="#1a0c06" stroke-width="3"/>
+        <path d="M770 690 L800 676 L830 690" stroke="#000" stroke-width="5" fill="none"/>
+        <!-- securea: mânerul se rotește în jurul capătului de jos (mâna călăului, în afara cadrului) -->
+        <g id="axe">
+          <path d="M1180 880 L820 650" stroke="#1a0c08" stroke-width="24" stroke-linecap="round"/>
+          <path d="M1180 880 L820 650" stroke="#4a2a18" stroke-width="3" opacity="0.6"/>
+          <path d="M850 640 C800 560 700 560 660 610 C700 640 720 690 700 760 C770 740 840 700 870 668 Z" fill="#141010"/>
+          <path d="M700 760 C720 690 700 640 660 610" stroke="#c9b8b0" stroke-width="4" fill="none" opacity="0.55"/>
+        </g>
+      </svg>
+    </div>
+    <!-- 2. Țeapa: pădurea de țepe în ceață, sub o lună roșiatică -->
+    <div class="scene" id="s-stake">
+      <svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+        <defs><radialGradient id="moon" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#e8b0a0"/><stop offset="0.6" stop-color="#a04a40"/><stop offset="1" stop-color="#a04a40" stop-opacity="0"/></radialGradient></defs>
+        <circle cx="800" cy="300" r="190" fill="url(#moon)" opacity="0.55"/>
+        <circle cx="800" cy="300" r="120" fill="#c98070" opacity="0.5"/>
+        <!-- țepele din fundal, tot mai mici spre orizont -->
+        <g fill="#0a0506">
+          <path d="M140 900 L152 560 L158 540 L164 560 L176 900z"/><path d="M300 900 L310 620 L315 600 L320 620 L330 900z"/>
+          <path d="M440 900 L448 650 L452 634 L456 650 L464 900z"/><path d="M560 900 L566 690 L569 676 L572 690 L578 900z"/>
+          <path d="M1030 900 L1036 690 L1039 676 L1042 690 L1048 900z"/><path d="M1150 900 L1158 650 L1162 634 L1166 650 L1174 900z"/>
+          <path d="M1280 900 L1290 610 L1295 590 L1300 610 L1310 900z"/><path d="M1440 900 L1452 560 L1458 540 L1464 560 L1476 900z"/>
+        </g>
+        <!-- țeapa din mijloc, care se ridică (în spatele pământului) -->
+        <g id="stake"><path d="M786 900 L790 360 L800 300 L810 360 L814 900z" fill="#080404"/><path d="M800 300 L806 340" stroke="#4a2a2a" stroke-width="2"/></g>
+        <path d="M0 840 Q400 800 800 830 T1600 820 V900 H0z" fill="#050203"/>
+      </svg>
+      <div class="fog"></div>
+    </div>
+    <div class="caption" id="caption"></div>
+    <div class="ceremony" id="cer"></div>
+    <div class="flash" id="flash"></div>
+  </div>
+
+  <script type="module">
+    import { candleSVG, animateFlames } from './js/candles.js';
+    import * as sfx from './js/sfx.js';
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    animateFlames();
+    let run = 0;
+    const wait = (ms, t) => new Promise((res, rej) => setTimeout(() => (t === run ? res() : rej(new Error('stop'))), ms));
+
+    function reset() {
+      ['s-axe', 's-stake'].forEach((id) => $(id).classList.remove('show'));
+      $('axe').setAttribute('class', ''); $('stake').setAttribute('class', '');
+      $('caption').classList.remove('show'); $('cer').classList.remove('show'); $('cer').innerHTML = '';
+      document.querySelectorAll('.chip').forEach((c) => c.remove());
+    }
+    function impact() {
+      $('frame').classList.remove('shake'); void $('frame').offsetWidth; $('frame').classList.add('shake');
+      $('flash').classList.add('on'); setTimeout(() => $('flash').classList.remove('on'), 60);
+    }
+    function chips() {
+      const f = $('frame').getBoundingClientRect();
+      for (let i = 0; i < 14; i++) {
+        const c = document.createElement('div');
+        c.className = 'chip';
+        c.style.left = `${f.width * 0.5}px`; c.style.top = `${f.height * 0.77}px`;
+        c.style.setProperty('--dx', `${(Math.random() - 0.5) * f.width * 0.25}px`);
+        c.style.setProperty('--dy', `${-Math.random() * f.height * 0.25}px`);
+        c.style.setProperty('--r', `${Math.random() * 720 - 360}deg`);
+        $('frame').appendChild(c);
+        requestAnimationFrame(() => c.classList.add('fly'));
+      }
+    }
+    // Ceremonia lumânării, ca în joc: suflul o stinge, apoi numele și clopotul.
+    async function candle(t, name) {
+      $('cer').innerHTML = `${candleSVG(name, { label: null, short: true })}<div class="c-name">${esc(name)}</div><div class="c-sub">a fost executat de sat</div>`;
+      const c = $('cer').querySelector('.candle');
+      $('cer').classList.add('show');
+      await wait(1500, t);
+      const heard = sfx.playFileAt('airblow', { volume: 1 });
+      await wait((heard ?? 0) + 30, t);
+      c.classList.add('gust'); c.dataset.state = 'dying';
+      await wait(70, t);
+      c.dataset.state = 'dead'; c.classList.remove('gust');
+      await wait(1000, t);
+      $('cer').querySelector('.c-name').classList.add('show');
+      sfx.churchBell(0, 110, 0.6);
+      await wait(1600, t);
+      $('cer').querySelector('.c-sub').classList.add('show');
+    }
+
+    async function axe() {
+      const t = ++run; reset();
+      const name = $('name').value.trim() || 'Radu';
+      $('caption').innerHTML = `Satul a hotărât. <b>${esc(name)}</b> urcă pe butuc.`;
+      $('s-axe').classList.add('show');
+      await wait(600, t); $('caption').classList.add('show');
+      for (let i = 0; i < 3; i++) { sfx.heartbeat(0, 0.6 + i * 0.15); await wait(900 - i * 150, t); }
+      $('caption').classList.remove('show');
+      $('axe').setAttribute('class', 'raise');
+      sfx.drone(0, 4);
+      await wait(2600, t);
+      await wait(700, t);                                // o clipă de liniște, cu securea sus
+      $('axe').setAttribute('class', 'drop');
+      sfx.whoosh(0);
+      await wait(160, t);
+      sfx.doomHit(0); impact(); chips(); navigator.vibrate?.(250);
+      await wait(1800, t);
+      $('s-axe').classList.remove('show');
+      await wait(900, t);
+      await candle(t, name);
+    }
+
+    async function stake() {
+      const t = ++run; reset();
+      const name = $('name').value.trim() || 'Radu';
+      $('caption').innerHTML = `Satul a hotărât. <b>${esc(name)}</b> e dus în pădurea de țepe.`;
+      $('s-stake').classList.add('show');
+      await wait(600, t); $('caption').classList.add('show');
+      sfx.drone(0, 6);
+      // Inima bate tot mai repede, apoi se oprește.
+      for (let i = 0; i < 6; i++) { sfx.heartbeat(0, 0.5 + i * 0.08); await wait(1000 - i * 120, t); }
+      $('caption').classList.remove('show');
+      await wait(800, t);                                // liniște
+      $('stake').setAttribute('class', 'rise');
+      sfx.whoosh(0);
+      await wait(300, t);
+      sfx.doomHit(0); impact(); navigator.vibrate?.(250);
+      sfx.crow(0.9, { distance: 0.35, pan: 0.4 });
+      await wait(2600, t);
+      $('s-stake').classList.remove('show');
+      await wait(900, t);
+      await candle(t, name);
+    }
+
+    document.querySelectorAll('[data-run]').forEach((b) => b.addEventListener('click', () => {
+      sfx.unlock();
+      (b.dataset.run === 'axe' ? axe : stake)().catch(() => {});
+    }));
+  </script>
+</body>
+</html>
