@@ -983,11 +983,11 @@ export async function playMusic(theme, options = {}) {
 
   if (options.youtube) return playYouTube(mine, options.youtube, options.fallback);
 
-  if (await hasFile(theme)) {
-    if (current !== mine) return;
-    playFile(mine, theme);
-    return;
-  }
+  const fromFile = await hasFile(theme);
+  // Între timp a pornit altă muzică (fazele se pot schimba repede): nu mai pornim tema asta,
+  // altfel ar rămâne să cânte pe fundal, fără să o mai oprească nimeni.
+  if (current !== mine) return;
+  if (fromFile) { playFile(mine, theme); return; }
   if (options.fallback && !THEMES[theme]) theme = options.fallback;
 
   mine.stop = startSynth(theme);
