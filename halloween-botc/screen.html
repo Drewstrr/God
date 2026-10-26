@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Proiector</title>
-  <link rel="stylesheet" href="css/style.css?v=23">
+  <link rel="stylesheet" href="css/style.css?v=24">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
@@ -761,7 +761,7 @@
         if (sfx.musicTheme() === theme) return;
         sfx.playMusic(null);
         // La victoria Răului, după ce se termină râsul Contelui.
-        setTimeout(() => { if (lastPhase === 'end') sfx.playMusic(theme, options); }, pub.winner === 'evil' ? 11000 : 6000);
+        setTimeout(() => { if (lastPhase === 'end') sfx.playMusic(theme, options); }, pub.winner === 'evil' ? 14000 : 6000);
       }
       else sfx.playMusic(theme ?? null, options);
     }

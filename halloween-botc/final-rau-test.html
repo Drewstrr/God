@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Finalul Răului · test</title>
-  <link rel="stylesheet" href="css/style.css?v=23">
+  <link rel="stylesheet" href="css/style.css?v=24">
   <style>
     .go { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: #000; cursor: pointer; }
     .go button { font: 800 1.6rem 'Blackwood Gothic', serif; color: var(--gold-hi); background: rgba(20, 6, 9, 0.9); border: 1px solid var(--gold); padding: 16px 30px; cursor: pointer; }
@@ -18,7 +18,7 @@
   <button class="again" id="again" hidden>↻ Revezi</button>
   <script type="module">
     // Exact ce face proiectorul când câștigă Răul: imaginea (js/bloodmoon.js), sunetul victoriei,
-    // apoi, după râsul Contelui (11 secunde), melodia balului din finalul jocului.
+    // apoi, după râsul Contelui (14 secunde), melodia balului din finalul jocului.
     import { bloodMoon, clearBloodMoon } from './js/bloodmoon.js';
     import * as sfx from './js/sfx.js';
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -54,7 +54,7 @@
       stage.innerHTML = `<div class="end evil"><h1>${bt('Răul a învins', '🩸')}</h1><p class="lead">Castelul Bran aparține acum Contelui.</p></div>`;
       bloodMoon();
       sfx.evilWins();
-      musicTimer = setTimeout(() => sfx.playMusic('ball', { fallback: 'doom' }), 11000);
+      musicTimer = setTimeout(() => sfx.playMusic('ball', { fallback: 'doom' }), 14000);
     }
     document.getElementById('go').addEventListener('click', () => {
       sfx.unlock();

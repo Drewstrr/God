@@ -453,20 +453,19 @@ export function evilLaugh(delay = 0) {
   }
 }
 
-// O cioară: 2–4 croncănituri aspre. distance: 0 = foarte aproape, 1 = departe. pan: -1 stânga … 1 dreapta.
-// Ciorile: dacă există audio/crow.mp3 (trecut în audio/list.json ca "crow"), se folosește înregistrarea reală;
-// altfel, croncănitul generat. Același fișier se aude aproape sau departe (mai încet, mai înfundat, în stânga/dreapta).
+// Ciorile: doar înregistrarea reală (audio/crow.mp3). Același fișier se aude aproape sau departe
+// (mai încet, mai înfundat, în stânga/dreapta). distance: 0 = foarte aproape, 1 = departe. pan: -1 stânga … 1 dreapta.
 let crowBuffer = null;
-let crowLoading = false;
-async function loadCrow() {
-  if (crowLoading || !ctx) return;
-  crowLoading = true;
-  try {
-    if (await hasFile('crow')) {
-      const res = await fetch(new URL('../audio/crow.mp3', import.meta.url));
-      crowBuffer = await ctx.decodeAudioData(await res.arrayBuffer());
-    }
-  } catch { crowBuffer = null; }
+let crowLoad = null;
+function loadCrow() {
+  if (!crowLoad && ctx) {
+    crowLoad = fetch(new URL('../audio/crow.mp3', import.meta.url))
+      .then((res) => res.arrayBuffer())
+      .then((b) => ctx.decodeAudioData(b))
+      .then((buf) => { crowBuffer = buf; })
+      .catch(() => { crowLoad = null; });
+  }
+  return crowLoad ?? Promise.resolve();
 }
 function crowFromFile(delay, distance, pan) {
   const t = ctx.currentTime + delay;
@@ -486,83 +485,21 @@ function crowFromFile(delay, distance, pan) {
 
 export function crow(delay = 0, { distance = 0.3, pan = 0 } = {}) {
   if (!ready()) return;
-  loadCrow();
   if (crowBuffer) return crowFromFile(delay, distance, pan);
-  const out = ctx.createGain();
-  out.gain.value = 0.55 * (1 - distance * 0.8);
-  const panner = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
-  const lp = ctx.createBiquadFilter();
-  lp.type = 'lowpass';
-  lp.frequency.value = 6000 - distance * 4800;
-  // Ecoul de departe.
-  const echo = ctx.createDelay(1);
-  echo.delayTime.value = 0.22 + distance * 0.15;
-  const fb = ctx.createGain();
-  fb.gain.value = 0.15 + distance * 0.3;
-  out.connect(lp);
-  lp.connect(echo).connect(fb).connect(echo);
-  const dest = panner ?? master;
-  if (panner) { panner.pan.value = pan; panner.connect(master); }
-  lp.connect(dest);
-  echo.connect(dest);
-
-  const shaper = ctx.createWaveShaper();
-  const curve = new Float32Array(1024);
-  for (let i = 0; i < 1024; i++) { const x = (i / 512) - 1; curve[i] = Math.tanh(x * 6); }
-  shaper.curve = curve;
-  const formants = [[1050, 5, 1], [2100, 6, 0.6], [3300, 7, 0.25]].map(([f, q, g]) => {
-    const bp = ctx.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.value = f * (0.95 + Math.random() * 0.1);
-    bp.Q.value = q;
-    const gg = ctx.createGain();
-    gg.gain.value = g;
-    shaper.connect(bp).connect(gg).connect(out);
-    return bp;
+  // Fișierul încă se încarcă: cioara se aude la momentul ei, dacă ajunge la timp (altfel deloc).
+  const when = ctx.currentTime + delay;
+  loadCrow().then(() => {
+    const left = when - ctx.currentTime;
+    if (crowBuffer && left > -0.3) crowFromFile(Math.max(0, left), distance, pan);
   });
-  void formants;
-
-  const caws = 2 + Math.floor(Math.random() * 3);
-  const base = 380 + Math.random() * 160;
-  for (let i = 0; i < caws; i++) {
-    const t = ctx.currentTime + delay + i * (0.38 + Math.random() * 0.12);
-    const len = 0.26 + Math.random() * 0.14;
-    const o = ctx.createOscillator();
-    o.type = 'sawtooth';
-    const f0 = base * (1 - i * 0.04);
-    o.frequency.setValueAtTime(f0 * 1.12, t);
-    o.frequency.linearRampToValueAtTime(f0, t + 0.05);
-    o.frequency.exponentialRampToValueAtTime(f0 * 0.82, t + len);
-    const n = ctx.createBufferSource();
-    n.buffer = noiseBuffer(0.5);
-    const ng = ctx.createGain();
-    ng.gain.value = 0.35;
-    const env = ctx.createGain();
-    env.gain.setValueAtTime(0.0001, t);
-    env.gain.exponentialRampToValueAtTime(0.9, t + 0.025);
-    env.gain.setValueAtTime(0.8, t + len * 0.6);
-    env.gain.exponentialRampToValueAtTime(0.0001, t + len);
-    o.connect(env);
-    n.connect(ng).connect(env);
-    env.connect(shaper);
-    o.start(t); o.stop(t + len + 0.05);
-    n.start(t); n.stop(t + len + 0.05);
-  }
 }
 
 // Un stol de ciori, unele aproape, altele departe, timp de câteva secunde.
 export function crows(delay = 0, seconds = 14) {
   loadCrow();
-  // Cu înregistrarea reală (care are deja mai multe croncănituri): de 2–3 ori, una aproape, restul departe.
-  if (crowBuffer) {
-    const n = Math.max(2, Math.min(3, Math.round(seconds / 5)));
-    for (let i = 0; i < n; i++) crow(delay + (i * seconds) / n + Math.random() * 1.5, { distance: i === 0 ? 0.15 : 0.55 + Math.random() * 0.35, pan: Math.random() * 1.6 - 0.8 });
-    return;
-  }
-  for (let i = 0; i < 9; i++) {
-    const far = Math.random() < 0.6;
-    crow(delay + Math.random() * seconds, { distance: far ? 0.65 + Math.random() * 0.3 : Math.random() * 0.25, pan: Math.random() * 2 - 1 });
-  }
+  // Înregistrarea are deja mai multe croncănituri: de 2–3 ori, una aproape, restul departe.
+  const n = Math.max(2, Math.min(3, Math.round(seconds / 5)));
+  for (let i = 0; i < n; i++) crow(delay + (i * seconds) / n + Math.random() * 1.5, { distance: i === 0 ? 0.15 : 0.55 + Math.random() * 0.35, pan: Math.random() * 1.6 - 0.8 });
 }
 
 // O lovitură cinematică: bubuit, apoi un acord grav, disonant, care crește.
@@ -593,7 +530,7 @@ export function doomHit(delay = 0) {
 // 0 s     lovitura grea, apoi un geamăt adânc care crește cât urcă luna, cu vântul care urlă printre turnuri,
 // ~2 s    clopotul de moarte, rar,
 // ~3.4 s  un cor întunecat, disonant (titlul),
-// 4.5 s   râsul Contelui și zborul liliecilor, apoi ciorile.
+// 4.5 s   râsul Contelui și zborul ciorilor, care croncănesc.
 export function evilWins() {
   doomHit(0.2);
   if (ready()) {
@@ -679,47 +616,38 @@ export function evilWins() {
       });
     });
 
-    // 4. Zborul liliecilor (odată cu râsul): bătăi repezi de aripi, de la stânga la dreapta, și câteva țipete subțiri.
+    // 4. Zborul ciorilor (odată cu râsul): bătăi grele de aripi, de la stânga la dreapta.
     const tb = t0 + 4.6;
     const flutter = ctx.createBufferSource();
-    flutter.buffer = noiseBuffer(2.4);
+    flutter.buffer = noiseBuffer(3);
     const fbp = ctx.createBiquadFilter();
     fbp.type = 'bandpass';
-    fbp.frequency.value = 1600;
-    fbp.Q.value = 1.2;
+    fbp.frequency.value = 700;
+    fbp.Q.value = 0.9;
     const fam = ctx.createGain();
     fam.gain.value = 0;
     const lfo = ctx.createOscillator();
-    lfo.type = 'square';
-    lfo.frequency.value = 13;
+    lfo.frequency.value = 4.5;
     const lfoG = ctx.createGain();
     lfoG.gain.value = 0.5;
     lfo.connect(lfoG).connect(fam.gain);
     const fenv = ctx.createGain();
     fenv.gain.setValueAtTime(0.0001, tb);
-    fenv.gain.exponentialRampToValueAtTime(0.35, tb + 0.4);
-    fenv.gain.exponentialRampToValueAtTime(0.0001, tb + 2.3);
+    fenv.gain.exponentialRampToValueAtTime(0.45, tb + 0.5);
+    fenv.gain.exponentialRampToValueAtTime(0.0001, tb + 2.9);
     const pan = ctx.createStereoPanner();
-    pan.pan.setValueAtTime(-0.8, tb);
-    pan.pan.linearRampToValueAtTime(0.8, tb + 2.3);
+    pan.pan.setValueAtTime(-0.7, tb);
+    pan.pan.linearRampToValueAtTime(0.7, tb + 2.9);
     flutter.connect(fbp).connect(fam).connect(fenv).connect(pan).connect(out);
     flutter.start(tb);
     lfo.start(tb);
-    lfo.stop(tb + 2.5);
-    [0.2, 0.55, 0.8, 1.3].forEach((s) => {
-      const t = tb + s;
-      const o = ctx.createOscillator();
-      o.type = 'sine';
-      o.frequency.setValueAtTime(7200 + Math.random() * 1500, t);
-      o.frequency.exponentialRampToValueAtTime(4200, t + 0.07);
-      o.connect(envGain(t, 0.005, 0.03, 0.08));
-      o.start(t);
-      o.stop(t + 0.12);
-    });
+    lfo.stop(tb + 3);
   }
   // 5. Clopotul de moarte, rar și grav.
   [2, 7.5, 12.5].forEach((s) => churchBell(s, 82.41, 0.38));
-  crows(8, 9);
+  // Ciorile croncănesc cât zboară spre noi, apoi încă două, departe (audio/crow.mp3).
+  crow(5.2, { distance: 0.1, pan: -0.4 });
+  crows(8.5, 9);
   // Râsul Contelui (audio/laugh.mp3); fără fișier, râsul generat.
   if (playClip('laugh', { delay: 4.5, volume: 1 }) === null) evilLaugh(4.5);
 }
@@ -997,7 +925,7 @@ const THEMES = {
     const fn = (t, i) => {
       chords[i % 4].forEach((n) => note(out, t, midi(n + 12), { type: 'sawtooth', attack: 1.5, peak: 0.03, decay: 4, filter: 700, detune: 9 }));
       // Din când în când, ciori în depărtare.
-      if (Math.random() < (crowBuffer ? 0.18 : 0.6)) crow(Math.max(0, t - ctx.currentTime) + Math.random() * 4, { distance: 0.6 + Math.random() * 0.35, pan: Math.random() * 2 - 1 });
+      if (Math.random() < 0.18) crow(Math.max(0, t - ctx.currentTime) + Math.random() * 4, { distance: 0.6 + Math.random() * 0.35, pan: Math.random() * 2 - 1 });
       return 5;
     };
     fn.stop = stop;

@@ -53,23 +53,80 @@ const MOON = `
   </g>
 </svg>`;
 
-// Liliacul: siluetă simplă; aripile bat din .bat-wing (CSS).
-const BAT = `<svg viewBox="0 0 100 44" aria-hidden="true"><path class="bat-wing" d="M50 16 C46 10 43 11 42 15 C35 8 22 4 6 8 C13 12 15 17 13 23 C19 20 25 21 29 26 C32 22 37 22 40 26 C43 23 46 24 50 30 C54 24 57 23 60 26 C63 22 68 22 71 26 C75 21 81 20 87 23 C85 17 87 12 94 8 C78 4 65 8 58 15 C57 11 54 10 50 16 Z M47 13 L46 8 L49 12 Z M53 13 L54 8 L51 12 Z" fill="#050102"/></svg>`;
+// Cioara în zbor, văzută de dedesubt: cap mic, aripi largi cu penele de la vârf desfăcute ca degetele, coada în evantai.
+// Se desenează jumătatea stângă și se oglindește; aripile bat din CSS.
+const CROW_HALF = 'M60 10 C57 10 55 12 55 15 C55 17 56 19 56 21 C48 18 36 13 22 13 C15 13 9 15 4 18 L1 21 L9 21.5 L3 25 L11 25 L6 29 L14 28 L10 33 L18 31 L15 36 L24 33 C34 35 46 35 54 33 C54 37 53 40 52 42 L49 52 C53 54 57 54.5 60 54.5 Z';
+const CROW = `<svg viewBox="0 0 120 60" aria-hidden="true"><g fill="#000"><path d="${CROW_HALF}"/><path d="${CROW_HALF}" transform="matrix(-1 0 0 1 120 0)"/></g></svg>`;
 
-// Un brad din trei etaje de crengi, cu vârful la (x, top) și baza la y.
-function pine(x, top, y) {
-  const h = y - top, w = h * 0.4;
-  const tri = (a, b, k) => `M${x} ${(top + h * a).toFixed(1)} L${(x - w * k).toFixed(1)} ${(top + h * b).toFixed(1)} L${(x + w * k).toFixed(1)} ${(top + h * b).toFixed(1)} Z`;
-  return `<path d="${tri(0, 0.42, 0.5)} ${tri(0.22, 0.72, 0.78)} ${tri(0.45, 1, 1)}"/>`;
+// Numere „la întâmplare”, dar aceleași de fiecare dată (pădurea arată la fel la fiecare final).
+function seeded(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
-const PINES = [[20, 40], [62, 6], [104, 52], [140, 24], [182, 60], [222, 38], [262, 74], [300, 70], [1300, 72], [1338, 46], [1378, 20], [1416, 56], [1456, 8], [1498, 44], [1540, 18], [1582, 50]]
-  .map(([x, top]) => pine(x, top, 150)).join('');
 
-// Pământul negru pe toată lățimea, cu brazi pe margini, în fața castelului.
+// Un brad ca cei din poza castelului: vârf subțire, crengi care atârnă, cu ace zimțate pe margine.
+// x = trunchiul, base = unde intră în pământ, h = înălțimea, w = jumătate din lățimea de la bază.
+function spruce(r, x, base, h, w) {
+  const top = base - h;
+  const side = (dir) => {
+    const pts = [[x, top]];
+    const n = Math.round(h / 9 + 6 + r() * 4);
+    for (let i = 1; i <= n; i++) {
+      const t = i / n;
+      const env = w * (0.08 + 0.92 * t ** 0.95);               // conul bradului
+      const y0 = top + h * (0.04 + 0.86 * (i - 1) / n);
+      const step = (h * 0.86) / n;
+      const out = env * (0.7 + r() * 0.45);
+      const inner = out * (0.25 + r() * 0.3);
+      const droop = step * (0.7 + r() * 0.9);
+      pts.push([x + dir * inner, y0]);
+      // marginea de sus a crengii, cu câteva ace
+      pts.push([x + dir * out * 0.55, y0 + droop * 0.35 - r() * step * 0.3]);
+      pts.push([x + dir * out * (0.92 + r() * 0.1), y0 + droop * 0.85]);
+      pts.push([x + dir * out, y0 + droop]);
+      // dedesubtul crengii, zimțat (acele care atârnă)
+      const k = 2 + Math.floor(r() * 3);
+      for (let j = 1; j <= k; j++) {
+        const f = j / (k + 1);
+        const px = x + dir * out * (1 - f * 0.75);
+        const py = y0 + droop * (1 - f * 0.3) + step * 0.15;
+        pts.push([px + dir * r() * step * 0.25, py + r() * step * 0.35]);
+        pts.push([px - dir * step * 0.12, py - step * 0.12]);
+      }
+    }
+    pts.push([x + dir * w * 0.05, base]);
+    return pts;
+  };
+  const left = side(-1), right = side(1).reverse();
+  const lean = (r() - 0.5) * h * 0.03;  // unii brazi stau ușor strâmb
+  const d = [...left, ...right].map(([px, py], k) => `${k ? 'L' : 'M'}${(px + lean * (base - py) / h).toFixed(1)} ${py.toFixed(1)}`).join('') + 'Z';
+  return `<path d="${d}"/>`;
+}
+
+// Pădurea de pe margini: înălțimi și forme diferite, cei înalți mai în spate, cei mici în față.
+function forest() {
+  const r = seeded(31);
+  const trees = [];
+  for (const [from, to] of [[-20, 560], [1040, 1620]]) {
+    for (let x = from; x < to; x += 16 + r() * 26) {
+      const nearCastle = from < 0 ? x / 560 : 1 - (x - 1040) / 580;    // 0 la margine, 1 lângă castel
+      const h = 40 + r() * 190 * (1 - nearCastle * 0.6) + (r() < 0.12 ? 70 : 0);
+      trees.push({ x, h, w: h * (0.2 + r() * 0.14) });
+    }
+  }
+  trees.sort((a, b) => b.h - a.h);
+  return trees.map((t) => spruce(r, t.x, 292 - r() * 10, t.h, t.w)).join('');
+}
+
+// Pământul negru pe toată lățimea, cu pădurea pe margini, în fața castelului.
 const GROUND = `
-<svg class="bm-ground" viewBox="0 0 1600 220" preserveAspectRatio="none" aria-hidden="true">
-  <g fill="#020001">${PINES}</g>
-  <path d="M0 220 V128 C140 108 260 100 380 116 C470 128 540 150 640 160 C760 170 840 170 960 160 C1060 150 1130 124 1230 114 C1350 102 1470 110 1600 124 V220 Z" fill="#020001"/>
+<svg class="bm-ground" viewBox="0 0 1600 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+  <g fill="#000">${forest()}</g>
+  <path d="M-200 300 V262 C0 250 160 246 320 254 C440 258 540 264 640 266 C760 268 840 268 960 266 C1060 264 1160 258 1280 252 C1420 246 1560 250 1800 262 V300 Z" fill="#000"/>
 </svg>`;
 
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -82,11 +139,11 @@ export function bloodMoon() {
   for (let i = 0; i < 90; i++) {
     stars += `<i style="left:${rnd(0, 100).toFixed(1)}%;top:${rnd(0, 60).toFixed(1)}%;--sz:${rnd(1, 2.6).toFixed(1)}px;--tw:${rnd(2, 6).toFixed(1)}s;--o:${rnd(0.3, 0.9).toFixed(2)}"></i>`;
   }
-  // Liliecii pornesc din turnul castelului și zboară spre noi, în toate părțile.
-  let bats = '';
+  // Ciorile pornesc din turnul castelului când râde Contele și zboară spre noi, în toate părțile.
+  let crows = '';
   for (let i = 0; i < 9; i++) {
     const side = i % 2 ? 1 : -1;
-    bats += `<i class="bat" style="--tx:${(side * rnd(45, 85)).toFixed(1)}vw;--ty:${rnd(-60, -10).toFixed(1)}vh;--s:${rnd(3, 7).toFixed(2)};--d:${rnd(2.4, 3.6).toFixed(1)}s;--delay:${(4.6 + rnd(0, 1.4)).toFixed(2)}s;--f:${rnd(0.13, 0.2).toFixed(2)}s">${BAT}</i>`;
+    crows += `<i class="crow" style="--tx:${(side * rnd(45, 85)).toFixed(1)}vw;--ty:${rnd(-60, -10).toFixed(1)}vh;--s:${rnd(3, 7).toFixed(2)};--d:${rnd(2.6, 3.8).toFixed(1)}s;--delay:${(4.6 + rnd(0, 1.4)).toFixed(2)}s;--f:${rnd(0.2, 0.3).toFixed(2)}s">${CROW}</i>`;
   }
   let embers = '';
   for (let i = 0; i < 40; i++) {
@@ -101,10 +158,10 @@ export function bloodMoon() {
       ${MOON}
     </div>
     <div class="bm-clouds"><i class="c1"></i><i class="c2"></i><i class="c3"></i></div>
+    <div class="bm-fog"><i></i><i></i></div>
     <img class="bm-castle" src="${new URL('../img/castel-noapte.webp', import.meta.url)}" alt="">
     ${GROUND}
-    <div class="bm-fog"><i></i><i></i></div>
-    <div class="bm-bats">${bats}</div>
+    <div class="bm-crows">${crows}</div>
     <div class="bm-embers">${embers}</div>
     <div class="bm-vignette"></div>`;
   document.body.prepend(layer);
