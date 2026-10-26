@@ -369,3 +369,16 @@ test('Vrăjitoarea poate otrăvi doar jucători vii', () => {
   assert.ok(!targets.includes('andrei'));
   assert.ok(targets.includes('flori'));
 });
+
+test('reluarea spune pe scurt ce a făcut povestitorul', () => {
+  const roles = { ...ROLES11, elisa: 'recluse' };
+  const base = { ...fixed(roles), night: 2, settings: { storyteller: true } };
+  const good = Object.keys(roles).filter((id) => !['robi', 'cella', 'radu'].includes(id));
+  const actions = Object.fromEntries(good.map((id) => [id, { bet: 'radu' }]));
+  actions.flori = { targets: ['elisa', 'luca'], bet: 'radu' };
+  const { state } = resolveNight(base, actions, seq(0.1));
+  const night = state.history.at(-1);
+  assert.equal(night.lean, 'evil');
+  assert.ok(night.leanNotes.some((n) => n.includes('Sihastrul')), JSON.stringify(night.leanNotes));
+  assert.ok(buildReplay(state).some((d) => d.lines.some((l) => l.startsWith('📜 Povestitorul (spre Rău):'))));
+});

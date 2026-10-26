@@ -280,18 +280,26 @@ const ftLie = (state) => ({ evil: 0.85, good: 0.5 }[state.lean] ?? 0.7);
 function falseRole(state, target, rng) {
   if (state.lean === 'evil') {
     const evil = teamOf(state.roles[target]) === 'evil';
-    return pickOne(evil ? keysOfType('townsfolk') : [...keysOfType('minion'), 'demon'], rng);
+    const role = pickOne(evil ? keysOfType('townsfolk') : [...keysOfType('minion'), 'demon'], rng);
+    note(state, `${nameOf(state, target)} a apărut drept ${ROLES[role].name}, o minciună convingătoare`);
+    return role;
   }
   return pickOne(ROLE_KEYS, rng);
+}
+// Ce a făcut povestitorul în noaptea asta, pe scurt (apare doar la final, în reluare).
+function note(state, text) {
+  if (state.lean && Array.isArray(state.leanNotes) && !state.leanNotes.includes(text)) state.leanNotes.push(text);
 }
 
 // Cum „apare” un jucător în fața abilităților: Vizitiul poate părea Sătean, Sihastrul poate părea Slujitor sau Conte.
 export function registersAs(state, id, rng = Math.random) {
   const role = state.roles[id];
   const p = misregister(state);
-  if (role === 'spy' && rng() < p) return pickOne(keysOfType('townsfolk'), rng);
-  if (role === 'recluse' && rng() < p) return pickOne([...keysOfType('minion'), 'demon'], rng);
-  return role;
+  let seen = role;
+  if (role === 'spy' && rng() < p) seen = pickOne(keysOfType('townsfolk'), rng);
+  if (role === 'recluse' && rng() < p) seen = pickOne([...keysOfType('minion'), 'demon'], rng);
+  if (seen !== role) note(state, `${ROLES[role].name} (${nameOf(state, id)}) a apărut drept ${ROLES[seen].name}`);
+  return seen;
 }
 
 function pairInfo(state, self, type, rng, honest) {
@@ -333,6 +341,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
   const tell = (id, msg) => { if (id) (priv[id] ??= []).push(msg); };
   const deaths = [];
   state.lean = storytellerLean(prev, actions);
+  state.leanNotes = [];
   const kill = (id, cause) => { if (state.alive[id]) { state.alive[id] = false; state.ghostVote[id] = true; deaths.push({ id, cause }); } };
   const pick = (id) => {
     const t = actions[id]?.targets ?? [];
@@ -406,6 +415,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     if (!pair) continue;
     const truth = pair.some((id) => id === state.redHerring || registersAs(state, id, rng) === 'demon');
     const answer = functioning(state, ft) ? truth : (rng() < ftLie(state) ? !truth : truth);
+    if (answer !== truth) note(state, `Ghicitoarea, otrăvită sau bețivă, a primit un „${answer ? 'DA' : 'NU'}” fals`);
     const names = pair.map((id) => nameOf(state, id)).join(' și ');
     tell(ft, { kind: 'info', text: answer ? `🔮 DA: unul dintre ${names} este Contele.` : `🔮 NU: niciunul dintre ${names} nu este Contele.` });
   }
@@ -425,8 +435,10 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     type: 'night', night,
     poisoned: state.poisoned, protected: protectedId, attack, attackResult,
     fortune: Object.fromEntries(holders('fortune').map((id) => [id, pick(id)])),
-    deaths: deaths.map((d) => d.id), bets, lean: state.lean,
+    deaths: deaths.map((d) => d.id), bets, lean: state.lean, leanNotes: state.leanNotes,
   });
+  // Notițele rămân doar în istoric; ziua nu mai adaugă nimic la ele.
+  state.leanNotes = null;
   state.winner = checkWinner(state);
   return { state, report: { night, deaths, private: priv } };
 }
@@ -437,7 +449,11 @@ export function resolveRaven(prev, target, rng = Math.random) {
   const pending = state.pendingRaven;
   if (!pending || !state.players.some((p) => p.id === target)) return { state, message: null };
   state.pendingRaven = null;
+  const night = [...state.history].reverse().find((h) => h.type === 'night');
+  state.leanNotes = night?.leanNotes ? [...night.leanNotes] : [];
   const role = pending.honest ? registersAs(state, target, rng) : falseRole(state, target, rng);
+  if (night && state.leanNotes.length) night.leanNotes = state.leanNotes;
+  state.leanNotes = null;
   return { state, message: { kind: 'info', text: `🪶 ${nameOf(state, target)} este ${roleName(role)}.` } };
 }
 
@@ -595,7 +611,10 @@ export function buildReplay(state) {
         lines.push(line);
       }
       for (const [, pair] of Object.entries(h.fortune ?? {})) if (pair) lines.push(`🔮 Ghicitoarea i-a cercetat pe ${pair.map((id) => nameOf(state, id)).join(' și ')}`);
-      if (h.lean) lines.push(h.lean === 'good' ? '📜 Povestitorul a înclinat puțin norocul spre Bine' : '📜 Povestitorul a înclinat puțin norocul spre Rău');
+      if (h.lean) {
+        const side = h.lean === 'good' ? 'Bine' : 'Rău';
+        lines.push(h.leanNotes?.length ? `📜 Povestitorul (spre ${side}): ${h.leanNotes.join('; ')}` : `📜 Povestitorul a vrut să încline norocul spre ${side}, dar n-a fost nevoie`);
+      }
       lines.push(h.deaths.length ? `💀 Au murit: ${h.deaths.map((id) => nameOf(state, id)).join(', ')}` : '🌙 Nu a murit nimeni');
       out.push({ title: `🌑 Noaptea ${h.night}`, lines });
     } else if (h.type === 'day') {
