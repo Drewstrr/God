@@ -90,8 +90,9 @@ export const ROLES = {
   // Slujitori
   poisoner: {
     name: 'Vrăjitoarea', emoji: '🧙‍♀️', type: 'minion',
-    night1: { pick: 1, prompt: 'Pe cine otrăvești?', anyone: true },
-    nights: { pick: 1, prompt: 'Pe cine otrăvești?', anyone: true },
+    // Doar jucătorii vii: un mort nu mai are abilitate, deci otrava lui n-ar avea niciun efect.
+    night1: { pick: 1, prompt: 'Pe cine otrăvești?' },
+    nights: { pick: 1, prompt: 'Pe cine otrăvești?' },
     card: 'În fiecare noapte otrăvești un jucător: până la noaptea următoare, abilitatea lui nu funcționează și informațiile lui pot fi false.',
   },
   spy: {

@@ -464,7 +464,9 @@ body.triumph .candle.out .flame, body.triumph .candle.out .light { opacity: 0; }
 /* Finalul */
 .end.small { margin-top: 0; }
 .end.small h1 { font-size: 3.2vw; margin-bottom: 1vh; }
-.final-roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(14vw, 1fr)); gap: 1.6vw; margin-top: 2vh; position: relative; z-index: 2; }
+.final-roles { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.6vw; margin-top: 2vh; position: relative; z-index: 2; }
+/* Patru pe rând; ultimul rând (incomplet) stă centrat */
+.final-roles .role-tile { flex: 0 0 calc((100% - 3 * 1.6vw) / 4); box-sizing: border-box; }
 .role-tile { position: relative; text-align: center; padding: 2vh 1vw; border-radius: 16px; background: rgba(20, 10, 14, 0.85); border: 2px solid rgba(255, 181, 71, 0.55); opacity: 0; animation: flip-in 0.8s ease-out forwards; }
 .role-tile.evil { border-color: var(--blood-hi); box-shadow: 0 0 24px rgba(224, 36, 71, 0.45); }
 .role-tile .emoji { font-size: 3.4vw; }

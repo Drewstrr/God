@@ -735,12 +735,14 @@ function finalPatch() {
   return {
     'public/endStage': 'winner',
     'public/final': {
+      // Dezvăluirea rolurilor: întâi binele, apoi Slujitorii, iar Contele mereu ultimul (Mireasa devenită Conte, chiar înaintea lui).
       roles: GP().map((p) => {
         const role = state.roles[p.id];
         const drunkAs = role === 'drunk' ? ROLES[state.believed[p.id]]?.name : null;
         const bride = state.promoted?.[p.id] === 'scarlet';
-        return { name: p.name, roleName: finalRoleName(state, p.id), emoji: bride ? ROLES.scarlet.emoji : ROLES[role].emoji, evil: teamOf(role) === 'evil', alive: Boolean(state.alive[p.id]), drunkAs };
-      }),
+        const rank = bride ? 2 : role === 'demon' ? 3 : teamOf(role) === 'evil' ? 1 : 0;
+        return { name: p.name, roleName: finalRoleName(state, p.id), emoji: bride ? ROLES.scarlet.emoji : ROLES[role].emoji, evil: teamOf(role) === 'evil', alive: Boolean(state.alive[p.id]), drunkAs, rank };
+      }).sort((a, b) => a.rank - b.rank).map(({ rank, ...x }) => x),
       replay: buildReplay(state),
       titles: computeTitles(state),
       bets: betLeaderboard(state),

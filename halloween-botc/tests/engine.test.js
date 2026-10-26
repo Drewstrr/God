@@ -362,3 +362,10 @@ test('povestitorul nu schimbă cine moare: același atac, aceeași moarte', () =
   assert.deepEqual(on.report.deaths, off.report.deaths);
   assert.equal(on.state.lean, 'evil');
 });
+
+test('Vrăjitoarea poate otrăvi doar jucători vii', () => {
+  const g = { ...fixed(ROLES11), night: 2, alive: { ...fixed(ROLES11).alive, andrei: false } };
+  const targets = validTargets(g, 'robi');
+  assert.ok(!targets.includes('andrei'));
+  assert.ok(targets.includes('flori'));
+});
