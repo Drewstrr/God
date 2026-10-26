@@ -658,9 +658,14 @@
       document.body.appendChild(el);
       sfx.duckMusic(8);
       sfx.whoosh(0);
+      const result = () => { el.querySelector('.slay-b').innerHTML = sl.hit ? `💀 <b>${esc(sl.targetName)}</b> se prăbușește!${sl.testament ? `<div class="testament">„${esc(sl.testament)}”</div>` : ''}` : '…nimic nu se întâmplă.'; };
       setTimeout(() => {
-        el.querySelector('.slay-b').innerHTML = sl.hit ? `💀 <b>${esc(sl.targetName)}</b> se prăbușește!${sl.testament ? `<div class="testament">„${esc(sl.testament)}”</div>` : ''}` : '…nimic nu se întâmplă.';
-        if (sl.hit) sfx.death(); else sfx.bell(0, 110, 3, 0.4);
+        if (!sl.hit) { result(); sfx.bell(0, 110, 3, 0.4); return; }
+        // Van Helsing l-a nimerit pe Conte: țărușul în carne (audio/stake.mp3), iar textul apare exact pe lovitură.
+        const heard = sfx.playFileAt('stake', { volume: 1 });
+        if (heard === null) { result(); sfx.death(); return; }
+        setTimeout(result, heard + 60);
+        sfx.churchBell(heard / 1000 + 1.1, 73.4, 0.55);
       }, 3000);
       setTimeout(() => el.classList.add('leaving'), 7500);
       setTimeout(() => el.remove(), 8700);
