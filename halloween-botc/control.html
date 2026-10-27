@@ -130,10 +130,12 @@
             Timp liber (min) <input type="number" id="s-free" value="${s.freeMinutes ?? 22}" min="0" max="120">
             <button class="btn small ghost" id="save-settings">Salvează</button>
           </div>
+          <div class="row"><button class="btn small ghost" id="film-toggle">${pub.skipFilm ? '🎬 Filmul de început: NU (apasă ca să-l arăți)' : '🎬 Filmul de început: DA (apasă ca să-l sari)'}</button></div>
           ${lineupHtml()}
           <button class="btn" data-cmd="start" ${ready < players.length || !lineupReady() ? 'disabled' : ''}>▶️ Pornește jocul</button>`;
         case 'intro': return `
           <p class="muted">Proiectorul rulează filmul de deschidere (~${INTRO.length} s), apoi arată regulile. După film, fiecare rupe sigiliul de pe telefon și își citește rolul.</p>
+          ${serverNow() < (pub.introAt ?? 0) + INTRO.length * 1000 ? '<button class="btn small ghost" id="skip-intro">⏭ Sari peste film</button>' : ''}
           <button class="btn" data-cmd="firstNight">🌑 Începe prima noapte</button>`;
         case 'night': return `
           <p class="lead" style="font-size:1.3rem">${pub.progress?.done ?? 0} / ${pub.progress?.total ?? 0} au ales · <span data-ends="${pub.endsAt ?? ''}"></span></p>
@@ -213,6 +215,8 @@
         sendCommand('beginDay', { minutes: +document.getElementById('free-min').value || 0 });
       });
       box.querySelector('#plus5')?.addEventListener('click', () => sendCommand('extendFree', { minutes: 5 }));
+      box.querySelector('#skip-intro')?.addEventListener('click', () => sendCommand('skipIntro'));
+      box.querySelector('#film-toggle')?.addEventListener('click', () => sendCommand('skipFilm', { on: !pub.skipFilm }));
       box.querySelectorAll('[data-end]').forEach((b) => b.addEventListener('click', () => sendCommand('endStage', { stage: b.dataset.end })));
       box.querySelector('#save-settings')?.addEventListener('click', () => sendCommand('settings', {
         settings: {
@@ -321,7 +325,7 @@
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
       const ready = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
-      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.day, pub.execution, pub.alive, pub.lineup, pub.engineInfo, pub.endStage, pub.paused]);
+      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.day, pub.execution, pub.alive, pub.lineup, pub.engineInfo, pub.endStage, pub.paused, pub.skipFilm, pub.introAt]);
       if (pub.phase !== pulsePhase || pub.endStage !== pulseStage) { pulsePhase = pub.phase; pulseStage = pub.endStage; phaseSince = Date.now(); }
       if (sig !== lastSig) { lastSig = sig; render(); } else renderPlayers();
     });

@@ -7,6 +7,7 @@ import {
   believedRole, voteThreshold, finalRoleName, inLineup as inLineupFor, checkWinner, shuffle, buildReplay, computeTitles, betLeaderboard, teamOf, grimoire, demonId,
 } from './engine.js';
 import { setVoteHandler, setEngineActive } from './pin-service.js';
+import { INTRO } from './intro.js';
 import {
   r, get, set, update, remove, push, onValue, onChildAdded, serverNow,
 } from './fb.js';
@@ -105,7 +106,7 @@ const run = serial(async (cmd) => {
   if (!active) return;
   const handlers = {
     fillBots, clearBots, start, firstNight, endNight, beginDay, startVoting, cancelNomination, endDayCmd,
-    toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree,
+    toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree, skipIntro, skipFilm,
     adminRevive, adminKill, adminRestartNight, pause, resume, finishDawn, storyteller,
   };
   await handlers[cmd?.type]?.(cmd);
@@ -186,7 +187,8 @@ async function start() {
     actions: null,
     playerInput: null,
     'public/phase': 'intro',
-    'public/introAt': serverNow() + 1500,  // filmul de deschidere (proiector + vibrațiile telefoanelor)
+    // Filmul de deschidere (proiector + vibrațiile telefoanelor). Fără film: un moment din trecut, ca filmul să fie „deja terminat”.
+    'public/introAt': pub.skipFilm ? filmOver() : serverNow() + 1500,
     'public/gameId': Date.now().toString(36),
     'public/round': 1,
     'public/counts': { townsfolk: tf, outsider: os, minion: mn, demon: dm },
@@ -485,6 +487,16 @@ async function openGathering(cmd = {}) {
   host.lastActivity = serverNow();
   await setPublic({ day: publicDay() });
   await save();
+}
+
+// Filmul de deschidere: îl poți sări în timp ce rulează, sau îl poți opri pentru jocurile următoare.
+const filmOver = () => serverNow() - (INTRO.length + 5) * 1000;
+async function skipIntro() {
+  if (pub.phase !== 'intro') return;
+  await setPublic({ introAt: filmOver() });
+}
+async function skipFilm(cmd = {}) {
+  await setPublic({ skipFilm: Boolean(cmd.on) });
 }
 
 async function extendFree(cmd = {}) {

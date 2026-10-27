@@ -421,6 +421,8 @@
     }
 
     function renderMain(phase) {
+      filmTimers.forEach(clearTimeout);   // dacă gazda a sărit peste film, telefonul nu mai vibrează degeaba
+      filmTimers = [];
       const name = priv?.name ?? players[me]?.name ?? me;
       if (priv?.sitOut && phase !== 'lobby') {
         showDock(false);

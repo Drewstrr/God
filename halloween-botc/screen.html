@@ -863,6 +863,8 @@
       if (phase !== 'day') { revealTimers.forEach(clearTimeout); revealTimers = []; nomKey = null; }
       if (phase !== 'morning') clearDawn();
       if (phase !== 'intro') stopIntroFilm();
+      // Gazda a sărit peste film: îl oprim și pornim muzica regulilor.
+      else if (document.querySelector('.cine') && serverNow() > (pub.introAt ?? 0) + INTRO.length * 1000) { stopIntroFilm(); sfx.playMusic(null); playThemeFor('intro'); }
       playThemeFor(phase);
       if (phase !== 'end') {
         stopBlood();
