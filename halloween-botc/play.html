@@ -461,8 +461,11 @@
         navigator.vibrate?.([200, 120, 200, 120, 400]);
       }
       const fresh = msgs[0] && msgs[0].night === lastNight && lastNight > 0 ? msgs[0] : null;
-      // Se vede doar ultima noapte (în prima zi, și ce ai aflat la început): restul îl ții minte.
-      const lastMsgs = msgs.filter((m) => m.night === lastNight || (lastNight <= 1 && m.night === 0));
+      // Se vede ultima noapte, plus ce ai aflat o singură dată, la început, care rămâne tot jocul:
+      // la răi, cine e Contele / Slujitorii / paravanele; la cei buni, informația din prima noapte
+      // a Spălătoresei, a Arhivarului și a Sfetnicului. Restul nopților le ții minte.
+      const atStart = (m) => m.night === 0 || (m.night === 1 && m.data?.type === 'pair');
+      const lastMsgs = msgs.filter((m) => m.night === lastNight || atStart(m));
       showDock(true);
       app.classList.add('with-dock');
       app.innerHTML = `
@@ -485,7 +488,7 @@
         </div>
         ${msgs.length ? `<div class="card know-card" id="know">
           <div class="know-hidden">✦ Ce știi${fresh ? ' · <b>mesaj nou</b>' : ''} · atinge ca să vezi ✦</div>
-          <div class="know-shown" hidden>${lastMsgs.map((m) => `<div class="entry ${m === fresh ? 'new' : ''}">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(plain(m.text))}</div>`).join('')}</div>
+          <div class="know-shown" hidden>${lastMsgs.map((m) => `<div class="entry ${m === fresh ? 'new' : ''}">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : '<span class="muted">La început:</span> '}${esc(plain(m.text))}</div>`).join('')}</div>
         </div>` : ''}
         ${finalCards(phase)}`;
 
