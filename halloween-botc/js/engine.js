@@ -225,13 +225,13 @@ export function initialKnowledge(state) {
   if (state.players.length < 7) return out;  // la mai puțin de 7 jucători, răul nu se cunoaște (ca la BotC)
   out[demon] = [
     { kind: 'minions', text: `🦇 Slujitorii tăi: ${minions.map((id) => nameOf(state, id)).join(', ')}.` },
-    { kind: 'bluffs', text: `🎭 Roluri care NU sunt în joc (te poți ascunde în spatele lor): ${state.bluffs.map(roleName).join(', ')}.` },
+    { kind: 'bluffs', text: `🎭 Roluri care NU sunt în joc (te poți ascunde în spatele lor): ${state.bluffs.map(roleName).join(', ')}. Spune-le și Slujitorilor, în șoaptă, ca să nu pretindeți același rol.` },
   ];
   for (const m of minions) {
     const others = minions.filter((x) => x !== m);
     out[m] = [{
       kind: 'master',
-      text: `🧛 Contele este ${nameOf(state, demon)}.${others.length ? ` Ceilalți Slujitori: ${others.map((id) => nameOf(state, id)).join(', ')}.` : ''}`,
+      text: `🧛 Contele este ${nameOf(state, demon)}.${others.length ? ` Ceilalți Slujitori: ${others.map((id) => nameOf(state, id)).join(', ')}.` : ''} Află de la el, în șoaptă, rolurile-paravan (roluri bune care nu sunt în joc) și pe care să-l pretinzi tu.`,
     }];
   }
   return out;
