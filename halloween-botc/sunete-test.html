@@ -30,6 +30,16 @@
     <p class="muted">Ascultă cu boxele pornite. Fiecare variantă are un sunet singur și, unde se potrivește, „secvența”: 11 lumânări aprinse pe rând, ca în joc. Spune-mi numerele care îți plac.</p>
     <div class="stage" id="stage"></div>
 
+    <section class="card moment" style="border-color:var(--gold-dim)">
+      <h2>⭐ Alegerea ta pentru A: chibrit la prima lumânare, apoi doar flacăra moale</h2>
+      <p class="muted">Prima lumânare: frecarea chibritului și flacăra moale. Toate celelalte: doar flacăra moale.</p>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn small" data-pick="one">▶ Prima lumânare</button>
+        <button class="btn small" data-pick="morning">▶ Dimineața: 11 pe rând</button>
+        <button class="btn small" data-pick="lobby">▶ Lobby: intră oamenii, din când în când</button>
+      </div>
+    </section>
+
     <section class="card moment">
       <h2>🕯️ A. Se aprinde o lumânare</h2>
       <p class="muted">În lobby, când intră cineva, și dimineața, când se aprind pe rând lumânările celor care s-au trezit.</p>
@@ -157,6 +167,18 @@
       const wg = ctx.createGain(); wg.gain.setValueAtTime(0.0001, t + 0.08); wg.gain.exponentialRampToValueAtTime(0.45, t + 0.3); wg.gain.exponentialRampToValueAtTime(0.0001, t + 1.15);
       w.connect(lp).connect(wg).connect(d); w.start(t + 0.08);
     }
+    // Doar chibritul: frecarea și pocniturile, fără flacăra lui (flacăra vine separat, moale).
+    function matchStrike(t, vol = 0.7) {
+      const d = out(vol, 0.3);
+      const s = noise(0.12), hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
+      const sg = ctx.createGain(); sg.gain.setValueAtTime(0.0001, t); sg.gain.exponentialRampToValueAtTime(0.5, t + 0.02); sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      s.connect(hp).connect(sg).connect(d); s.start(t);
+      for (let k = 0; k < 5; k++) {
+        const tc = t + 0.08 + Math.random() * 0.2, c = noise(0.01), cg = ctx.createGain();
+        cg.gain.setValueAtTime(0.25 * Math.random(), tc); cg.gain.exponentialRampToValueAtTime(0.0001, tc + 0.01);
+        c.connect(cg).connect(d); c.start(tc);
+      }
+    }
     // Flacără moale (fără chibrit): doar „suflul” cald al focului care pornește.
     function softFlame(t, vol = 0.6) {
       const d = out(vol, 0.4);
@@ -232,6 +254,24 @@
       }
     }
 
+    // Alegerea ta: prima lumânare cu chibrit, celelalte doar flacăra moale.
+    const firstCandle = (t) => { matchStrike(t); softFlame(t + 0.15, 0.55); };
+    const nextCandle = (t) => softFlame(t, 0.5);
+    function pickDemo(kind) {
+      timers.forEach(clearTimeout); timers = [];
+      const t0 = ctx.currentTime + 0.1;
+      drawStage(0);
+      if (kind === 'one') { firstCandle(t0); timers.push(setTimeout(() => drawStage(1), 250)); return; }
+      // Dimineața: lumânările vin la ~0,55 s una de alta; în lobby, oamenii intră la câteva secunde.
+      let at = 0;
+      for (let i = 0; i < 11; i++) {
+        if (i) at += kind === 'lobby' ? 1.2 + Math.random() * 2.5 : 0.55;
+        (i ? nextCandle : firstCandle)(t0 + at);
+        const lit = i + 1;
+        timers.push(setTimeout(() => drawStage(lit), 100 + at * 1000 + (i ? 0 : 150)));
+      }
+    }
+
     document.getElementById('candle').innerHTML = CANDLE.map((v, i) => `<div class="var"><b>${v.name}</b><p>${v.help}</p><div class="row">
       <button class="btn small" data-c1="${i}">▶ O lumânare</button><button class="btn small ghost" data-cs="${i}">▶ 11 pe rând</button></div></div>`).join('');
     document.getElementById('death').innerHTML = DEATH.map((v, i) => `<div class="var"><b>${v.name}</b><p>${v.help}</p><div class="row">
@@ -245,6 +285,7 @@
       if (b.dataset.c1) { drawStage(1); CANDLE[+b.dataset.c1].one(t); }
       if (b.dataset.cs) sequence(CANDLE[+b.dataset.cs].step);
       if (b.dataset.d) DEATH[+b.dataset.d].play(t);
+      if (b.dataset.pick) pickDemo(b.dataset.pick);
     });
   </script>
 </body>
