@@ -590,7 +590,7 @@ export function nextNight(prev) {
   return state;
 }
 
-// Binele câștigă când moare Contele; răul, când rămân doar doi jucători în viață.
+// Binele câștigă când moare Contele; răul, când rămân doar doi jucători în viață sau niciun bun.
 // Avertismentul povestitorului pentru ultimele zile (Răul câștigă când rămân doar doi în viață).
 // 3 în viață: ultima zi. Un nevinovat executat = 2 în viață, Răul câștigă pe loc; fără execuție, Contele mușcă la noapte.
 // 4 în viață: un nevinovat executat lasă 3, iar mușcătura de la noapte poate încheia jocul.
