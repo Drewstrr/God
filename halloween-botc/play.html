@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0b0709">
   <meta name="robots" content="noindex">
   <title>Balul Contelui</title>
-  <link rel="stylesheet" href="css/style.css?v=28">
+  <link rel="stylesheet" href="css/style.css?v=29">
 </head>
 <body>
   <main class="wrap" id="app">
@@ -571,7 +571,7 @@
         'Dacă devii Contele, continuă ca și cum nimic nu s-a întâmplat.',
       ],
     };
-    // Sfaturile pentru cei buni: câteva pentru toată lumea, plus unul-două pentru rolul tău.
+    // Sfaturile pentru cei buni: câteva pentru toată lumea, plus 3–4 pentru rolul tău.
     const GOOD_TIPS = [
       'Spune-ți informația devreme, măcar câtorva oameni de încredere. Dacă mori noaptea, moare și ea cu tine.',
       'Dacă doi jucători pretind același rol, unul sigur minte (nici Bețivul nu are un rol care chiar e în joc).',
@@ -580,19 +580,80 @@
       'Atenție la cei care te grăbesc să votezi sau care apără prea tare pe cineva.',
     ];
     const ROLE_TIPS = {
-      washer: ['Cei doi din informația ta: unul sigur are acel rol. Întreabă-i ce rol pretind, fără să spui tu primul.'],
-      librarian: ['Străinul din informația ta poate fi Bețivul: atunci informațiile lui sunt false, chiar dacă el nu știe.'],
-      investigator: ['Unul din cei doi e Slujitor. Urmărește-i: cel care minte despre rolul lui se dă singur de gol.'],
-      fortune: ['Verifică pe cine bănuiești, dar ține minte: un jucător bun îți apare mereu drept Conte (capcana).', 'Dacă primești „DA” de două ori pentru același om, în perechi diferite, e ori Contele, ori capcana ta.'],
-      undertaker: ['Spune ce rol avea cel executat: confirmi sau demaști ce a pretins el, iar Binele învață din greșeli.'],
-      monk: ['Binecuvântează pe cine crezi că e cel mai util Binelui (Ghicitoarea, Groparul) și nu spune pe cine, ca să nu-l ținteasă Contele.'],
-      raven: ['Dacă mori noaptea, alegi pe cineva și îi afli rolul: alege pe cel mai bănuit sau pe cel mai „sigur”, ca să-l verifici.'],
-      slayer: ['Ai un singur țăruș: folosește-l când ești destul de sigur pe cine e Contele. Contele se poate da și el drept Van Helsing.'],
-      soldier: ['Contele nu te poate ucide noaptea: poți spune ce rol ai, ca să te asumi drept om de încredere.'],
-      mayor: ['Dacă rămâneți 3 și nu se execută nimeni, câștigă Binele. Contele te poate ataca, dar uneori moare altcineva în locul tău.'],
-      virgin: ['Spune devreme că ești Fecioara: cine te nominalizează și nu pățește nimic poate fi rău (sau Străin).'],
-      recluse: ['Poți apărea drept rău în fața altor abilități. Spune-ți rolul devreme, ca să nu fii executat pe nedrept.'],
-      saint: ['Dacă ești executat, Binele pierde! Spune-ți rolul la timp, ca să nu fii pus pe butuc.'],
+      washer: [
+        'Cei doi din informația ta: unul sigur are acel rol. Întreabă-i ce rol pretind, fără să spui tu primul.',
+        'Dacă cel numit își confirmă singur rolul, ai găsit un om de încredere. Spune asta la adunare.',
+        'Dacă amândoi neagă rolul, ceva nu e în regulă: unul minte (Vizitiul poate apărea drept Sătean) sau Vrăjitoarea te-a otrăvit în prima noapte.',
+        'Spune informația întâi unui om sau doi de încredere, nu tuturor deodată: Contele ar ști pe cine să muște.',
+      ],
+      librarian: [
+        'Străinul din informația ta poate fi Bețivul: atunci informațiile lui sunt false, chiar dacă el nu știe.',
+        'Spune-i Bețivului în șoaptă ce ai aflat: dacă știe, nu mai încurcă Binele cu informații false.',
+        'Dacă Străinul e Sfântul, apără-l: dacă e executat, Binele pierde pe loc.',
+        'Dacă Străinul e Sihastrul, ține minte că poate apărea drept rău la Ghicitoare sau la Sfetnic, deși e bun.',
+      ],
+      investigator: [
+        'Unul din cei doi e Slujitor. Urmărește-i: cel care minte despre rolul lui se dă singur de gol.',
+        'Celălalt poate fi nevinovat. Nu-i executa pe amândoi orbește: află întâi ce rol pretinde fiecare.',
+        'Atenție la Sihastru: e bun, dar poate apărea drept Slujitor. Dacă unul din cei doi zice că e Sihastrul, verifică-l cu alții.',
+        'Ține informația pentru tine o vreme și ascultă: un Slujitor care nu știe că e bănuit minte liniștit.',
+      ],
+      fortune: [
+        'Verifică pe cine bănuiești, dar ține minte: un jucător bun îți apare mereu drept Conte (capcana).',
+        'Dacă primești „DA” de două ori pentru același om, în perechi diferite, e ori Contele, ori capcana ta.',
+        'Te poți alege și pe tine în pereche („eu și Radu”): dacă primești „NU”, Radu nu e Contele.',
+        'Dacă ești otrăvit(ă), răspunsul poate fi greșit: un rezultat care nu se potrivește cu nimic poate fi de la otravă.',
+      ],
+      virgin: [
+        'Spune devreme că ești Fecioara: cine te nominalizează și nu pățește nimic poate fi rău (sau Străin).',
+        'Dacă te nominalizează un Sătean, el e executat pe loc, iar tu devii cel mai sigur om bun din joc.',
+        'Puterea merge o singură dată: după prima nominalizare, ești ca orice Sătean.',
+        'Dacă ești otrăvit(ă) când ești nominalizat(ă), nu se întâmplă nimic, chiar dacă te-a nominalizat un Sătean.',
+      ],
+      undertaker: [
+        'Spune ce rol avea cel executat: confirmi sau demaști ce a pretins el, iar Binele învață din greșeli.',
+        'Ține minte toate rolurile aflate: după câteva zile vezi cine a mințit despre cei executați.',
+        'Dacă afli că executatul era Contele, dar jocul continuă, Mireasa Contelui a devenit noul Conte: căutați-o!',
+        'Ești o țintă pentru Conte: spune ce afli, dar alege cu grijă când dezvălui că ești Groparul.',
+      ],
+      monk: [
+        'Binecuvântează pe cine crezi că e cel mai util Binelui (Ghicitoarea, Groparul) și nu spune pe cine, ca să nu-l ținteasă Contele.',
+        'Nu te poți binecuvânta pe tine. Schimbă des pe cine binecuvântezi, ca Contele să nu poată ghici.',
+        'Dacă dimineața nu a murit nimeni, poate ai salvat pe cineva: spune pe cine ai binecuvântat, e o dovadă puternică pentru amândoi.',
+        'Dacă ești otrăvit(ă), binecuvântarea nu merge în noaptea aceea.',
+      ],
+      raven: [
+        'Dacă mori noaptea, alegi pe cineva și îi afli rolul: alege pe cel mai bănuit sau pe cel mai „sigur”, ca să-l verifici.',
+        'Spune imediat ce ai aflat: e una dintre cele mai sigure informații din joc.',
+        'Dacă erai otrăvit(ă) în noaptea în care ai murit, rolul aflat poate fi fals.',
+      ],
+      slayer: [
+        'Ai un singur țăruș: folosește-l când ești destul de sigur pe cine e Contele. Contele se poate da și el drept Van Helsing.',
+        'Țărușul se folosește doar la adunare, în fața tuturor.',
+        'Dacă lovești și nu se întâmplă nimic, ai „curățat” un om: nu e Contele (dacă nu erai otrăvit).',
+        'Nu spune prea devreme că ești Van Helsing: Contele te-ar putea ucide înainte să folosești țărușul.',
+      ],
+      soldier: [
+        'Contele nu te poate ucide noaptea: poți spune ce rol ai, ca să te asumi drept om de încredere.',
+        'Dacă într-o dimineață nu moare nimeni, poate Contele te-a atacat pe tine. Spune asta: e un indiciu.',
+        'Atenție: dacă Vrăjitoarea te otrăvește, Contele te poate ucide în noaptea aceea.',
+      ],
+      mayor: [
+        'Dacă rămâneți 3 și nu se execută nimeni, câștigă Binele. Contele te poate ataca, dar uneori moare altcineva în locul tău.',
+        'În ultima zi, dacă nu sunteți siguri cine e Contele, convinge-i pe ceilalți să nu execute pe nimeni: așa câștigați.',
+        'Ține secret că ești Primarul până spre final: dacă Contele află, te va ataca înainte de ultima zi.',
+        'Dacă ești otrăvit, puterea ta nu merge.',
+      ],
+      recluse: [
+        'Poți apărea drept rău în fața altor abilități. Spune-ți rolul devreme, ca să nu fii executat pe nedrept.',
+        'Dacă Ghicitoarea sau Sfetnicul te arată drept rău, explică liniștit că ești Sihastrul: e exact ce face rolul tău.',
+        'Ești de partea Binelui: votează și nominalizează ca un Sătean.',
+      ],
+      saint: [
+        'Dacă ești executat, Binele pierde! Spune-ți rolul la timp, ca să nu fii pus pe butuc.',
+        'Dacă ești nominalizat, spune imediat că ești Sfântul.',
+        'Răii ar putea încerca să te pună pe butuc intenționat: stai aproape de oamenii de încredere.',
+      ],
     };
     function tipsFor() {
       if (!priv?.role || pub.phase === 'end') return null;
