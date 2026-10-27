@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b0709">
   <meta name="robots" content="noindex">
   <title>Balul Contelui</title>
-  <link rel="stylesheet" href="css/style.css?v=26">
+  <link rel="stylesheet" href="css/style.css?v=27">
 </head>
 <body>
   <main class="wrap" id="app">
@@ -655,7 +655,7 @@
           ${timer}
           ${night.ghost ? '<p class="center muted">👻 Ești fantomă: nu mai ai abilitate, dar poți paria.</p>' : ''}
           <p class="center" style="font-size:1.25rem"><b>🎲 Pariul nopții: cine crezi că e Contele?</b></p>
-          <p class="center muted" style="margin-top:-6px">Secret. La final, cine ghicește cel mai des primește un titlu.</p>
+          <p class="center muted" style="margin-top:-6px">🦅 Secret. La final, cine l-a ghicit cel mai des primește titlul „Ochiul de vultur”.</p>
           <div class="targets calling">${(night.bets ?? []).map((t) => `<button data-t="${t.id}">${esc(t.name)}</button>`).join('')}</div>
           <p class="center error" id="msg"></p>
           <button class="btn" id="confirm" disabled>Pariază</button>

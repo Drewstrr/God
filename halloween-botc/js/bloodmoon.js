@@ -61,9 +61,10 @@ const CROW_HALF = 'M60 10 C57 10 55 12 55 15 C55 17 56 19 56 21 C48 18 36 13 22 
 const CROW = `<svg viewBox="0 0 120 60" aria-hidden="true"><g fill="#000"><path d="${CROW_HALF}"/><path d="${CROW_HALF}" transform="matrix(-1 0 0 1 120 0)"/></g></svg>`;
 
 // Pământul negru pe toată lățimea, cu pădurea pe margini, în fața castelului.
+// Brazii sunt negri, iar marginile lor sunt atinse de lumina roșie a lunii, ca să se vadă fiecare brad.
 const GROUND = `
 <svg class="bm-ground" viewBox="0 0 1600 300" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-  <g fill="#000">${forest()}</g>
+  <g fill="#000" stroke="rgba(190, 30, 25, 0.5)" stroke-width="0.8">${forest()}</g>
   <path d="M-200 300 V262 C0 250 160 246 320 254 C440 258 540 264 640 266 C760 268 840 268 960 266 C1060 264 1160 258 1280 252 C1420 246 1560 250 1800 262 V300 Z" fill="#000"/>
 </svg>`;
 
