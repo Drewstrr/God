@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0b0709">
   <meta name="robots" content="noindex">
   <title>Balul Contelui</title>
-  <link rel="stylesheet" href="css/style.css?v=30">
+  <link rel="stylesheet" href="css/style.css?v=31">
 </head>
 <body>
   <main class="wrap" id="app">
@@ -195,7 +195,13 @@
         <h2>Ce știi</h2>
         ${msgs.length ? msgs.map((m) => `<div class="entry ${m.night === lastNight && m.night > 0 ? 'new' : ''}">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(plain(m.text))}</div>`).join('')
           : '<p class="muted">Încă nimic. Informațiile vin dimineața, după noapte.</p>'}
-        ${tips ? `<h2>${tips.title}</h2><ul>${tips.list.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+        ${tips ? `<h2>${tips.title}</h2>
+          ${tips.list.length ? `<p class="tips-for">Pentru ${esc(priv.roleName)}</p><ol class="tips">${tips.list.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>` : ''}
+          ${tips.common ? `<details class="tips-more"><summary>Pentru toți cei buni (${tips.common.length})</summary><ol class="tips">${tips.common.map((t) => `<li>${esc(t)}</li>`).join('')}</ol></details>` : ''}
+          ${tips.poison ? `<details class="tips-more"><summary>☠️ Ce înseamnă otrăvit sau Bețiv?</summary>
+            <p><b>Otrăvit:</b> Vrăjitoarea alege în fiecare noapte pe cineva. Până în noaptea următoare, puterea lui nu merge, iar informația primită poate fi falsă. Nu afli că ai fost otrăvit.</p>
+            <p><b>Bețiv:</b> un Străin care crede că e Sătean. Puterea lui nu merge deloc, iar informațiile lui pot fi false tot jocul. Nici el nu știe.</p>
+            <p>De aceea nicio informație nu e 100% sigură. Când ceva nu se potrivește, poate cineva a fost otrăvit sau e Bețivul.</p></details>` : ''}` : ''}
         ${alive() && pub.phase !== 'end' ? `
           <h2>Testamentul tău</h2>
           <p class="muted">Apare pe proiector dacă mori. Poți scrie ce rol pretinzi, pe cine bănuiești… sau o minciună.</p>
@@ -571,13 +577,13 @@
         'Dacă devii Contele, continuă ca și cum nimic nu s-a întâmplat.',
       ],
     };
-    // Sfaturile pentru cei buni: câteva pentru toată lumea, plus 3–4 pentru rolul tău.
+    // Sfaturile pentru cei buni: 3–4 pentru rolul tău, apoi (pliate) câteva pentru toată lumea.
     const GOOD_TIPS = [
-      'Spune-ți informația devreme, măcar câtorva oameni de încredere. Dacă mori noaptea, moare și ea cu tine.',
-      'Dacă doi jucători pretind același rol, unul sigur minte (nici Bețivul nu are un rol care chiar e în joc).',
-      'Nu lăsați nicio zi fără execuție: Contele ucide în fiecare noapte, iar voi pierdeți un om oricum.',
-      'Comparați informațiile: cine apare în mai multe indicii? Cine își schimbă povestea de la o zi la alta?',
-      'Atenție la cei care te grăbesc să votezi sau care apără prea tare pe cineva.',
+      'Spune-ți informația devreme câtorva oameni de încredere: dacă mori, moare și ea.',
+      'Doi jucători pretind același rol? Unul sigur minte.',
+      'Nu lăsați nicio zi fără execuție: Contele ucide în fiecare noapte.',
+      'Comparați indiciile: cine apare de mai multe ori? Cine își schimbă povestea?',
+      'Feriți-vă de cine vă grăbește la vot sau apără pe cineva prea tare.',
     ];
     const ROLE_TIPS = {
       washer: [
@@ -657,7 +663,7 @@
     };
     function tipsFor() {
       if (!priv?.role || pub.phase === 'end') return null;
-      if (priv.team !== 'evil') return { title: 'Cum îl prinzi pe Conte', list: [...(ROLE_TIPS[priv.role] ?? []), ...GOOD_TIPS] };
+      if (priv.team !== 'evil') return { title: 'Cum îl prinzi pe Conte', list: ROLE_TIPS[priv.role] ?? [], common: GOOD_TIPS, poison: true };
       const list = EVIL_TIPS[priv.role];
       return list ? { title: 'Cum să te ascunzi', list } : null;
     }
