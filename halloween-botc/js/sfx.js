@@ -1227,3 +1227,96 @@ export function duckMusic(seconds = 8) {
   musicBus.gain.setValueAtTime(0.06 * musicVolume, t + seconds);
   musicBus.gain.linearRampToValueAtTime(MUSIC_LEVEL * musicVolume, t + seconds + 2);
 }
+
+// ---------- lumânarea care se aprinde și pianul morții (alese pe pagina sunete-test) ----------
+// Ecou de catedrală, creat o singură dată.
+let verbNode = null;
+function verbOut(vol, wet) {
+  if (!verbNode) {
+    verbNode = ctx.createConvolver();
+    const len = ctx.sampleRate * 4;
+    const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = ir.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+    }
+    verbNode.buffer = ir;
+    const w = ctx.createGain();
+    w.gain.value = 0.35;
+    verbNode.connect(w).connect(master);
+  }
+  const g = ctx.createGain();
+  g.gain.value = vol;
+  g.connect(master);
+  const s = ctx.createGain();
+  s.gain.value = wet;
+  g.connect(s).connect(verbNode);
+  return g;
+}
+function burst(dest, t, seconds, filter, freq, peak, attack, release) {
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuffer(seconds);
+  const f = ctx.createBiquadFilter();
+  f.type = filter;
+  if (Array.isArray(freq)) freq.forEach(([fr, at], i) => (i ? f.frequency.exponentialRampToValueAtTime(fr, t + at) : f.frequency.setValueAtTime(fr, t + at)));
+  else f.frequency.value = freq;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(peak, t + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + release);
+  src.connect(f).connect(g).connect(dest);
+  src.start(t);
+}
+// Chibritul: frecarea și câteva pocnituri.
+function matchStrike(t) {
+  const d = verbOut(0.7, 0.3);
+  burst(d, t, 0.12, 'highpass', 2500, 0.5, 0.02, 0.12);
+  for (let k = 0; k < 5; k++) burst(d, t + 0.08 + Math.random() * 0.2, 0.02, 'highpass', 1500, 0.05 + Math.random() * 0.2, 0.002, 0.012);
+}
+// Flacăra moale: suflul cald al focului care pornește.
+function softFlame(t, vol = 0.5) {
+  const d = verbOut(vol, 0.4);
+  burst(d, t, 1, 'lowpass', [[180, 0], [900, 0.25], [300, 0.9]], 0.4, 0.2, 0.95);
+  const o = ctx.createOscillator();
+  o.frequency.value = 70;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t + 0.05);
+  g.gain.exponentialRampToValueAtTime(0.12, t + 0.15);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.75);
+  o.connect(g).connect(d);
+  o.start(t + 0.05);
+  o.stop(t + 0.8);
+}
+// O lumânare se aprinde: prima cu chibritul și flacăra, celelalte doar cu flacăra.
+export function candleLight({ first = false, delay = 0 } = {}) {
+  if (!ready()) return;
+  const t = ctx.currentTime + delay;
+  if (first) { matchStrike(t); softFlame(t + 0.15, 0.55); } else softFlame(t);
+}
+// Pian: armonice ușor „întinse” și lovitura ciocănelului.
+function pianoNote(t, f, vol) {
+  const d = verbOut(vol, 0.5);
+  [[1, 0.6, 3.2], [2.003, 0.3, 2.2], [3.01, 0.18, 1.5], [4.02, 0.1, 1.1], [5.04, 0.06, 0.8], [6.07, 0.04, 0.6]].forEach(([k, amp, dec]) => {
+    const o = ctx.createOscillator();
+    o.frequency.value = f * k;
+    const g = ctx.createGain();
+    const len = dec * Math.min(1.4, 300 / f);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp * 0.5, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g).connect(d);
+    o.start(t);
+    o.stop(t + len + 0.05);
+  });
+  burst(d, t, 0.03, 'bandpass', Math.min(4000, f * 6), 0.12, 0.002, 0.03);
+}
+// Moartea de noapte: acord grav lovit puternic, trei note care coboară și basul final (ca în filmele vechi de groază).
+export function deathPiano(delay = 0) {
+  if (!ready()) return;
+  const t = ctx.currentTime + delay;
+  const m = (n) => 440 * 2 ** ((n - 69) / 12);
+  [38, 45, 50, 53].forEach((n) => pianoNote(t, m(n), 0.6));
+  [[1.1, 62], [1.6, 61], [2.1, 57]].forEach(([d, n]) => pianoNote(t + d, m(n), 0.45));
+  pianoNote(t + 2.9, m(38), 0.6);
+  pianoNote(t + 2.9, m(26), 0.5);
+}
