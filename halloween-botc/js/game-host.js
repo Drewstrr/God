@@ -9,6 +9,7 @@ import {
 import { setVoteHandler, setEngineActive } from './pin-service.js';
 import { INTRO } from './intro.js';
 import * as bots from './bots.js';
+import { TEST_TOOLS } from './config.js';
 import {
   r, get, set, update, remove, push, onValue, onChildAdded, serverNow,
 } from './fb.js';
@@ -164,7 +165,7 @@ async function start() {
   if (missing.length || chosen.length < MIN_PLAYERS || chosen.length > MAX_PLAYERS) return;
 
   // Povestitorul inteligent e pornit implicit; se poate opri din panou oricând.
-  const forced = (await get(r('secret/forced'))).val() ?? {};
+  const forced = TEST_TOOLS ? (await get(r('secret/forced'))).val() ?? {} : {};
   state = newGame(chosen, { ...(pub.settings ?? {}), storyteller: pub.storyteller !== false, forced });
   host = { seen: {} };
   const knowledge = initialKnowledge(state);

@@ -97,6 +97,7 @@
     import { ask } from './js/ask.js';
     import { INTRO } from './js/intro.js';
     import { sendCommand } from './js/game-host.js';
+    import { TEST_TOOLS } from './js/config.js';
     import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION, ROLES, gen, inLineup as inLineupFor } from './js/engine.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -195,7 +196,7 @@
               <button class="btn small ghost" id="save-settings">Salvează</button>
             </div>
           </details>
-          ${Object.keys(forced).length ? `<div class="pause-bar">⚠️ Ai ales tu rolul pentru <b>${Object.keys(forced).length}</b> ${Object.keys(forced).length === 1 ? 'jucător' : 'jucători'} (doar pentru teste: tu le vei ști rolurile). <button class="btn small danger" id="forced-clear">Șterge alegerile</button></div>` : ''}
+          ${!TEST_TOOLS ? '' : `${Object.keys(forced).length ? `<div class="pause-bar">⚠️ Ai ales tu rolul pentru <b>${Object.keys(forced).length}</b> ${Object.keys(forced).length === 1 ? 'jucător' : 'jucători'} (doar pentru teste: tu le vei ști rolurile). <button class="btn small danger" id="forced-clear">Șterge alegerile</button></div>` : ''}
           <details class="ctl-settings" ${Object.keys(forced).length ? 'open' : ''}>
             <summary>🎭 Test: alege tu rolurile (nu la petrecere)</summary>
             <p class="muted" style="margin:4px 0">Doar pentru oamenii reali. Cine rămâne „la întâmplare” primește un rol potrivit, ca să iasă numărul corect de Săteni, Străini, Slujitori și un singur Conte.</p>
@@ -206,7 +207,7 @@
                   ${[['townsfolk', 'Săteni'], ['outsider', 'Străini'], ['minion', 'Slujitori'], ['demon', 'Conte']].map(([t, label]) => `<optgroup label="${label}">${Object.entries(ROLES).filter(([, r]) => r.type === t).map(([k, r]) => `<option value="${k}" ${forced[id] === k ? 'selected' : ''} ${Object.entries(forced).some(([o, v]) => o !== id && v === k) ? 'disabled' : ''}>${r.emoji} ${esc(r.name)}</option>`).join('')}</optgroup>`).join('')}
                 </select>
               </label>`).join('') || '<span class="muted">Niciun om real cu PIN încă.</span>'}</div>
-          </details>
+          </details>`}
           <details class="ctl-settings">
             <summary>🧪 Test cu roboți (nu la petrecere)</summary>
             <div class="row">
@@ -475,7 +476,7 @@
       el.className = `ctl-engine ${on ? 'ok' : 'error'}`;
     });
 
-    onValue(r('secret/forced'), (snap) => { forced = snap.val() ?? {}; if (lastSig) render(); });
+    if (TEST_TOOLS) onValue(r('secret/forced'), (snap) => { forced = snap.val() ?? {}; if (lastSig) render(); });
 
     // Redesenăm butoanele doar când se schimbă ceva relevant, ca să nu pierdem ce scrii în câmpuri.
     let lastSig = '';
