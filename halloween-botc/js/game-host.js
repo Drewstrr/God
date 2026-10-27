@@ -376,6 +376,9 @@ async function endNight(cmd = {}) {
   for (const id of aliveIds().filter(isBot)) bots.hear(host.minds ?? {}, state, id, bots.claimsFor(state, id, report.private[id] ?? []));
   let n = 0;
   const keyBase = Date.now();
+  // Fiecare primește un mesaj în fiecare noapte (chiar și „nimic nou”): pe ecran toți arată la fel,
+  // iar bulina de pe Pergament nu-i dă de gol pe cei care au roluri cu informații.
+  for (const p of GP()) if (!report.private[p.id]?.length) patch[`private/${p.id}/inbox/n${keyBase}_none`] = { night, text: '🌙 Noaptea asta n-ai aflat nimic nou.', kind: 'none' };
   for (const [id, msgs] of Object.entries(report.private)) {
     for (const m of msgs) patch[`private/${id}/inbox/n${keyBase}_${n++}`] = { night, text: m.text, kind: m.kind };
   }
