@@ -336,7 +336,7 @@
       const others = Object.keys(players).filter((id) => id in (pub.alive ?? {}));
       let html = '';
       if (panel === 'nominate') {
-        const free = others.filter((id) => !(d.nominated ?? []).includes(id) && pub.alive?.[id] !== false);
+        const free = others.filter((id) => id !== me && !(d.nominated ?? []).includes(id) && pub.alive?.[id] !== false);
         html += `<div class="card"><h3>⚖︎ Pe cine nominalizezi?</h3><p class="muted">Poți nominaliza o singură dată pe zi. Fiecare poate fi nominalizat o dată pe zi.</p>
           <div class="targets">${free.map((id) => `<button data-nom="${id}">${esc(playerName(id))}</button>`).join('')}</div>
           <button class="btn ghost" data-panel="">Renunță</button></div>`;

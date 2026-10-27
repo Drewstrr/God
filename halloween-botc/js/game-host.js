@@ -4,7 +4,7 @@
 import {
   PLAYERS, ROLES, TYPES, DISTRIBUTION, MIN_PLAYERS, MAX_PLAYERS, ROLE_KEYS, newGame, initialKnowledge, resolveNight, resolveRaven,
   startDay, nominate, nominationError, tallyNomination, endDay, slay, nextNight, nightAction, validTargets,
-  believedRole, voteThreshold, finalRoleName, inLineup as inLineupFor, checkWinner, shuffle, buildReplay, computeTitles, betLeaderboard, teamOf, grimoire,
+  believedRole, voteThreshold, finalRoleName, inLineup as inLineupFor, checkWinner, shuffle, buildReplay, computeTitles, betLeaderboard, teamOf, grimoire, demonId,
 } from './engine.js';
 import { setVoteHandler, setEngineActive } from './pin-service.js';
 import {
@@ -293,13 +293,37 @@ function watchNight(endsAt = pub.endsAt) {
   if (!host.paused) nightTimer = setTimeout(() => run({ type: 'endNight', night }), Math.max(0, (endsAt ?? serverNow()) - serverNow()) + 500);
 }
 
+// Contele trebuie să muște: dacă n-a ales până expiră timpul, noaptea îl mai așteaptă 30 de secunde
+// (pe proiector se vede doar că timpul s-a prelungit, nu pentru cine), apoi jocul alege în locul lui un jucător bun.
+const COUNT_GRACE = 30;
+const countMissing = (raw) => {
+  const demon = demonId(state);
+  return state.night > 1 && demon && state.alive[demon] && !Object.values(raw[demon]?.targets ?? {}).length ? demon : null;
+};
+
 async function endNight(cmd = {}) {
   if (pub.phase !== 'night' || !state) return;
   if (cmd.night && cmd.night !== state.night) return;
+  const night = state.night;
+  if (cmd.night && host.graceNight !== night) {
+    const pending = (await get(r(`actions/${night}`))).val() ?? {};
+    if (countMissing(pending)) {
+      host.graceNight = night;
+      clearTimeout(nightTimer);
+      const endsAt = serverNow() + COUNT_GRACE * 1000;
+      await setPublic({ endsAt });
+      if (!host.paused) nightTimer = setTimeout(() => run({ type: 'endNight', night }), COUNT_GRACE * 1000 + 500);
+      return;
+    }
+  }
   stopActions?.(); stopActions = null;
   clearTimeout(nightTimer);
-  const night = state.night;
   const raw = (await get(r(`actions/${night}`))).val() ?? {};
+  const late = countMissing(raw);
+  if (late) {
+    const good = validTargets(state, late).filter((id) => teamOf(state.roles[id]) === 'good');
+    if (good.length) raw[late] = { ...raw[late], targets: [shuffle(good)[0]], auto: true };
+  }
   // Siguranță: roboții care n-au apucat să aleagă aleg acum.
   for (const p of GP().filter((x) => isBot(x.id) && !raw[x.id]?.done)) raw[p.id] = botChoice(p.id);
   const actions = Object.fromEntries(Object.entries(raw).map(([id, a]) => [id, { targets: Object.values(a.targets ?? {}), bet: a.bet ?? null }]));

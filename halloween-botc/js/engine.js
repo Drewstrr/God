@@ -479,6 +479,7 @@ export function nominationError(state, by, target) {
   if (!t) return 'Nu e zi.';
   if (!state.alive[by]) return 'Fantomele nu pot nominaliza.';
   if (t.nominators[by]) return 'Ai nominalizat deja pe cineva azi.';
+  if (by === target) return 'Nu te poți nominaliza pe tine.';
   if (t.nominees[target]) return 'Jucătorul a fost deja nominalizat azi.';
   if (!state.players.some((p) => p.id === target)) return 'Jucător necunoscut.';
   // La BotC original și morții pot fi nominalizați, dar nu are rost și încurcă începătorii: doar cei vii.

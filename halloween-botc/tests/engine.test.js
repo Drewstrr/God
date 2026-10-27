@@ -244,7 +244,7 @@ test('partidă la întâmplare: se termină mereu cu un câștigător, fără er
       g = startDay(g);
       const alive = g.players.filter((p) => g.alive[p.id]);
       const by = alive[0].id;
-      const target = alive[Math.floor(Math.random() * alive.length)].id;
+      const target = alive[1 + Math.floor(Math.random() * (alive.length - 1))].id;
       g = nominate(g, by, target);
       ({ state: g } = tallyNomination(g, by, target, Object.fromEntries(g.players.map((p) => [p.id, Math.random() < 0.7]))));
       ({ state: g } = endDay(g));
@@ -413,4 +413,10 @@ test('Răul câștigă pe loc când nu mai e niciun jucător bun în viață', (
   assert.equal(checkWinner({ ...g, alive }), 'evil');
   // Cu un singur bun în viață, jocul continuă.
   assert.equal(checkWinner({ ...g, alive: { ...alive, andrei: true } }), null);
+});
+
+test('nimeni nu se poate nominaliza pe sine (nici Fecioara)', () => {
+  const g = startDay(fixed({ ...ROLES11, andrei: 'virgin' }));
+  assert.equal(nominationError(g, 'andrei', 'andrei'), 'Nu te poți nominaliza pe tine.');
+  assert.equal(nominationError(g, 'andrei', 'luca'), null);
 });
