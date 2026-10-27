@@ -528,13 +528,15 @@
         dawnText('Pentru fiecare suflet care s-a trezit, se aprinde o lumânare…', true);
         fitStage();
       });
+      // Prima lumânare se aprinde cu chibritul, celelalte doar cu flacăra moale.
+      const firstWake = Math.min(...Object.values(m.wake ?? {}));
       for (const [id, sec] of Object.entries(m.wake ?? {})) {
         at(m, sec, (late) => {
           const c = document.querySelector(`#dawn-candles [data-pid="${id}"]`);
           if (!c) return;
           c.classList.remove('out');
           c.dataset.state = late ? 'normal' : 'small';
-          if (!late) { setTimeout(() => { c.dataset.state = 'normal'; }, 300); sfx.bell(0, 523 + Math.random() * 200, 1.6, 0.08); }
+          if (!late) { setTimeout(() => { c.dataset.state = 'normal'; }, 300); sfx.candleLight({ first: sec === firstWake }); }
         });
       }
 
@@ -560,17 +562,20 @@
             // Mușcătura Contelui (audio/bite1.mp3 sau bite2.mp3, la întâmplare), chiar când se zbate lumânarea victimei.
             sfx.playClip(Math.random() < 0.5 ? 'bite1' : 'bite2', { volume: 1 });
             sfx.playMusic('mourning');
-            sfx.churchBell(1.6, 73.4, 0.55);
           }
         });
-        at(m, t0 + 2.5, () => {
+        at(m, t0 + 2.5, (late) => {
           document.querySelector('.mourn-card')?.remove();
           const card = document.createElement('div');
           card.className = 'mourn-card';
           card.innerHTML = `<div class="m-name">${esc(d.name)}</div><div class="m-date">${DATE}</div><div class="m-epitaph"></div><div class="m-testament"></div><div class="m-silence"></div>`;
           document.body.appendChild(card);
           requestAnimationFrame(() => card.classList.add('show'));
-          sfx.crow(0.4, { distance: 0.2, pan: Math.random() * 0.8 - 0.4 });   // cioara, când apare numele mortului
+          // Numele mortului: pianul dramatic, iar cioara pe ecoul lui.
+          if (!late) {
+            sfx.deathPiano();
+            sfx.crow(3.4, { distance: 0.3, pan: Math.random() * 0.8 - 0.4 });
+          }
         });
         at(m, t0 + 5, (late) => {
           const el = document.querySelector('.mourn-card .m-epitaph');
@@ -855,7 +860,8 @@
       showSlay(pub.slay);
       showVirgin(pub.virgin);
       const joined = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
-      if (phase === 'lobby' && joinedBefore !== null && joined > joinedBefore) sfx.chime();
+      // Intră cineva în lobby: i se aprinde lumânarea (primul cu chibritul, ceilalți doar cu flacăra moale).
+      if (phase === 'lobby' && joinedBefore !== null && joined > joinedBefore) sfx.candleLight({ first: joinedBefore === 0 });
       joinedBefore = joined;
       document.body.dataset.phase = phase;
       sfx.setMuted(Boolean(pub.muted));
