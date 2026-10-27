@@ -539,6 +539,21 @@ function demonDies(state, aliveBefore) {
   return { newDemon: null };
 }
 
+// Cineva iese din joc în afara regulilor obișnuite (pleacă de la petrecere sau îl scoate gazda din panoul de urgență).
+// Dacă era Contele, contează ca moartea lui: Mireasa preia rolul, ca la execuție.
+export function removeFromGame(prev, id, { left = false } = {}) {
+  const state = structuredClone(prev);
+  const report = { newDemon: null };
+  if (!state.alive[id]) return { state, report };
+  const aliveBefore = aliveCount(state);
+  const wasDemon = state.roles[id] === 'demon';
+  state.alive[id] = false;
+  if (left) state.history.push({ type: 'left', day: state.today?.day ?? state.night, id });
+  if (wasDemon) Object.assign(report, demonDies(state, aliveBefore));
+  state.winner ??= checkWinner(state);
+  return { state, report };
+}
+
 // Sfârșitul zilei: cel de pe butuc e executat. Fără execuție la 3 jucători în viață, Primarul câștigă.
 export function endDay(prev) {
   const state = structuredClone(prev);
@@ -662,6 +677,8 @@ export function buildReplay(state) {
       if (h.virgin) lines.push(`🕊️ ${nameOf(state, h.virgin.by)} a nominalizat-o pe Fecioara (${nameOf(state, h.virgin.target)}) și a fost ${gen(h.virgin.by, 'executat', 'executată')} pe loc`);
       lines.push(h.executed ? `⚰️ ${gen(h.executed, 'Executat', 'Executată')}: ${nameOf(state, h.executed)} (${finalRoleName(state, h.executed)})` : 'Nimeni nu a fost executat');
       out.push({ title: `☀️ Ziua ${h.day}`, lines });
+    } else if (h.type === 'left') {
+      out.push({ title: `🚪 ${nameOf(state, h.id)} a plecat`, lines: [`${nameOf(state, h.id)} a părăsit castelul (${finalRoleName(state, h.id)})`] });
     } else if (h.type === 'slay') {
       out.push({ title: `🗡️ Țărușul (ziua ${h.day})`, lines: [`${nameOf(state, h.by)} → ${nameOf(state, h.target)}: ${h.hit ? 'Contele a murit!' : 'nimic nu s-a întâmplat'}`] });
     }

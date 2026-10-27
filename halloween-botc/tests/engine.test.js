@@ -427,3 +427,17 @@ test('„Ochiul de vultur” numără doar pariurile celor buni (răii știu cin
   const eagle = computeTitles(state).find((t) => t.title === 'Ochiul de vultur');
   assert.deepEqual(eagle?.names, ['Andrei']);
 });
+
+test('dacă pleacă Contele cu cel puțin 5 în viață, Mireasa devine Contele', async () => {
+  const { removeFromGame } = await import('../js/engine.js');
+  const g = fixed(ROLES11);
+  const { state, report } = removeFromGame(g, 'radu', { left: true });
+  assert.equal(report.newDemon, 'cella');
+  assert.equal(state.roles.cella, 'demon');
+  assert.equal(state.winner ?? null, null);
+  assert.ok(buildReplay(state).some((b) => /a plecat/.test(b.title)));
+  // Fără Mireasă în viață: câștigă Binele.
+  const g2 = fixed(ROLES11);
+  g2.alive.cella = false;
+  assert.equal(removeFromGame(g2, 'radu').state.winner, 'good');
+});

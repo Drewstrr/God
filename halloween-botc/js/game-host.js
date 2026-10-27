@@ -4,7 +4,7 @@
 import {
   PLAYERS, ROLES, TYPES, DISTRIBUTION, MIN_PLAYERS, MAX_PLAYERS, ROLE_KEYS, newGame, initialKnowledge, resolveNight, resolveRaven,
   startDay, nominate, nominationError, tallyNomination, endDay, slay, nextNight, nightAction, validTargets,
-  believedRole, voteThreshold, finalRoleName, inLineup as inLineupFor, checkWinner, shuffle, buildReplay, computeTitles, betLeaderboard, teamOf, grimoire, demonId,
+  believedRole, voteThreshold, finalRoleName, inLineup as inLineupFor, checkWinner, shuffle, buildReplay, computeTitles, betLeaderboard, teamOf, grimoire, demonId, removeFromGame,
 } from './engine.js';
 import { setVoteHandler, setEngineActive } from './pin-service.js';
 import { INTRO } from './intro.js';
@@ -106,7 +106,7 @@ const run = serial(async (cmd) => {
   if (!active) return;
   const handlers = {
     fillBots, clearBots, start, firstNight, endNight, beginDay, startVoting, cancelNomination, endDayCmd,
-    toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree, skipIntro, skipFilm, soundTest, announce, extendNight,
+    toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree, skipIntro, skipFilm, soundTest, announce, extendNight, backToIntro, backToFree,
     adminRevive, adminKill, adminRestartNight, pause, resume, finishDawn, storyteller,
   };
   await handlers[cmd?.type]?.(cmd);
@@ -214,7 +214,37 @@ async function start() {
 
 async function firstNight() {
   if (!state || pub.phase !== 'intro') return;
+  host.firstNightAt = serverNow();
   await openNight();
+  await setPublic({ undoIntroUntil: host.firstNightAt + UNDO_INTRO_MS });
+}
+
+// „Înapoi” doar unde nu s-a întâmplat încă nimic ireversibil (nimeni n-a ales noaptea, nimeni n-a nominalizat).
+const UNDO_INTRO_MS = 60000;
+const UNDO_FREE_MS = 120000;
+async function backToIntro() {
+  if (!state || pub.phase !== 'night' || state.night !== 1 || serverNow() > (host.firstNightAt ?? 0) + UNDO_INTRO_MS) return;
+  const acted = (await get(r('actions/1'))).val() ?? {};
+  if (Object.entries(acted).some(([id, a]) => a?.done && !isBot(id))) return;
+  stopActions?.(); stopActions = null;
+  clearTimeout(nightTimer);
+  host.firstNightAt = null;
+  const patch = {
+    'public/phase': 'intro', 'public/endsAt': null, 'public/progress': null, 'public/undoIntroUntil': null,
+    'public/introAt': filmOver(), actions: null,
+  };
+  for (const p of GP()) patch[`private/${p.id}/night`] = null;
+  await update(r(), patch);
+  await save();
+}
+async function backToFree() {
+  if (!state || pub.phase !== 'day' || host.free || host.current || !host.lastFree) return;
+  if (state.today?.nominations?.length || serverNow() > host.lastFree.at + UNDO_FREE_MS) return;
+  host.free = { endsAt: serverNow() + Math.max(60000, host.lastFree.remaining) };
+  host.lastFree = null;
+  await setPublic({ day: publicDay() });
+  await save();
+  armFree();
 }
 
 async function toNight() {
@@ -352,6 +382,7 @@ async function endNight(cmd = {}) {
     'public/ghostVote': state.ghostVote,
     'public/endsAt': null,
     'public/progress': null,
+    'public/undoIntroUntil': null,
     'public/winner': null,
     'public/morning': morning,
   });
@@ -427,6 +458,8 @@ function publicDay(extra = {}) {
     // Timpul liber (petrecerea): cât rulează, nominalizările sunt închise.
     free: host.free?.endsAt ?? null,
     lastActivity: host.lastActivity ?? null,
+    // Adunarea deschisă din greșeală: 2 minute se poate reveni la timpul liber (cât n-a nominalizat nimeni).
+    undoFreeUntil: host.lastFree && !t?.nominations?.length ? host.lastFree.at + UNDO_FREE_MS : null,
     // Ieri nu a fost executat nimeni: proiectorul le amintește, ca jocul să nu se lungească.
     noExecYesterday: state.night > 1 && [...state.history].reverse().find((h) => h.type === 'day')?.executed === null,
     ...extra,
@@ -462,6 +495,7 @@ async function beginDay(cmd = {}) {
   if (state.winner) return finishDawn();
   state = startDay(state);
   host.current = null;
+  host.lastFree = null;
   host.lastActivity = serverNow();
   const minutes = clamp(cmd.minutes ?? state.settings.freeMinutes, 0, 120, 22);
   host.free = minutes ? { endsAt: serverNow() + minutes * 60000 } : null;
@@ -483,6 +517,7 @@ async function openGathering(cmd = {}) {
   if (pub.phase !== 'day' || !host.free) return;
   if (cmd.auto && host.free.endsAt > serverNow() + 1000) return armFree();  // timpul a fost prelungit între timp
   clearTimeout(freeTimer);
+  host.lastFree = { at: serverNow(), remaining: Math.max(0, host.free.endsAt - serverNow()) };
   host.free = null;
   host.lastActivity = serverNow();
   await setPublic({ day: publicDay() });
@@ -808,17 +843,28 @@ async function endStage(cmd) {
 
 // ---------- urgențe ----------
 
-async function setAliveAndCheck(id, alive, extra = {}) {
+async function setAliveAndCheck(id, alive, extra = {}, { left = false } = {}) {
   if (!state || !(id in state.alive)) return;
-  state.alive[id] = alive;
-  if (alive) delete state.ghostVote[id]; else state.ghostVote[id] = state.ghostVote[id] ?? true;
-  state.winner = alive ? null : checkWinner(state);
+  let newDemon = null;
+  if (alive) {
+    state.alive[id] = true;
+    delete state.ghostVote[id];
+    state.winner = null;
+  } else {
+    // Ca o moarte: dacă pleacă (sau e scos) Contele, Mireasa îi ia locul, ca la execuție.
+    const ghost = state.ghostVote[id];
+    let report;
+    ({ state, report } = removeFromGame(state, id, { left }));
+    state.ghostVote[id] = ghost ?? true;
+    newDemon = report.newDemon;
+  }
   const patch = {
     [`private/${id}/status`]: { alive, ghostVote: Boolean(state.ghostVote[id]) },
     'public/alive': state.alive,
     'public/ghostVote': state.ghostVote,
     ...extra,
   };
+  if (newDemon) await tellNewDemon(newDemon, patch);
   if (state.winner) Object.assign(patch, { 'public/phase': 'end', 'public/winner': state.winner, 'public/endsAt': null }, finalPatch());
   await update(r(), patch);
   await save();
@@ -828,7 +874,7 @@ async function setAliveAndCheck(id, alive, extra = {}) {
 async function leave(cmd) {
   if (!state || !state.alive[cmd.id] || pub.phase === 'end') return;
   state.ghostVote[cmd.id] = false;
-  await setAliveAndCheck(cmd.id, false, { 'public/notice': { text: `🚪 ${nameOf(cmd.id)} a părăsit castelul.`, at: serverNow() } });
+  await setAliveAndCheck(cmd.id, false, { 'public/notice': { text: `🚪 ${nameOf(cmd.id)} a părăsit castelul.`, at: serverNow() } }, { left: true });
 }
 
 async function adminRevive(cmd) { await setAliveAndCheck(cmd.id, true); }

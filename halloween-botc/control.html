@@ -208,11 +208,12 @@
           <p>${film ? `🎬 Rulează filmul de deschidere (~${INTRO.length} s).` : '📜 Pe proiector sunt regulile.'} După film, fiecare rupe sigiliul de pe telefon și își citește rolul.</p>
           <p class="muted">Explică pe scurt regulile, apoi începe noaptea.</p>
           ${film ? '<div class="row"><button class="btn small ghost" id="skip-intro">⏭ Sari peste film</button></div>' : ''}
-          <button class="btn primary" data-cmd="firstNight">🌑 Începe prima noapte</button>`;
+          <button class="btn primary" data-cmd="firstNight" data-confirm="Ai terminat explicațiile? Începe prima noapte.">🌑 Începe prima noapte</button>`;
         }
         case 'night': return `
           <p class="lead" style="font-size:1.4rem">${pub.progress?.done ?? 0} / ${pub.progress?.total ?? 0} au ales · ⏳ <span data-ends="${pub.endsAt ?? ''}"></span></p>
           <p class="muted">Noaptea se încheie singură când aleg toți sau când expiră timpul. Nu trebuie să apeși nimic.</p>
+          ${pub.round === 1 && serverNow() < (pub.undoIntroUntil ?? 0) ? `<div class="row"><button class="btn small ghost" data-cmd="backToIntro" data-until="${pub.undoIntroUntil}" data-confirm="Revii la reguli? Merge doar dacă nimeni n-a apucat să aleagă.">↩ Înapoi la reguli</button></div>` : ''}
           <div class="row">
             <button class="btn small" id="plus30">+30 secunde</button>
             <button class="btn small ghost" data-cmd="endNight" data-confirm="Închei noaptea acum? Cine n-a ales pierde acțiunea.">⏹ Încheie noaptea acum</button>
@@ -229,10 +230,11 @@
             <p class="lead" style="font-size:1.4rem">🎭 Timp liber · adunarea în <span data-ends="${d.free}"></span></p>
             <p class="muted">Când expiră timpul, proiectorul cheamă singur pe toată lumea la adunare.</p>
             <div class="row"><button class="btn small ghost" id="plus5">+5 minute</button></div>
-            <button class="btn primary" data-cmd="openGathering">☩ Deschide adunarea acum</button>`;
+            <button class="btn primary" data-cmd="openGathering" data-confirm="Deschizi adunarea acum? Timpul liber se oprește.">☩ Deschide adunarea acum</button>`;
           const block = d.block;
           const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)` : block ? `⚖️ Egalitate la ${block.votes}: nimeni pe butuc` : '⚖️ Nimeni pe butuc';
           let now = '<p class="muted">Jucătorii nominalizează de pe telefon. Tu închei ziua când s-au lămurit.</p>';
+          if (!c && d.undoFreeUntil && serverNow() < d.undoFreeUntil) now += `<div class="row"><button class="btn small ghost" data-cmd="backToFree" data-until="${d.undoFreeUntil}" data-confirm="Revii la timpul liber? Merge doar cât n-a nominalizat nimeni.">↩ Înapoi la timpul liber</button></div>`;
           if (c?.stage === 'defense') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: acuzare și apărare · <span data-ends="${c.endsAt ?? ''}"></span></p>
             <div class="row"><button class="btn small" data-cmd="startVoting">✠ Pornește votul acum</button>
             <button class="btn small danger" data-cmd="cancelNomination" data-confirm="Anulezi nominalizarea? Nu consumă dreptul nimănui.">✕ Anulează nominalizarea</button></div>`;
@@ -464,12 +466,13 @@
     onValue(r('public'), (snap) => {
       pub = snap.val() ?? {};
       const ready = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
-      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.day, pub.execution, pub.alive, pub.lineup, pub.engineInfo, pub.endStage, pub.paused, pub.skipFilm, pub.introAt]);
+      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.day, pub.execution, pub.alive, pub.lineup, pub.engineInfo, pub.endStage, pub.paused, pub.skipFilm, pub.introAt, pub.undoIntroUntil]);
       if (pub.phase !== pulsePhase || pub.endStage !== pulseStage) { pulsePhase = pub.phase; pulseStage = pub.endStage; phaseSince = Date.now(); }
       if (sig !== lastSig) { lastSig = sig; render(); } else renderPlayers();
     });
 
     setInterval(() => {
+      document.querySelectorAll('[data-until]').forEach((el) => { if (serverNow() > +el.dataset.until) el.closest('.row')?.remove(); });
       document.querySelectorAll('[data-ends]').forEach((el) => { if (+el.dataset.ends) el.textContent = fmt(+el.dataset.ends - (pub.paused?.at ?? serverNow())); });
     }, 250);
 

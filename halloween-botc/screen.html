@@ -463,7 +463,8 @@
             </div>`).join('')}</div>
             ${bets.length ? `<p class="center lead bets-line">🎲 Cele mai bune pariuri: ${bets.map((b) => `<b>${esc(b.name)}</b> (${b.correct})`).join(' · ')}</p>` : ''}`;
         }
-        return `${head}${townCandles()}`;
+        // Primul ecran al finalului: doar titlul, peste scena cu soarele sau cu luna (fără lumânări).
+        return head;
       },
     };
 
