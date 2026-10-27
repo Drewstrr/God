@@ -106,7 +106,7 @@ const run = serial(async (cmd) => {
   if (!active) return;
   const handlers = {
     fillBots, clearBots, start, firstNight, endNight, beginDay, startVoting, cancelNomination, endDayCmd,
-    toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree, skipIntro, skipFilm,
+    toNight, endStage, reset, settings, lineup, leave, inputs, closeVoting, finishReveal, botDayTick, openGathering, extendFree, skipIntro, skipFilm, soundTest, announce, extendNight,
     adminRevive, adminKill, adminRestartNight, pause, resume, finishDawn, storyteller,
   };
   await handlers[cmd?.type]?.(cmd);
@@ -497,6 +497,21 @@ async function skipIntro() {
 }
 async function skipFilm(cmd = {}) {
   await setPublic({ skipFilm: Boolean(cmd.on) });
+}
+
+// Unelte din panou: testul de sunet, un mesaj scurt pe proiector, încă 30 de secunde de noapte.
+async function soundTest() {
+  await setPublic({ soundTest: serverNow() });
+}
+async function announce(cmd = {}) {
+  const text = String(cmd.text ?? '').trim().slice(0, 140);
+  if (text) await setPublic({ notice: { text: `📢 ${text}`, at: serverNow(), long: true } });
+}
+async function extendNight() {
+  if (pub.phase !== 'night' || !state || host.paused) return;
+  const endsAt = Math.max(pub.endsAt ?? 0, serverNow()) + 30000;
+  await setPublic({ endsAt });
+  watchNight(endsAt);
 }
 
 async function extendFree(cmd = {}) {

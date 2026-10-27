@@ -806,8 +806,27 @@
       el.textContent = n.text;
       document.body.appendChild(el);
       sfx.bell(0, 147, 4, 0.4);
-      setTimeout(() => el.classList.add('leaving'), 7000);
-      setTimeout(() => el.remove(), 8200);
+      // Mesajele scrise de gazdă stau mai mult pe ecran.
+      const stay = n.long ? 12000 : 7000;
+      setTimeout(() => el.classList.add('leaving'), stay);
+      setTimeout(() => el.remove(), stay + 1200);
+    }
+
+    // Testul de sunet din panou: dangătul de seară și un clopoțel, plus un semn pe ecran (se vede chiar dacă boxele tac).
+    let lastSoundTest = null;
+    function soundTest(at) {
+      if (!at || at === lastSoundTest) return;
+      const fresh = lastSoundTest !== null || serverNow() - at < 8000;
+      lastSoundTest = at;
+      if (!fresh) return;
+      sfx.nightFalls();
+      sfx.chime(2.5);
+      const el = document.createElement('div');
+      el.className = 'notice';
+      el.textContent = sfx.ready() ? '🔔 Test de sunet: se aude clopotul?' : '🔇 Sunetul proiectorului e oprit: apasă oriunde pe proiector';
+      document.body.appendChild(el);
+      setTimeout(() => el.classList.add('leaving'), 5000);
+      setTimeout(() => el.remove(), 6200);
     }
 
     function showPause() {
@@ -831,6 +850,7 @@
       showPause();
       const phase = pub.phase ?? 'lobby';
       showNotice(pub.notice);
+      soundTest(pub.soundTest);
       showSlay(pub.slay);
       showVirgin(pub.virgin);
       const joined = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
