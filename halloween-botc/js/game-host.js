@@ -699,7 +699,7 @@ async function closeVoting(cmd = {}) {
   const before = { alive: { ...state.alive }, ghost: { ...state.ghostVote } };
   const { state: next, entry } = tallyNomination(state, c.by, c.target, votes);
   state = next;
-  bots.sawVotes(host.minds ?? {}, state, c.by, c.target, c.votes);
+  if (host.minds) bots.sawVotes(host.minds, state, c.by, c.target, c.votes);   // doar când joacă roboți
   // Votul se dezvăluie pe rând, în ordinea mesei, începând cu cel de după nominalizat (ca la BotC).
   const seats = GP().map((p) => p.id);
   const start = seats.indexOf(c.target);
