@@ -406,3 +406,11 @@ test('povestitorul anunță ultima zi la 3 în viață și avertizează la 4', a
   assert.equal(finalDayWarning(alive(5)), null);
   assert.equal(finalDayWarning(alive(11)), null);
 });
+
+test('Răul câștigă pe loc când nu mai e niciun jucător bun în viață', () => {
+  const g = fixed(ROLES11);
+  const alive = Object.fromEntries(Object.keys(g.alive).map((id) => [id, ['robi', 'cella', 'radu'].includes(id)]));
+  assert.equal(checkWinner({ ...g, alive }), 'evil');
+  // Cu un singur bun în viață, jocul continuă.
+  assert.equal(checkWinner({ ...g, alive: { ...alive, andrei: true } }), null);
+});

@@ -619,6 +619,8 @@ export function checkWinner(state) {
   const demon = demonId(state);
   if (!demon || !state.alive[demon]) return 'good';
   if (aliveCount(state) <= 2) return 'evil';
+  // Nu mai e niciun jucător bun în viață: Binele nu mai are cum câștiga, jocul se încheie pe loc.
+  if (!state.players.some((p) => state.alive[p.id] && teamOf(state.roles[p.id]) === 'good')) return 'evil';
   return null;
 }
 
