@@ -8,6 +8,7 @@ import {
 } from './engine.js';
 import { setVoteHandler, setEngineActive } from './pin-service.js';
 import { INTRO } from './intro.js';
+import * as bots from './bots.js';
 import {
   r, get, set, update, remove, push, onValue, onChildAdded, serverNow,
 } from './fb.js';
@@ -163,7 +164,8 @@ async function start() {
   if (missing.length || chosen.length < MIN_PLAYERS || chosen.length > MAX_PLAYERS) return;
 
   // Povestitorul inteligent e pornit implicit; se poate opri din panou oricând.
-  state = newGame(chosen, { ...(pub.settings ?? {}), storyteller: pub.storyteller !== false });
+  const forced = (await get(r('secret/forced'))).val() ?? {};
+  state = newGame(chosen, { ...(pub.settings ?? {}), storyteller: pub.storyteller !== false, forced });
   host = { seen: {} };
   const knowledge = initialKnowledge(state);
   const patch = {};
@@ -293,10 +295,10 @@ async function openNight({ restart = false } = {}) {
   watchNight(endsAt);
 }
 
+// Mintea fiecărui robot (ce bănuiește), păstrată cu restul datelor gazdei.
+const mind = (id) => ((host.minds ??= {})[id] ??= bots.newMind());
 function botChoice(id) {
-  const spec = nightAction(state, id);
-  const targets = spec ? shuffle(validTargets(state, id)).slice(0, spec.pick) : null;
-  const bet = shuffle(aliveIds().filter((x) => x !== id))[0] ?? null;
+  const { targets, bet } = bots.nightChoice(state, id, mind(id));
   return { targets, bet, done: true, at: Date.now() };
 }
 
@@ -367,6 +369,10 @@ async function endNight(cmd = {}) {
     patch[`private/${p.id}/night`] = null;
     patch[`private/${p.id}/status`] = { alive: state.alive[p.id], ghostVote: Boolean(state.ghostVote[p.id]) };
   }
+  // Roboții țin minte ce au aflat în noaptea asta.
+  for (const [id, msgs] of Object.entries(report.private)) if (isBot(id)) for (const m of msgs) bots.learn(mind(id), id, m);
+  // …și și-o spun la masă (răii inventează); ceilalți roboți ascultă.
+  for (const id of aliveIds().filter(isBot)) bots.hear(host.minds ?? {}, state, id, bots.claimsFor(state, id, report.private[id] ?? []));
   let n = 0;
   const keyBase = Date.now();
   for (const [id, msgs] of Object.entries(report.private)) {
@@ -391,7 +397,7 @@ async function endNight(cmd = {}) {
   if (state.winner) armFinish();
   const raven = state.pendingRaven?.id;
   if (raven && isBot(raven)) {
-    const target = shuffle(aliveIds())[0];
+    const target = bots.ravenPick(state, raven, mind(raven)) ?? shuffle(aliveIds())[0];
     setTimeout(() => set(r(`playerInput/${raven}/raven`), { night, target, at: Date.now() }), 3000);
   }
 }
@@ -582,11 +588,18 @@ function startBotDay() {
 
 async function botDayTick() {
   if (pub.phase !== 'day' || !state?.today || host.current || host.free) return;
+  // Van Helsing-robot lovește doar când e destul de sigur pe cine e Contele.
+  for (const id of aliveIds().filter(isBot)) {
+    const target = bots.slayPick(state, id, mind(id));
+    if (target) return set(r(`playerInput/${id}/slay`), { target, at: Date.now() });
+  }
   if (state.today.nominations.length >= 3 || Math.random() < 0.5) return;
-  const bots = shuffle(aliveIds().filter((id) => isBot(id) && !state.today.nominators[id]));
-  const by = bots[0];
-  const target = shuffle(aliveIds().filter((id) => !state.today.nominees[id] && id !== by))[0];
-  if (by && target) await set(r(`playerInput/${by}/nominate`), { target, day: state.today.day, at: Date.now() });
+  // Primul robot care are pe cine bănui nominalizează (răii nu-și nominalizează niciodată colegii).
+  for (const by of shuffle(aliveIds().filter((id) => isBot(id) && !state.today.nominators[id]))) {
+    const allowed = aliveIds().filter((id) => !state.today.nominees[id] && id !== by);
+    const target = bots.nominee(state, by, mind(by), allowed);
+    if (target) return set(r(`playerInput/${by}/nominate`), { target, day: state.today.day, at: Date.now() });
+  }
 }
 
 // Procesează intrările noi de pe telefoane (fiecare tip o singură dată, după momentul trimiterii).
@@ -664,7 +677,7 @@ const canVote = (id) => state.alive[id] || state.ghostVote[id];
 function botVotes() {
   const c = host.current;
   for (const id of GP().map((p) => p.id).filter((x) => isBot(x) && canVote(x))) {
-    const yes = state.alive[id] ? Math.random() < 0.45 : Math.random() < 0.2;
+    const yes = bots.vote(state, id, mind(id), c.target);
     setTimeout(() => set(r(`playerInput/${id}/vote`), { key: c.key, yes, at: Date.now() }), 1000 + Math.random() * 6000);
   }
 }
@@ -686,6 +699,7 @@ async function closeVoting(cmd = {}) {
   const before = { alive: { ...state.alive }, ghost: { ...state.ghostVote } };
   const { state: next, entry } = tallyNomination(state, c.by, c.target, votes);
   state = next;
+  bots.sawVotes(host.minds ?? {}, state, c.by, c.target, c.votes);
   // Votul se dezvăluie pe rând, în ordinea mesei, începând cu cel de după nominalizat (ca la BotC).
   const seats = GP().map((p) => p.id);
   const start = seats.indexOf(c.target);

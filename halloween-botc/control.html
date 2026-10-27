@@ -97,7 +97,7 @@
     import { ask } from './js/ask.js';
     import { INTRO } from './js/intro.js';
     import { sendCommand } from './js/game-host.js';
-    import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION, gen, inLineup as inLineupFor } from './js/engine.js';
+    import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION, ROLES, gen, inLineup as inLineupFor } from './js/engine.js';
 
     const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
@@ -164,6 +164,9 @@
             : `<p class="error">Jocul merge cu ${MIN_PLAYERS}–${MAX_PLAYERS} jucători.</p>`}
         </div>`;
     }
+    // Rolurile alese de gazdă pentru teste (în secret/forced: jucătorii nu le pot citi).
+    let forced = {};
+    const humans = () => Object.entries(pub.players ?? {}).filter(([id, p]) => inLineup(id) && p.hasPin && !p.bot);
     const lineupReady = () => Boolean(DISTRIBUTION[Object.keys(pub.players ?? {}).filter(inLineup).length]);
 
     // Pentru fiecare fază: ce se întâmplă acum și UN singur buton mare, pasul următor. Restul sunt mici.
@@ -191,6 +194,18 @@
               Timp liber <input type="number" id="s-free" value="${s.freeMinutes ?? 22}" min="0" max="120"> min
               <button class="btn small ghost" id="save-settings">Salvează</button>
             </div>
+          </details>
+          ${Object.keys(forced).length ? `<div class="pause-bar">⚠️ Ai ales tu rolul pentru <b>${Object.keys(forced).length}</b> ${Object.keys(forced).length === 1 ? 'jucător' : 'jucători'} (doar pentru teste: tu le vei ști rolurile). <button class="btn small danger" id="forced-clear">Șterge alegerile</button></div>` : ''}
+          <details class="ctl-settings" ${Object.keys(forced).length ? 'open' : ''}>
+            <summary>🎭 Test: alege tu rolurile (nu la petrecere)</summary>
+            <p class="muted" style="margin:4px 0">Doar pentru oamenii reali. Cine rămâne „la întâmplare” primește un rol potrivit, ca să iasă numărul corect de Săteni, Străini, Slujitori și un singur Conte.</p>
+            <div class="row" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px">${humans().map(([id, p]) => `
+              <label style="display:flex;gap:6px;align-items:center;justify-content:space-between">${esc(p.name)}
+                <select data-force="${id}">
+                  <option value="">🎲 la întâmplare</option>
+                  ${[['townsfolk', 'Săteni'], ['outsider', 'Străini'], ['minion', 'Slujitori'], ['demon', 'Conte']].map(([t, label]) => `<optgroup label="${label}">${Object.entries(ROLES).filter(([, r]) => r.type === t).map(([k, r]) => `<option value="${k}" ${forced[id] === k ? 'selected' : ''} ${Object.entries(forced).some(([o, v]) => o !== id && v === k) ? 'disabled' : ''}>${r.emoji} ${esc(r.name)}</option>`).join('')}</optgroup>`).join('')}
+                </select>
+              </label>`).join('') || '<span class="muted">Niciun om real cu PIN încă.</span>'}</div>
           </details>
           <details class="ctl-settings">
             <summary>🧪 Test cu roboți (nu la petrecere)</summary>
@@ -362,6 +377,8 @@
         },
       }));
       box.querySelector('#plus30')?.addEventListener('click', () => sendCommand('extendNight'));
+      box.querySelectorAll('[data-force]').forEach((sel) => sel.addEventListener('change', () => set(r(`secret/forced/${sel.dataset.force}`), sel.value || null)));
+      box.querySelector('#forced-clear')?.addEventListener('click', async () => { if (await ask('Ștergi toate rolurile alese? Jocul le va împărți la întâmplare.')) set(r('secret/forced'), null); });
     }
 
     function renderPlayers() {
@@ -457,6 +474,8 @@
       el.title = on ? `Rulează pe ${pub.engineInfo?.device ?? 'proiector'}. Ține Proiectorul deschis într-un singur loc.` : '';
       el.className = `ctl-engine ${on ? 'ok' : 'error'}`;
     });
+
+    onValue(r('secret/forced'), (snap) => { forced = snap.val() ?? {}; if (lastSig) render(); });
 
     // Redesenăm butoanele doar când se schimbă ceva relevant, ca să nu pierdem ce scrii în câmpuri.
     let lastSig = '';

@@ -441,3 +441,22 @@ test('dacă pleacă Contele cu cel puțin 5 în viață, Mireasa devine Contele'
   g2.alive.cella = false;
   assert.equal(removeFromGame(g2, 'radu').state.winner, 'good');
 });
+
+test('rolurile alese de gazdă (pentru teste) se respectă, restul se completează corect', () => {
+  for (let k = 0; k < 40; k++) {
+    const g = newGame(P(11), { forced: { andrei: 'monk', flori: 'poisoner', luca: 'demon' } });
+    assert.equal(g.roles.andrei, 'monk');
+    assert.equal(g.roles.flori, 'poisoner');
+    assert.equal(g.roles.luca, 'demon');
+    const vals = Object.values(g.roles);
+    assert.equal(new Set(vals).size, 11);
+    assert.equal(vals.filter((r) => r === 'demon').length, 1);
+    const types = vals.map((r) => ROLES[r].type);
+    assert.deepEqual(['townsfolk', 'outsider', 'minion'].map((t) => types.filter((x) => x === t).length), [7, 1, 2]);
+    assert.equal(g.settings.forced, undefined);
+  }
+  // Prea mulți Slujitori aleși: jocul tot pornește, cu un singur Conte și roluri unice.
+  const g = newGame(P(11), { forced: { andrei: 'poisoner', flori: 'spy', luca: 'scarlet' } });
+  assert.equal(Object.values(g.roles).filter((r) => r === 'demon').length, 1);
+  assert.equal(new Set(Object.values(g.roles)).size, 11);
+});

@@ -175,7 +175,7 @@ export function functioning(state, id) {
 
 // ---------- începutul jocului ----------
 
-export function newGame(players = PLAYERS, settings = {}, rng = Math.random) {
+export function newGame(players = PLAYERS, { forced: forcedIn = {}, ...settings } = {}, rng = Math.random) {
   const n = players.length;
   const dist = DISTRIBUTION[n];
   if (!dist) throw new Error(`Jocul merge cu ${MIN_PLAYERS}–${MAX_PLAYERS} jucători.`);
@@ -184,18 +184,38 @@ export function newGame(players = PLAYERS, settings = {}, rng = Math.random) {
   const town = shuffle(keysOfType('townsfolk').filter((k) => os > 0 || k !== 'librarian'), rng);
   const outs = shuffle(keysOfType('outsider'), rng);
   const mins = shuffle(keysOfType('minion'), rng);
-  const inPlay = [...town.slice(0, tf), ...outs.slice(0, os), ...mins.slice(0, mn), 'demon'];
-  const order = shuffle(players, rng);
-  const roles = Object.fromEntries(order.map((p, i) => [p.id, inPlay[i]]));
+
+  // Pentru teste, gazda poate alege rolul unor jucători; restul se împart la întâmplare,
+  // păstrând cât se poate numărul de Săteni / Străini / Slujitori și un singur Conte.
+  const forced = {};
+  for (const [id, role] of Object.entries(forcedIn ?? {})) {
+    if (ROLES[role] && players.some((p) => p.id === id) && !Object.values(forced).includes(role)) forced[id] = role;
+  }
+  const used = new Set(Object.values(forced));
+  const has = (t) => Object.values(forced).filter((k) => ROLES[k].type === t).length;
+  const pool = (list) => list.filter((k) => !used.has(k));
+  const townPool = pool(town);
+  const free = shuffle(players.filter((p) => !(p.id in forced)), rng);
+  const needTown = Math.max(0, tf - has('townsfolk'));
+  let pick = [...townPool.slice(0, needTown), ...pool(outs).slice(0, Math.max(0, os - has('outsider'))),
+    ...pool(mins).slice(0, Math.max(0, mn - has('minion'))), ...(has('demon') ? [] : ['demon'])];
+  for (const extra of townPool.slice(needTown)) if (pick.length < free.length) pick.push(extra);
+  while (pick.length > free.length) {
+    const k = pick.findIndex((r) => ROLES[r].type === 'townsfolk');
+    pick.splice(k === -1 ? 0 : k, 1);
+  }
+  pick = shuffle(pick, rng);
+  const roles = { ...forced, ...Object.fromEntries(free.map((p, i) => [p.id, pick[i]])) };
+  const inPlay = new Set(Object.values(roles));
 
   // Bețivul crede că e un Sătean care nu e în joc.
-  const outOfPlayTown = town.slice(tf);
+  const outOfPlayTown = town.filter((k) => !inPlay.has(k));
   const believed = {};
   const drunk = Object.keys(roles).find((id) => roles[id] === 'drunk');
   if (drunk) believed[drunk] = outOfPlayTown.shift();
 
   // Trei roluri bune care nu sunt în joc, pentru Conte (de preferat Săteni).
-  const bluffs = [...outOfPlayTown, ...outs.slice(os)].slice(0, 3);
+  const bluffs = [...outOfPlayTown, ...outs.filter((k) => !inPlay.has(k))].slice(0, 3);
   const good = Object.keys(roles).filter((id) => teamOf(roles[id]) === 'good');
   return {
     players,
@@ -316,11 +336,12 @@ function pairInfo(state, self, type, rng, honest) {
     const [x, role] = matches[0];
     const y = pickOne(others.filter((id) => id !== x), rng);
     const [a, b] = shuffle([x, y], rng);
-    return { text: `Unul dintre ${nameOf(state, a)} și ${nameOf(state, b)} este ${roleName(role)}.` };
+    return { text: `Unul dintre ${nameOf(state, a)} și ${nameOf(state, b)} este ${roleName(role)}.`, ids: [a, b], role };
   }
   // Informație falsă: un rol oarecare de tipul cerut și doi jucători la întâmplare (arată la fel ca una adevărată).
   const [a, b] = shuffle(others, rng);
-  return { text: `Unul dintre ${nameOf(state, a)} și ${nameOf(state, b)} este ${roleName(pickOne(keysOfType(type), rng))}.` };
+  const role = pickOne(keysOfType(type), rng);
+  return { text: `Unul dintre ${nameOf(state, a)} și ${nameOf(state, b)} este ${roleName(role)}.`, ids: [a, b], role };
 }
 
 // Grimoarul: tot ce vede Majordomul (și panoul de urgență).
@@ -399,7 +420,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
   if (night > 1 && prev.lastExecuted) {
     for (const u of holders('undertaker').filter(awake)) {
       const role = functioning(state, u) ? registersAs(state, prev.lastExecuted, rng) : falseRole(state, prev.lastExecuted, rng);
-      tell(u, { kind: 'info', text: `⚰️ ${nameOf(state, prev.lastExecuted)}, ${gen(prev.lastExecuted, 'executat', 'executată')} ieri, era ${roleName(role)}.` });
+      tell(u, { kind: 'info', text: `⚰️ ${nameOf(state, prev.lastExecuted)}, ${gen(prev.lastExecuted, 'executat', 'executată')} ieri, era ${roleName(role)}.`, data: { type: 'role', id: prev.lastExecuted, role } });
     }
   }
 
@@ -410,8 +431,10 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     for (const [role, type] of [['washer', 'townsfolk'], ['librarian', 'outsider'], ['investigator', 'minion']]) {
       for (const id of holders(role)) {
         const honest = functioning(state, id);
-        const text = pairInfo(state, id, type, rng, honest).text;
-        tell(id, { kind: 'info', text: `${ROLES[role].emoji} ${text}` });
+        const info = pairInfo(state, id, type, rng, honest);
+        const text = info.text;
+        // „data”: aceeași informație, pentru roboți (oamenii citesc textul).
+        tell(id, { kind: 'info', text: `${ROLES[role].emoji} ${text}`, ...(info.ids ? { data: { type: 'pair', ids: info.ids, role: info.role } } : {}) });
         if (!honest) falseInfo.push({ id, role, why: state.roles[id] === 'drunk' ? 'drunk' : 'poisoned', text });
       }
     }
@@ -425,7 +448,7 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     const answer = functioning(state, ft) ? truth : (rng() < ftLie(state) ? !truth : truth);
     if (!functioning(state, ft)) note(state, answer !== truth ? `Ghicitoarea, otrăvită sau bețivă, a primit un „${answer ? 'DA' : 'NU'}” fals` : 'Ghicitoarea, deși otrăvită sau bețivă, a primit răspunsul adevărat');
     const names = pair.map((id) => nameOf(state, id)).join(' și ');
-    tell(ft, { kind: 'info', text: answer ? `🔮 DA: unul dintre ${names} este Contele.` : `🔮 NU: niciunul dintre ${names} nu este Contele.` });
+    tell(ft, { kind: 'info', text: answer ? `🔮 DA: unul dintre ${names} este Contele.` : `🔮 NU: niciunul dintre ${names} nu este Contele.`, data: { type: 'fortune', ids: pair, yes: answer } });
   }
 
   // 8. Majordomul vede grimoarul.
@@ -462,7 +485,7 @@ export function resolveRaven(prev, target, rng = Math.random) {
   const role = pending.honest ? registersAs(state, target, rng) : falseRole(state, target, rng);
   if (night && state.leanNotes.length) night.leanNotes = state.leanNotes;
   state.leanNotes = null;
-  return { state, message: { kind: 'info', text: `🪶 ${nameOf(state, target)} este ${roleName(role)}.` } };
+  return { state, message: { kind: 'info', text: `🪶 ${nameOf(state, target)} este ${roleName(role)}.`, data: { type: 'role', id: target, role } } };
 }
 
 // ---------- ziua: nominalizări, vot, execuție ----------
