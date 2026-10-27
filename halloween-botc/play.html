@@ -140,17 +140,10 @@
     let sheetTab = 'mine';
     const sheetEl = () => document.getElementById('sheet');
     const sheetOpen = () => sheetEl().classList.contains('open');
-    const inboxList = () => Object.values(priv?.inbox ?? {}).sort((a, b) => (b.night ?? 0) - (a.night ?? 0));
-    const seenKey = () => `seen-${pub.gameId}-${me}`;
     function showDock(on) {
       const dock = document.getElementById('dock');
       dock.hidden = !on;
       if (!on) { closeSheet(); app.classList.remove('with-dock'); return; }
-      // Bulina: câte informații noi n-ai citit încă în pergament.
-      const unseen = inboxList().length - Number(store(seenKey()) ?? 0);
-      const dot = document.getElementById('dot');
-      dot.hidden = unseen <= 0;
-      dot.textContent = unseen > 0 ? unseen : '';
     }
     function markDock() {
       document.querySelectorAll('#dock [data-open]').forEach((b) => b.classList.toggle('on', sheetOpen() && b.dataset.open === sheetTab));
@@ -180,21 +173,16 @@
       const el = sheetEl();
       if (sheetTab === 'roles') el.innerHTML = sheetRoles();
       else if (sheetTab === 'rules') el.innerHTML = sheetRules();
-      else { el.innerHTML = sheetMine(); store(seenKey(), String(inboxList().length)); showDock(true); }
+      else el.innerHTML = sheetMine();
       wireSheet();
     }
     function sheetMine() {
-      const msgs = inboxList();
-      const lastNight = msgs[0]?.night;
       const tips = tipsFor();
       return `
         <div class="seal-top">C</div>
         <h2>Rolul tău</h2>
         <p style="text-align:center"><b style="font-size:1.25rem">${esc(priv?.roleName ?? '')}</b><br><span class="muted">${TYPE_LABEL[priv?.type] ?? ''} · ${priv?.team === 'evil' ? 'Tabăra răului' : 'Tabăra binelui'}</span></p>
         <p>${esc(priv?.card ?? '')}</p>
-        <h2>Ce știi</h2>
-        ${msgs.length ? msgs.map((m) => `<div class="entry ${m.night === lastNight && m.night > 0 ? 'new' : ''}">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(plain(m.text))}</div>`).join('')
-          : '<p class="muted">Încă nimic. Informațiile vin dimineața, după noapte.</p>'}
         ${tips ? `<h2>${tips.title}</h2>
           ${tips.list.length ? `<p class="tips-for">Pentru ${esc(priv.roleName)}</p><ol class="tips">${tips.list.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>` : ''}
           ${tips.common ? `<details class="tips-more"><summary>Pentru toți cei buni (${tips.common.length})</summary><ol class="tips">${tips.common.map((t) => `<li>${esc(t)}</li>`).join('')}</ol></details>` : ''}
@@ -473,6 +461,8 @@
         navigator.vibrate?.([200, 120, 200, 120, 400]);
       }
       const fresh = msgs[0] && msgs[0].night === lastNight && lastNight > 0 ? msgs[0] : null;
+      // Se vede doar ultima noapte (în prima zi, și ce ai aflat la început): restul îl ții minte.
+      const lastMsgs = msgs.filter((m) => m.night === lastNight || (lastNight <= 1 && m.night === 0));
       showDock(true);
       app.classList.add('with-dock');
       app.innerHTML = `
@@ -495,7 +485,7 @@
         </div>
         ${msgs.length ? `<div class="card know-card" id="know">
           <div class="know-hidden">✦ Ce știi${fresh ? ' · <b>mesaj nou</b>' : ''} · atinge ca să vezi ✦</div>
-          <div class="know-shown" hidden>${msgs.map((m) => `<div class="entry ${m === fresh ? 'new' : ''}">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(plain(m.text))}</div>`).join('')}</div>
+          <div class="know-shown" hidden>${lastMsgs.map((m) => `<div class="entry ${m === fresh ? 'new' : ''}">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(plain(m.text))}</div>`).join('')}</div>
         </div>` : ''}
         ${finalCards(phase)}`;
 
