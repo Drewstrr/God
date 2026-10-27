@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#0b0709">
   <meta name="robots" content="noindex">
   <title>Balul Contelui</title>
-  <link rel="stylesheet" href="css/style.css?v=33">
+  <link rel="stylesheet" href="css/style.css?v=34">
 </head>
 <body>
   <main class="wrap" id="app">
@@ -183,8 +183,6 @@
       else { el.innerHTML = sheetMine(); store(seenKey(), String(inboxList().length)); showDock(true); }
       wireSheet();
     }
-    // Un rând sigilat: toate arată la fel (aceeași mărime), oricât de lung e mesajul dinăuntru.
-    const sealedLine = (label, html) => `<button class="seal-line" type="button">🔒 ${label} · atinge ca să citești</button><div class="seal-text" hidden>${html}</div>`;
     function sheetMine() {
       const msgs = inboxList();
       const lastNight = msgs[0]?.night;
@@ -192,19 +190,18 @@
       return `
         <div class="seal-top">C</div>
         <h2>Rolul tău</h2>
-        ${sealedLine('Rolul tău', `<p style="text-align:center"><b style="font-size:1.25rem">${esc(priv?.roleName ?? '')}</b><br><span class="muted">${TYPE_LABEL[priv?.type] ?? ''} · ${priv?.team === 'evil' ? 'Tabăra răului' : 'Tabăra binelui'}</span></p><p>${esc(priv?.card ?? '')}</p>`)}
+        <p style="text-align:center"><b style="font-size:1.25rem">${esc(priv?.roleName ?? '')}</b><br><span class="muted">${TYPE_LABEL[priv?.type] ?? ''} · ${priv?.team === 'evil' ? 'Tabăra răului' : 'Tabăra binelui'}</span></p>
+        <p>${esc(priv?.card ?? '')}</p>
         <h2>Ce știi</h2>
-        <p class="muted" style="margin-top:0">Fiecare mesaj e sigilat: atinge-l ca să-l citești, apoi se închide singur.</p>
-        ${msgs.length ? msgs.map((m) => `<div class="entry ${m.night === lastNight && m.night > 0 ? 'new' : ''}">${sealedLine(m.night ? `Noaptea ${m.night}` : 'Ce ai aflat la început', esc(plain(m.text)))}</div>`).join('')
+        ${msgs.length ? msgs.map((m) => `<div class="entry ${m.night === lastNight && m.night > 0 ? 'new' : ''}">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(plain(m.text))}</div>`).join('')
           : '<p class="muted">Încă nimic. Informațiile vin dimineața, după noapte.</p>'}
-        ${tips ? `<h2>Sfaturi</h2>
-          <details class="tips-more tips-own"><summary>💡 Sfaturi pentru rolul tău (atinge ca să le vezi)</summary>
-          ${tips.list.length ? `<p class="tips-for">Pentru rolul tău</p><ol class="tips">${tips.list.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>` : ''}
+        ${tips ? `<h2>${tips.title}</h2>
+          ${tips.list.length ? `<p class="tips-for">Pentru ${esc(priv.roleName)}</p><ol class="tips">${tips.list.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>` : ''}
           ${tips.common ? `<details class="tips-more"><summary>Pentru toți cei buni (${tips.common.length})</summary><ol class="tips">${tips.common.map((t) => `<li>${esc(t)}</li>`).join('')}</ol></details>` : ''}
           ${tips.poison ? `<details class="tips-more"><summary>☠️ Ce înseamnă otrăvit sau Bețiv?</summary>
             <p><b>Otrăvit:</b> Vrăjitoarea alege în fiecare noapte pe cineva. Până în noaptea următoare, puterea lui nu merge, iar informația primită poate fi falsă. Nu afli că ai fost otrăvit.</p>
             <p><b>Bețiv:</b> un Străin care crede că e Sătean. Puterea lui nu merge deloc, iar informațiile lui pot fi false tot jocul. Nici el nu știe.</p>
-            <p>De aceea nicio informație nu e 100% sigură. Când ceva nu se potrivește, poate cineva a fost otrăvit sau e Bețivul.</p></details>` : ''}</details>` : ''}
+            <p>De aceea nicio informație nu e 100% sigură. Când ceva nu se potrivește, poate cineva a fost otrăvit sau e Bețivul.</p></details>` : ''}` : ''}
         ${alive() && pub.phase !== 'end' ? `
           <h2>Testamentul tău</h2>
           <p class="muted">Apare pe proiector dacă mori. Poți scrie ce rol pretinzi, pe cine bănuiești… sau o minciună.</p>
@@ -246,13 +243,6 @@
     }
     function wireSheet() {
       const el = sheetEl();
-      // Atingi un rând sigilat: se deschide 10 secunde, apoi se sigilează la loc.
-      el.querySelectorAll('.seal-line').forEach((b) => b.addEventListener('click', () => {
-        const text = b.nextElementSibling;
-        b.hidden = true;
-        text.hidden = false;
-        setTimeout(() => { text.hidden = true; b.hidden = false; }, 10000);
-      }));
       el.querySelector('#logout')?.addEventListener('click', () => { if (confirm('Te deloghezi de pe acest telefon?')) { closeSheet(); logout(); } });
       // Testamentul: păstrăm ce scrie jucătorul între redesenări.
       const tEl = el.querySelector('#f-testament');
@@ -415,6 +405,7 @@
     // și vibrează odată cu „Se ascunde printre voi”.
     const filmActive = () => pub.phase === 'intro' && pub.introAt && serverNow() < pub.introAt + INTRO.length * 1000 && priv?.role && !priv?.sitOut;
     let filmTimers = [];
+    let knowTimer = null;
     function renderFilmWait() {
       const name = priv?.name ?? players[me]?.name ?? me;
       app.innerHTML = `
@@ -502,9 +493,22 @@
             <p>${esc(priv.card)}</p>
           </div>
         </div>
-        ${fresh ? `<div class="news"><span class="lbl">Noaptea ${fresh.night}</span><p>📜 Ai un mesaj nou. Citește-l în Pergament, ferit de ochii celorlalți.</p></div>` : ''}
+        ${msgs.length ? `<div class="card know-card" id="know">
+          <div class="know-hidden">✦ Ce știi${fresh ? ' · <b>mesaj nou</b>' : ''} · atinge ca să vezi ✦</div>
+          <div class="know-shown" hidden>${msgs.map((m) => `<div class="entry ${m === fresh ? 'new' : ''}">${m.night ? `<span class="muted">Noaptea ${m.night}:</span> ` : ''}${esc(plain(m.text))}</div>`).join('')}</div>
+        </div>` : ''}
         ${finalCards(phase)}`;
 
+      // „Ce știi” de pe ecranul principal: ascuns ca rolul, se vede 10 secunde după atingere.
+      const know = app.querySelector('#know');
+      know?.addEventListener('click', () => {
+        const shown = know.querySelector('.know-shown');
+        const open = shown.hidden;
+        shown.hidden = !open;
+        know.querySelector('.know-hidden').hidden = open;
+        clearTimeout(knowTimer);
+        if (open) knowTimer = setTimeout(() => { shown.hidden = true; know.querySelector('.know-hidden').hidden = false; }, 10000);
+      });
       const role = app.querySelector('#role');
       let hideTimer = null;
       const reveal = (on) => {
