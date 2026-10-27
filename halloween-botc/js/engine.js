@@ -702,7 +702,8 @@ export function computeTitles(state) {
   const eagle = {};
   for (const h of state.history ?? []) {
     if (h.type !== 'night') continue;
-    for (const [p, b] of Object.entries(h.bets ?? {})) if (state.roles[b] === 'demon' || b === demonId(state)) eagle[p] = (eagle[p] ?? 0) + 1;
+    // Doar cei buni: răii știu cine e Contele, n-au ce ghici.
+    for (const [p, b] of Object.entries(h.bets ?? {})) if (!evil(p) && (state.roles[b] === 'demon' || b === demonId(state))) eagle[p] = (eagle[p] ?? 0) + 1;
   }
   add('🦅', 'Ochiul de vultur', best(eagle), 'a ghicit Contele de cele mai multe ori');
 
@@ -719,7 +720,7 @@ export function betLeaderboard(state) {
   const score = Object.fromEntries(state.players.map((p) => [p.id, 0]));
   for (const h of state.history ?? []) {
     if (h.type !== 'night') continue;
-    for (const [p, b] of Object.entries(h.bets ?? {})) if (state.roles[b] === 'demon' && p in score) score[p] += 1;
+    for (const [p, b] of Object.entries(h.bets ?? {})) if (state.roles[b] === 'demon' && p in score && teamOf(state.roles[p]) === 'good') score[p] += 1;
   }
   return state.players.map((p) => ({ name: p.name, correct: score[p.id] })).sort((a, b) => b.correct - a.correct);
 }

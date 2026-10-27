@@ -420,3 +420,10 @@ test('nimeni nu se poate nominaliza pe sine (nici Fecioara)', () => {
   assert.equal(nominationError(g, 'andrei', 'andrei'), 'Nu te poți nominaliza pe tine.');
   assert.equal(nominationError(g, 'andrei', 'luca'), null);
 });
+
+test('„Ochiul de vultur” numără doar pariurile celor buni (răii știu cine e Contele)', () => {
+  const g = fixed(ROLES11);
+  const { state } = resolveNight(g, { robi: { targets: ['luca'], bet: 'radu' }, cella: { bet: 'radu' }, andrei: { bet: 'radu' } });
+  const eagle = computeTitles(state).find((t) => t.title === 'Ochiul de vultur');
+  assert.deepEqual(eagle?.names, ['Andrei']);
+});
