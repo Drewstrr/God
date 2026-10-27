@@ -471,7 +471,7 @@
     // ---------- dimineața: ritualul în trei acte ----------
     // I. Clopotul și inima („Castelul se trezește… dar nu toată lumea”).
     // II. Apelul lumânărilor: se aprind una câte una, tot mai rar; cea care rămâne stinsă e victima.
-    // III. Doliul: alb-negru, numele, epitaful, testamentul, un moment de tăcere.
+    // III. Doliul: alb-negru, numele, epitaful, testamentul.
     // Cronologia vine de la motor (dawnAt + secunde), ca telefoanele să vibreze în aceeași clipă.
     let dawnTimers = [];
     const clearDawn = () => { dawnTimers.forEach(clearTimeout); dawnTimers = []; document.body.classList.remove('dawning', 'mourning'); document.querySelector('.mourn-card')?.remove(); };
@@ -592,7 +592,6 @@
             type();
           });
         }
-        at(m, t0 + 19.5, () => { const el = document.querySelector('.mourn-card .m-silence'); if (el) el.textContent = '🕯️ Un moment de tăcere'; });
         at(m, t0 + 26, () => document.querySelector('.mourn-card')?.classList.add('leaving'));
         at(m, t0 + 27, () => { document.querySelector('.mourn-card')?.remove(); document.body.classList.remove('mourning'); });
       });

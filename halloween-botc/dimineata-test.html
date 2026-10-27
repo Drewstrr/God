@@ -115,7 +115,6 @@
         sfx.crow(3.4, { distance: 0.3, pan: Math.random() * 0.8 - 0.4 });   // cioara, pe ecoul pianului
       });
       at(act3 + 5, () => { const el = document.querySelector('.mourn-card .m-epitaph'); if (el) el.textContent = '„A avut încredere în cine nu trebuia.”'; });
-      at(act3 + 19.5, () => { const el = document.querySelector('.mourn-card .m-silence'); if (el) el.textContent = '🕯️ Un moment de tăcere'; });
       at(act3 + 26, () => document.querySelector('.mourn-card')?.classList.add('leaving'));
       at(act3 + 27, () => {
         document.querySelector('.mourn-card')?.remove();
