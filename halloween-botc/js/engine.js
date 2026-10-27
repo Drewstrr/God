@@ -80,7 +80,7 @@ export const ROLES = {
     card: 'Nu știi că ești Bețivul: crezi că ai un rol de Sătean, dar abilitatea ta nu funcționează și informațiile tale pot fi false.',
   },
   recluse: {
-    name: 'Sihastrul', emoji: '🏚️', type: 'outsider',
+    name: 'Cerșetorul', emoji: '🏚️', type: 'outsider',
     card: 'Ești de partea binelui, dar abilitățile celorlalți te pot vedea drept Slujitor sau chiar drept Conte.',
   },
   saint: {
@@ -96,7 +96,7 @@ export const ROLES = {
     card: 'În fiecare noapte otrăvești un jucător: până la noaptea următoare, abilitatea lui nu funcționează și informațiile lui pot fi false.',
   },
   spy: {
-    name: 'Vizitiul', emoji: '🐴', type: 'minion', night1: { info: true }, nights: { info: true },
+    name: 'Majordomul', emoji: '🗝️', type: 'minion', night1: { info: true }, nights: { info: true },
     card: 'În fiecare noapte vezi rolurile tuturor. Abilitățile celorlalți te pot vedea drept jucător bun, chiar drept Sătean.',
   },
   scarlet: {
@@ -131,7 +131,7 @@ export const NIGHT_ORDER = ['poisoner', 'monk', 'demon', 'raven', 'undertaker', 
 
 export const DEFAULT_SETTINGS = { nightSeconds: 90, defenseSeconds: 60, voteSeconds: 20, freeMinutes: 22 };
 
-// Cât de des „mint” Vizitiul și Sihastrul în fața abilităților (decizia naratorului, aici la întâmplare).
+// Cât de des „mint” Majordomul și Cerșetorul în fața abilităților (decizia naratorului, aici la întâmplare).
 const MISREGISTER = 0.5;
 // Primarul atacat: șansa ca altcineva să moară în locul lui.
 const MAYOR_BOUNCE = 0.5;
@@ -257,7 +257,7 @@ export function validTargets(state, id) {
 
 // ---------- povestitorul ----------
 // Un povestitor de BotC nu decide cine moare sau cine câștigă, dar alege ce lasă regulile la voia lui:
-// ce informație falsă primesc Bețivul și otrăviții, cum „apar” Sihastrul și Vizitiul. Ca să țină jocul strâns,
+// ce informație falsă primesc Bețivul și otrăviții, cum „apar” Cerșetorul și Majordomul. Ca să țină jocul strâns,
 // înclină puțin norocul spre tabăra care pierde. Aici facem la fel, doar din a doua noapte și doar dacă e pornit:
 // - Binele e aproape (jumătate din cei buni vii pariază corect pe Conte): informațiile false devin mai convingătoare;
 // - Binele e pierdut (aproape nimeni nu pariază pe Conte, iar jocul se apropie de final): norocul îl ajută puțin.
@@ -271,7 +271,7 @@ export function storytellerLean(state, actions = {}) {
   if (onDemon <= 0.15 && aliveCount(state) <= 7) return 'good';
   return null;
 }
-// Cât de des „apar” Sihastrul și Vizitiul altfel decât sunt.
+// Cât de des „apar” Cerșetorul și Majordomul altfel decât sunt.
 const misregister = (state) => ({ evil: 0.7, good: 0.25 }[state.lean] ?? MISREGISTER);
 // Ghicitoarea care nu funcționează: cât de des minte.
 const ftLie = (state) => ({ evil: 0.85, good: 0.5 }[state.lean] ?? 0.7);
@@ -293,7 +293,7 @@ function note(state, text) {
   if (state.lean && Array.isArray(state.leanNotes) && !state.leanNotes.includes(text)) state.leanNotes.push(text);
 }
 
-// Cum „apare” un jucător în fața abilităților: Vizitiul poate părea Sătean, Sihastrul poate părea Slujitor sau Conte.
+// Cum „apare” un jucător în fața abilităților: Majordomul poate părea Sătean, Cerșetorul poate părea Slujitor sau Conte.
 export function registersAs(state, id, rng = Math.random) {
   const role = state.roles[id];
   const p = misregister(state);
@@ -323,7 +323,7 @@ function pairInfo(state, self, type, rng, honest) {
   return { text: `Unul dintre ${nameOf(state, a)} și ${nameOf(state, b)} este ${roleName(pickOne(keysOfType(type), rng))}.` };
 }
 
-// Grimoarul: tot ce vede Vizitiul (și panoul de urgență).
+// Grimoarul: tot ce vede Majordomul (și panoul de urgență).
 export function grimoire(state) {
   return state.players.map((p) => {
     const role = state.roles[p.id];
@@ -428,9 +428,9 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
     tell(ft, { kind: 'info', text: answer ? `🔮 DA: unul dintre ${names} este Contele.` : `🔮 NU: niciunul dintre ${names} nu este Contele.` });
   }
 
-  // 8. Vizitiul vede grimoarul.
+  // 8. Majordomul vede grimoarul.
   const spy = findByRole(state, 'spy');
-  if (spy && awake(spy)) tell(spy, { kind: 'grimoire', text: `🐴 Grimoarul nopții ${night}:\n${grimoire(state).join('\n')}` });
+  if (spy && awake(spy)) tell(spy, { kind: 'grimoire', text: `🗝️ Grimoarul nopții ${night}:\n${grimoire(state).join('\n')}` });
 
   // Pariul nopții: pe cine crede fiecare că e Contele (doar pentru titlurile de la final).
   const bets = {};

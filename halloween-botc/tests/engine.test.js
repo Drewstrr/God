@@ -379,7 +379,7 @@ test('reluarea spune pe scurt ce a făcut povestitorul', () => {
   const { state } = resolveNight(base, actions, seq(0.1));
   const night = state.history.at(-1);
   assert.equal(night.lean, 'evil');
-  assert.ok(night.leanNotes.some((n) => n.includes('Sihastrul')), JSON.stringify(night.leanNotes));
+  assert.ok(night.leanNotes.some((n) => n.includes('Cerșetorul')), JSON.stringify(night.leanNotes));
   assert.ok(buildReplay(state).some((d) => d.lines.some((l) => l.startsWith('📜 Povestitorul (spre Rău):'))));
 });
 
