@@ -10,7 +10,7 @@ import {
 
 export const ENV = 'botc';
 // Crește la fiecare publicare: telefoanele cu cod vechi se reîncarcă singure.
-export const APP_VERSION = 57;
+export const APP_VERSION = 58;
 export const ENGINE_EMAIL = 'motor@blackwood.ro';
 
 // Paginile jucătorilor (telefon, iPad) au logarea lor, separată de cea a motorului:
