@@ -474,7 +474,7 @@
       app.classList.add('with-dock');
       app.innerHTML = `
         <button class="hide-btn" id="hide">☾ Ascunde</button>
-        ${pub.paused ? '<div class="card center pause-bar">⌛ <b>Pauză.</b> Jocul așteaptă să se întoarcă toată lumea.</div>' : ''}
+        ${pub.paused ? (pub.paused.quiet ? '<div class="card center pause-bar">📢 <b>Anunț pe proiector.</b> Timpul stă pe loc cât se citește.</div>' : '<div class="card center pause-bar">⌛ <b>Pauză.</b> Jocul așteaptă să se întoarcă toată lumea.</div>') : ''}
         <h1 class="center">${esc(name)}</h1>
         <div class="badges">${badges}</div>
         <p class="phase-line">${phaseText}</p>

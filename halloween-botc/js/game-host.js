@@ -85,9 +85,11 @@ export async function startHost({ onPassive = () => {} } = {}) {
   state = revive((await get(r('secret/state'))).val());
   host = (await get(r('secret/host'))).val() ?? {};
   host.seen ??= {};
+  // Proiectorul s-a reîncărcat în timpul unui mesaj: pauza tăcută se reia singură, ca înainte.
+  if (host.paused?.quiet) setTimeout(() => { if (host.paused?.quiet) run({ type: 'resume' }); }, Math.max(1000, host.paused.at + ANNOUNCE_HOLD - serverNow()));
   onValue(r('public'), (snap) => { pub = snap.val() ?? {}; });
   pub = (await get(r('public'))).val() ?? {};
-  if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { nightSeconds: 90, defenseSeconds: 60, voteSeconds: 30, freeMinutes: 22 } });
+  if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { nightSeconds: 90, defenseSeconds: 0, voteSeconds: 30, freeMinutes: 22 } });
 
   onChildAdded(r('commands'), (snap) => {
     if (!active) return;
@@ -146,7 +148,7 @@ async function settings(cmd) {
   await setPublic({
     settings: {
       nightSeconds: clamp(s.nightSeconds, 20, 600, 90),
-      defenseSeconds: clamp(s.defenseSeconds, 10, 600, 60),
+      defenseSeconds: clamp(s.defenseSeconds, 0, 1800, 0),   // 0 = dezbatere fără limită: votul pornește când apasă gazda
       voteSeconds: clamp(s.voteSeconds, 8, 120, 30),
       freeMinutes: clamp(s.freeMinutes, 0, 120, 22),
     },
@@ -339,6 +341,7 @@ const countMissing = (raw) => {
 
 async function endNight(cmd = {}) {
   if (pub.phase !== 'night' || !state) return;
+  if (host.paused) return;  // la reluare, watchNight verifică din nou dacă au terminat toți
   if (cmd.night && cmd.night !== state.night) return;
   const night = state.night;
   if (cmd.night && host.graceNight !== night) {
@@ -583,9 +586,20 @@ async function skipFilm(cmd = {}) {
 async function soundTest() {
   await setPublic({ soundTest: serverNow() });
 }
+// Cât stă proclamația pe proiector (vezi proclaim din screen.html): atât stă și timpul pe loc.
+const ANNOUNCE_HOLD = 16500;
+let announceTimer = null;
 async function announce(cmd = {}) {
   const text = String(cmd.text ?? '').trim().slice(0, 140);
-  if (text) await setPublic({ notice: { text: `📢 ${text}`, at: serverNow(), long: true } });
+  if (!text) return;
+  await setPublic({ notice: { text: `📢 ${text}`, at: serverNow(), long: true } });
+  // Cât se citește mesajul, cronometrele stau pe loc, ca jocul să nu treacă în altă fază.
+  // E o pauză „tăcută”: muzica merge mai departe, fără ecranul de pauză; după mesaj, jocul continuă singur.
+  if (!host.paused) await pause({ quiet: true });
+  if (host.paused?.quiet) {
+    clearTimeout(announceTimer);
+    announceTimer = setTimeout(() => { if (host.paused?.quiet) run({ type: 'resume' }); }, ANNOUNCE_HOLD);
+  }
 }
 async function extendNight() {
   if (pub.phase !== 'night' || !state || host.paused) return;
@@ -607,7 +621,7 @@ function resumeDay() {
   if (host.free) armFree();
   if (!host.current) return startBotDay();
   const c = host.current;
-  if (c.stage === 'defense') armDay(c.endsAt, 'startVoting');
+  if (c.stage === 'defense') { if (c.endsAt) armDay(c.endsAt, 'startVoting'); }
   else if (c.stage === 'voting') { armDay(c.endsAt, 'closeVoting'); botVotes(); }
   else if (c.stage === 'reveal') armDay(c.endsAt, 'finishReveal');
   startBotDay();
@@ -676,11 +690,13 @@ async function onNominate(by, v) {
   if (nominationError(state, by, v.target)) return;
   state = nominate(state, by, v.target);
   if (state.today.virgin) return virginStrikes(by, v.target);
-  const endsAt = serverNow() + (state.settings.defenseSeconds ?? 60) * 1000;
+  // Fără limită (0 s): acuzarea și apărarea țin cât vrea gazda; votul pornește doar din panou.
+  const secs = state.settings.defenseSeconds ?? 0;
+  const endsAt = secs ? serverNow() + secs * 1000 : null;
   host.current = { key: `${state.today.day}_${state.today.nominations.length}`, by, target: v.target, stage: 'defense', endsAt, votes: {} };
   await setPublic({ day: publicDay() });
   await save();
-  armDay(endsAt, 'startVoting');
+  if (endsAt) armDay(endsAt, 'startVoting');
 }
 
 // Fecioara: proiectorul arată ce s-a întâmplat, apoi cel care a nominalizat-o e executat (ziua se încheie).
@@ -845,16 +861,25 @@ async function endDayCmd() {
 // ---------- pauza (cineva a ieșit din cameră) ----------
 
 // Toate cronometrele se opresc; la reluare, fiecare continuă de unde a rămas.
-async function pause() {
+async function pause({ quiet = false } = {}) {
+  // Gazda apasă „Pauză” în timpul unui mesaj: pauza tăcută devine una adevărată (nu se mai reia singură).
+  if (host.paused?.quiet && !quiet) {
+    clearTimeout(announceTimer);
+    host.paused.quiet = false;
+    await setPublic({ paused: { at: host.paused.at } });
+    await save();
+    return;
+  }
   if (host.paused || !state || ['lobby', 'end'].includes(pub.phase)) return;
-  host.paused = { at: serverNow() };
+  host.paused = { at: serverNow(), quiet: quiet || null };
   clearTimeout(nightTimer); clearTimeout(dayTimer); clearTimeout(freeTimer); clearInterval(botDayTimer);
-  await setPublic({ paused: { at: host.paused.at } });
+  await setPublic({ paused: { at: host.paused.at, quiet: quiet || null } });
   await save();
 }
 
 async function resume() {
   if (!host.paused) return;
+  clearTimeout(announceTimer);
   const shift = serverNow() - host.paused.at;
   host.paused = null;
   const patch = { paused: null };

@@ -640,7 +640,7 @@
       revealTimers.forEach(clearTimeout); revealTimers = [];
       const head = `<div class="nom-head"><b>${esc(c.byName)}</b> ${gen(c.target, 'îl', 'o')} nominalizează pe <b class="squid-pink">${esc(c.targetName)}</b></div>`;
       if (c.stage === 'defense') {
-        box.innerHTML = `<div class="nom-box">${head}<p class="lead">🗣️ Acuzare și apărare</p>${timer('', c.endsAt)}</div>`;
+        box.innerHTML = `<div class="nom-box">${head}<p class="lead">🗣️ Acuzare și apărare</p>${c.endsAt ? timer('', c.endsAt) : '<p class="muted">Dezbatere liberă. Votul începe la semnul gazdei.</p>'}</div>`;
         if (fresh) { sfx.bell(0, 196, 3, 0.4); }
       } else if (c.stage === 'voting') {
         box.innerHTML = `<div class="nom-box">${head}<p class="lead">✠ <b>Votați acum pe telefon!</b></p>${timer('', c.endsAt)}<div class="voted">${votedLine(c)}</div></div>`;
@@ -868,6 +868,8 @@
 
     function showPause() {
       let el = document.getElementById('pause-overlay');
+      // Pauza tăcută din timpul unui mesaj al gazdei: fără ecran de pauză și fără clopoțel, muzica merge mai departe.
+      if (pub.paused?.quiet) return;
       if (pub.paused && !el) {
         el = document.createElement('div');
         el.id = 'pause-overlay';

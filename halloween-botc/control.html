@@ -188,10 +188,10 @@
             <button class="tog ${pub.skipFilm ? 'off' : 'on'}" id="film-toggle">${pub.skipFilm ? '🎬 Film la început: NU' : '🎬 Film la început: DA'}</button>
           </div>
           <details class="ctl-settings">
-            <summary>⚙️ Timpi: noapte ${s.nightSeconds ?? 90} s · apărare ${s.defenseSeconds ?? 60} s · vot ${s.voteSeconds ?? 30} s · timp liber ${s.freeMinutes ?? 22} min</summary>
+            <summary>⚙️ Timpi: noapte ${s.nightSeconds ?? 90} s · apărare ${+(s.defenseSeconds ?? 0) ? `${s.defenseSeconds} s` : 'fără limită'} · vot ${s.voteSeconds ?? 30} s · timp liber ${s.freeMinutes ?? 22} min</summary>
             <div class="row">
               Noapte <input type="number" id="s-night" value="${s.nightSeconds ?? 90}" min="20" max="600"> s
-              Apărare <input type="number" id="s-def" value="${s.defenseSeconds ?? 60}" min="10" max="600"> s
+              Apărare <input type="number" id="s-def" value="${s.defenseSeconds ?? 0}" min="0" max="1800" title="0 = fără limită: pornești tu votul"> s (0 = pornești tu votul)
               Vot <input type="number" id="s-vote" value="${s.voteSeconds ?? 30}" min="8" max="120"> s
               Timp liber <input type="number" id="s-free" value="${s.freeMinutes ?? 22}" min="0" max="120"> min
               <button class="btn small ghost" id="save-settings">Salvează</button>
@@ -257,8 +257,8 @@
           const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)` : block ? `⚖️ Egalitate la ${block.votes}: nimeni pe butuc` : '⚖️ Nimeni pe butuc';
           let now = '<p class="muted">Jucătorii nominalizează de pe telefon. Tu închei ziua când s-au lămurit.</p>';
           if (!c && d.undoFreeUntil && serverNow() < d.undoFreeUntil) now += `<div class="row"><button class="btn small ghost" data-cmd="backToFree" data-until="${d.undoFreeUntil}" data-confirm="Revii la timpul liber? Merge doar cât n-a nominalizat nimeni.">↩ Înapoi la timpul liber</button></div>`;
-          if (c?.stage === 'defense') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: acuzare și apărare · <span data-ends="${c.endsAt ?? ''}"></span></p>
-            <div class="row"><button class="btn small" data-cmd="startVoting">✠ Pornește votul acum</button>
+          if (c?.stage === 'defense') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: acuzare și apărare · ${c.endsAt ? `<span data-ends="${c.endsAt}"></span>` : 'fără limită de timp'}</p>
+            <div class="row"><button class="btn ${c.endsAt ? 'small' : 'pulse'}" data-cmd="startVoting">✠ Pornește votul${c.endsAt ? ' acum' : ''}</button>
             <button class="btn small danger" data-cmd="cancelNomination" data-confirm="Anulezi nominalizarea? Nu consumă dreptul nimănui.">✕ Anulează nominalizarea</button></div>`;
           if (c?.stage === 'voting') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: se votează · ${c.voted ?? 0} au votat · <span data-ends="${c.endsAt ?? ''}"></span></p>
             <div class="row"><button class="btn small danger" data-cmd="cancelNomination" data-confirm="Anulezi votul în curs?">✕ Anulează votul</button></div>`;
@@ -301,9 +301,10 @@
       const box = document.getElementById('actions');
       const playing = phase !== 'lobby' && phase !== 'end';
       document.getElementById('pause-slot').innerHTML = !playing ? ''
+        : pub.paused?.quiet ? '<button class="btn small ghost" data-cmd="pause">⌛ Ține pauza</button>'
         : pub.paused ? '<button class="btn pulse" data-cmd="resume">▶️ Continuă jocul</button>'
         : '<button class="btn small ghost" data-cmd="pause">⌛ Pauză</button>';
-      box.innerHTML = (pub.paused && playing ? '<div class="pause-bar">⌛ <b>Pauză</b> · toate cronometrele stau pe loc.</div>' : '') + actionsFor(phase);
+      box.innerHTML = (pub.paused && playing ? (pub.paused.quiet ? '<div class="pause-bar">📢 <b>Mesaj pe proiector</b> · cronometrele stau pe loc ~15 s, apoi jocul continuă singur.</div>' : '<div class="pause-bar">⌛ <b>Pauză</b> · toate cronometrele stau pe loc.</div>') : '') + actionsFor(phase);
       document.getElementById('danger').innerHTML = phase === 'lobby' ? ''
         : phase === 'end' ? '<button class="btn small danger" data-cmd="reset" data-confirm="Începi un joc nou? PIN-urile rămân.">🔄 Joc nou</button>'
         : '<button class="btn small danger" data-cmd="reset" data-pin="1" data-confirm="Oprești jocul de acum și începi de la zero? Tot ce s-a jucat se pierde. PIN-urile rămân.">🔄 Oprește jocul și începe altul</button>';

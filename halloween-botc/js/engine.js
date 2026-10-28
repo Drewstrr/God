@@ -129,7 +129,7 @@ export const MAX_PLAYERS = 15;
 // Ordinea în care se rezolvă noaptea (cine acționează înaintea cui).
 export const NIGHT_ORDER = ['poisoner', 'monk', 'demon', 'raven', 'undertaker', 'washer', 'librarian', 'investigator', 'fortune', 'spy'];
 
-export const DEFAULT_SETTINGS = { nightSeconds: 90, defenseSeconds: 60, voteSeconds: 20, freeMinutes: 22 };
+export const DEFAULT_SETTINGS = { nightSeconds: 90, defenseSeconds: 0, voteSeconds: 30, freeMinutes: 22 };
 
 // Cât de des „mint” Majordomul și Cerșetorul în fața abilităților (decizia naratorului, aici la întâmplare).
 const MISREGISTER = 0.5;
