@@ -1333,3 +1333,24 @@ export function dawnCandle(index, total, delay = 0) {
   if (index === 0) pianoNote(t, m(38), 0.45);
   else if (fromEnd <= 2) pianoNote(t, m([36, 41, 38][fromEnd]), 0.45);
 }
+
+// Finalul, „Toate rolurile”: fiecare rău dezvăluit primește un bas de pian puternic (ca la ultimele lumânări
+// ale dimineții), cu o lovitură grea dedesubt; Contele, ultimul, primește cel mai adânc și mai plin acord.
+export function evilReveal(step = 0, isDemon = false) {
+  if (!ready()) return;
+  const t = ctx.currentTime;
+  const m = (n) => 440 * 2 ** ((n - 69) / 12);
+  const notes = isDemon ? [26, 38, 45, 50] : [[36, 24], [41, 29], [38, 26]][step % 3];
+  notes.forEach((n, i) => pianoNote(t, m(n), i < 2 ? 0.75 : 0.45));
+  // lovitura de dedesubt, care se simte în piept
+  const o = ctx.createOscillator();
+  o.frequency.setValueAtTime(isDemon ? 60 : 70, t);
+  o.frequency.exponentialRampToValueAtTime(30, t + 0.9);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(isDemon ? 0.9 : 0.7, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
+  o.connect(g).connect(master);
+  o.start(t);
+  o.stop(t + 1.2);
+}

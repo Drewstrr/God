@@ -881,7 +881,7 @@ function finalPatch() {
         const bride = state.promoted?.[p.id] === 'scarlet';
         const rank = bride ? 2 : role === 'demon' ? 3 : teamOf(role) === 'evil' ? 1 : 0;
         return { name: p.name, roleName: finalRoleName(state, p.id), emoji: bride ? ROLES.scarlet.emoji : ROLES[role].emoji, evil: teamOf(role) === 'evil', alive: Boolean(state.alive[p.id]), drunkAs, rank };
-      }).sort((a, b) => a.rank - b.rank).map(({ rank, ...x }) => x),
+      }).sort((a, b) => a.rank - b.rank).map(({ rank, ...x }) => ({ ...x, boss: rank >= 2 })),   // boss: Contele (sau Mireasa devenită Conte)
       replay: buildReplay(state),
       titles: computeTitles(state),
       bets: betLeaderboard(state),

@@ -220,7 +220,14 @@
     // Efectele pașilor de final: un sunet la fiecare rol sau titlu.
     function endStageEffects(stage) {
       const f = pub.final ?? {};
-      if (stage === 'roles') (f.roles ?? []).forEach((x, i) => setTimeout(() => (x.evil ? sfx.voteHit(0) : sfx.tick()), 400 + i * 600));
+      // Rolurile: cei buni cu un „tic”, răii (la final, Contele ultimul) cu un bas de pian puternic.
+      if (stage === 'roles') {
+        let evilStep = 0;
+        (f.roles ?? []).forEach((x, i) => {
+          const step = x.evil ? evilStep++ : 0;
+          setTimeout(() => (x.evil ? sfx.evilReveal(step, Boolean(x.boss)) : sfx.tick()), 400 + i * 600);
+        });
+      }
       if (stage === 'titles') (f.titles ?? []).forEach((_, i) => setTimeout(() => sfx.bell(0, 330, 3, 0.3), 500 + i * 2200));
     }
 
