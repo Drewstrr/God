@@ -528,15 +528,16 @@
         dawnText('Pentru fiecare suflet care s-a trezit, se aprinde o lumânare…', true);
         fitStage();
       });
-      // Prima lumânare se aprinde cu chibritul, celelalte doar cu flacăra moale.
-      const firstWake = Math.min(...Object.values(m.wake ?? {}));
+      // Fiecare lumânare a unui trezit: o notă de pian care urcă, cu bas grav pe prima și pe ultimele trei
+      // (inima continuă să bată dedesubt).
+      const wakeOrder = Object.values(m.wake ?? {}).sort((a, b) => a - b);
       for (const [id, sec] of Object.entries(m.wake ?? {})) {
         at(m, sec, (late) => {
           const c = document.querySelector(`#dawn-candles [data-pid="${id}"]`);
           if (!c) return;
           c.classList.remove('out');
           c.dataset.state = late ? 'normal' : 'small';
-          if (!late) { setTimeout(() => { c.dataset.state = 'normal'; }, 300); sfx.candleLight({ first: sec === firstWake }); }
+          if (!late) { setTimeout(() => { c.dataset.state = 'normal'; }, 300); sfx.dawnCandle(wakeOrder.indexOf(sec), wakeOrder.length); }
         });
       }
 

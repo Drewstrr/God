@@ -1320,3 +1320,16 @@ export function deathPiano(delay = 0) {
   pianoNote(t + 2.9, m(38), 0.6);
   pianoNote(t + 2.9, m(26), 0.5);
 }
+
+// Dimineața, lumânarea celor treziți: o notă de pian care urcă pe o scară în Re minor;
+// pe prima și pe ultimele trei (cele rare, de suspans) se aude dedesubt și un bas grav.
+const DAWN_LADDER = [62, 65, 67, 69, 72, 74, 77, 79, 81, 84, 86, 89];
+export function dawnCandle(index, total, delay = 0) {
+  if (!ready()) return;
+  const t = ctx.currentTime + delay;
+  const m = (n) => 440 * 2 ** ((n - 69) / 12);
+  pianoNote(t, m(DAWN_LADDER[Math.min(index, DAWN_LADDER.length - 1)]), 0.5);
+  const fromEnd = total - 1 - index;  // 0 = ultima lumânare
+  if (index === 0) pianoNote(t, m(38), 0.45);
+  else if (fromEnd <= 2) pianoNote(t, m([36, 41, 38][fromEnd]), 0.45);
+}
