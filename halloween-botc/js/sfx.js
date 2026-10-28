@@ -1346,21 +1346,22 @@ export function deathPiano(delay = 0) {
   pianoNote(t + 2.9, m(26), 0.5);
 }
 
-// Dimineața, lumânarea celor treziți: o notă de pian care coboară, de sus până jos, pe gama de Re minor armonic
-// (cu Do diez, sunetul „gotic”); ultima e mereu Re-ul de jos; cu mai puțini treziți, scara pornește mai de jos.
-// Pe prima și pe ultimele trei (cele rare, de suspans) se aude dedesubt și un bas grav: Si bemol, La, apoi Re-ul adânc.
-const DAWN_LADDER = [86, 85, 82, 81, 79, 77, 76, 74, 73, 70, 69, 67, 65, 64, 62];
+// Dimineața, lumânarea celor treziți: o notă de pian care coboară pe gama de Re minor armonic (cu Do diez, sunetul
+// „gotic”), în registrul de jos (gazda: „să se audă de la cele mai joase sunete”): de la Re4 cel mult, până la Re2.
+// Ultima lumânare e mereu Re-ul cel mai de jos; cu mai puțini treziți se aud doar treptele de jos.
+// Pe prima și pe ultimele trei (cele rare, de suspans) nota e dublată de un bas mai jos, cât îl pot reda boxele.
+const DAWN_LADDER = [62, 61, 58, 57, 55, 53, 52, 50, 49, 46, 45, 43, 41, 40, 38];
 export function dawnCandle(index, total, delay = 0) {
   if (!ready()) return;
   const t = ctx.currentTime + 0.03 + delay;   // puțin înainte: o notă programată „acum” poate porni cu un mic clic
   const m = (n) => 440 * 2 ** ((n - 69) / 12);
-  // Aliniat la capăt: ultima lumânare e mereu nota cea mai joasă; cu puțini vii se aud doar treptele de jos.
-  const step = Math.max(0, DAWN_LADDER.length - total + index);
-  pianoNote(t, m(DAWN_LADDER[Math.min(step, DAWN_LADDER.length - 1)]), 0.5, 0.005, false);
+  const note = DAWN_LADDER[Math.min(Math.max(0, DAWN_LADDER.length - total + index), DAWN_LADDER.length - 1)];
   const fromEnd = total - 1 - index;  // 0 = ultima lumânare
-  // Basul, o octavă mai sus decât înainte: tot grav, dar în zona pe care boxele o pot reda (de aici veneau pocniturile).
-  if (index === 0) pianoNote(t, m(50), 0.45, 0.005, false);
-  else if (fromEnd <= 2) pianoNote(t, m([38, 45, 46][fromEnd]), 0.5, 0.005, false);
+  const special = index === 0 || fromEnd <= 2;
+  pianoNote(t, m(note), special ? 0.6 : 0.5, 0.005, false);
+  // Basul: o octavă mai jos sau, dacă ar coborî sub ~55 Hz (unde boxele pocnesc), o cvintă mai jos.
+  const bass = [note - 12, note - 7].find((n) => n >= 33);
+  if (special && bass) pianoNote(t, m(bass), 0.45, 0.005, false);
 }
 
 // Finalul, „Toate rolurile”: fiecare rău dezvăluit primește un bas de pian puternic (ca la ultimele lumânări
