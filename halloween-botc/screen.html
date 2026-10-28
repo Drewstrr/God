@@ -402,8 +402,8 @@
         if (d.free) return `
           <h1>${bt('Balul continuă', '🎭')}</h1>
           ${doomBanner()}
-          <p class="center lead muted">Vorbiți în șoaptă, faceți alianțe… sau mințiți. Nominalizările se deschid la adunare.</p>
-          ${timer('☩ Adunarea în', d.free)}
+          ${d.freeOver ? '<div class="doom-banner final"><b>🔔 Timpul liber s-a terminat!</b><span>Toată lumea la masă. Adunarea începe când sunt toți aici.</span></div>'
+            : `<p class="center lead muted">Vorbiți în șoaptă, faceți alianțe… sau mințiți. Nominalizările se deschid la adunare.</p>${timer('☩ Adunarea în', d.free)}`}
           ${townCandles()}`;
         const block = d.block;
         const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)`
@@ -873,10 +873,12 @@
       // Ziua: redesenăm doar când se schimbă ceva important; altfel actualizăm nominalizarea curentă.
       if (phase === 'day' && lastPhase === 'day') {
         const d = pub.day ?? {};
-        const key = JSON.stringify([pub.alive, pub.ghostVote, d.block, d.nominations?.length, d.free]);
+        const key = JSON.stringify([pub.alive, pub.ghostVote, d.block, d.nominations?.length, d.free, d.freeOver]);
         if (key === dayKey) return drawNomination();
         // S-a terminat timpul liber: clopotul adunării.
         if (!d.free && JSON.parse(dayKey ?? '[]')[4]) { sfx.sessionBell(); playThemeFor('day'); }
+        // A expirat timpul liber: clopotul cheamă lumea la masă (adunarea o deschide gazda).
+        if (d.freeOver && !JSON.parse(dayKey ?? '[]')[5]) { sfx.duckMusic(6); [0, 1.6, 3.2].forEach((t) => sfx.churchBell(t, 196, 0.45)); }
         dayKey = key;
         stage.innerHTML = views.day();
         nomKey = null;
@@ -907,7 +909,7 @@
         return;
       }
       stage.innerHTML = (views[phase] ?? views.lobby)();
-      if (phase === 'day') { dayKey = JSON.stringify([pub.alive, pub.ghostVote, pub.day?.block, pub.day?.nominations?.length, pub.day?.free]); drawNomination(); }
+      if (phase === 'day') { dayKey = JSON.stringify([pub.alive, pub.ghostVote, pub.day?.block, pub.day?.nominations?.length, pub.day?.free, pub.day?.freeOver]); drawNomination(); }
       fitStage();
       if (phase === 'end') [0, 400, 1500].forEach((ms) => setTimeout(fitReplay, ms));
       if (phase === 'end' && stageChanged && previous === 'end') endStageEffects(pub.endStage);

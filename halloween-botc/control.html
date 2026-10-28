@@ -242,9 +242,14 @@
           <button class="btn primary" id="begin-day">☀️ Începe ziua</button>`;
         }
         case 'day': {
+          if (d.free && d.freeOver) return `
+            <p class="lead" style="font-size:1.4rem">🔔 Timpul liber s-a terminat.</p>
+            <p class="muted">Proiectorul și telefoanele îi cheamă pe toți la masă. Deschide adunarea când sunt toți acolo.</p>
+            <div class="row"><button class="btn small ghost" id="plus5">+5 minute de timp liber</button></div>
+            <button class="btn primary" data-cmd="openGathering" data-confirm="Sunt toți la masă? Deschide adunarea.">☩ Deschide adunarea</button>`;
           if (d.free) return `
             <p class="lead" style="font-size:1.4rem">🎭 Timp liber · adunarea în <span data-ends="${d.free}"></span></p>
-            <p class="muted">Când expiră timpul, proiectorul cheamă singur pe toată lumea la adunare.</p>
+            <p class="muted">Când expiră timpul, proiectorul îi cheamă pe toți la masă; adunarea o deschizi tu.</p>
             <div class="row"><button class="btn small ghost" id="plus5">+5 minute</button></div>
             <button class="btn primary" data-cmd="openGathering" data-confirm="Deschizi adunarea acum? Timpul liber se oprește.">☩ Deschide adunarea acum</button>`;
           const block = d.block;
@@ -506,6 +511,7 @@
         case 'intro': return since > INTRO.length + 25 ? '[data-cmd="firstNight"]' : null;
         case 'morning': return pub.morning?.dawnAt && serverNow() > pub.morning.dawnAt + pub.morning.end * 1000 ? '#begin-day' : null;
         case 'day':
+          if (d.free && d.freeOver) return '[data-cmd="openGathering"]';
           // Ziua o închei tu: îți amintim când nu s-a mai întâmplat nimic de un minut și jumătate.
           if (d.free || d.current || !d.lastActivity) return null;
           return serverNow() - d.lastActivity > 90000 ? '[data-cmd="endDayCmd"]:not([disabled])' : null;

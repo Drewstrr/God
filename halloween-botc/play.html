@@ -271,7 +271,7 @@
       const phase = pub.phase ?? 'lobby';
       const night = phase === 'night' && priv?.night?.night === pub.round ? priv.night : null;
       const cur = pub.day?.current;
-      const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.day?.free, pub.endStage, Boolean(pub.script), panel, Boolean(pub.paused), pub.morning?.dawnAt, pub.introAt]);
+      const sig = JSON.stringify([phase, pub.round, pub.winner, priv, Boolean(night), pub.nightSeq, cur?.key, cur?.stage, pub.day?.nominated, pub.day?.nominators, pub.day?.free, pub.day?.freeOver, pub.endStage, Boolean(pub.script), panel, Boolean(pub.paused), pub.morning?.dawnAt, pub.introAt]);
       if (!force && sig === lastSig) return;
       lastSig = sig;
       guideOpen = document.querySelector('details.guide:not(.evil-tips)')?.open ?? guideOpen;
@@ -317,6 +317,10 @@
     function dayActions() {
       const d = pub.day ?? {};
       if (pub.phase !== 'day' || !alive()) return '';
+      if (d.free && d.freeOver) {
+        if (!store(`freeover-${pub.gameId}-${d.day}`)) { store(`freeover-${pub.gameId}-${d.day}`, '1'); navigator.vibrate?.([300, 150, 300]); }
+        return '<div class="card center doom-card final"><b>🔔 Timpul liber s-a terminat!</b><p>Vino la masă: adunarea începe când sunt toți acolo.</p></div>';
+      }
       if (d.free) return `<div class="card center"><p>🎭 <b>Timp liber.</b> Adunarea în <b data-ends="${d.free}"></b>.</p><p class="muted">Nominalizările și țărușul se deschid la adunare. Până atunci: vorbește, ascultă, minte.</p></div>`;
       if (pub.paused) return '';
       const busy = Boolean(d.current);

@@ -485,6 +485,8 @@ function publicDay(extra = {}) {
     current: host.current ? publicCurrent() : null,
     // Timpul liber (petrecerea): cât rulează, nominalizările sunt închise.
     free: host.free?.endsAt ?? null,
+    // Timpul liber a expirat: se așteaptă gazda să deschidă adunarea.
+    freeOver: Boolean(host.free?.over),
     lastActivity: host.lastActivity ?? null,
     // Adunarea deschisă din greșeală: 2 minute se poate reveni la timpul liber (cât n-a nominalizat nimeni).
     undoFreeUntil: host.lastFree && !t?.nominations?.length ? host.lastFree.at + UNDO_FREE_MS : null,
@@ -544,6 +546,15 @@ function armFree() {
 async function openGathering(cmd = {}) {
   if (pub.phase !== 'day' || !host.free) return;
   if (cmd.auto && host.free.endsAt > serverNow() + 1000) return armFree();  // timpul a fost prelungit între timp
+  // Când expiră timpul liber, adunarea NU se deschide singură: oamenii pot fi împrăștiați prin casă.
+  // Proiectorul și telefoanele îi cheamă la masă, iar gazda deschide adunarea când sunt toți acolo.
+  if (cmd.auto) {
+    if (host.free.over) return;
+    host.free.over = true;
+    await setPublic({ day: publicDay() });
+    await save();
+    return;
+  }
   clearTimeout(freeTimer);
   host.lastFree = { at: serverNow(), remaining: Math.max(0, host.free.endsAt - serverNow()) };
   host.free = null;
@@ -579,7 +590,8 @@ async function extendNight() {
 
 async function extendFree(cmd = {}) {
   if (pub.phase !== 'day' || !host.free) return;
-  host.free.endsAt += clamp(cmd.minutes, 1, 60, 5) * 60000;
+  host.free.endsAt = Math.max(host.free.endsAt, serverNow()) + clamp(cmd.minutes, 1, 60, 5) * 60000;
+  host.free.over = false;
   await setPublic({ day: publicDay() });
   await save();
   armFree();
