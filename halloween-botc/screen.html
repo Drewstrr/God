@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Proiector</title>
-  <link rel="stylesheet" href="css/style.css?v=35">
+  <link rel="stylesheet" href="css/style.css?v=36">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
@@ -822,15 +822,31 @@
       const fresh = lastNotice !== null;
       lastNotice = n.at;
       if (!fresh && serverNow() - n.at > 15000) return;
+      if (n.long) return proclaim(n.text.replace(/^📢\s*/, ''));
       const el = document.createElement('div');
       el.className = 'notice';
       el.textContent = n.text;
       document.body.appendChild(el);
       sfx.bell(0, 147, 4, 0.4);
-      // Mesajele scrise de gazdă stau mai mult pe ecran.
-      const stay = n.long ? 12000 : 7000;
+      const stay = 7000;
       setTimeout(() => el.classList.add('leaving'), stay);
       setTimeout(() => el.remove(), stay + 1200);
+    }
+
+    // Mesajul scris de gazdă din panou: o proclamație gotică peste tot ecranul, cu clopotul castelului.
+    function proclaim(text) {
+      document.querySelector('.proclaim')?.remove();
+      const el = document.createElement('div');
+      el.className = 'proclaim';
+      el.innerHTML = `<div class="pc-frame"><div class="pc-head">✠ Se dă de știre ✠</div><div class="pc-rule"></div><div class="pc-text"></div><div class="pc-rule"></div><div class="pc-foot">din porunca Gazdei</div></div>`;
+      const t = el.querySelector('.pc-text');
+      t.textContent = text;
+      if (text.length > 70) t.classList.add('long');
+      document.body.appendChild(el);
+      sfx.churchBell(0, 98, 0.5);
+      sfx.churchBell(2.2, 87.3, 0.4);
+      setTimeout(() => el.classList.add('leaving'), 15000);
+      setTimeout(() => el.remove(), 16500);
     }
 
     // Testul de sunet din panou: dangătul de seară și un clopoțel, plus un semn pe ecran (se vede chiar dacă boxele tac).
