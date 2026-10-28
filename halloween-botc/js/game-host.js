@@ -89,13 +89,13 @@ export async function startHost({ onPassive = () => {} } = {}) {
   if (host.paused?.quiet) setTimeout(() => { if (host.paused?.quiet) run({ type: 'resume' }); }, Math.max(1000, host.paused.at + ANNOUNCE_HOLD - serverNow()));
   onValue(r('public'), (snap) => { pub = snap.val() ?? {}; });
   pub = (await get(r('public'))).val() ?? {};
-  if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { nightSeconds: 90, defenseSeconds: 0, voteSeconds: 30, freeMinutes: 22 } });
-  // O singură dată: timpii salvați mai demult aveau votul de 20 s și apărarea de 60 s; gazda a cerut vot de 30 s
-  // și dezbatere fără limită. Ce a schimbat gazda de mână (alte valori) rămâne neatins.
-  if (pub.settings && (pub.settings.rev ?? 0) < 2) {
-    const s = { ...pub.settings, rev: 2 };
+  if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { nightSeconds: 90, defenseSeconds: 600, voteSeconds: 30, freeMinutes: 22, rev: 3 } });
+  // O singură dată: timpii salvați mai demult aveau votul de 20 s și apărarea de 60 s (sau fără limită); gazda a cerut
+  // vot de 30 s și dezbatere de 10 minute. Ce a schimbat gazda de mână (alte valori) rămâne neatins.
+  if (pub.settings && (pub.settings.rev ?? 0) < 3) {
+    const s = { ...pub.settings, rev: 3 };
     if (!s.voteSeconds || s.voteSeconds === 20) s.voteSeconds = 30;
-    if (s.defenseSeconds === undefined || s.defenseSeconds === 60) s.defenseSeconds = 0;
+    if (!s.defenseSeconds || s.defenseSeconds === 60) s.defenseSeconds = 600;
     await setPublic({ settings: s });
     // Jocul în curs ia și el noii timpi.
     if (state?.settings) { state.settings = { ...state.settings, voteSeconds: s.voteSeconds, defenseSeconds: s.defenseSeconds }; await save(); }
@@ -158,10 +158,10 @@ async function settings(cmd) {
   await setPublic({
     settings: {
       nightSeconds: clamp(s.nightSeconds, 20, 600, 90),
-      defenseSeconds: clamp(s.defenseSeconds, 0, 1800, 0),   // 0 = dezbatere fără limită: votul pornește când apasă gazda
+      defenseSeconds: clamp(s.defenseSeconds, 0, 1800, 600),   // 0 = dezbatere fără limită: votul pornește când apasă gazda
       voteSeconds: clamp(s.voteSeconds, 8, 120, 30),
       freeMinutes: clamp(s.freeMinutes, 0, 120, 22),
-      rev: 2,
+      rev: 3,
     },
   });
 }
@@ -702,7 +702,7 @@ async function onNominate(by, v) {
   state = nominate(state, by, v.target);
   if (state.today.virgin) return virginStrikes(by, v.target);
   // Fără limită (0 s): acuzarea și apărarea țin cât vrea gazda; votul pornește doar din panou.
-  const secs = state.settings.defenseSeconds ?? 0;
+  const secs = state.settings.defenseSeconds ?? 600;
   const endsAt = secs ? serverNow() + secs * 1000 : null;
   host.current = { key: `${state.today.day}_${state.today.nominations.length}`, by, target: v.target, stage: 'defense', endsAt, votes: {} };
   await setPublic({ day: publicDay() });

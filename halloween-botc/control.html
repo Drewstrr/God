@@ -188,10 +188,10 @@
             <button class="tog ${pub.skipFilm ? 'off' : 'on'}" id="film-toggle">${pub.skipFilm ? '🎬 Film la început: NU' : '🎬 Film la început: DA'}</button>
           </div>
           <details class="ctl-settings">
-            <summary>⚙️ Timpi: noapte ${s.nightSeconds ?? 90} s · apărare ${+(s.defenseSeconds ?? 0) ? `${s.defenseSeconds} s` : 'fără limită'} · vot ${s.voteSeconds ?? 30} s · timp liber ${s.freeMinutes ?? 22} min</summary>
+            <summary>⚙️ Timpi: noapte ${s.nightSeconds ?? 90} s · apărare ${+(s.defenseSeconds ?? 600) ? `${Math.round((s.defenseSeconds ?? 600) / 60 * 10) / 10} min` : 'fără limită'} · vot ${s.voteSeconds ?? 30} s · timp liber ${s.freeMinutes ?? 22} min</summary>
             <div class="row">
               Noapte <input type="number" id="s-night" value="${s.nightSeconds ?? 90}" min="20" max="600"> s
-              Apărare <input type="number" id="s-def" value="${s.defenseSeconds ?? 0}" min="0" max="1800" title="0 = fără limită: pornești tu votul"> s (0 = pornești tu votul)
+              Apărare <input type="number" id="s-def" value="${s.defenseSeconds ?? 600}" min="0" max="1800" title="0 = fără limită: pornești tu votul"> s (0 = pornești tu votul)
               Vot <input type="number" id="s-vote" value="${s.voteSeconds ?? 30}" min="8" max="120"> s
               Timp liber <input type="number" id="s-free" value="${s.freeMinutes ?? 22}" min="0" max="120"> min
               <button class="btn small ghost" id="save-settings">Salvează</button>
@@ -258,7 +258,7 @@
           let now = '<p class="muted">Jucătorii nominalizează de pe telefon. Tu închei ziua când s-au lămurit.</p>';
           if (!c && d.undoFreeUntil && serverNow() < d.undoFreeUntil) now += `<div class="row"><button class="btn small ghost" data-cmd="backToFree" data-until="${d.undoFreeUntil}" data-confirm="Revii la timpul liber? Merge doar cât n-a nominalizat nimeni.">↩ Înapoi la timpul liber</button></div>`;
           if (c?.stage === 'defense') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: acuzare și apărare · ${c.endsAt ? `<span data-ends="${c.endsAt}"></span>` : 'fără limită de timp'}</p>
-            <div class="row"><button class="btn ${c.endsAt ? 'small' : 'pulse'}" data-cmd="startVoting">✠ Pornește votul${c.endsAt ? ' acum' : ''}</button>
+            <div class="row"><button class="btn pulse" data-cmd="startVoting">✠ Treci la vot${c.endsAt ? ' acum' : ''}</button>
             <button class="btn small danger" data-cmd="cancelNomination" data-confirm="Anulezi nominalizarea? Nu consumă dreptul nimănui.">✕ Anulează nominalizarea</button></div>`;
           if (c?.stage === 'voting') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: se votează · ${c.voted ?? 0} au votat · <span data-ends="${c.endsAt ?? ''}"></span></p>
             <div class="row"><button class="btn small danger" data-cmd="cancelNomination" data-confirm="Anulezi votul în curs?">✕ Anulează votul</button></div>`;
