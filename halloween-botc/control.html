@@ -212,7 +212,7 @@
           <details class="ctl-settings">
             <summary>🧪 Test cu roboți (nu la petrecere)</summary>
             <div class="row">
-              <button class="btn small ghost" data-cmd="fillBots">🤖 Completează cu roboți</button>
+              <button class="btn small ghost" data-cmd="fillBots" data-confirm="Completezi locurile goale cu roboți?">🤖 Completează cu roboți</button>
               <button class="btn small ghost" data-cmd="clearBots">Scoate roboții</button>
             </div>
           </details>
@@ -258,7 +258,7 @@
           let now = '<p class="muted">Jucătorii nominalizează de pe telefon. Tu închei ziua când s-au lămurit.</p>';
           if (!c && d.undoFreeUntil && serverNow() < d.undoFreeUntil) now += `<div class="row"><button class="btn small ghost" data-cmd="backToFree" data-until="${d.undoFreeUntil}" data-confirm="Revii la timpul liber? Merge doar cât n-a nominalizat nimeni.">↩ Înapoi la timpul liber</button></div>`;
           if (c?.stage === 'defense') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: acuzare și apărare · ${c.endsAt ? `<span data-ends="${c.endsAt}"></span>` : 'fără limită de timp'}</p>
-            <div class="row"><button class="btn pulse" data-cmd="startVoting">✠ Treci la vot${c.endsAt ? ' acum' : ''}</button>
+            <div class="row"><button class="btn pulse" data-cmd="startVoting" data-confirm="Treci la vot acum? Dezbaterea se încheie și toată lumea votează pe telefon.">✠ Treci la vot${c.endsAt ? ' acum' : ''}</button>
             <button class="btn small danger" data-cmd="cancelNomination" data-confirm="Anulezi nominalizarea? Nu consumă dreptul nimănui.">✕ Anulează nominalizarea</button></div>`;
           if (c?.stage === 'voting') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: se votează · ${c.voted ?? 0} au votat · <span data-ends="${c.endsAt ?? ''}"></span></p>
             <div class="row"><button class="btn small danger" data-cmd="cancelNomination" data-confirm="Anulezi votul în curs?">✕ Anulează votul</button></div>`;
@@ -272,7 +272,7 @@
         }
         case 'execution': return `
           <p class="lead">${pub.execution?.name ? `${esc(pub.execution.name)} a fost ${gen(pub.execution.id, 'executat', 'executată')}.` : 'Nimeni nu a fost executat.'}</p>
-          <button class="btn primary" data-cmd="toNight">${pub.winner ? '🏁 Arată finalul' : '🌑 Începe noaptea'}</button>`;
+          <button class="btn primary" data-cmd="toNight" data-confirm="${pub.winner ? 'Arăți finalul pe proiector?' : 'Începi noaptea? Telefoanele trec la alegerile de noapte.'}">${pub.winner ? '🏁 Arată finalul' : '🌑 Începe noaptea'}</button>`;
         case 'end': {
           const st = pub.endStage ?? 'winner';
           const order = [['winner', '🏁 Câștigătorul'], ['roles', '🎭 Toate rolurile'], ['replay', '📜 Reluarea'], ['titles', '🏅 Titlurile serii']];
@@ -302,7 +302,7 @@
       const playing = phase !== 'lobby' && phase !== 'end';
       document.getElementById('pause-slot').innerHTML = !playing ? ''
         : pub.paused?.quiet ? '<button class="btn small ghost" data-cmd="pause">⌛ Ține pauza</button>'
-        : pub.paused ? '<button class="btn pulse" data-cmd="resume">▶️ Continuă jocul</button>'
+        : pub.paused ? '<button class="btn pulse" data-cmd="resume" data-confirm="Continui jocul? Cronometrele pornesc din nou.">▶️ Continuă jocul</button>'
         : '<button class="btn small ghost" data-cmd="pause">⌛ Pauză</button>';
       box.innerHTML = (pub.paused && playing ? (pub.paused.quiet ? '<div class="pause-bar">📢 <b>Mesaj pe proiector</b> · cronometrele stau pe loc ~15 s, apoi jocul continuă singur.</div>' : '<div class="pause-bar">⌛ <b>Pauză</b> · toate cronometrele stau pe loc.</div>') : '') + actionsFor(phase);
       document.getElementById('danger').innerHTML = phase === 'lobby' ? ''
@@ -411,14 +411,18 @@
         players[b.dataset.play] = !players[b.dataset.play];
         sendCommand('lineup', { players });
       }));
-      box.querySelector('#begin-day')?.addEventListener('click', (e) => {
+      box.querySelector('#begin-day')?.addEventListener('click', async (e) => {
+        const min = +document.getElementById('free-min').value || 0;
+        if (!(await ask(min ? `Începi ziua? Urmează ${min} minute de timp liber.` : 'Începi ziua? Adunarea se deschide imediat.'))) return;
         e.target.disabled = true;
         sendCommand('beginDay', { minutes: +document.getElementById('free-min').value || 0 });
       });
       box.querySelector('#plus5')?.addEventListener('click', () => sendCommand('extendFree', { minutes: 5 }));
-      box.querySelector('#skip-intro')?.addEventListener('click', () => sendCommand('skipIntro'));
+      box.querySelector('#skip-intro')?.addEventListener('click', async () => { if (await ask('Sari peste film și treci direct la reguli?')) sendCommand('skipIntro'); });
       box.querySelector('#film-toggle')?.addEventListener('click', () => sendCommand('skipFilm', { on: !pub.skipFilm }));
-      box.querySelectorAll('[data-end]').forEach((b) => b.addEventListener('click', () => sendCommand('endStage', { stage: b.dataset.end })));
+      box.querySelectorAll('[data-end]').forEach((b) => b.addEventListener('click', async () => {
+        if (await ask(`Treci la „${b.textContent.replace(/^Mai departe:\s*/, '').trim()}” pe proiector?`)) sendCommand('endStage', { stage: b.dataset.end });
+      }));
       box.querySelector('#save-settings')?.addEventListener('click', () => sendCommand('settings', {
         settings: {
           nightSeconds: +document.getElementById('s-night').value,
