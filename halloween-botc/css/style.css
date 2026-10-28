@@ -1116,3 +1116,14 @@ body.final-day::after { content: ''; position: fixed; inset: 0; pointer-events: 
 @keyframes pc-in { from { opacity: 0; transform: scale(1.06); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes pc-glow { to { text-shadow: 0 0 50px rgba(255, 181, 71, 0.7), 0 0 10px rgba(224, 36, 71, 0.9), 0 4px 0 #2a0008; } }
 .ask-pin { display: block; width: 10em; margin: 0 auto 18px; text-align: center; font-size: 1.6rem; letter-spacing: 0.4em; padding: 8px; }
+/* Ceremonia execuției: lumânarea jucătorului (aceeași ca în lobby) stă în picioare într-o ramă gotică,
+   mereu întreagă pe ecran, oricât de înaltă ar fi. */
+.ceremony-frame { position: relative; display: flex; align-items: flex-end; justify-content: center;
+  width: min(30vh, 22vw); height: 52vh; padding-bottom: 2.4vh; box-sizing: border-box;
+  border: 2px solid rgba(201, 161, 74, 0.75); outline: 1px solid rgba(201, 161, 74, 0.35); outline-offset: 8px;
+  border-radius: 48% 48% 6px 6px / 22% 22% 6px 6px;
+  background: radial-gradient(ellipse at 50% 35%, rgba(255, 181, 71, 0.08), transparent 65%), linear-gradient(180deg, rgba(30, 8, 12, 0.6), rgba(8, 2, 4, 0.85));
+  box-shadow: 0 0 60px rgba(200, 16, 46, 0.25), inset 0 0 40px rgba(0, 0, 0, 0.8); }
+.ceremony-frame::after { content: ''; position: absolute; left: 12%; right: 12%; bottom: 2vh; height: 2px; background: linear-gradient(90deg, transparent, rgba(201, 161, 74, 0.7), transparent); }
+.ceremony .ceremony-frame .candle { --s: min(1.05vw, 1.68vh); }
+.ceremony-frame + .ceremony-name { margin-top: 3vh; }
