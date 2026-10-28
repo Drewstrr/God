@@ -1315,7 +1315,7 @@ export function candleLight({ first = false, delay = 0 } = {}) {
   if (first) { matchStrike(t); softFlame(t + 0.15, 0.55); } else softFlame(t);
 }
 // Pian: armonice ușor „întinse” și lovitura ciocănelului.
-function pianoNote(t, f, vol, attack = 0.005) {
+function pianoNote(t, f, vol, attack = 0.005, hammer = true) {
   // Notele grave pornesc mai moale: un atac de 5 ms pe un bas adânc împinge brusc membrana boxei și pocnește.
   if (f < 130) attack = Math.max(attack, 0.025);
   const d = verbOut(vol, 0.5);
@@ -1331,7 +1331,9 @@ function pianoNote(t, f, vol, attack = 0.005) {
     o.start(t);
     o.stop(t + len + 0.05);
   });
-  burst(d, t, 0.03, 'bandpass', Math.min(4000, f * 6), 0.12, 0.002, 0.03);
+  // „Ciocănelul” pianului (un mic zgomot la atac): moale și scurt, și doar unde nu se suprapun note.
+  // Pornit în 2 ms, cu două note deodată (lumânările cu bas), dădea vârfuri care se auzeau ca pocnituri.
+  if (hammer && f >= 130) burst(d, t, 0.05, 'bandpass', Math.min(2500, f * 4), 0.04, 0.01, 0.05);
 }
 // Moartea de noapte: acord grav lovit puternic, trei note care coboară și basul final (ca în filmele vechi de groază).
 export function deathPiano(delay = 0) {
@@ -1354,11 +1356,11 @@ export function dawnCandle(index, total, delay = 0) {
   const m = (n) => 440 * 2 ** ((n - 69) / 12);
   // Aliniat la capăt: ultima lumânare e mereu nota cea mai joasă; cu puțini vii se aud doar treptele de jos.
   const step = Math.max(0, DAWN_LADDER.length - total + index);
-  pianoNote(t, m(DAWN_LADDER[Math.min(step, DAWN_LADDER.length - 1)]), 0.5);
+  pianoNote(t, m(DAWN_LADDER[Math.min(step, DAWN_LADDER.length - 1)]), 0.5, 0.005, false);
   const fromEnd = total - 1 - index;  // 0 = ultima lumânare
   // Basul, o octavă mai sus decât înainte: tot grav, dar în zona pe care boxele o pot reda (de aici veneau pocniturile).
-  if (index === 0) pianoNote(t, m(50), 0.45);
-  else if (fromEnd <= 2) pianoNote(t, m([38, 45, 46][fromEnd]), 0.5);
+  if (index === 0) pianoNote(t, m(50), 0.45, 0.005, false);
+  else if (fromEnd <= 2) pianoNote(t, m([38, 45, 46][fromEnd]), 0.5, 0.005, false);
 }
 
 // Finalul, „Toate rolurile”: fiecare rău dezvăluit primește un bas de pian puternic (ca la ultimele lumânări
@@ -1368,7 +1370,7 @@ export function evilReveal(step = 0, isDemon = false) {
   const t = ctx.currentTime + 0.03;
   const m = (n) => 440 * 2 ** ((n - 69) / 12);
   const notes = isDemon ? [26, 38, 45, 50] : [[36, 24], [41, 29], [38, 26]][step % 3];
-  notes.forEach((n, i) => pianoNote(t, m(n), i < 2 ? 0.75 : 0.45));
+  notes.forEach((n, i) => pianoNote(t, m(n), i < 2 ? 0.75 : 0.45, 0.005, false));
   // lovitura de dedesubt, care se simte în piept
   const o = ctx.createOscillator();
   o.frequency.setValueAtTime(isDemon ? 60 : 70, t);
