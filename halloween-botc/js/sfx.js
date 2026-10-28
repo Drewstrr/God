@@ -12,7 +12,21 @@ export function unlock() {
     ctx = new AC();
     master = ctx.createGain();
     master.gain.value = muted ? 0 : 0.9 * volume;
-    master.connect(ctx.destination);
+    // Limitatorul: când se suprapun multe sunete (pian, bas, clopot, muzică), suma lor ar trece de maximul plăcii
+    // de sunet și vârfurile s-ar tăia: asta se aude ca pocnituri. Compresorul coboară volumul doar în acele clipe,
+    // iar curba moale de după prinde și vârfurile prea scurte pentru el. Restul sună exact ca înainte.
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -8;
+    limiter.knee.value = 6;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.002;
+    limiter.release.value = 0.2;
+    const soft = ctx.createWaveShaper();
+    const curve = new Float32Array(2048);
+    for (let i = 0; i < curve.length; i++) { const x = (i / (curve.length - 1)) * 2 - 1; curve[i] = Math.tanh(1.2 * x) / Math.tanh(1.2); }
+    soft.curve = curve;
+    soft.oversample = '2x';
+    master.connect(limiter).connect(soft).connect(ctx.destination);
     ctx.onstatechange = () => stateListeners.forEach((cb) => cb(ready()));
   }
   // Safari poate lăsa sunetul „suspended” sau „interrupted” (după somn); îl repornim în ambele cazuri.
@@ -40,8 +54,9 @@ export const setMuted = (m) => { muted = m; applyVolume(); };
 let volume = 1;
 let musicVolume = 1;
 function applyVolume() {
-  if (master) master.gain.value = muted ? 0 : 0.9 * volume;
-  if (musicBus) musicBus.gain.value = MUSIC_LEVEL * musicVolume;
+  // Lin, nu dintr-odată: o schimbare bruscă de volum în timp ce cântă ceva pocnește și ea.
+  if (master) master.gain.setTargetAtTime(muted ? 0 : 0.9 * volume, ctx.currentTime, 0.03);
+  if (musicBus) musicBus.gain.setTargetAtTime(MUSIC_LEVEL * musicVolume, ctx.currentTime, 0.03);
 }
 export const setVolume = (v) => { volume = Math.max(0, Math.min(1, v)); applyVolume(); };
 export const setMusicVolume = (v) => { musicVolume = Math.max(0, Math.min(1, v)); applyVolume(); };
