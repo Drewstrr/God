@@ -273,7 +273,8 @@ async function openNight({ restart = false } = {}) {
       targets: spec ? shuffle(everyone.filter((t) => allowed.includes(t.id))) : null,
       info: Boolean(info),
       ghost: !state.alive[p.id],
-      bets: shuffle(everyone.filter((t) => t.id !== p.id && state.alive[t.id])),
+      // Fiecare își vede și propriul nume: altfel Contele n-ar găsi „Contele” în listă și ar întreba de ce.
+      bets: shuffle(everyone.filter((t) => state.alive[t.id])),
     };
   }
   const endsAt = serverNow() + (state.settings.nightSeconds ?? 90) * 1000;
