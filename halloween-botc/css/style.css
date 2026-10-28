@@ -1090,3 +1090,7 @@ body.final-day::after { content: ''; position: fixed; inset: 0; pointer-events: 
 .know-card .know-hidden b { color: var(--gold-hi); }
 .know-card .entry { padding: 6px 0; border-bottom: 1px dashed var(--line); white-space: pre-line; }
 .know-card .entry.new { color: var(--gold-hi); }
+
+/* Votul pe proiector: cine încă n-a votat iese în evidență */
+.voted .lead { font-size: 1.5vw; margin: 0.6vh 0; }
+.voted .vote-missing b { color: var(--gold-hi); }

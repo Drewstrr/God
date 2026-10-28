@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Proiector</title>
-  <link rel="stylesheet" href="css/style.css?v=34">
+  <link rel="stylesheet" href="css/style.css?v=35">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="screen">
@@ -608,6 +608,14 @@
     // Nominalizarea curentă: acuzatorul și acuzatul, apărarea, votul pe telefoane, apoi dezvăluirea pe rând.
     let nomKey = null;
     let revealTimers = [];
+    // În timpul votului: cine a votat deja (fără ce a votat) și cine mai lipsește, ca nimeni să nu uite.
+    function votedLine(c) {
+      const name = (id) => esc(pub.players?.[id]?.name ?? id);
+      const done = new Set(c.votedIds ?? []);
+      const missing = (c.voters ?? []).filter((id) => !done.has(id));
+      return `<p class="lead">✓ Au votat (${done.size}): ${[...done].map(name).join(', ') || '—'}</p>`
+        + (missing.length ? `<p class="lead vote-missing">⏳ Încă nu: <b>${missing.map(name).join(', ')}</b></p>` : '<p class="lead">Au votat toți.</p>');
+    }
     function drawNomination() {
       const box = document.getElementById('nomination');
       const c = pub.day?.current;
@@ -617,7 +625,7 @@
       const key = `${c.key}-${c.stage}`;
       if (key === nomKey) {
         const v = box.querySelector('.voted');
-        if (v && c.stage === 'voting') v.textContent = `${c.voted ?? 0} au votat`;
+        if (v && c.stage === 'voting') v.innerHTML = votedLine(c);
         return;
       }
       const fresh = true;
@@ -628,7 +636,7 @@
         box.innerHTML = `<div class="nom-box">${head}<p class="lead">🗣️ Acuzare și apărare</p>${timer('', c.endsAt)}</div>`;
         if (fresh) { sfx.bell(0, 196, 3, 0.4); }
       } else if (c.stage === 'voting') {
-        box.innerHTML = `<div class="nom-box">${head}<p class="lead">✠ <b>Votați acum pe telefon!</b></p>${timer('', c.endsAt)}<p class="lead voted">${c.voted ?? 0} au votat</p></div>`;
+        box.innerHTML = `<div class="nom-box">${head}<p class="lead">✠ <b>Votați acum pe telefon!</b></p>${timer('', c.endsAt)}<div class="voted">${votedLine(c)}</div></div>`;
         if (fresh) { sfx.sessionBell(); }
       } else if (c.stage === 'reveal') {
         const rv = c.reveal ?? { items: [] };

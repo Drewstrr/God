@@ -87,7 +87,7 @@ export async function startHost({ onPassive = () => {} } = {}) {
   host.seen ??= {};
   onValue(r('public'), (snap) => { pub = snap.val() ?? {}; });
   pub = (await get(r('public'))).val() ?? {};
-  if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { nightSeconds: 90, defenseSeconds: 60, voteSeconds: 20, freeMinutes: 22 } });
+  if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { nightSeconds: 90, defenseSeconds: 60, voteSeconds: 30, freeMinutes: 22 } });
 
   onChildAdded(r('commands'), (snap) => {
     if (!active) return;
@@ -147,7 +147,7 @@ async function settings(cmd) {
     settings: {
       nightSeconds: clamp(s.nightSeconds, 20, 600, 90),
       defenseSeconds: clamp(s.defenseSeconds, 10, 600, 60),
-      voteSeconds: clamp(s.voteSeconds, 8, 120, 20),
+      voteSeconds: clamp(s.voteSeconds, 8, 120, 30),
       freeMinutes: clamp(s.freeMinutes, 0, 120, 22),
     },
   });
@@ -499,7 +499,12 @@ function publicDay(extra = {}) {
 function publicCurrent() {
   const c = host.current;
   const base = { key: c.key, by: c.by, target: c.target, byName: nameOf(c.by), targetName: nameOf(c.target), stage: c.stage, endsAt: c.endsAt ?? null };
-  if (c.stage === 'voting') base.voted = Object.keys(c.votes ?? {}).length;
+  if (c.stage === 'voting') {
+    base.voted = Object.keys(c.votes ?? {}).length;
+    // Pe proiector se văd numele celor care au votat (nu și ce au votat) și cine mai lipsește.
+    base.votedIds = Object.keys(c.votes ?? {});
+    base.voters = GP().map((p) => p.id).filter(canVote);
+  }
   if (c.stage === 'reveal') base.reveal = c.reveal;
   return base;
 }
@@ -697,7 +702,7 @@ async function startVoting(cmd = {}) {
   const c = host.current;
   if (pub.phase !== 'day' || !c || c.stage !== 'defense' || (cmd.key && cmd.key !== c.key)) return;
   c.stage = 'voting';
-  c.endsAt = serverNow() + (state.settings.voteSeconds ?? 20) * 1000;
+  c.endsAt = serverNow() + (state.settings.voteSeconds ?? 30) * 1000;
   c.votes = {};
   await setPublic({ day: publicDay() });
   await save();
@@ -720,7 +725,7 @@ async function onVote(id, v) {
   const c = host.current;
   if (pub.phase !== 'day' || !c || c.stage !== 'voting' || v.key !== c.key || !canVote(id)) return;
   c.votes[id] = Boolean(v.yes);
-  await setPublic({ 'day/current/voted': Object.keys(c.votes).length });
+  await setPublic({ 'day/current/voted': Object.keys(c.votes).length, 'day/current/votedIds': Object.keys(c.votes) });
   // Au votat toți: închidem mai devreme.
   if (GP().every((p) => !canVote(p.id) || p.id in c.votes)) setTimeout(() => run({ type: 'closeVoting', key: c.key }), 800);
 }

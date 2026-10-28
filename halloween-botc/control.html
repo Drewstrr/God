@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Panou</title>
-  <link rel="stylesheet" href="css/style.css?v=34">
+  <link rel="stylesheet" href="css/style.css?v=35">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="ctl">
@@ -187,11 +187,11 @@
             <button class="tog ${pub.skipFilm ? 'off' : 'on'}" id="film-toggle">${pub.skipFilm ? '🎬 Film la început: NU' : '🎬 Film la început: DA'}</button>
           </div>
           <details class="ctl-settings">
-            <summary>⚙️ Timpi: noapte ${s.nightSeconds ?? 90} s · apărare ${s.defenseSeconds ?? 60} s · vot ${s.voteSeconds ?? 20} s · timp liber ${s.freeMinutes ?? 22} min</summary>
+            <summary>⚙️ Timpi: noapte ${s.nightSeconds ?? 90} s · apărare ${s.defenseSeconds ?? 60} s · vot ${s.voteSeconds ?? 30} s · timp liber ${s.freeMinutes ?? 22} min</summary>
             <div class="row">
               Noapte <input type="number" id="s-night" value="${s.nightSeconds ?? 90}" min="20" max="600"> s
               Apărare <input type="number" id="s-def" value="${s.defenseSeconds ?? 60}" min="10" max="600"> s
-              Vot <input type="number" id="s-vote" value="${s.voteSeconds ?? 20}" min="8" max="120"> s
+              Vot <input type="number" id="s-vote" value="${s.voteSeconds ?? 30}" min="8" max="120"> s
               Timp liber <input type="number" id="s-free" value="${s.freeMinutes ?? 22}" min="0" max="120"> min
               <button class="btn small ghost" id="save-settings">Salvează</button>
             </div>
