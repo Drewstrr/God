@@ -90,6 +90,16 @@ export async function startHost({ onPassive = () => {} } = {}) {
   onValue(r('public'), (snap) => { pub = snap.val() ?? {}; });
   pub = (await get(r('public'))).val() ?? {};
   if (!pub.phase) await setPublic({ phase: 'lobby', settings: pub.settings ?? { nightSeconds: 90, defenseSeconds: 0, voteSeconds: 30, freeMinutes: 22 } });
+  // O singură dată: timpii salvați mai demult aveau votul de 20 s și apărarea de 60 s; gazda a cerut vot de 30 s
+  // și dezbatere fără limită. Ce a schimbat gazda de mână (alte valori) rămâne neatins.
+  if (pub.settings && (pub.settings.rev ?? 0) < 2) {
+    const s = { ...pub.settings, rev: 2 };
+    if (!s.voteSeconds || s.voteSeconds === 20) s.voteSeconds = 30;
+    if (s.defenseSeconds === undefined || s.defenseSeconds === 60) s.defenseSeconds = 0;
+    await setPublic({ settings: s });
+    // Jocul în curs ia și el noii timpi.
+    if (state?.settings) { state.settings = { ...state.settings, voteSeconds: s.voteSeconds, defenseSeconds: s.defenseSeconds }; await save(); }
+  }
 
   onChildAdded(r('commands'), (snap) => {
     if (!active) return;
@@ -151,6 +161,7 @@ async function settings(cmd) {
       defenseSeconds: clamp(s.defenseSeconds, 0, 1800, 0),   // 0 = dezbatere fără limită: votul pornește când apasă gazda
       voteSeconds: clamp(s.voteSeconds, 8, 120, 30),
       freeMinutes: clamp(s.freeMinutes, 0, 120, 22),
+      rev: 2,
     },
   });
 }
