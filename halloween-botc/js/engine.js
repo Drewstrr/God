@@ -735,7 +735,10 @@ export function computeTitles(state) {
     if (h.type !== 'day') continue;
     for (const n of h.nominations) {
       accuser[n.by] = (accuser[n.by] ?? 0) + 1;
+      // Doar voturile celor buni: un rău care votează nevinovați o face cu bună știință, nu din paranoia,
+      // iar unul care își votează tovarășul nu face dreptate.
       for (const v of n.yes) {
+        if (evil(v)) continue;
         if (evil(n.target)) justice[v] = (justice[v] ?? 0) + 1;
         else innocent[v] = (innocent[v] ?? 0) + 1;
       }

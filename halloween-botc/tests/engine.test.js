@@ -462,3 +462,15 @@ test('rolurile alese de gazdă (pentru teste) se respectă, restul se completeaz
   assert.equal(Object.values(g.roles).filter((r) => r === 'demon').length, 1);
   assert.equal(new Set(Object.values(g.roles)).size, 11);
 });
+
+test('Paranoicul și Justițiarul se dau doar celor buni', () => {
+  const g = fixed(ROLES11);
+  g.history = [{ type: 'day', day: 1, nominations: [
+    { by: 'andrei', target: 'flori', yes: ['radu', 'robi', 'radu', 'nico'], count: 4, threshold: 6 },
+    { by: 'radu', target: 'luca', yes: ['radu', 'cella'], count: 2, threshold: 6 },
+    { by: 'flori', target: 'cella', yes: ['radu', 'marian'], count: 2, threshold: 6 },
+  ] }];
+  const titles = Object.fromEntries(computeTitles(g).map((x) => [x.title, x.names]));
+  assert.deepEqual(titles.Paranoicul, ['Nico']);
+  assert.deepEqual(titles['Justițiarul'], ['Marian']);
+});
