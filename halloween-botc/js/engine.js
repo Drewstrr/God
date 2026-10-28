@@ -384,9 +384,10 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
 
   // 2. Preotul binecuvântează.
   let protectedId = null;
+  let protectedBy = null;
   for (const monk of holders('monk')) {
     const t = pick(monk)?.[0];
-    if (t && functioning(state, monk)) protectedId = t;
+    if (t && functioning(state, monk)) { protectedId = t; protectedBy = monk; }
   }
 
   // 3. Contele mușcă (nu în prima noapte).
@@ -465,6 +466,8 @@ export function resolveNight(prev, actions = {}, rng = Math.random) {
   state.history.push({
     type: 'night', night,
     poisoned: state.poisoned, protected: protectedId, attack, attackResult,
+    // Cine a făcut fiecare acțiune (pentru reluare: numele, nu doar rolul).
+    by: { poisoner: state.poisoned ? poisoner : null, monk: protectedBy, demon: attack ? demon : null },
     fortune: Object.fromEntries(holders('fortune').map((id) => [id, pick(id)])),
     deaths: deaths.map((d) => d.id), bets, lean: state.lean, leanNotes: state.leanNotes, falseInfo,
   });
@@ -671,14 +674,17 @@ export function buildReplay(state) {
     if (h.type === 'night') {
       const lines = [];
       const pe = (id, verb, vf) => (isFemale(id) ? `${vf} pe ${nameOf(state, id)}` : `l-a ${verb} pe ${nameOf(state, id)}`);
-      if (h.poisoned) lines.push(`🧙‍♀️ Vrăjitoarea ${pe(h.poisoned, 'otrăvit', 'a otrăvit-o')}`);
-      if (h.protected) lines.push(`✝️ Preotul ${pe(h.protected, 'binecuvântat', 'a binecuvântat-o')}`);
+      // „Cella (Vrăjitoarea)”: numele celui care a făcut acțiunea, cu rolul lui. Partidele vechi n-au numele: rămâne rolul.
+      const actor = (id, role) => (id ? `${nameOf(state, id)} (${role})` : role);
+      const by = h.by ?? {};
+      if (h.poisoned) lines.push(`🧙‍♀️ ${actor(by.poisoner, 'Vrăjitoarea')} ${pe(h.poisoned, 'otrăvit', 'a otrăvit-o')}`);
+      if (h.protected) lines.push(`✝️ ${actor(by.monk, 'Preotul')} ${pe(h.protected, 'binecuvântat', 'a binecuvântat-o')}`);
       if (h.attack) {
         const res = h.attackResult ?? {};
-        let line = `🧛 Contele ${pe(h.attack, 'atacat', 'a atacat-o')}`;
-        if (res.bounced) line += `, dar Primarul a scăpat: în locul lui a fost ${gen(res.victim, 'atacat', 'atacată')} ${nameOf(state, res.victim)}`;
+        let line = `🧛 ${actor(by.demon, 'Contele')} ${pe(h.attack, 'atacat', 'a atacat-o')}`;
+        if (res.bounced) line += `, dar ${nameOf(state, h.attack)} (Primarul) a scăpat: în locul lui a fost ${gen(res.victim, 'atacat', 'atacată')} ${nameOf(state, res.victim)}`;
         const who = res.bounced ? res.victim : h.attack;
-        if (res.saved === 'monk') line += ` — ${gen(who, 'salvat', 'salvată')} de binecuvântarea Preotului`;
+        if (res.saved === 'monk') line += ` — ${gen(who, 'salvat', 'salvată')} de binecuvântarea ${by.monk ? `lui ${nameOf(state, by.monk)} (Preotul)` : 'Preotului'}`;
         else if (res.saved === 'soldier') line += ` — Haiducul nu poate fi ucis`;
         lines.push(line);
       }
@@ -688,7 +694,7 @@ export function buildReplay(state) {
           ? `🍺 ${nameOf(state, f.id)} era de fapt Bețivul, deci informația primită ca ${ROLES[f.role].name} era falsă: „${f.text}”`
           : `☠️ ${who}, ${gen(f.id, 'otrăvit', 'otrăvită')} în prima noapte, a primit o informație falsă: „${f.text}”`);
       }
-      for (const [, pair] of Object.entries(h.fortune ?? {})) if (pair) lines.push(`🔮 Ghicitoarea i-a cercetat pe ${pair.map((id) => nameOf(state, id)).join(' și ')}`);
+      for (const [ft, pair] of Object.entries(h.fortune ?? {})) if (pair) lines.push(`🔮 ${actor(ft, 'Ghicitoarea')} i-a cercetat pe ${pair.map((id) => nameOf(state, id)).join(' și ')}`);
       if (h.lean) {
         const side = h.lean === 'good' ? 'Bine' : 'Rău';
         lines.push(h.leanNotes?.length ? `📜 Povestitorul (spre ${side}): ${h.leanNotes.join('; ')}` : `📜 Povestitorul ar fi ajutat ${h.lean === 'good' ? 'Binele' : 'Răul'}, dar în noaptea asta nu a avut nicio ocazie`);
