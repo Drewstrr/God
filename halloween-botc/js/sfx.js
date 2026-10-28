@@ -26,7 +26,13 @@ export function unlock() {
     for (let i = 0; i < curve.length; i++) { const x = (i / (curve.length - 1)) * 2 - 1; curve[i] = Math.tanh(1.2 * x) / Math.tanh(1.2); }
     soft.curve = curve;
     soft.oversample = '2x';
-    master.connect(limiter).connect(soft).connect(ctx.destination);
+    // Boxele de laptop sau de proiector nu pot reda basul foarte adânc (sub ~50 Hz): în loc să-l cânte, membrana
+    // lovește și pocnește. Filtrul taie doar acea zonă pe care boxele oricum n-o redau; basul se aude la fel.
+    const guard = ctx.createBiquadFilter();
+    guard.type = 'highpass';
+    guard.frequency.value = 50;
+    guard.Q.value = 0.6;
+    master.connect(guard).connect(limiter).connect(soft).connect(ctx.destination);
     ctx.onstatechange = () => stateListeners.forEach((cb) => cb(ready()));
   }
   // Safari poate lăsa sunetul „suspended” sau „interrupted” (după somn); îl repornim în ambele cazuri.
@@ -1309,7 +1315,9 @@ export function candleLight({ first = false, delay = 0 } = {}) {
   if (first) { matchStrike(t); softFlame(t + 0.15, 0.55); } else softFlame(t);
 }
 // Pian: armonice ușor „întinse” și lovitura ciocănelului.
-function pianoNote(t, f, vol) {
+function pianoNote(t, f, vol, attack = 0.005) {
+  // Notele grave pornesc mai moale: un atac de 5 ms pe un bas adânc împinge brusc membrana boxei și pocnește.
+  if (f < 130) attack = Math.max(attack, 0.025);
   const d = verbOut(vol, 0.5);
   [[1, 0.6, 3.2], [2.003, 0.3, 2.2], [3.01, 0.18, 1.5], [4.02, 0.1, 1.1], [5.04, 0.06, 0.8], [6.07, 0.04, 0.6]].forEach(([k, amp, dec]) => {
     const o = ctx.createOscillator();
@@ -1317,7 +1325,7 @@ function pianoNote(t, f, vol) {
     const g = ctx.createGain();
     const len = dec * Math.min(1.4, 300 / f);
     g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(amp * 0.5, t + 0.005);
+    g.gain.exponentialRampToValueAtTime(amp * 0.5, t + attack);
     g.gain.exponentialRampToValueAtTime(0.0001, t + len);
     o.connect(g).connect(d);
     o.start(t);
@@ -1342,21 +1350,22 @@ export function deathPiano(delay = 0) {
 const DAWN_LADDER = [86, 85, 82, 81, 79, 77, 76, 74, 73, 70, 69, 67, 65, 64, 62];
 export function dawnCandle(index, total, delay = 0) {
   if (!ready()) return;
-  const t = ctx.currentTime + delay;
+  const t = ctx.currentTime + 0.03 + delay;   // puțin înainte: o notă programată „acum” poate porni cu un mic clic
   const m = (n) => 440 * 2 ** ((n - 69) / 12);
   // Aliniat la capăt: ultima lumânare e mereu nota cea mai joasă; cu puțini vii se aud doar treptele de jos.
   const step = Math.max(0, DAWN_LADDER.length - total + index);
   pianoNote(t, m(DAWN_LADDER[Math.min(step, DAWN_LADDER.length - 1)]), 0.5);
   const fromEnd = total - 1 - index;  // 0 = ultima lumânare
-  if (index === 0) pianoNote(t, m(38), 0.45);
-  else if (fromEnd <= 2) pianoNote(t, m([26, 33, 34][fromEnd]), 0.5);
+  // Basul, o octavă mai sus decât înainte: tot grav, dar în zona pe care boxele o pot reda (de aici veneau pocniturile).
+  if (index === 0) pianoNote(t, m(50), 0.45);
+  else if (fromEnd <= 2) pianoNote(t, m([38, 45, 46][fromEnd]), 0.5);
 }
 
 // Finalul, „Toate rolurile”: fiecare rău dezvăluit primește un bas de pian puternic (ca la ultimele lumânări
 // ale dimineții), cu o lovitură grea dedesubt; Contele, ultimul, primește cel mai adânc și mai plin acord.
 export function evilReveal(step = 0, isDemon = false) {
   if (!ready()) return;
-  const t = ctx.currentTime;
+  const t = ctx.currentTime + 0.03;
   const m = (n) => 440 * 2 ** ((n - 69) / 12);
   const notes = isDemon ? [26, 38, 45, 50] : [[36, 24], [41, 29], [38, 26]][step % 3];
   notes.forEach((n, i) => pianoNote(t, m(n), i < 2 ? 0.75 : 0.45));
@@ -1366,7 +1375,7 @@ export function evilReveal(step = 0, isDemon = false) {
   o.frequency.exponentialRampToValueAtTime(30, t + 0.9);
   const g = ctx.createGain();
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(isDemon ? 0.9 : 0.7, t + 0.015);
+  g.gain.exponentialRampToValueAtTime(isDemon ? 0.9 : 0.7, t + 0.03);
   g.gain.exponentialRampToValueAtTime(0.0001, t + 1.1);
   o.connect(g).connect(master);
   o.start(t);
