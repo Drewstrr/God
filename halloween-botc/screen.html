@@ -515,7 +515,7 @@
       at(m, 2.4, (late) => { if (!late) sfx.churchBell(0, 98, 0.42); });
       at(m, 4.8, (late) => { if (!late) sfx.churchBell(0, 87.3, 0.5); });
       at(m, 1.2, (late) => { if (m.dawnAt + 7500 > serverNow()) { dawnText('Castelul se trezește…'); } });
-      at(m, 4.4, (late) => { if (m.dawnAt + 7500 > serverNow()) { dawnText('Dar nu toată lumea.'); } });
+      at(m, 4.4, (late) => { if (m.dawnAt + 7500 > serverNow()) { dawnText(m.night <= 1 ? 'Dar probabil nu toată lumea…' : 'Dar nu toată lumea.'); } });
       // Inima bate tot mai repede până la deznodământ.
       const beatUntil = m.dawnAt + m.act3 * 1000;
       let gap = 1250;
