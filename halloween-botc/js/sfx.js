@@ -1337,14 +1337,15 @@ export function deathPiano(delay = 0) {
 }
 
 // Dimineața, lumânarea celor treziți: o notă de pian care coboară, de sus până jos, pe gama de Re minor armonic
-// (cu Do diez, sunetul „gotic”); prima e Re-ul de sus, ultima e Re-ul de jos, oricâți s-ar trezi.
+// (cu Do diez, sunetul „gotic”); ultima e mereu Re-ul de jos; cu mai puțini treziți, scara pornește mai de jos.
 // Pe prima și pe ultimele trei (cele rare, de suspans) se aude dedesubt și un bas grav: Si bemol, La, apoi Re-ul adânc.
 const DAWN_LADDER = [86, 85, 82, 81, 79, 77, 76, 74, 73, 70, 69, 67, 65, 64, 62];
 export function dawnCandle(index, total, delay = 0) {
   if (!ready()) return;
   const t = ctx.currentTime + delay;
   const m = (n) => 440 * 2 ** ((n - 69) / 12);
-  const step = total > 1 ? Math.round((index * (DAWN_LADDER.length - 1)) / (total - 1)) : 0;
+  // Aliniat la capăt: ultima lumânare e mereu nota cea mai joasă; cu puțini vii se aud doar treptele de jos.
+  const step = Math.max(0, DAWN_LADDER.length - total + index);
   pianoNote(t, m(DAWN_LADDER[Math.min(step, DAWN_LADDER.length - 1)]), 0.5);
   const fromEnd = total - 1 - index;  // 0 = ultima lumânare
   if (index === 0) pianoNote(t, m(38), 0.45);
