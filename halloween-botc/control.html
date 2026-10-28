@@ -92,7 +92,7 @@
   </main>
 
   <script type="module">
-    import { r, onValue, set, get, requireEngineLogin, serverNow, showUpdateBanner } from './js/fb.js';
+    import { r, onValue, set, get, requireEngineLogin, serverNow, showUpdateBanner, auth, ENGINE_EMAIL, signInWithEmailAndPassword } from './js/fb.js';
     showUpdateBanner();
     import { resetPin, hashPin } from './js/pin-service.js';
     import { ask } from './js/ask.js';
@@ -362,7 +362,7 @@
         const overlay = document.createElement('div');
         overlay.className = 'ask-overlay';
         overlay.innerHTML = `<div class="card ask-box"><p>${escP(text)}</p>
-          <input class="ask-pin" type="password" inputmode="numeric" autocomplete="off" maxlength="8" placeholder="PIN">
+          <input class="ask-pin" type="password" autocomplete="off" maxlength="64" placeholder="PIN sau parolă">
           <div class="row2"><button class="btn ghost" data-a="0">${escP(no)}</button><button class="btn danger" data-a="1">${escP(yes)}</button></div></div>`;
         const input = overlay.querySelector('.ask-pin');
         const done = (ok) => { overlay.remove(); document.removeEventListener('keydown', onKey); resolve(ok ? input.value.trim() : null); };
@@ -378,15 +378,22 @@
       });
     }
 
-    // Oprirea jocului în plin cere PIN-ul de jucător al lui Andrei (gazda), ca să nu fie apăsată din greșeală.
-    // Dacă Andrei nu și-a ales încă PIN-ul (de exemplu la un test cu roboți), ajunge confirmarea.
+    // Oprirea jocului în plin cere PIN-ul de jucător al lui Andrei (4 cifre) sau parola panoului,
+    // ca să nu fie apăsată din greșeală.
     async function hostPinOk() {
-      const stored = (await get(r('secret/pins/andrei'))).val();
-      if (!stored) return true;
-      const pin = await askPin('Scrie PIN-ul tău de jucător (Andrei) ca să oprești jocul.', { yes: 'Oprește jocul' });
+      const pin = await askPin('Ca să oprești jocul, scrie PIN-ul tău de jucător (4 cifre) sau parola cu care ai intrat în panou.', { yes: 'Oprește jocul' });
       if (pin === null) return false;
-      if (pin && (await hashPin('andrei', pin)) === stored) return true;
-      await ask('PIN greșit. Jocul continuă.', { yes: 'Bine', no: 'Închide' });
+      try {
+        if (/^\d{4}$/.test(pin)) {
+          const stored = (await get(r('secret/pins/andrei'))).val();
+          if (stored && (await hashPin('andrei', pin)) === stored) return true;
+        } else if (pin) {
+          // Aceeași logare ca la intrarea în panou: dacă parola e bună, contul rămâne același.
+          await signInWithEmailAndPassword(auth, ENGINE_EMAIL, pin);
+          return true;
+        }
+      } catch { /* parolă greșită */ }
+      await ask('PIN sau parolă greșită. Jocul continuă.', { yes: 'Bine', no: 'Închide' });
       return false;
     }
 
