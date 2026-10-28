@@ -1115,3 +1115,4 @@ body.final-day::after { content: ''; position: fixed; inset: 0; pointer-events: 
 .pc-text.long { font-size: min(4.8vw, 8.5vh); }
 @keyframes pc-in { from { opacity: 0; transform: scale(1.06); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
 @keyframes pc-glow { to { text-shadow: 0 0 50px rgba(255, 181, 71, 0.7), 0 0 10px rgba(224, 36, 71, 0.9), 0 4px 0 #2a0008; } }
+.ask-pin { display: block; width: 10em; margin: 0 auto 18px; text-align: center; font-size: 1.6rem; letter-spacing: 0.4em; padding: 8px; }

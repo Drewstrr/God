@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Balul Contelui – Panou</title>
-  <link rel="stylesheet" href="css/style.css?v=36">
+  <link rel="stylesheet" href="css/style.css?v=37">
   <script src="js/vendor/qrcode.js"></script>
 </head>
 <body class="ctl">
@@ -93,8 +93,8 @@
   <script type="module">
     import { r, onValue, set, get, requireEngineLogin, serverNow, showUpdateBanner } from './js/fb.js';
     showUpdateBanner();
-    import { resetPin } from './js/pin-service.js';
-    import { ask } from './js/ask.js';
+    import { resetPin, hashPin } from './js/pin-service.js';
+    import { ask, askPin } from './js/ask.js';
     import { INTRO } from './js/intro.js';
     import { sendCommand } from './js/game-host.js';
     import { TEST_TOOLS } from './js/config.js';
@@ -305,7 +305,7 @@
       box.innerHTML = (pub.paused && playing ? '<div class="pause-bar">⌛ <b>Pauză</b> · toate cronometrele stau pe loc.</div>' : '') + actionsFor(phase);
       document.getElementById('danger').innerHTML = phase === 'lobby' ? ''
         : phase === 'end' ? '<button class="btn small danger" data-cmd="reset" data-confirm="Începi un joc nou? PIN-urile rămân.">🔄 Joc nou</button>'
-        : '<button class="btn small danger" data-cmd="reset" data-confirm="Oprești jocul de acum și începi de la zero? Tot ce s-a jucat se pierde. PIN-urile rămân.">🔄 Oprește jocul și începe altul</button>';
+        : '<button class="btn small danger" data-cmd="reset" data-pin="1" data-confirm="Oprești jocul de acum și începi de la zero? Tot ce s-a jucat se pierde. PIN-urile rămân.">🔄 Oprește jocul și începe altul</button>';
       for (const id of ['pause-slot', 'actions', 'danger']) wire(document.getElementById(id));
       // Uneltele se redesenează doar la schimbarea fazei, ca să nu se șteargă mesajul pe care îl scrii.
       if (toolsPhase !== phase) { toolsPhase = phase; renderTools(phase); }
@@ -354,9 +354,22 @@
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     }
 
+    // Oprirea jocului în plin cere PIN-ul de jucător al lui Andrei (gazda), ca să nu fie apăsată din greșeală.
+    // Dacă Andrei nu și-a ales încă PIN-ul (de exemplu la un test cu roboți), ajunge confirmarea.
+    async function hostPinOk() {
+      const stored = (await get(r('secret/pins/andrei'))).val();
+      if (!stored) return true;
+      const pin = await askPin('Scrie PIN-ul tău de jucător (Andrei) ca să oprești jocul.', { yes: 'Oprește jocul' });
+      if (pin === null) return false;
+      if (pin && (await hashPin('andrei', pin)) === stored) return true;
+      await ask('PIN greșit. Jocul continuă.', { yes: 'Bine', no: 'Închide' });
+      return false;
+    }
+
     function wire(box) {
       box.querySelectorAll('[data-cmd]').forEach((b) => b.addEventListener('click', async () => {
         if (b.dataset.confirm && !(await ask(b.dataset.confirm))) return;
+        if (b.dataset.pin && !(await hostPinOk())) return;
         b.disabled = true;
         await sendCommand(b.dataset.cmd);
       }));
