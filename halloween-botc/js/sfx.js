@@ -9,7 +9,10 @@ export function unlock() {
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return false;
-    ctx = new AC();
+    // „playback”: browserul ține o rezervă mai mare de sunet pregătit. Întârzierea crește cu câteva sutimi de secundă
+    // (nu se simte în joc), dar când calculatorul e ocupat (ex. lumânările dimineții) sunetul nu mai rămâne fără date,
+    // ceea ce s-ar auzi ca pocnituri.
+    try { ctx = new AC({ latencyHint: 'playback' }); } catch { ctx = new AC(); }
     master = ctx.createGain();
     master.gain.value = muted ? 0 : 0.9 * volume;
     // Limitatorul: când se suprapun multe sunete (pian, bas, clopot, muzică), suma lor ar trece de maximul plăcii
@@ -25,7 +28,7 @@ export function unlock() {
     const curve = new Float32Array(2048);
     for (let i = 0; i < curve.length; i++) { const x = (i / (curve.length - 1)) * 2 - 1; curve[i] = Math.tanh(1.2 * x) / Math.tanh(1.2); }
     soft.curve = curve;
-    soft.oversample = '2x';
+    soft.oversample = 'none';
     // Boxele de laptop sau de proiector nu pot reda basul foarte adânc (sub ~50 Hz): în loc să-l cânte, membrana
     // lovește și pocnește. Filtrul taie doar acea zonă pe care boxele oricum n-o redau; basul se aude la fel.
     const guard = ctx.createBiquadFilter();
@@ -1255,7 +1258,7 @@ let verbNode = null;
 function verbOut(vol, wet) {
   if (!verbNode) {
     verbNode = ctx.createConvolver();
-    const len = ctx.sampleRate * 4;
+    const len = ctx.sampleRate * 2.2;   // ecou de ~2 s: la fel de catedrală, dar la jumătate din efortul pentru calculator
     const ir = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let c = 0; c < 2; c++) {
       const d = ir.getChannelData(c);
@@ -1319,7 +1322,8 @@ function pianoNote(t, f, vol, attack = 0.005, hammer = true) {
   // Notele grave pornesc mai moale: un atac de 5 ms pe un bas adânc împinge brusc membrana boxei și pocnește.
   if (f < 130) attack = Math.max(attack, 0.025);
   const d = verbOut(vol, 0.5);
-  [[1, 0.6, 3.2], [2.003, 0.3, 2.2], [3.01, 0.18, 1.5], [4.02, 0.1, 1.1], [5.04, 0.06, 0.8], [6.07, 0.04, 0.6]].forEach(([k, amp, dec]) => {
+  // Patru straturi (armonice) pe notă: ultimele două, aproape inaudibile, cereau calcul fără să se audă.
+  [[1, 0.62, 3.2], [2.003, 0.31, 2.2], [3.01, 0.19, 1.5], [4.02, 0.11, 1.1]].forEach(([k, amp, dec]) => {
     const o = ctx.createOscillator();
     o.frequency.value = f * k;
     const g = ctx.createGain();
