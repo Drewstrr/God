@@ -1,0 +1,19 @@
+Muzică proprie (opțional)
+
+Jocul generează singur muzica pentru fiecare fază. Dacă vrei o melodie adevărată,
+pune aici un fișier MP3 cu unul dintre numele de mai jos și el va fi folosit în locul celei generate:
+
+  waltz.mp3      petrecerea / așteptarea (între ședințe și înainte de joc)
+  organ.mp3      introducerea poveștii
+  night.mp3      noaptea
+  somber.mp3     dimineața și eliminarea
+  ticking.mp3    discuția
+  tension.mp3    votul și dezvăluirea
+  heartbeat.mp3  cele 15 secunde dinaintea eliminării
+  glory.mp3      binele a învins
+  doom.mp3       răul a învins
+
+După ce pui un fișier, adaugă numele lui (fără .mp3) în audio/list.json, de exemplu: ["night", "doom"]
+(sau trimite-mi fișierele și le pun eu).
+
+Folosește doar muzică pe care ai voie s-o folosești (de exemplu fără drepturi de autor).

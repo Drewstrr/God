@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="darkreader-lock">
+  <meta name="color-scheme" content="only dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Balul Contelui – Urgență</title>
+  <link rel="stylesheet" href="css/style.css?v=38">
+</head>
+<body>
+  <main class="wrap" style="max-width:860px">
+    <h1>🚨 Panoul de urgență</h1>
+    <div id="login"></div>
+    <div id="gate" hidden></div>
+    <div id="panel" hidden>
+      <div class="card warn">
+        <b>⚠️ Aici se văd toate secretele jocului.</b> Folosește pagina doar în caz de forță majoră și nu o arăta jucătorilor.
+        <button class="btn small ghost" id="lock" style="margin-left:8px">🔒 Închide</button>
+      </div>
+      <div class="card">
+        <h2 id="phase">Jocul</h2>
+        <div class="ctl-actions">
+          <button class="btn ghost" id="restart-night">🌑 Repornește noaptea (toți aleg din nou)</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Jucătorii și secretele</h2>
+        <table class="rows"><tbody id="rows"></tbody></table>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { r, onValue, get, set, requireEngineLogin, showUpdateBanner } from './js/fb.js';
+    showUpdateBanner();
+    import { sendCommand } from './js/game-host.js';
+    import { ROLES, teamOf } from './js/engine.js';
+    import { hashPin } from './js/pin-service.js';
+    import { ask } from './js/ask.js';
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const KEY = 'blackwood-admin-open';
+    const PHASES = {
+      lobby: 'Așteptare', intro: 'Introducere', night: 'Noaptea', morning: 'Dimineața', day: 'Ziua', execution: 'Execuția', end: 'Final',
+    };
+
+    await requireEngineLogin(document.getElementById('login'));
+
+    // A doua parolă, separată de cea a motorului. Se alege la prima deschidere.
+    const gate = document.getElementById('gate');
+    const stored = (await get(r('secret/adminPass'))).val();
+    const open = () => { gate.hidden = true; document.getElementById('panel').hidden = false; start(); };
+    const isOpen = () => { try { return sessionStorage.getItem(KEY) === '1'; } catch { return false; } };
+    if (stored && isOpen()) open();
+    else {
+      gate.hidden = false;
+      gate.innerHTML = `
+        <form class="card">
+          <h2>${stored ? '🔑 Parola de urgență' : '🔑 Alege parola de urgență'}</h2>
+          <p class="muted">${stored ? 'Introdu parola panoului de urgență.' : 'E diferită de parola motorului. Dă-o unei persoane de încredere care nu joacă sau păstreaz-o tu pentru situații grave.'}</p>
+          <input type="password" name="pw" placeholder="Parola" required minlength="4">
+          ${stored ? '' : '<input type="password" name="pw2" placeholder="Încă o dată" required minlength="4">'}
+          <button class="btn">Deschide</button>
+          <p class="error" id="err"></p>
+        </form>`;
+      gate.querySelector('form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const err = document.getElementById('err');
+        if (!stored && f.pw.value !== f.pw2.value) { err.textContent = 'Parolele nu se potrivesc.'; return; }
+        const h = await hashPin('admin', f.pw.value);
+        if (!stored) await set(r('secret/adminPass'), h);
+        else if (h !== stored) { err.textContent = 'Parolă greșită.'; return; }
+        try { sessionStorage.setItem(KEY, '1'); } catch {}
+        open();
+      });
+    }
+
+    document.getElementById('lock').addEventListener('click', () => {
+      try { sessionStorage.removeItem(KEY); } catch {}
+      location.reload();
+    });
+
+    function start() {
+      let pub = {};
+      let state = null;
+      let actions = {};
+      let stopActions = null;
+
+      const render = () => {
+        document.getElementById('phase').textContent = `Faza: ${PHASES[pub.phase] ?? pub.phase ?? '—'}${pub.round ? ` · runda ${pub.round}` : ''}`;
+        document.getElementById('restart-night').disabled = pub.phase !== 'night';
+        const name = (id) => state?.players?.find((p) => p.id === id)?.name ?? id;
+        const head = state ? `<tr><td colspan="3" class="muted">🎭 Paravanele Contelui: ${(state.bluffs ?? []).map((k) => ROLES[k]?.name).join(', ')}${state.redHerring ? ` · capcana Ghicitoarei: ${esc(name(state.redHerring))}` : ''}</td></tr>` : '';
+        const rows = head + (state?.players ?? []).map((p) => {
+          const key = state.roles?.[p.id];
+          const role = ROLES[key];
+          const alive = pub.alive?.[p.id];
+          const a = actions[p.id];
+          const extra = [
+            key === 'drunk' ? `crede că e ${ROLES[state.believed?.[p.id]]?.name}` : '',
+            state.poisoned === p.id ? '🧪 otrăvit' : '',
+            !alive ? (state.ghostVote?.[p.id] ? '🗳️ are vot de fantomă' : 'fără vot') : '',
+          ].filter(Boolean).join(' · ');
+          const targets = Object.values(a?.targets ?? {});
+          const act = pub.phase === 'night' && a
+            ? [targets.length ? `→ ${targets.map((t) => esc(name(t))).join(', ')}` : '', a.bet ? `pariu: ${esc(name(a.bet))}` : '', a.done ? '✓' : '…'].filter(Boolean).join(' · ')
+            : '';
+          return `
+            <tr>
+              <td><b>${esc(p.name)}</b><br><span class="${role && teamOf(key) === 'evil' ? 'error' : 'muted'}">${role ? `${role.emoji} ${role.name}` : '—'}</span>${extra ? `<br><small class="muted">${extra}</small>` : ''}</td>
+              <td>${alive ? '<span class="pill on">viu</span>' : '<span class="pill">👻 mort</span>'}<br><small class="muted">${act}</small></td>
+              <td style="text-align:right">
+                ${alive ? `<button class="btn small ghost" data-cmd="adminKill" data-id="${p.id}">💀 Marchează mort</button>`
+                        : `<button class="btn small" data-cmd="adminRevive" data-id="${p.id}">✨ Reînvie</button>`}
+              </td>
+            </tr>`;
+        }).join('');
+        document.getElementById('rows').innerHTML = rows || '<tr><td class="muted">Jocul nu a început.</td></tr>';
+        document.querySelectorAll('#rows [data-cmd]').forEach((b) => b.addEventListener('click', async () => {
+          const labels = { adminKill: 'marchezi mort pe', adminRevive: 'reînvii pe' };
+          if (!(await ask(`Sigur ${labels[b.dataset.cmd]} ${name(b.dataset.id)}?`))) return;
+          b.disabled = true;
+          sendCommand(b.dataset.cmd, { id: b.dataset.id });
+        }));
+      };
+
+      onValue(r('secret/state'), (snap) => { state = snap.val(); render(); });
+      onValue(r('public'), (snap) => {
+        const round = pub.round;
+        pub = snap.val() ?? {};
+        if (pub.round !== round || !stopActions) {
+          stopActions?.();
+          stopActions = pub.round ? onValue(r(`actions/${pub.round}`), (s) => { actions = s.val() ?? {}; render(); }) : null;
+        }
+        render();
+      });
+
+      document.getElementById('restart-night').addEventListener('click', async () => {
+        if (await ask('Repornești noaptea? Toate alegerile de până acum se șterg și toți aleg din nou.')) sendCommand('adminRestartNight');
+      });
+    }
+  </script>
+</body>
+</html>

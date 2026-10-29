@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="darkreader-lock">
+  <meta name="color-scheme" content="only dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Sunete · test</title>
+  <link rel="stylesheet" href="css/style.css?v=38">
+  <style>
+    .wrap { max-width: 920px; }
+    .moment { margin: 18px 0; }
+    .moment h2 { text-align: left; }
+    .vars { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+    .var { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: rgba(20, 8, 11, 0.6); }
+    .var b { display: block; color: var(--gold-hi); margin-bottom: 4px; }
+    .var p { margin: 0 0 8px; color: var(--muted); font-size: 0.95rem; }
+    .var .row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .stage { display: flex; justify-content: center; gap: 10px; margin: 10px 0 0; min-height: 34px; }
+    .stage i { width: 12px; height: 28px; border-radius: 3px; background: #4a3a30; position: relative; }
+    .stage i.lit::after { content: ''; position: absolute; left: 1px; top: -14px; width: 10px; height: 14px; border-radius: 50% 50% 40% 40%;
+      background: radial-gradient(circle at 50% 70%, #fff6c8, #ffb547 60%, rgba(255, 120, 30, 0)); animation: flick 0.25s ease-in-out infinite alternate; }
+    @keyframes flick { to { transform: scale(0.9, 1.08); } }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>🎹 Variante de sunete</h1>
+    <p class="muted">Ascultă cu boxele pornite. Fiecare variantă are un sunet singur și, unde se potrivește, „secvența”: 11 lumânări aprinse pe rând, ca în joc. Spune-mi numerele care îți plac.</p>
+    <div class="stage" id="stage"></div>
+
+    <section class="card moment" style="border-color:var(--gold-dim)">
+      <h2>⭐ Alegerea ta pentru A: chibrit la prima lumânare, apoi doar flacăra moale</h2>
+      <p class="muted">Prima lumânare: frecarea chibritului și flacăra moale. Toate celelalte: doar flacăra moale.</p>
+      <div class="row" style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn small" data-pick="one">▶ Prima lumânare</button>
+        <button class="btn small" data-pick="morning">▶ Dimineața: 11 pe rând</button>
+        <button class="btn small" data-pick="lobby">▶ Lobby: intră oamenii, din când în când</button>
+      </div>
+    </section>
+
+    <section class="card moment" style="border-color:var(--gold-hi)">
+      <h2>🎹 A3. Pianul de la început (A3), în variante mai dramatice</h2>
+      <p class="muted">Același sunet de pian care ți-a plăcut, o notă pe lumânare, dar cu mai multă dramă. „11 pe rând” merge pe ritmul real al dimineții.</p>
+      <div class="vars" id="pianos"></div>
+    </section>
+
+    <section class="card moment" style="border-color:var(--blood-hi)">
+      <h2>🎹 A2. Aprinderea dramatică (pentru dimineață)</h2>
+      <p class="muted">„11 pe rând” merge pe ritmul real al dimineții: la început lumânările vin repede, ultimele trei rar, pentru suspans. Fiecare variantă e diferită de pianul simplu.</p>
+      <div class="vars" id="drama"></div>
+    </section>
+
+    <section class="card moment">
+      <h2>🕯️ A. Se aprinde o lumânare</h2>
+      <p class="muted">În lobby, când intră cineva, și dimineața, când se aprind pe rând lumânările celor care s-au trezit.</p>
+      <div class="vars" id="candle"></div>
+    </section>
+
+    <section class="card moment">
+      <h2>💀 B. Momentul culminant: moare cineva</h2>
+      <p class="muted">Dimineața, când se stinge lumânarea victimei și apare numele ei.</p>
+      <div class="vars" id="death"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    // Toate sunetele sunt generate aici, în pagină (fără fișiere), ca să le putem asculta repede.
+    let ctx, master, verb;
+    function audio() {
+      if (ctx) { ctx.resume(); return; }
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain();
+      master.gain.value = 0.9;
+      master.connect(ctx.destination);
+      // Ecoul de catedrală: un „răspuns” de zgomot care se stinge în ~4 secunde.
+      verb = ctx.createConvolver();
+      const len = ctx.sampleRate * 4.2;
+      const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) {
+        const d = ir.getChannelData(c);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+      }
+      verb.buffer = ir;
+      const wet = ctx.createGain();
+      wet.gain.value = 0.35;
+      verb.connect(wet).connect(master);
+    }
+    // Ieșire: o parte direct, o parte prin ecou.
+    function out(vol = 1, wet = 0.6) {
+      const g = ctx.createGain();
+      g.gain.value = vol;
+      g.connect(master);
+      const s = ctx.createGain();
+      s.gain.value = wet;
+      g.connect(s).connect(verb);
+      return g;
+    }
+    const midi = (n) => 440 * 2 ** ((n - 69) / 12);
+    function noise(sec) {
+      const b = ctx.createBuffer(1, ctx.sampleRate * sec, ctx.sampleRate);
+      const d = b.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource();
+      src.buffer = b;
+      return src;
+    }
+    function tone(t, f, { type = 'sine', a = 0.005, peak = 0.2, decay = 1.5, dest }) {
+      const o = ctx.createOscillator();
+      o.type = type;
+      o.frequency.value = f;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(peak, t + a);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + a + decay);
+      o.connect(g).connect(dest);
+      o.start(t);
+      o.stop(t + a + decay + 0.05);
+    }
+
+    // ---------- instrumente ----------
+    // Pian: armonice ușor „întinse” (ca la coardele reale) și o lovitură scurtă de ciocănel.
+    function piano(t, f, vol = 0.5, sus = 1) {
+      const d = out(vol, 0.5);
+      [[1, 0.6, 3.2], [2.003, 0.3, 2.2], [3.01, 0.18, 1.5], [4.02, 0.1, 1.1], [5.04, 0.06, 0.8], [6.07, 0.04, 0.6]]
+        .forEach(([k, amp, dec]) => tone(t, f * k, { peak: amp * 0.5, decay: dec * Math.min(1.4, 300 / f) * sus, dest: d }));
+      const h = noise(0.03), bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = Math.min(4000, f * 6); bp.Q.value = 2;
+      const hg = ctx.createGain(); hg.gain.setValueAtTime(0.12, t); hg.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      h.connect(bp).connect(hg).connect(d); h.start(t);
+    }
+    // Orgă: mai multe registre (ca trăgătoarele de la orgă), intră încet, cu un tremolo fin.
+    function organ(t, f, dur = 2.5, vol = 0.18) {
+      const d = out(vol, 0.9);
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.0001, t);
+      env.gain.linearRampToValueAtTime(1, t + 0.18);
+      env.gain.setValueAtTime(1, t + dur);
+      env.gain.exponentialRampToValueAtTime(0.0001, t + dur + 1.2);
+      const trem = ctx.createOscillator(); trem.frequency.value = 5.5;
+      const tg = ctx.createGain(); tg.gain.value = 0.08;
+      trem.connect(tg).connect(env.gain); trem.start(t); trem.stop(t + dur + 1.3);
+      env.connect(d);
+      [[0.5, 0.5], [1, 1], [2, 0.6], [3, 0.3], [4, 0.25], [6, 0.1], [8, 0.08]].forEach(([k, amp]) => {
+        const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f * k;
+        const g = ctx.createGain(); g.gain.value = amp * 0.25;
+        o.connect(g).connect(env); o.start(t); o.stop(t + dur + 1.3);
+      });
+    }
+    // Harpă: coardă ciupită (algoritmul Karplus-Strong, calculat direct în sunet).
+    function harp(t, f, vol = 0.55) {
+      const sr = ctx.sampleRate, n = Math.round(sr * 2.4), period = Math.round(sr / f);
+      const buf = ctx.createBuffer(1, n, sr), d = buf.getChannelData(0);
+      const ring = Array.from({ length: period }, () => Math.random() * 2 - 1);
+      for (let i = 0; i < n; i++) { const k = i % period; const next = ring[(k + 1) % period]; d[i] = ring[k]; ring[k] = 0.4985 * (ring[k] + next); }
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3500;
+      src.connect(lp).connect(out(vol, 0.6)); src.start(t);
+    }
+    // Clopoțel de cristal / celestă: armonice „de sticlă”, înalte, care sună mult.
+    function crystal(t, f, vol = 0.35) {
+      const d = out(vol, 0.8);
+      [[1, 0.5, 2.6], [2.76, 0.22, 1.4], [5.4, 0.12, 0.8], [8.93, 0.06, 0.5]].forEach(([k, amp, dec]) => tone(t, f * k, { peak: amp * 0.4, decay: dec, dest: d }));
+    }
+    // Chibrit care se aprinde: frecare scurtă, pocnituri, apoi „vuuuf”-ul flăcării care se umflă.
+    function matchFlame(t, vol = 0.7) {
+      const d = out(vol, 0.3);
+      const s = noise(0.12), hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
+      const sg = ctx.createGain(); sg.gain.setValueAtTime(0.0001, t); sg.gain.exponentialRampToValueAtTime(0.5, t + 0.02); sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      s.connect(hp).connect(sg).connect(d); s.start(t);
+      for (let k = 0; k < 5; k++) {
+        const tc = t + 0.08 + Math.random() * 0.25, c = noise(0.01), cg = ctx.createGain();
+        cg.gain.setValueAtTime(0.25 * Math.random(), tc); cg.gain.exponentialRampToValueAtTime(0.0001, tc + 0.01);
+        c.connect(cg).connect(d); c.start(tc);
+      }
+      const w = noise(1.2), lp = ctx.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(250, t + 0.08); lp.frequency.exponentialRampToValueAtTime(1400, t + 0.35); lp.frequency.exponentialRampToValueAtTime(400, t + 1.1);
+      const wg = ctx.createGain(); wg.gain.setValueAtTime(0.0001, t + 0.08); wg.gain.exponentialRampToValueAtTime(0.45, t + 0.3); wg.gain.exponentialRampToValueAtTime(0.0001, t + 1.15);
+      w.connect(lp).connect(wg).connect(d); w.start(t + 0.08);
+    }
+    // Doar chibritul: frecarea și pocniturile, fără flacăra lui (flacăra vine separat, moale).
+    function matchStrike(t, vol = 0.7) {
+      const d = out(vol, 0.3);
+      const s = noise(0.12), hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
+      const sg = ctx.createGain(); sg.gain.setValueAtTime(0.0001, t); sg.gain.exponentialRampToValueAtTime(0.5, t + 0.02); sg.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      s.connect(hp).connect(sg).connect(d); s.start(t);
+      for (let k = 0; k < 5; k++) {
+        const tc = t + 0.08 + Math.random() * 0.2, c = noise(0.01), cg = ctx.createGain();
+        cg.gain.setValueAtTime(0.25 * Math.random(), tc); cg.gain.exponentialRampToValueAtTime(0.0001, tc + 0.01);
+        c.connect(cg).connect(d); c.start(tc);
+      }
+    }
+    // Flacără moale (fără chibrit): doar „suflul” cald al focului care pornește.
+    function softFlame(t, vol = 0.6) {
+      const d = out(vol, 0.4);
+      const w = noise(1), lp = ctx.createBiquadFilter(); lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(180, t); lp.frequency.exponentialRampToValueAtTime(900, t + 0.25); lp.frequency.exponentialRampToValueAtTime(300, t + 0.9);
+      const wg = ctx.createGain(); wg.gain.setValueAtTime(0.0001, t); wg.gain.exponentialRampToValueAtTime(0.4, t + 0.2); wg.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
+      w.connect(lp).connect(wg).connect(d); w.start(t);
+      tone(t + 0.05, 70, { peak: 0.12, a: 0.1, decay: 0.6, dest: d });
+    }
+    // Gong mare: armonice nepotrivite care cresc puțin, apoi sună lung.
+    function gong(t, f = 55, vol = 0.6) {
+      const d = out(vol, 0.7);
+      [[1, 0.5, 7], [1.48, 0.3, 6], [2.03, 0.25, 5], [2.74, 0.18, 4], [3.32, 0.12, 3.5], [4.11, 0.08, 3], [5.6, 0.05, 2]]
+        .forEach(([k, amp, dec]) => tone(t, f * k, { a: 0.06, peak: amp * 0.4, decay: dec, dest: d }));
+      const h = noise(0.2), lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 600;
+      const hg = ctx.createGain(); hg.gain.setValueAtTime(0.3, t); hg.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      h.connect(lp).connect(hg).connect(d); h.start(t);
+    }
+    // Cor: voci „aaa” (fierăstraie prin filtrele vocalei A), cu vibrato.
+    function choir(t, notes, dur = 4, vol = 0.14) {
+      const d = out(vol, 0.9);
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.0001, t); env.gain.exponentialRampToValueAtTime(1, t + 1.2);
+      env.gain.setValueAtTime(1, t + dur); env.gain.exponentialRampToValueAtTime(0.0001, t + dur + 2);
+      const formants = [[750, 6, 1], [1150, 8, 0.5], [2600, 10, 0.18]].map(([f, q, g]) => {
+        const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q;
+        const gg = ctx.createGain(); gg.gain.value = g; bp.connect(gg).connect(env); return bp;
+      });
+      env.connect(d);
+      const vib = ctx.createOscillator(); vib.frequency.value = 5; const vd = ctx.createGain(); vd.gain.value = 8;
+      vib.connect(vd); vib.start(t); vib.stop(t + dur + 2.2);
+      notes.forEach((n) => [-9, 0, 9].forEach((c) => {
+        const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = midi(n); o.detune.value = c; vd.connect(o.detune);
+        const g = ctx.createGain(); g.gain.value = 0.08; o.connect(g); formants.forEach((bp) => g.connect(bp));
+        o.start(t); o.stop(t + dur + 2.2);
+      }));
+    }
+
+    // Cutie muzicală: armonice de metal subțire, ușor dezacordate, ca o jucărie veche.
+    function musicBox(t, f, vol = 0.4) {
+      const d = out(vol, 0.7);
+      const cents = (Math.random() - 0.5) * 18;
+      [[1, 0.5, 1.4], [4, 0.18, 0.5], [10, 0.06, 0.2]].forEach(([k, amp, dec]) => {
+        const o = ctx.createOscillator(); o.frequency.value = f * k; o.detune.value = cents;
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(amp * 0.4, t + 0.003); g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+        o.connect(g).connect(d); o.start(t); o.stop(t + dec + 0.05);
+      });
+    }
+    // Clavecin de castel: coardă ciupită strălucitoare (ca la harpă, dar mai scurtă și mai „metalică”).
+    function harpsichord(t, f, vol = 0.45) {
+      const sr = ctx.sampleRate, n = Math.round(sr * 1.4), period = Math.round(sr / f);
+      const buf = ctx.createBuffer(1, n, sr), d = buf.getChannelData(0);
+      const ring = Array.from({ length: period }, () => Math.random() * 2 - 1);
+      for (let i = 0; i < n; i++) { const k = i % period; const next = ring[(k + 1) % period]; d[i] = ring[k]; ring[k] = 0.4993 * (ring[k] + next) + 0.0006 * (Math.random() - 0.5); }
+      const src = ctx.createBufferSource(); src.buffer = buf;
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = f * 0.8;
+      src.connect(hp).connect(out(vol, 0.6)); src.start(t);
+    }
+    // Violoncel cu tremolo (arcușul tremură pe coardă): crește încet, ca în filmele de groază.
+    function cello(t, f, dur = 2.5, vol = 0.16) {
+      const d = out(vol, 0.8);
+      const env = ctx.createGain();
+      env.gain.setValueAtTime(0.0001, t); env.gain.exponentialRampToValueAtTime(1, t + 0.45);
+      env.gain.setValueAtTime(1, t + dur); env.gain.exponentialRampToValueAtTime(0.0001, t + dur + 1.4);
+      const trem = ctx.createOscillator(); trem.frequency.value = 9; const tg = ctx.createGain(); tg.gain.value = 0.35;
+      trem.connect(tg).connect(env.gain); trem.start(t); trem.stop(t + dur + 1.5);
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1400; lp.connect(env); env.connect(d);
+      const vib = ctx.createOscillator(); vib.frequency.value = 5; const vg = ctx.createGain(); vg.gain.value = 6; vib.connect(vg); vib.start(t); vib.stop(t + dur + 1.5);
+      [-6, 6].forEach((c) => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = c; vg.connect(o.detune); o.connect(lp); o.start(t); o.stop(t + dur + 1.5); });
+    }
+    // O bătaie de inimă: „bum-bum” grav.
+    function thump(t, vol = 0.5) {
+      const d = out(vol, 0.2);
+      [[0, 1], [0.22, 0.7]].forEach(([dt, a]) => {
+        const o = ctx.createOscillator(); o.frequency.setValueAtTime(70, t + dt); o.frequency.exponentialRampToValueAtTime(38, t + dt + 0.18);
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t + dt); g.gain.exponentialRampToValueAtTime(0.6 * a, t + dt + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + dt + 0.22);
+        o.connect(g).connect(d); o.start(t + dt); o.stop(t + dt + 0.25);
+      });
+    }
+    // Un „vâjâit” care crește spre notă (ca un sunet dat invers), apoi lovitura de pian.
+    function swellInto(t, f, vol = 0.4) {
+      const d = out(vol, 0.6);
+      const w = noise(0.6), bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f * 2; bp.Q.value = 3;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t - 0.55); g.gain.exponentialRampToValueAtTime(0.35, t - 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.02);
+      w.connect(bp).connect(g).connect(d); w.start(t - 0.55);
+      const o = ctx.createOscillator(); o.frequency.value = f; const og = ctx.createGain(); og.gain.setValueAtTime(0.0001, t - 0.55); og.gain.exponentialRampToValueAtTime(0.15, t - 0.02); og.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      o.connect(og).connect(d); o.start(t - 0.55); o.stop(t + 0.05);
+      piano(t, f, 0.5);
+    }
+
+    // Scara pe care urcă lumânările (Re minor, ca să rămână misterios).
+    const LADDER = [62, 65, 67, 69, 72, 74, 77, 79, 81, 84, 86];
+
+    const CANDLE = [
+      { name: '1. Chibrit + flacără', help: 'Frecarea chibritului, câteva pocnituri, apoi flacăra care se umflă. Cel mai „real”.', one: (t) => matchFlame(t), step: (t) => matchFlame(t, 0.55) },
+      { name: '2. Flacără moale', help: 'Doar suflul cald al focului care pornește, fără chibrit. Discret, merge și repetat de 11 ori.', one: (t) => softFlame(t), step: (t) => softFlame(t, 0.5) },
+      { name: '3. Pian', help: 'O notă de pian pentru fiecare lumânare, urcând pe o scară minoră. Elegant, de bal.', one: (t) => piano(t, midi(69)), step: (t, i) => piano(t, midi(LADDER[i])) },
+      { name: '4. Harpă', help: 'O coardă ciupită pe lumânare. Basm, castel, foarte delicat.', one: (t) => harp(t, midi(69)), step: (t, i) => harp(t, midi(LADDER[i])) },
+      { name: '5. Clopoțel de cristal', help: 'Ca o celestă: sticlă fină, sună lung în ecou. Magic, de poveste.', one: (t) => crystal(t, midi(81)), step: (t, i) => crystal(t, midi(LADDER[i] + 12), 0.25) },
+      { name: '6. Orgă (o notă pe lumânare)', help: 'Fiecare lumânare adaugă o notă de orgă; la final se aude un acord întreg, ca într-o catedrală.', one: (t) => organ(t, midi(62), 2), step: (t, i) => organ(t, midi(LADDER[i] - 12), (11 - i) * 0.45 + 1.5, 0.09) },
+      { name: '7. Flacără + pian', help: 'Suflul flăcării și, peste el, nota de pian. Combinația dintre real și muzical.', one: (t) => { softFlame(t, 0.45); piano(t + 0.12, midi(69), 0.4); }, step: (t, i) => { softFlame(t, 0.35); piano(t + 0.12, midi(LADDER[i]), 0.35); } },
+    ];
+
+    // Aprinderea dramatică: fiecare variantă e o mică melodie care se construiește lumânare cu lumânare.
+    const CHROMA = [50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 62];                 // urcă semiton cu semiton, apoi se „rezolvă”
+    const MOON = [56, 61, 64, 56, 61, 64, 57, 61, 64, 57, 62];                   // arpegii ca în „Sonata lunii”
+    const LULLABY = [76, 74, 72, 71, 72, 74, 76, 76, 77, 76, 74];                // un cântec de leagăn bântuit
+    const DRAMA = [
+      { name: '1. Pian: suspans semiton cu semiton', help: 'Fiecare lumânare urcă cu un semiton, în octave grave, ca tensiunea dintr-un film. Ultima „se rezolvă” cu un acord.', one: (t) => { piano(t, midi(50), 0.5); piano(t, midi(38), 0.4); },
+        step: (t, i) => { piano(t, midi(CHROMA[i]), 0.45); piano(t, midi(CHROMA[i] - 12), 0.35); if (i === 10) [38, 45, 50, 53, 57].forEach((n) => piano(t, midi(n), 0.4)); } },
+      { name: '2. Pian: „Sonata lunii”', help: 'Arpegii lente, în stilul lui Beethoven. Melancolic, nocturn, foarte elegant.', one: (t) => piano(t, midi(61), 0.45), step: (t, i) => { piano(t, midi(MOON[i]), 0.42); if (i % 3 === 0) piano(t, midi(MOON[i] - 24), 0.3); } },
+      { name: '3. Cutie muzicală bântuită', help: 'Un cântec de leagăn de jucărie veche, puțin dezacordat. Cel mai „horror”, fiecare lumânare e o notă.', one: (t) => musicBox(t, midi(76)), step: (t, i) => musicBox(t, midi(LULLABY[i])) },
+      { name: '4. Clavecin de castel', help: 'Ca un clavecin dintr-un salon vechi de bal: strălucitor, baroc, coboară misterios.', one: (t) => harpsichord(t, midi(62)), step: (t, i) => harpsichord(t, midi([74, 72, 70, 69, 67, 65, 64, 62, 61, 62, 57][i])) },
+      { name: '5. Violoncel cu tremolo', help: 'Coarde care tremură și cresc, fiecare lumânare adaugă o notă; la final, un acord întunecat de orchestră.', one: (t) => cello(t, midi(50), 2), step: (t, i) => cello(t, midi([38, 45, 50, 53, 57, 62, 45, 50, 53, 57, 62][i]), 2.2, 0.08) },
+      { name: '6. Pian + inimă', help: 'O notă gravă de pian și o bătaie de inimă pe fiecare lumânare. Sumbru și apăsător.', one: (t) => { thump(t); piano(t + 0.05, midi(50), 0.45); }, step: (t, i) => { thump(t, 0.4); piano(t + 0.05, midi(LADDER[i] - 12), 0.4); } },
+      { name: '7. Pian „invers”', help: 'Un vâjâit care crește spre fiecare notă, ca un sunet dat înapoi, apoi lovitura de pian. Cinematic, ca într-un trailer.', one: (t) => swellInto(t + 0.5, midi(62)), step: (t, i) => swellInto(t + 0.5, midi(LADDER[i])) },
+      { name: '8. Flacără + cutie muzicală', help: 'Suflul flăcării și peste el o notă de cutie muzicală. Real și bântuit în același timp.', one: (t) => { softFlame(t, 0.4); musicBox(t + 0.1, midi(76), 0.35); }, step: (t, i) => { softFlame(t, 0.3); musicBox(t + 0.1, midi(LULLABY[i]), 0.32); } },
+    ];
+    // Pianul de la început (A3), în variante: același timbru, aceeași idee (o notă pe lumânare, urcând).
+    const PIANOS = [
+      { name: '1. Pianul original, pe ritmul dimineții', help: 'Exact pianul de la A3, doar că pe ritmul real: repede la început, ultimele trei rar. Ca referință.', one: (t) => piano(t, midi(69)), step: (t, i) => piano(t, midi(LADDER[i])) },
+      { name: '2. Cu pedala apăsată', help: 'Aceleași note, dar fiecare sună lung și se adună cu celelalte, ca un acord care crește din lumânări.', one: (t) => piano(t, midi(69), 0.45, 3), step: (t, i) => piano(t, midi(LADDER[i]), 0.38, 3) },
+      { name: '3. Cu bas grav', help: 'Aceleași note, iar pe prima și pe ultimele trei se aude dedesubt și un bas adânc. Mai solemn.', one: (t) => { piano(t, midi(69)); piano(t, midi(38), 0.45, 2); }, step: (t, i) => { piano(t, midi(LADDER[i])); if (i === 0 || i >= 8) piano(t, midi(38 + (i >= 8 ? [0, 3, -2][i - 8] : 0)), 0.45, 2); } },
+      { name: '4. În octave, tot mai tare', help: 'Fiecare notă dublată (mâna stângă și dreaptă), din ce în ce mai puternic: începe în șoaptă, ultima lumânare sună tare.', one: (t) => { piano(t, midi(69), 0.5); piano(t, midi(57), 0.4); }, step: (t, i) => { const v = 0.18 + i * 0.04; piano(t, midi(LADDER[i]), v); piano(t, midi(LADDER[i] - 12), v * 0.8); } },
+      { name: '5. Cu final dramatic', help: 'Urcă la fel, dar ultimele trei lumânări (cele rare) cântă un final de film: tensiune, apoi un acord minor greu.', one: (t) => piano(t, midi(69)), step: (t, i) => { if (i < 8) piano(t, midi(LADDER[i])); else if (i === 8) { piano(t, midi(69), 0.5); piano(t, midi(57), 0.4); } else if (i === 9) { piano(t, midi(70), 0.55); piano(t, midi(58), 0.45); } else [38, 50, 57, 62, 65, 69].forEach((n) => piano(t, midi(n), 0.42, 2.5)); } },
+      { name: '6. Coborând', help: 'Aceleași note, dar de sus în jos: mai melancolic, ca o numărătoare a celor rămași în viață.', one: (t) => piano(t, midi(86)), step: (t, i) => piano(t, midi(LADDER[10 - i])) },
+    ];
+
+    // Ritmul real al dimineții: 0,75–1,1 s între lumânări, ultimele trei la 1,7 / 2,4 / 3,2 s.
+    function dawnSequence(step) {
+      timers.forEach(clearTimeout); timers = [];
+      drawStage(0);
+      const t0 = ctx.currentTime + 0.6;
+      let at = 0;
+      for (let i = 0; i < 11; i++) {
+        const left = 11 - i;
+        if (i) at += left <= 3 ? [3.2, 2.4, 1.7][left - 1] : 0.75 + Math.random() * 0.35;
+        step(t0 + at, i);
+        const lit = i + 1;
+        timers.push(setTimeout(() => drawStage(lit), 600 + at * 1000));
+      }
+    }
+
+    const DEATH = [
+      { name: '1. Orgă de catedrală', help: 'Un acord minor de orgă (Re minor), adânc, cu ecou mare. Solemn, ca la o înmormântare.', play: (t) => { organ(t, midi(38), 4.5, 0.2); organ(t, midi(50), 4.5, 0.12); organ(t, midi(53), 4.5, 0.1); organ(t, midi(57), 4.5, 0.1); } },
+      { name: '2. Pian dramatic', help: 'Un acord grav lovit puternic, apoi trei note care coboară. Ca în filmele vechi de groază.', play: (t) => { [38, 45, 50, 53].forEach((n) => piano(t, midi(n), 0.6)); [[1.1, 62], [1.6, 61], [2.1, 57]].forEach(([d, n]) => piano(t + d, midi(n), 0.45)); piano(t + 2.9, midi(38), 0.6); piano(t + 2.9, midi(26), 0.5); } },
+      { name: '3. Gong', help: 'O lovitură mare de gong care sună lung. Tragic, de final de capitol.', play: (t) => gong(t) },
+      { name: '4. Cor + orgă', help: 'Voci care cântă „aaa” peste orgă. Cel mai cinematic: ca o rugăciune pentru cel mort.', play: (t) => { organ(t, midi(38), 5, 0.14); choir(t + 0.3, [50, 53, 57, 62], 4.5); } },
+      { name: '5. Gong + orgă', help: 'Gongul, apoi orga care intră încet peste ecoul lui. Puternic și solemn.', play: (t) => { gong(t, 55, 0.55); organ(t + 1.4, midi(38), 4, 0.16); organ(t + 1.4, midi(45), 4, 0.1); organ(t + 1.4, midi(53), 4, 0.1); } },
+      { name: '6. Pian + cor', help: 'O notă grea de pian, apoi corul care se ridică din ea. Emoționant, mai puțin „horror”.', play: (t) => { piano(t, midi(38), 0.6); piano(t, midi(50), 0.5); choir(t + 0.6, [57, 62, 65], 4.5, 0.12); } },
+    ];
+
+    // Lumânările de pe ecran, ca să vezi sincronizarea cu sunetul.
+    const stage = document.getElementById('stage');
+    const drawStage = (lit = 0) => { stage.innerHTML = Array.from({ length: 11 }, (_, i) => `<i class="${i < lit ? 'lit' : ''}"></i>`).join(''); };
+    drawStage(0);
+    let timers = [];
+    function sequence(step) {
+      timers.forEach(clearTimeout); timers = [];
+      drawStage(0);
+      const t0 = ctx.currentTime + 0.1;
+      for (let i = 0; i < 11; i++) {
+        step(t0 + i * 0.55, i);
+        timers.push(setTimeout(() => drawStage(i + 1), 100 + i * 550));
+      }
+    }
+
+    // Alegerea ta: prima lumânare cu chibrit, celelalte doar flacăra moale.
+    const firstCandle = (t) => { matchStrike(t); softFlame(t + 0.15, 0.55); };
+    const nextCandle = (t) => softFlame(t, 0.5);
+    function pickDemo(kind) {
+      timers.forEach(clearTimeout); timers = [];
+      const t0 = ctx.currentTime + 0.1;
+      drawStage(0);
+      if (kind === 'one') { firstCandle(t0); timers.push(setTimeout(() => drawStage(1), 250)); return; }
+      // Dimineața: lumânările vin la ~0,55 s una de alta; în lobby, oamenii intră la câteva secunde.
+      let at = 0;
+      for (let i = 0; i < 11; i++) {
+        if (i) at += kind === 'lobby' ? 1.2 + Math.random() * 2.5 : 0.55;
+        (i ? nextCandle : firstCandle)(t0 + at);
+        const lit = i + 1;
+        timers.push(setTimeout(() => drawStage(lit), 100 + at * 1000 + (i ? 0 : 150)));
+      }
+    }
+
+    document.getElementById('pianos').innerHTML = PIANOS.map((v, i) => `<div class="var"><b>${v.name}</b><p>${v.help}</p><div class="row">
+      <button class="btn small" data-p1="${i}">▶ O lumânare</button><button class="btn small ghost" data-ps="${i}">▶ 11 pe rând (ca dimineața)</button></div></div>`).join('');
+    document.getElementById('drama').innerHTML = DRAMA.map((v, i) => `<div class="var"><b>${v.name}</b><p>${v.help}</p><div class="row">
+      <button class="btn small" data-x1="${i}">▶ O lumânare</button><button class="btn small ghost" data-xs="${i}">▶ 11 pe rând (ca dimineața)</button></div></div>`).join('');
+    document.getElementById('candle').innerHTML = CANDLE.map((v, i) => `<div class="var"><b>${v.name}</b><p>${v.help}</p><div class="row">
+      <button class="btn small" data-c1="${i}">▶ O lumânare</button><button class="btn small ghost" data-cs="${i}">▶ 11 pe rând</button></div></div>`).join('');
+    document.getElementById('death').innerHTML = DEATH.map((v, i) => `<div class="var"><b>${v.name}</b><p>${v.help}</p><div class="row">
+      <button class="btn small" data-d="${i}">▶ Ascultă</button></div></div>`).join('');
+
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      audio();
+      const t = ctx.currentTime + 0.08;
+      if (b.dataset.c1) { drawStage(1); CANDLE[+b.dataset.c1].one(t); }
+      if (b.dataset.cs) sequence(CANDLE[+b.dataset.cs].step);
+      if (b.dataset.d) DEATH[+b.dataset.d].play(t);
+      if (b.dataset.pick) pickDemo(b.dataset.pick);
+      if (b.dataset.p1) { drawStage(1); PIANOS[+b.dataset.p1].one(t + 0.4); }
+      if (b.dataset.ps) dawnSequence(PIANOS[+b.dataset.ps].step);
+      if (b.dataset.x1) { drawStage(1); DRAMA[+b.dataset.x1].one(t + 0.4); }
+      if (b.dataset.xs) dawnSequence(DRAMA[+b.dataset.xs].step);
+    });
+  </script>
+</body>
+</html>

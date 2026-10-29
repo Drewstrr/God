@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="darkreader-lock">
+  <meta name="color-scheme" content="only dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Dimineața · varianta veche</title>
+  <link rel="stylesheet" href="css/style.css?v=38">
+  <style>
+    .go { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: #000; cursor: pointer; }
+    .go button { font: 800 1.6rem 'Blackwood Gothic', serif; color: var(--gold-hi); background: rgba(20, 6, 9, 0.9); border: 1px solid var(--gold); padding: 16px 30px; cursor: pointer; }
+    .again { position: fixed; right: 12px; bottom: 12px; z-index: 90; font: 600 0.95rem 'EB Garamond', serif; color: #8d7a7e; background: rgba(0, 0, 0, 0.4); border: 1px solid #3a2a2e; padding: 6px 12px; cursor: pointer; }
+  </style>
+</head>
+<body class="screen" data-phase="morning">
+  <div class="screen-wrap" id="stage"></div>
+  <div class="go" id="go"><button>▶ Varianta VECHE a sunetului</button></div>
+  <button class="again" id="again" hidden>↻ Revezi</button>
+  <script type="module">
+    // Dimineața de pe proiector, cu aceleași lumânări și aceeași ordine a momentelor ca în joc:
+    // clopotele și textele, lumânările celor treziți (o notă joasă de pian care coboară, cu bas pe prima și pe ultimele trei),
+    // apoi lumânarea victimei se stinge, apare numele ei și se aude pianul dramatic.
+    import * as sfx from './js/sfx-vechi.js';   // sunetul de dinainte (fără rezerva mare, ecou de 4 s, 6 armonice), pentru comparație
+    import { candleSVG, animateFlames } from './js/candles.js';
+    const NAMES = ['Andrei', 'Flori', 'Luca', 'Nico', 'Bogdan', 'Gabriela', 'Marian', 'Elisa', 'Robi', 'Cella', 'Radu'];
+    const stage = document.getElementById('stage');
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const DATE = new Date().toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+    let timers = [];
+    const at = (sec, fn) => timers.push(setTimeout(fn, sec * 1000));
+    const shuffle = (a) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+
+    function candleRows(looks) {
+      const items = NAMES.map((n, i) => candleSVG(n, { cls: looks[n], label: esc(n), index: i }).replace('<div class="candle ', `<div data-pid="${n}" class="candle `));
+      const top = Math.floor(items.length / 2);
+      return `<div class="candle-rows"><div class="candle-row">${items.slice(0, top).join('')}</div><div class="candle-row">${items.slice(top).join('')}</div></div>`;
+    }
+    function dawnText(html, small = false) {
+      const el = document.getElementById('dawn-text');
+      if (!el) return;
+      el.classList.remove('show');
+      setTimeout(() => { el.innerHTML = html; el.classList.toggle('small', small); el.classList.add('show'); }, 250);
+    }
+
+    function run() {
+      timers.forEach(clearTimeout); timers = [];
+      document.querySelector('.mourn-card')?.remove();
+      document.body.classList.remove('mourning');
+      document.body.classList.add('dawning');
+      sfx.playMusic(null);
+      stage.innerHTML = '<div class="dawn" id="dawn"><div class="dawn-text" id="dawn-text"></div><div id="dawn-candles"></div><div class="morning" id="morning"></div></div>';
+
+      // Cine s-a trezit (în ordine la întâmplare, ultimii trei mai rar, pentru suspans) și cine a murit.
+      const victim = NAMES[Math.floor(Math.random() * NAMES.length)];
+      const survivors = shuffle(NAMES.filter((n) => n !== victim));
+      const wake = {};
+      let t = 8 + 1.2;
+      survivors.forEach((n, i) => {
+        const left = survivors.length - i;
+        t += left <= 3 ? [3.2, 2.4, 1.7][left - 1] : 0.75 + Math.random() * 0.35;
+        wake[n] = t;
+      });
+      const act3 = t + 3;
+
+      // Actul I: clopotele, textele, inima care bate tot mai repede.
+      at(0, () => sfx.churchBell(0, 98, 0.5));
+      at(2.4, () => sfx.churchBell(0, 98, 0.42));
+      at(4.8, () => sfx.churchBell(0, 87.3, 0.5));
+      at(1.2, () => dawnText('Castelul se trezește…'));
+      at(4.4, () => dawnText('Dar nu toată lumea.'));
+      let gap = 1250;
+      const beat = () => {
+        if (!document.body.classList.contains('dawning')) return;
+        sfx.heartbeat(0, 0.8);
+        gap = Math.max(480, gap * 0.955);
+        const next = setTimeout(beat, gap);
+        timers.push(next);
+      };
+      at(0.6, beat);
+      at(act3, () => document.body.classList.remove('dawning'));
+
+      // Actul II: lumânările stinse; se aprind pe rând ale celor care s-au trezit.
+      at(8, () => {
+        document.getElementById('dawn-candles').innerHTML = candleRows(Object.fromEntries(NAMES.map((n) => [n, 'out'])));
+        dawnText('Pentru fiecare suflet care s-a trezit, se aprinde o lumânare…', true);
+        animateFlames();
+      });
+      survivors.forEach((n, i) => at(wake[n], () => {
+        const c = document.querySelector(`#dawn-candles [data-pid="${n}"]`);
+        if (!c) return;
+        c.classList.remove('out');
+        c.dataset.state = 'small';
+        setTimeout(() => { c.dataset.state = 'normal'; }, 300);
+        sfx.dawnCandle(i, survivors.length);
+      }));
+
+      // Actul III: lumânarea victimei se zbate și se stinge (mușcătura), apoi apare numele și pianul dramatic.
+      at(act3, () => {
+        document.body.classList.add('mourning');
+        dawnText('', true);
+        const c = document.querySelector(`#dawn-candles [data-pid="${victim}"]`);
+        if (c) { c.classList.add('victim'); c.dataset.state = 'dying'; setTimeout(() => { c.dataset.state = 'normal'; c.classList.remove('out'); c.classList.add('ghost'); }, 2200); }
+        sfx.playClip(Math.random() < 0.5 ? 'bite1' : 'bite2', { volume: 1 });
+        sfx.playMusic('mourning');
+      });
+      at(act3 + 2.5, () => {
+        const card = document.createElement('div');
+        card.className = 'mourn-card';
+        card.innerHTML = `<div class="m-name">${esc(victim)}</div><div class="m-date">${DATE}</div><div class="m-epitaph"></div><div class="m-testament"></div><div class="m-silence"></div>`;
+        document.body.appendChild(card);
+        requestAnimationFrame(() => card.classList.add('show'));
+        sfx.deathPiano();
+        sfx.crow(3.4, { distance: 0.3, pan: Math.random() * 0.8 - 0.4 });   // cioara, pe ecoul pianului
+      });
+      at(act3 + 5, () => { const el = document.querySelector('.mourn-card .m-epitaph'); if (el) el.textContent = '„A avut încredere în cine nu trebuia.”'; });
+      at(act3 + 26, () => document.querySelector('.mourn-card')?.classList.add('leaving'));
+      at(act3 + 27, () => {
+        document.querySelector('.mourn-card')?.remove();
+        document.body.classList.remove('mourning');
+        sfx.playMusic('somber');
+        dawnText(`💀 <b>${esc(victim)}</b> a murit în noaptea asta.`);
+      });
+    }
+    document.getElementById('go').addEventListener('click', () => {
+      sfx.unlock();
+      document.getElementById('go').remove();
+      document.getElementById('again').hidden = false;
+      setTimeout(run, 400);
+    });
+    document.getElementById('again').addEventListener('click', run);
+  </script>
+</body>
+</html>

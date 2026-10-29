@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ro">
+<head>
+  <meta charset="utf-8">
+  <meta name="darkreader-lock">
+  <meta name="color-scheme" content="only dark">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Balul Contelui – Panou</title>
+  <link rel="stylesheet" href="css/style.css?v=38">
+  <script src="js/vendor/qrcode.js"></script>
+</head>
+<body class="ctl">
+  <style>
+    /* Panoul încape pe ecranul laptopului fără scroll: bara de sus, „Acum” în stânga, unelte și jucători în dreapta. */
+    body.ctl { margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+    body.ctl .card { padding: 14px 16px; }
+    body.ctl .card h2, body.ctl .card h3 { padding-bottom: 0; background: none; text-align: left; }
+    .ctl-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid var(--line); background: rgba(10, 4, 6, 0.85); }
+    .ctl-top h1 { font-size: 1.35rem; margin: 0 8px 0 0; padding: 0; background: none; }
+    .ctl-engine { font-size: 0.9rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); }
+    .ctl-engine.ok { color: var(--ok); border-color: rgba(60, 207, 122, 0.4); }
+    .ctl-engine.error { color: #ff8a8a; border-color: var(--blood-hi); animation: sound-pulse 1.6s ease-in-out infinite; }
+    .ctl-top .grow { flex: 1; }
+    .tog { font: 600 0.88rem 'EB Garamond', serif; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+    .tog.on { color: var(--gold-hi); border-color: var(--gold-dim); background: rgba(201, 161, 74, 0.12); }
+    .tog.off { color: #ff8a8a; border-color: rgba(224, 36, 71, 0.5); }
+    .ctl-vol { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--muted); }
+    .ctl-vol input { width: 90px; }
+    .ctl-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 14px; padding: 12px 16px; flex: 1; min-height: 0; box-sizing: border-box; }
+    .ctl-grid > * { min-height: 0; }
+    .ctl-now { display: flex; flex-direction: column; overflow: auto; margin: 0; }
+    .ctl-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+    .ctl-head h2 { margin: 0; font-size: 1.6rem; }
+    .ctl-now .btn.primary { font-size: 1.25rem; padding: 14px 22px; width: 100%; margin-top: 8px; }
+    .ctl-now .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0; }
+    .ctl-now p { margin: 6px 0; }
+    .ctl-danger { margin-top: auto; padding-top: 12px; border-top: 1px dashed rgba(224, 36, 71, 0.35); display: flex; justify-content: flex-end; }
+    .btn.danger { color: #ff9a9a; border-color: rgba(224, 36, 71, 0.55); background: transparent; }
+    .ctl-side { display: flex; flex-direction: column; gap: 12px; }
+    .ctl-side .card { margin: 0; }
+    .ctl-tools .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
+    .ctl-tools input[type=text] { flex: 1; min-width: 120px; }
+    .ctl-tools h3, .ctl-players h3 { margin: 0 0 6px; }
+    .ctl-players { flex: 1; overflow: auto; }
+    .ctl-players .rows { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+    .ctl-players .rows tbody { display: contents; }
+    .ctl-players .rows tr { display: flex; align-items: center; gap: 6px; border-bottom: 1px solid var(--line); padding: 3px 0; }
+    .ctl-players .rows td { padding: 0; border: 0; font-size: 0.95rem; }
+    .ctl-players .rows td:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ctl-players .pill { font-size: 0.75rem; padding: 1px 7px; }
+    .ctl-players .btn.small { padding: 2px 7px; font-size: 0.8rem; }
+    .ctl-settings summary { cursor: pointer; color: var(--muted); padding: 4px 0; }
+    .ctl-settings .row input { width: 64px; }
+    .links-modal { position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, 0.75); display: grid; place-items: center; }
+    .links-modal[hidden] { display: none; }
+    .links-modal > .card { width: min(760px, 94vw); max-height: 90vh; overflow: auto; }
+    /* Pe telefon sau pe ecrane mici: o singură coloană, cu scroll normal. */
+    @media (max-width: 900px), (max-height: 560px) {
+      body.ctl { height: auto; overflow: auto; }
+      .ctl-grid { grid-template-columns: 1fr; height: auto; }
+    }
+  </style>
+  <header class="ctl-top">
+    <h1>🎛️ Panou</h1>
+    <span id="engine" class="ctl-engine">Se verifică motorul…</span>
+    <script>setTimeout(() => { const e = document.getElementById('engine'); if (e && e.textContent.startsWith('Se verifică')) e.textContent = '⚠️ Panoul nu pornește: reîncarcă cu Cmd+Shift+R'; }, 12000);</script>
+    <span class="grow"></span>
+    <button class="tog" id="sound">🔊 Sunet</button>
+    <button class="tog" id="music">🎵 Muzică</button>
+    <button class="tog" id="storyteller">📜 Povestitor</button>
+    <label class="ctl-vol">🔊 <input type="range" id="volume" min="0" max="100" step="5"> <b id="volume-val"></b></label>
+    <label class="ctl-vol">🎵 <input type="range" id="music-volume" min="0" max="100" step="5"> <b id="music-volume-val"></b></label>
+    <button class="tog" id="links-btn">🔗 Linkuri</button>
+  </header>
+  <div class="links-modal" id="links-modal" hidden><div class="card links" id="links"></div></div>
+  <div id="login" class="wrap"></div>
+  <main class="ctl-grid" id="panel" hidden>
+    <section class="card ctl-now">
+      <div class="ctl-head"><h2 id="phase-title">Jocul</h2><span id="pause-slot"></span></div>
+      <div id="actions"></div>
+      <div class="ctl-danger" id="danger"></div>
+    </section>
+    <aside class="ctl-side">
+      <section class="card ctl-tools" id="tools"></section>
+      <section class="card ctl-players">
+        <h3>👥 Jucătorii</h3>
+        <p class="muted" id="players-help" style="margin:0 0 6px;font-size:0.9rem"></p>
+        <table class="rows"><tbody id="players"></tbody></table>
+      </section>
+    </aside>
+  </main>
+
+  <script type="module">
+    import { r, onValue, set, get, requireEngineLogin, serverNow, showUpdateBanner, auth, ENGINE_EMAIL, signInWithEmailAndPassword } from './js/fb.js';
+    showUpdateBanner();
+    import { resetPin, hashPin } from './js/pin-service.js';
+    import { ask } from './js/ask.js';
+    import { INTRO } from './js/intro.js';
+    import { sendCommand } from './js/game-host.js';
+    import { TEST_TOOLS } from './js/config.js';
+    import { MIN_PLAYERS, MAX_PLAYERS, DISTRIBUTION, ROLES, gen, inLineup as inLineupFor } from './js/engine.js';
+
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmt = (ms) => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
+    // Toate paginile jocului, cu link de deschis, copiat sau scanat (QR).
+    const base = location.href.replace(/[^/]*([?#].*)?$/, '');
+    const LINKS = [
+      ['📽️', 'Proiector + motor', 'screen', 'Pe MacBook, pe ecranul proiectorului. Deschis într-un singur loc.'],
+      ['🕯️', 'Telefon (jucători)', 'play', 'Pentru invitați: aleg numele și PIN-ul. E și codul QR din lobby.'],
+      ['🎛️', 'Panoul de comandă', 'control', 'Pagina asta. Nu arată niciun secret.'],
+      ['🚨', 'Panoul de urgență', 'admin', 'Parolă separată. Arată secretele: doar în caz de forță majoră.'],
+      ['📜', 'Regulamentul', 'regulament', 'De trimis invitaților înainte de petrecere. Se poate printa.'],
+    ];
+    const linksBox = document.getElementById('links');
+    linksBox.innerHTML = `<div class="ctl-head"><h2>🔗 Linkurile jocului</h2><button class="btn small ghost" id="links-close">✕ Închide</button></div>${LINKS.map(([icon, name, path, help]) => `
+      <div class="link-row">
+        <div class="link-text"><b>${icon} ${name}</b><br><a href="${base + path}" target="_blank">${base + path}</a><br><span class="muted">${help}</span></div>
+        <div class="link-actions">
+          <button class="btn small ghost" data-copy="${base + path}">📋 Copiază</button>
+          <button class="btn small ghost" data-qr="${base + path}">▦ QR</button>
+        </div>
+      </div>`).join('')}<div class="link-qr" id="link-qr" hidden></div>`;
+    const linksModal = document.getElementById('links-modal');
+    document.getElementById('links-btn').addEventListener('click', () => { linksModal.hidden = false; });
+    document.getElementById('links-close').addEventListener('click', () => { linksModal.hidden = true; });
+    linksModal.addEventListener('click', (e) => { if (e.target === linksModal) linksModal.hidden = true; });
+    linksBox.querySelectorAll('[data-copy]').forEach((b) => b.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = '✓ Copiat'; } catch { ask(`Copiază linkul de mai jos: ${b.dataset.copy}`, { yes: 'Am copiat', no: 'Închide' }); }
+      setTimeout(() => { b.textContent = '📋 Copiază'; }, 1500);
+    }));
+    linksBox.querySelectorAll('[data-qr]').forEach((b) => b.addEventListener('click', () => {
+      const box = document.getElementById('link-qr');
+      const qr = window.qrcode(0, 'M');
+      qr.addData(b.dataset.qr);
+      qr.make();
+      box.innerHTML = `<div class="qr">${qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true })}</div><p class="muted">${b.dataset.qr}<br>Scanează cu camera telefonului sau a iPad-ului.</p><button class="btn small ghost" id="qr-close">Închide</button>`;
+      box.hidden = false;
+      box.querySelector('#qr-close').addEventListener('click', () => { box.hidden = true; });
+      box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }));
+
+    await requireEngineLogin(document.getElementById('login'));
+    document.getElementById('panel').hidden = false;
+    document.getElementById('login').hidden = true;
+
+    let pub = {};
+    const TITLES = {
+      lobby: '⏳ Așteptăm jucătorii', intro: '📜 Introducerea', night: '🌑 Noaptea', morning: '☀️ Dimineața',
+      day: '☀️ Ziua', execution: '⚰️ Execuția', end: '🏁 Final',
+    };
+
+    const inLineup = (id) => inLineupFor(pub.lineup, id, pub.players);
+
+    // Cine joacă: se alege înainte de start. Personajele le împarte aplicația, după numărul de jucători.
+    function lineupHtml() {
+      const all = Object.entries(pub.players ?? {}).filter(([id, p]) => id !== 'invitat' || p.hasPin);
+      const n = all.filter(([id]) => inLineup(id)).length;
+      const d = DISTRIBUTION[n];
+      return `
+        <div class="lineup">
+          <h3>👥 Cine joacă (${n})</h3>
+          <div class="chips">${all.map(([id, p]) => `<button class="chip ${inLineup(id) ? 'on' : ''}" data-play="${id}">${esc(p.name)}</button>`).join('')}</div>
+          ${d ? `<p class="muted">Aplicația va împărți: ${d[0]} Săteni, ${d[1]} Străini, ${d[2]} Slujitori, 1 Conte.</p>`
+            : `<p class="error">Jocul merge cu ${MIN_PLAYERS}–${MAX_PLAYERS} jucători.</p>`}
+        </div>`;
+    }
+    // Rolurile alese de gazdă pentru teste (în secret/forced: jucătorii nu le pot citi).
+    let forced = {};
+    const humans = () => Object.entries(pub.players ?? {}).filter(([id, p]) => inLineup(id) && p.hasPin && !p.bot);
+    const lineupReady = () => Boolean(DISTRIBUTION[Object.keys(pub.players ?? {}).filter(inLineup).length]);
+
+    // Pentru fiecare fază: ce se întâmplă acum și UN singur buton mare, pasul următor. Restul sunt mici.
+    function actionsFor(phase) {
+      const players = Object.entries(pub.players ?? {}).filter(([id]) => inLineup(id)).map(([, p]) => p);
+      const ready = players.filter((p) => p.hasPin || p.bot).length;
+      const s = pub.settings ?? {};
+      const d = pub.day ?? {};
+      const c = d.current;
+      switch (phase) {
+        case 'lobby': {
+          const missing = players.length - ready;
+          return `
+          <p class="lead">${ready} din ${players.length} jucători au intrat${missing > 0 ? ` · mai așteptăm <b>${missing}</b>` : ' · toată lumea e aici ✓'}</p>
+          ${lineupHtml()}
+          <div class="row">
+            <button class="tog ${pub.skipFilm ? 'off' : 'on'}" id="film-toggle">${pub.skipFilm ? '🎬 Film la început: NU' : '🎬 Film la început: DA'}</button>
+          </div>
+          <details class="ctl-settings">
+            <summary>⚙️ Timpi: noapte ${s.nightSeconds ?? 90} s · apărare ${+(s.defenseSeconds ?? 600) ? `${Math.round((s.defenseSeconds ?? 600) / 60 * 10) / 10} min` : 'fără limită'} · vot ${s.voteSeconds ?? 30} s · timp liber ${s.freeMinutes ?? 22} min</summary>
+            <div class="row">
+              Noapte <input type="number" id="s-night" value="${s.nightSeconds ?? 90}" min="20" max="600"> s
+              Apărare <input type="number" id="s-def" value="${s.defenseSeconds ?? 600}" min="0" max="1800" title="0 = fără limită: pornești tu votul"> s (0 = pornești tu votul)
+              Vot <input type="number" id="s-vote" value="${s.voteSeconds ?? 30}" min="8" max="120"> s
+              Timp liber <input type="number" id="s-free" value="${s.freeMinutes ?? 22}" min="0" max="120"> min
+              <button class="btn small ghost" id="save-settings">Salvează</button>
+            </div>
+          </details>
+          ${!TEST_TOOLS ? '' : `${Object.keys(forced).length ? `<div class="pause-bar">⚠️ Ai ales tu rolul pentru <b>${Object.keys(forced).length}</b> ${Object.keys(forced).length === 1 ? 'jucător' : 'jucători'} (doar pentru teste: tu le vei ști rolurile). <button class="btn small danger" id="forced-clear">Șterge alegerile</button></div>` : ''}
+          <details class="ctl-settings" ${Object.keys(forced).length ? 'open' : ''}>
+            <summary>🎭 Test: alege tu rolurile (nu la petrecere)</summary>
+            <p class="muted" style="margin:4px 0">Doar pentru oamenii reali. Cine rămâne „la întâmplare” primește un rol potrivit, ca să iasă numărul corect de Săteni, Străini, Slujitori și un singur Conte.</p>
+            <div class="row" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 12px">${humans().map(([id, p]) => `
+              <label style="display:flex;gap:6px;align-items:center;justify-content:space-between">${esc(p.name)}
+                <select data-force="${id}">
+                  <option value="">🎲 la întâmplare</option>
+                  ${[['townsfolk', 'Săteni'], ['outsider', 'Străini'], ['minion', 'Slujitori'], ['demon', 'Conte']].map(([t, label]) => `<optgroup label="${label}">${Object.entries(ROLES).filter(([, r]) => r.type === t).map(([k, r]) => `<option value="${k}" ${forced[id] === k ? 'selected' : ''} ${Object.entries(forced).some(([o, v]) => o !== id && v === k) ? 'disabled' : ''}>${r.emoji} ${esc(r.name)}</option>`).join('')}</optgroup>`).join('')}
+                </select>
+              </label>`).join('') || '<span class="muted">Niciun om real cu PIN încă.</span>'}</div>
+          </details>`}
+          <details class="ctl-settings">
+            <summary>🧪 Test cu roboți (nu la petrecere)</summary>
+            <div class="row">
+              <button class="btn small ghost" data-cmd="fillBots" data-confirm="Completezi locurile goale cu roboți?">🤖 Completează cu roboți</button>
+              <button class="btn small ghost" data-cmd="clearBots">Scoate roboții</button>
+            </div>
+          </details>
+          <button class="btn primary" data-cmd="start" data-confirm="Pornești jocul cu ${players.length} jucători? Rolurile se împart acum." ${ready < players.length || !lineupReady() ? 'disabled' : ''}>▶️ Pornește jocul</button>
+          ${ready < players.length ? '<p class="muted">Butonul se activează când toți cei bifați și-au ales PIN-ul.</p>' : ''}`;
+        }
+        case 'intro': {
+          const film = serverNow() < (pub.introAt ?? 0) + INTRO.length * 1000;
+          return `
+          <p>${film ? `🎬 Rulează filmul de deschidere (~${INTRO.length} s).` : '📜 Pe proiector sunt regulile.'} După film, fiecare rupe sigiliul de pe telefon și își citește rolul.</p>
+          <p class="muted">Explică pe scurt regulile, apoi începe noaptea.</p>
+          ${film ? '<div class="row"><button class="btn small ghost" id="skip-intro">⏭ Sari peste film</button></div>' : ''}
+          <button class="btn primary" data-cmd="firstNight" data-confirm="Ai terminat explicațiile? Începe prima noapte.">🌑 Începe prima noapte</button>`;
+        }
+        case 'night': return `
+          <p class="lead" style="font-size:1.4rem">${pub.progress?.done ?? 0} / ${pub.progress?.total ?? 0} au ales · ⏳ <span data-ends="${pub.endsAt ?? ''}"></span></p>
+          <p class="muted">Noaptea se încheie singură când aleg toți sau când expiră timpul. Nu trebuie să apeși nimic.</p>
+          ${pub.round === 1 && serverNow() < (pub.undoIntroUntil ?? 0) ? `<div class="row"><button class="btn small ghost" data-cmd="backToIntro" data-until="${pub.undoIntroUntil}" data-confirm="Revii la reguli? Merge doar dacă nimeni n-a apucat să aleagă.">↩ Înapoi la reguli</button></div>` : ''}
+          <div class="row">
+            <button class="btn small" id="plus30">+30 secunde</button>
+            <button class="btn small ghost" data-cmd="endNight" data-confirm="Închei noaptea acum? Cine n-a ales pierde acțiunea.">⏹ Încheie noaptea acum</button>
+          </div>`;
+        case 'morning': {
+          const ritual = pub.morning?.dawnAt && serverNow() < pub.morning.dawnAt + pub.morning.end * 1000;
+          return `
+          <p>${ritual ? '🕯️ Proiectorul anunță morții nopții. Așteaptă să se termine.' : '✓ Anunțul s-a terminat.'}</p>
+          <div class="row">Timp liber <input type="number" id="free-min" value="${s.freeMinutes ?? 22}" min="0" max="120"> minute <span class="muted">(0 = adunarea imediat)</span></div>
+          <button class="btn primary" id="begin-day">☀️ Începe ziua</button>`;
+        }
+        case 'day': {
+          if (d.free && d.freeOver) return `
+            <p class="lead" style="font-size:1.4rem">🔔 Timpul liber s-a terminat.</p>
+            <p class="muted">Proiectorul și telefoanele îi cheamă pe toți la masă. Deschide adunarea când sunt toți acolo.</p>
+            <div class="row"><button class="btn small ghost" id="plus5">+5 minute de timp liber</button></div>
+            <button class="btn primary" data-cmd="openGathering" data-confirm="Sunt toți la masă? Deschide adunarea.">☩ Deschide adunarea</button>`;
+          if (d.free) return `
+            <p class="lead" style="font-size:1.4rem">🎭 Timp liber · adunarea în <span data-ends="${d.free}"></span></p>
+            <p class="muted">Când expiră timpul, proiectorul îi cheamă pe toți la masă; adunarea o deschizi tu.</p>
+            <div class="row"><button class="btn small ghost" id="plus5">+5 minute</button></div>
+            <button class="btn primary" data-cmd="openGathering" data-confirm="Deschizi adunarea acum? Timpul liber se oprește.">☩ Deschide adunarea acum</button>`;
+          const block = d.block;
+          const blockLine = block?.id ? `⚖️ Pe butuc: <b>${esc(block.name)}</b> (${block.votes} voturi)` : block ? `⚖️ Egalitate la ${block.votes}: nimeni pe butuc` : '⚖️ Nimeni pe butuc';
+          let now = '<p class="muted">Jucătorii nominalizează de pe telefon. Tu închei ziua când s-au lămurit.</p>';
+          if (!c && d.undoFreeUntil && serverNow() < d.undoFreeUntil) now += `<div class="row"><button class="btn small ghost" data-cmd="backToFree" data-until="${d.undoFreeUntil}" data-confirm="Revii la timpul liber? Merge doar cât n-a nominalizat nimeni.">↩ Înapoi la timpul liber</button></div>`;
+          if (c?.stage === 'defense') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: acuzare și apărare · ${c.endsAt ? `<span data-ends="${c.endsAt}"></span>` : 'fără limită de timp'}</p>
+            <div class="row"><button class="btn pulse" data-cmd="startVoting" data-confirm="Treci la vot acum? Dezbaterea se încheie și toată lumea votează pe telefon.">✠ Treci la vot${c.endsAt ? ' acum' : ''}</button>
+            <button class="btn small danger" data-cmd="cancelNomination" data-confirm="Anulezi nominalizarea? Nu consumă dreptul nimănui.">✕ Anulează nominalizarea</button></div>`;
+          if (c?.stage === 'voting') now = `<p><b>${esc(c.byName)}</b> → <b>${esc(c.targetName)}</b>: se votează · ${c.voted ?? 0} au votat · <span data-ends="${c.endsAt ?? ''}"></span></p>
+            <div class="row"><button class="btn small danger" data-cmd="cancelNomination" data-confirm="Anulezi votul în curs?">✕ Anulează votul</button></div>`;
+          if (c?.stage === 'reveal') now = `<p>Se dezvăluie voturile pentru <b>${esc(c.targetName)}</b>…</p>`;
+          return `
+            <p class="lead">Ziua ${d.day ?? ''} · ${blockLine} · minim ${d.threshold ?? '?'} voturi</p>
+            ${(d.nominations ?? []).length ? `<p class="muted">Azi: ${(d.nominations ?? []).map((n) => `${esc(n.byName)} → ${esc(n.targetName)} (${n.count})`).join(' · ')}</p>` : ''}
+            ${now}
+            <button class="btn primary" data-cmd="endDayCmd" ${c && c.stage !== 'reveal' ? 'disabled' : ''} data-confirm="${block?.id ? `Închei ziua? ${esc(block.name)} va fi ${gen(block.id, 'executat', 'executată')}.` : 'Închei ziua fără execuție?'}">🌙 Încheie ziua${block?.id ? ` (execută pe ${esc(block.name)})` : ' (fără execuție)'}</button>
+            ${c && c.stage !== 'reveal' ? '<p class="muted">Poți încheia ziua după ce se termină votul în curs.</p>' : ''}`;
+        }
+        case 'execution': return `
+          <p class="lead">${pub.execution?.name ? `${esc(pub.execution.name)} a fost ${gen(pub.execution.id, 'executat', 'executată')}.` : 'Nimeni nu a fost executat.'}</p>
+          <button class="btn primary" data-cmd="toNight" data-confirm="${pub.winner ? 'Arăți finalul pe proiector?' : 'Începi noaptea? Telefoanele trec la alegerile de noapte.'}">${pub.winner ? '🏁 Arată finalul' : '🌑 Începe noaptea'}</button>`;
+        case 'end': {
+          const st = pub.endStage ?? 'winner';
+          const order = [['winner', '🏁 Câștigătorul'], ['roles', '🎭 Toate rolurile'], ['replay', '📜 Reluarea'], ['titles', '🏅 Titlurile serii']];
+          const next = order[order.findIndex(([k]) => k === st) + 1];
+          return `
+            <p class="lead">${pub.winner === 'good' ? '🕯️ A câștigat Binele.' : '🩸 A câștigat Răul.'} Arată pe rând:</p>
+            <div class="row">${order.map(([k, label]) => `<button class="btn small ${st === k ? '' : 'ghost'}" data-end="${k}">${label}</button>`).join('')}</div>
+            ${next ? `<button class="btn primary" data-end="${next[0]}">Mai departe: ${next[1]}</button>` : '<p class="muted">Gata. Descarcă datele partidei din „Unelte”, apoi poți începe un joc nou.</p>'}`;
+        }
+        default: return '';
+      }
+    }
+
+    // Uneltele din dreapta: mereu la îndemână, nimic periculos.
+    function toolsHtml(phase) {
+      return `
+        <h3>🧰 Unelte</h3>
+        <div class="row"><button class="btn small ghost" id="sound-test">🔔 Test sunet pe proiector</button></div>
+        <div class="row"><input type="text" id="announce-text" maxlength="140" placeholder="Mesaj pe proiector (ex.: Pauză de pizza!)"><button class="btn small" id="announce-send">📢 Trimite</button></div>
+        ${phase === 'end' ? '<div class="row"><button class="btn small" id="export">⬇️ Descarcă datele partidei</button></div>' : ''}`;
+    }
+
+    function render() {
+      const phase = pub.phase ?? 'lobby';
+      document.getElementById('phase-title').textContent = TITLES[phase] ?? 'Jocul';
+      const box = document.getElementById('actions');
+      const playing = phase !== 'lobby' && phase !== 'end';
+      document.getElementById('pause-slot').innerHTML = !playing ? ''
+        : pub.paused?.quiet ? '<button class="btn small ghost" data-cmd="pause">⌛ Ține pauza</button>'
+        : pub.paused ? '<button class="btn pulse" data-cmd="resume" data-confirm="Continui jocul? Cronometrele pornesc din nou.">▶️ Continuă jocul</button>'
+        : '<button class="btn small ghost" data-cmd="pause">⌛ Pauză</button>';
+      box.innerHTML = (pub.paused && playing ? (pub.paused.quiet ? '<div class="pause-bar">📢 <b>Mesaj pe proiector</b> · cronometrele stau pe loc ~15 s, apoi jocul continuă singur.</div>' : '<div class="pause-bar">⌛ <b>Pauză</b> · toate cronometrele stau pe loc.</div>') : '') + actionsFor(phase);
+      document.getElementById('danger').innerHTML = phase === 'lobby' ? ''
+        : phase === 'end' ? '<button class="btn small danger" data-cmd="reset" data-confirm="Începi un joc nou? PIN-urile rămân.">🔄 Joc nou</button>'
+        : '<button class="btn small danger" data-cmd="reset" data-pin="1" data-confirm="Oprești jocul de acum și începi de la zero? Tot ce s-a jucat se pierde. PIN-urile rămân.">🔄 Oprește jocul și începe altul</button>';
+      for (const id of ['pause-slot', 'actions', 'danger']) wire(document.getElementById(id));
+      // Uneltele se redesenează doar la schimbarea fazei, ca să nu se șteargă mesajul pe care îl scrii.
+      if (toolsPhase !== phase) { toolsPhase = phase; renderTools(phase); }
+      renderPlayers();
+    }
+    let toolsPhase = null;
+    function renderTools(phase) {
+      const box = document.getElementById('tools');
+      box.innerHTML = toolsHtml(phase);
+      box.querySelector('#sound-test').addEventListener('click', (e) => {
+        sendCommand('soundTest');
+        e.target.textContent = '🔔 Trimis: ascultă proiectorul';
+        setTimeout(() => { e.target.textContent = '🔔 Test sunet pe proiector'; }, 4000);
+      });
+      const input = box.querySelector('#announce-text');
+      const send = async () => {
+        const text = input.value.trim();
+        if (!text) return;
+        if (!(await ask(`Afișezi pe proiector: „${text}”?`))) return;
+        await sendCommand('announce', { text });
+        input.value = '';
+      };
+      box.querySelector('#announce-send').addEventListener('click', send);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+      box.querySelector('#export')?.addEventListener('click', exportGame);
+    }
+
+    // Datele partidei, într-un fișier: rolurile, fiecare noapte și zi, voturile, pariurile, povestitorul.
+    // Doar la final (în timpul jocului ar dezvălui secretele, iar gazda joacă și ea).
+    async function exportGame() {
+      if (pub.phase !== 'end') return;
+      const [state, pubAll] = await Promise.all([get(r('secret/state')), get(r('public'))]);
+      const p = pubAll.val() ?? {};
+      const data = {
+        joc: 'Balul Contelui', exportat: new Date().toISOString(), gameId: p.gameId,
+        castigator: p.winner, setari: p.settings, povestitor: p.storyteller !== false,
+        final: p.final, stare: state.val(),
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `balul-contelui-${new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    }
+
+    // Ținut aici (nu în ask.js): un ask.js vechi, păstrat în cache de browser, nu strică panoul.
+    const escP = (x) => String(x).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    function askPin(text, { yes = 'Confirmă', no = 'Anulează' } = {}) {
+      return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'ask-overlay';
+        overlay.innerHTML = `<div class="card ask-box"><p>${escP(text)}</p>
+          <input class="ask-pin" type="password" autocomplete="off" maxlength="64" placeholder="PIN sau parolă">
+          <div class="row2"><button class="btn ghost" data-a="0">${escP(no)}</button><button class="btn danger" data-a="1">${escP(yes)}</button></div></div>`;
+        const input = overlay.querySelector('.ask-pin');
+        const done = (ok) => { overlay.remove(); document.removeEventListener('keydown', onKey); resolve(ok ? input.value.trim() : null); };
+        const onKey = (e) => { if (e.key === 'Escape') done(false); if (e.key === 'Enter') done(true); };
+        overlay.addEventListener('click', (e) => {
+          const b = e.target.closest('[data-a]');
+          if (b) done(b.dataset.a === '1');
+          else if (e.target === overlay) done(false);
+        });
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(overlay);
+        input.focus();
+      });
+    }
+
+    // Oprirea jocului în plin cere PIN-ul de jucător al lui Andrei (4 cifre) sau parola panoului,
+    // ca să nu fie apăsată din greșeală.
+    async function hostPinOk() {
+      const pin = await askPin('Ca să oprești jocul, scrie PIN-ul tău de jucător (4 cifre) sau parola cu care ai intrat în panou.', { yes: 'Oprește jocul' });
+      if (pin === null) return false;
+      try {
+        if (/^\d{4}$/.test(pin)) {
+          const stored = (await get(r('secret/pins/andrei'))).val();
+          if (stored && (await hashPin('andrei', pin)) === stored) return true;
+        } else if (pin) {
+          // Aceeași logare ca la intrarea în panou: dacă parola e bună, contul rămâne același.
+          await signInWithEmailAndPassword(auth, ENGINE_EMAIL, pin);
+          return true;
+        }
+      } catch { /* parolă greșită */ }
+      await ask('PIN sau parolă greșită. Jocul continuă.', { yes: 'Bine', no: 'Închide' });
+      return false;
+    }
+
+    function wire(box) {
+      box.querySelectorAll('[data-cmd]').forEach((b) => b.addEventListener('click', async () => {
+        if (b.dataset.confirm && !(await ask(b.dataset.confirm))) return;
+        if (b.dataset.pin && !(await hostPinOk())) return;
+        b.disabled = true;
+        await sendCommand(b.dataset.cmd);
+      }));
+      box.querySelectorAll('[data-play]').forEach((b) => b.addEventListener('click', () => {
+        // Invitatul Secret fără PIN nu se trimite deloc: când își alege PIN-ul, intră singur în joc.
+        const players = Object.fromEntries(Object.entries(pub.players ?? {}).filter(([id, p]) => id !== 'invitat' || p.hasPin).map(([id]) => [id, inLineup(id)]));
+        players[b.dataset.play] = !players[b.dataset.play];
+        sendCommand('lineup', { players });
+      }));
+      box.querySelector('#begin-day')?.addEventListener('click', async (e) => {
+        const min = +document.getElementById('free-min').value || 0;
+        if (!(await ask(min ? `Începi ziua? Urmează ${min} minute de timp liber.` : 'Începi ziua? Adunarea se deschide imediat.'))) return;
+        e.target.disabled = true;
+        sendCommand('beginDay', { minutes: +document.getElementById('free-min').value || 0 });
+      });
+      box.querySelector('#plus5')?.addEventListener('click', () => sendCommand('extendFree', { minutes: 5 }));
+      box.querySelector('#skip-intro')?.addEventListener('click', async () => { if (await ask('Sari peste film și treci direct la reguli?')) sendCommand('skipIntro'); });
+      box.querySelector('#film-toggle')?.addEventListener('click', () => sendCommand('skipFilm', { on: !pub.skipFilm }));
+      box.querySelectorAll('[data-end]').forEach((b) => b.addEventListener('click', async () => {
+        if (await ask(`Treci la „${b.textContent.replace(/^Mai departe:\s*/, '').trim()}” pe proiector?`)) sendCommand('endStage', { stage: b.dataset.end });
+      }));
+      box.querySelector('#save-settings')?.addEventListener('click', () => sendCommand('settings', {
+        settings: {
+          nightSeconds: +document.getElementById('s-night').value,
+          defenseSeconds: +document.getElementById('s-def').value,
+          voteSeconds: +document.getElementById('s-vote').value,
+          freeMinutes: +document.getElementById('s-free').value,
+        },
+      }));
+      box.querySelector('#plus30')?.addEventListener('click', () => sendCommand('extendNight'));
+      box.querySelectorAll('[data-force]').forEach((sel) => sel.addEventListener('change', () => set(r(`secret/forced/${sel.dataset.force}`), sel.value || null)));
+      box.querySelector('#forced-clear')?.addEventListener('click', async () => { if (await ask('Ștergi toate rolurile alese? Jocul le va împărți la întâmplare.')) set(r('secret/forced'), null); });
+    }
+
+    function renderPlayers() {
+      const players = Object.entries(pub.players ?? {}).filter(([id, p]) => id !== 'invitat' || p.hasPin || id in (pub.alive ?? {}));
+      const lobby = (pub.phase ?? 'lobby') === 'lobby';
+      document.getElementById('players-help').textContent = lobby
+        ? '🔑 = resetează PIN-ul (jucătorul își alege altul). Nu vezi niciun secret.'
+        : 'Cine trăiește și cine a murit. 🚪 = a plecat de la petrecere.';
+      document.getElementById('players').innerHTML = players.map(([id, p]) => {
+        // În timpul ritualului dimineții nu arătăm cine a murit: afli odată cu sala.
+        const ritual = pub.phase === 'morning' && pub.morning?.dawnAt && serverNow() < pub.morning.dawnAt + pub.morning.end * 1000;
+        const alive = pub.alive?.[id] !== false || (ritual && (pub.morning.deaths ?? []).some((d) => d.id === id));
+        const state = lobby
+          ? (p.hasPin ? '<span class="pill on">are PIN</span>' : p.bot ? '<span class="pill">🤖 robot</span>' : '<span class="pill">fără PIN</span>')
+          : !(id in (pub.alive ?? {})) ? '<span class="pill">nu joacă</span>'
+          : (alive ? '<span class="pill on">în viață</span>' : '<span class="pill">👻 fantomă</span>');
+        return `
+          <tr>
+            <td><b>${esc(p.name)}</b>${!lobby && p.bot ? ' 🤖' : ''}</td>
+            <td>${state}</td>
+            <td style="text-align:right">
+              ${!lobby && pub.phase !== 'end' && pub.alive?.[id] ? `<button class="btn small ghost" data-leave="${id}" title="A plecat de la petrecere">🚪</button>` : ''}
+              ${p.hasPin ? `<button class="btn small ghost" data-reset="${id}" title="Resetează PIN-ul">🔑</button>` : ''}
+            </td>
+          </tr>`;
+      }).join('');
+      document.querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', async () => {
+        const name = pub.players[b.dataset.leave].name;
+        if (!(await ask(`${name} părăsește castelul? Devine fantomă fără vot (rolul rămâne secret).`))) return;
+        b.disabled = true;
+        sendCommand('leave', { id: b.dataset.leave });
+      }));
+      document.querySelectorAll('[data-reset]').forEach((b) => b.addEventListener('click', async () => {
+        const name = pub.players[b.dataset.reset].name;
+        if (!(await ask(`Resetezi PIN-ul lui ${name}? Va trebui să-și aleagă unul nou.`))) return;
+        b.disabled = true;
+        await resetPin(b.dataset.reset);
+      }));
+    }
+
+    const soundBtn = document.getElementById('sound');
+    onValue(r('public/muted'), (snap) => {
+      soundBtn.dataset.muted = snap.val() ? '1' : '';
+      soundBtn.textContent = snap.val() ? '🔇 Sunet: OPRIT' : '🔊 Sunet: pornit';
+      soundBtn.className = `tog ${snap.val() ? 'off' : 'on'}`;
+      soundBtn.title = 'Sunetul proiectorului. Apasă ca să-l schimbi.';
+    });
+    soundBtn.addEventListener('click', () => set(r('public/muted'), !soundBtn.dataset.muted));
+    const musicBtn = document.getElementById('music');
+    onValue(r('public/music'), (snap) => {
+      const off = snap.val() === false;
+      musicBtn.dataset.off = off ? '1' : '';
+      musicBtn.textContent = off ? '🎵 Muzică: OPRITĂ' : '🎵 Muzică: pornită';
+      musicBtn.className = `tog ${off ? 'off' : 'on'}`;
+    });
+    musicBtn.addEventListener('click', () => set(r('public/music'), Boolean(musicBtn.dataset.off)));
+    // Povestitorul inteligent: înclină puțin norocul spre tabăra care pierde (doar ce lasă regulile la întâmplare).
+    const stBtn = document.getElementById('storyteller');
+    onValue(r('public/storyteller'), (snap) => {
+      const off = snap.val() === false;
+      stBtn.dataset.off = off ? '1' : '';
+      stBtn.textContent = off ? '📜 Povestitor: OPRIT' : '📜 Povestitor: pornit';
+      stBtn.className = `tog ${off ? 'off' : 'on'}`;
+      stBtn.title = 'Povestitorul inteligent înclină puțin norocul spre tabăra care pierde.';
+    });
+    stBtn.addEventListener('click', () => sendCommand('storyteller', { on: Boolean(stBtn.dataset.off) }));
+
+
+    // Glisoarele de volum: proiectorul se schimbă pe loc, cât tragi de ele.
+    for (const [id, key] of [['volume', 'volume'], ['music-volume', 'musicVolume']]) {
+      const input = document.getElementById(id);
+      const label = document.getElementById(`${id}-val`);
+      let dragging = false;
+      let pending = null;
+      onValue(r(`public/${key}`), (snap) => {
+        if (dragging) return;
+        input.value = snap.val() ?? 100;
+        label.textContent = `${input.value}%`;
+      });
+      input.addEventListener('input', () => {
+        dragging = true;
+        label.textContent = `${input.value}%`;
+        clearTimeout(pending);
+        pending = setTimeout(() => set(r(`public/${key}`), Number(input.value)), 120);
+      });
+      input.addEventListener('change', () => { dragging = false; set(r(`public/${key}`), Number(input.value)); });
+    }
+
+    onValue(r('public/engine'), (snap) => {
+      const el = document.getElementById('engine');
+      const on = Boolean(snap.val()?.online);
+      el.textContent = on ? '⚙️ Motor pornit' : '⚠️ Motorul e OPRIT: deschide Proiectorul';
+      el.title = on ? `Rulează pe ${pub.engineInfo?.device ?? 'proiector'}. Ține Proiectorul deschis într-un singur loc.` : '';
+      el.className = `ctl-engine ${on ? 'ok' : 'error'}`;
+    });
+
+    if (TEST_TOOLS) onValue(r('secret/forced'), (snap) => { forced = snap.val() ?? {}; if (lastSig) render(); });
+
+    // Redesenăm butoanele doar când se schimbă ceva relevant, ca să nu pierdem ce scrii în câmpuri.
+    let lastSig = '';
+    let pulsePhase = null;
+    let pulseStage = null;
+    let phaseSince = Date.now();
+    onValue(r('public'), (snap) => {
+      pub = snap.val() ?? {};
+      const ready = Object.values(pub.players ?? {}).filter((p) => p.hasPin || p.bot).length;
+      const sig = JSON.stringify([pub.phase, pub.round, ready, pub.progress, pub.endsAt, pub.winner, pub.settings, pub.day, pub.execution, pub.alive, pub.lineup, pub.engineInfo, pub.endStage, pub.paused, pub.skipFilm, pub.introAt, pub.undoIntroUntil]);
+      if (pub.phase !== pulsePhase || pub.endStage !== pulseStage) { pulsePhase = pub.phase; pulseStage = pub.endStage; phaseSince = Date.now(); }
+      if (sig !== lastSig) { lastSig = sig; render(); } else renderPlayers();
+    });
+
+    setInterval(() => {
+      document.querySelectorAll('[data-until]').forEach((el) => { if (serverNow() > +el.dataset.until) el.closest('.row')?.remove(); });
+      document.querySelectorAll('[data-ends]').forEach((el) => { if (+el.dataset.ends) el.textContent = fmt(+el.dataset.ends - (pub.paused?.at ?? serverNow())); });
+    }, 250);
+
+    // Butonul pe care trebuie să-l apeși ca să mergi mai departe pulsează după ce s-a terminat ce era pe ecran.
+    function pulseTarget() {
+      if (pub.paused) return null;
+      const since = (Date.now() - phaseSince) / 1000;
+      const d = pub.day ?? {};
+      switch (pub.phase) {
+        case 'lobby': return '[data-cmd="start"]:not([disabled])';
+        case 'intro': return since > INTRO.length + 25 ? '[data-cmd="firstNight"]' : null;
+        case 'morning': return pub.morning?.dawnAt && serverNow() > pub.morning.dawnAt + pub.morning.end * 1000 ? '#begin-day' : null;
+        case 'day':
+          if (d.free && d.freeOver) return '[data-cmd="openGathering"]';
+          // Ziua o închei tu: îți amintim când nu s-a mai întâmplat nimic de un minut și jumătate.
+          if (d.free || d.current || !d.lastActivity) return null;
+          return serverNow() - d.lastActivity > 90000 ? '[data-cmd="endDayCmd"]:not([disabled])' : null;
+        case 'execution': return since > (pub.execution?.name ? 13 : 3) ? '[data-cmd="toNight"]' : null;
+        case 'end': {
+          const next = { winner: 'roles', roles: 'replay', replay: 'titles' }[pub.endStage ?? 'winner'];
+          return next && since > 8 ? `.btn.primary[data-end="${next}"]` : null;
+        }
+        default: return null;
+      }
+    }
+    let ritualWas = false;
+    setInterval(() => {
+      // La sfârșitul ritualului dimineții, lista jucătorilor se actualizează (abia acum apare cine a murit).
+      const ritualNow = pub.phase === 'morning' && pub.morning?.dawnAt && serverNow() < pub.morning.dawnAt + pub.morning.end * 1000;
+      if (ritualWas && !ritualNow) renderPlayers();
+      ritualWas = Boolean(ritualNow);
+      const sel = pulseTarget();
+      document.querySelectorAll('#panel .btn.pulse').forEach((b) => { if (!sel || !b.matches(sel)) if (b.dataset.cmd !== 'resume') b.classList.remove('pulse'); });
+      if (sel) document.querySelector(`#actions ${sel}`)?.classList.add('pulse');
+    }, 1000);
+  </script>
+</body>
+</html>
