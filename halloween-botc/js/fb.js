@@ -1,4 +1,4 @@
-// Legătura cu Firebase. Pagina de test scrie sub /test, cea finală sub /live.
+// Legătura cu Firebase. Testele scriu sub /botc, jocul de pe godguard.ro sub /bal.
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import {
   getAuth, onAuthStateChanged, signInAnonymously, signInWithEmailAndPassword, signOut,
@@ -8,9 +8,12 @@ import {
   onDisconnect, serverTimestamp, goOffline, goOnline,
 } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
 
-export const ENV = 'botc';
+// Zona din baza de date: godguard.ro are zona lui („bal”), separată de testele de pe GitHub („botc”),
+// ca un tab de test uitat deschis să nu poată atinge jocul adevărat.
+import { LIVE } from './config.js';
+export const ENV = LIVE ? 'bal' : 'botc';
 // Crește la fiecare publicare: telefoanele cu cod vechi se reîncarcă singure.
-export const APP_VERSION = 81;
+export const APP_VERSION = 82;
 export const ENGINE_EMAIL = 'motor@blackwood.ro';
 
 // Paginile jucătorilor (telefon, iPad) au logarea lor, separată de cea a motorului:

@@ -1,4 +1,6 @@
-// Setări pentru versiunea publicată.
-// TEST_TOOLS: alegerea rolurilor din panou, pentru teste. La urcarea pe godguard.ro se pune pe false
-// (vezi LANSARE.md): panoul nu mai arată alegerea, iar motorul ignoră rolurile alese.
-export const TEST_TOOLS = true;
+// Setări care depind de unde rulează jocul.
+// LIVE: versiunea de pe godguard.ro (cea jucată pe 31 octombrie); altfel e versiunea de test (GitHub Pages).
+export const LIVE = typeof location !== 'undefined' && /(^|\.)godguard\.ro$/.test(location.hostname);
+// TEST_TOOLS: alegerea rolurilor din panou, doar pentru teste. Pe godguard.ro e oprită (vezi LANSARE.md):
+// panoul nu arată alegerea, iar motorul ignoră orice rol ales.
+export const TEST_TOOLS = !LIVE;

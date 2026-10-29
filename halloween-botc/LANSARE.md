@@ -1,12 +1,15 @@
-# Înainte de urcarea jocului pe godguard.ro
+# Urcarea jocului pe godguard.ro
 
-Lista de pași pentru versiunea finală (cea jucată pe 31 octombrie).
+Jocul jucat pe 31 octombrie rulează pe godguard.ro (Netlify, ramura `main`), în folderul `halloween-botc/`.
+Testele rămân pe GitHub Pages (ramura `halloween-dev`). Același cod, două comportamente, după adresă (`js/config.js`):
 
-1. **Scoate alegerea rolurilor din panou:** în `js/config.js` pune `TEST_TOOLS = false`.
-   Panoul nu mai arată „🎭 Test: alege tu rolurile”, iar motorul ignoră orice rol ales rămas salvat.
-2. **Șterge rolurile alese rămase de la teste** (`secret/forced` din baza de date), ca să nu rămână nimic.
-3. **Roboții rămân** în versiunea urcată (butonul „🤖 Completează cu roboți”, sub „🧪 Test cu roboți”):
-   sunt utili pentru o probă pe proiectorul de la petrecere. Fără roboți activi, codul lor nu influențează jocul
-   (nici povestitorul); mesajele de noapte au un câmp „data” (aceeași informație ca textul), folosit doar de roboți.
-4. Paginile de test (`*-test.html`, `masa.html`, `sange.html`) nu sunt legate de joc; se pot lăsa sau șterge.
-5. Crește `APP_VERSION` în `js/fb.js`, ca telefoanele să încarce versiunea nouă.
+| | GitHub Pages (teste) | godguard.ro (jocul) |
+|---|---|---|
+| Zona din baza de date | `botc` | `bal` (separată: un tab de test uitat deschis nu atinge jocul) |
+| Alegerea rolurilor din panou (`TEST_TOOLS`) | da | nu (panoul n-o arată, motorul ignoră orice rol ales) |
+| Roboții („🧪 Test cu roboți”) | da | da (fără roboți activi, codul lor nu influențează jocul) |
+
+## La fiecare urcare
+1. Pe `halloween-dev`: crește `APP_VERSION` în `js/fb.js` (telefoanele cu cod vechi se reîncarcă singure).
+2. Pe `main` se copiază DOAR folderul `halloween-botc/` (restul site-ului, de ex. teaserul `/halloween/teaser`, nu se atinge).
+3. Folderul trebuie să rămână la o adresă care începe cu `/halloween`: service worker-ul site-ului (crew-zaky) le ignoră doar pe acestea.
